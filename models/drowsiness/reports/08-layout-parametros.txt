@@ -1,0 +1,21 @@
+LAYOUT DOS PARÂMETROS
+================================================================================
+alignment = 16
+kernel_base_hint = 2048
+
+KERNEL_BASE  = 2048
+KERNEL_BYTES = 384608
+
+BIAS_BASE    = 386656
+BIAS_BYTES   = 28168
+
+MUL_BASE     = 414832
+MUL_BYTES    = 28172
+
+SHIFT_BASE   = 443008
+SHIFT_BYTES  = 28172
+
+Q6_BASE      = 471184
+Q6_BYTES     = 28168
+
+PARAMS_BASE  = 499360
