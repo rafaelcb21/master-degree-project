@@ -1,0 +1,24 @@
+[model]
+name = "Drowsiness MobileNetV2"
+tflite = "model_int8_esp32.tflite"
+[runtime]
+contract = "layerparam-v1"
+wat_template = "../../wat/templates/mobilenet_int8_v1.wat"
+num_slots = 3
+[input]
+format = "rgb565"
+synthetic_layer = "rgb565_to_rgb888"
+[test]
+adapter = "binary-folders"
+[[test.datasets]]
+path = "test/drowsy"
+label = 1
+[[test.datasets]]
+path = "test/non_drowsy"
+label = 0
+[[classes]]
+name = "drowsy"
+label = 1
+[[classes]]
+name = "non_drowsy"
+label = 0

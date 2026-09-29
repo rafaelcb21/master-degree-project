@@ -1,0 +1,15 @@
+[model]
+name = "MobileNetV2 Alpha 0.35 ImageNet"
+tflite = "mobilenetv2_alpha035_quant.tflite"
+[runtime]
+contract = "layerparam-v1"
+wat_template = "wat/model_template.wat"
+num_slots = 3
+[input]
+format = "bgr888"
+synthetic_layer = "none"
+[test]
+adapter = "imagenet-topk"
+path = "test/img"
+top_k = 15
+labels = "labels/imagenet_class_index.json"

@@ -44,6 +44,7 @@ FLAG_PADDING_SAME = 1 << 0
 FLAG_HAS_Q6 = 1 << 1
 
 FLAG_QUANTIZE_INPUT_INT8 = FLAG_PADDING_SAME
+FLAG_QUANTIZE_OUTPUT_UINT8 = 1 << 1
 
 TFLITE_UINT8 = 3
 TFLITE_INT8 = 9
@@ -450,6 +451,11 @@ def _build_quantize_params(
         input_dtype_name = (
             f"unknown({input_dtype})"
         )
+
+    if output_tensor.Type() == TFLITE_UINT8:
+        flags |= FLAG_QUANTIZE_OUTPUT_UINT8
+    elif output_tensor.Type() != TFLITE_INT8:
+        raise ValueError("QUANTIZE suporta apenas saída UINT8 ou INT8.")
 
     # QUANTIZE é in-place.
     # Mesmo que out_slot tenha sido passado,
@@ -1837,16 +1843,14 @@ def build_layer_params(
     weight_tensor_off,
     bias_tensor_off,
     mul_q6_off,
+    synthetic_layer="rgb565_to_rgb888",
 ):
     """
     Constrói os parâmetros de todas as camadas
     utilizadas pelo runtime.
 
-    A primeira camada é sintética:
-        RGB565_TO_RGB888
-
-    Depois são adicionadas as operações reais
-    provenientes do grafo TFLite.
+    Opcionalmente adiciona RGB565_TO_RGB888 antes das operações
+    reais provenientes do grafo TFLite.
     """
 
     layer_params = []
@@ -1855,14 +1859,10 @@ def build_layer_params(
     # CAMADA SINTÉTICA RGB565 → RGB888
     # ========================================================
 
-    rgb_layer = build_rgb565_layer(
-        subgraph,
-        slot_bases=slot_bases,
-    )
-
-    layer_params.append(
-        rgb_layer
-    )
+    if synthetic_layer == "rgb565_to_rgb888":
+        layer_params.append(build_rgb565_layer(subgraph, slot_bases=slot_bases))
+    elif synthetic_layer != "none":
+        raise ValueError(f"Camada sintética desconhecida: {synthetic_layer}")
 
     # ========================================================
     # OPERAÇÕES DO MODELO
@@ -2306,9 +2306,14 @@ def layer_params_to_text(
         "QUANTIZE (op_type=7)"
     )
 
-    lines.append(
-        "  flags    = 0 para uint8, 1 para int8"
-    )
+    lines.extend([
+        "  flags bit 0: 0 = input UINT8, 1 = input INT8",
+        "  flags bit 1: 0 = output INT8, 1 = output UINT8",
+        "  flags = 0 -> input UINT8 / output INT8",
+        "  flags = 1 -> input INT8  / output INT8",
+        "  flags = 2 -> input UINT8 / output UINT8",
+        "  flags = 3 -> input INT8  / output UINT8",
+    ])
 
     lines.append(
         "  kh       = multiplier"

@@ -16,6 +16,7 @@ from extractor.layer_params import (
     FLAG_PADDING_SAME,
     FLAG_HAS_Q6,
     FLAG_QUANTIZE_INPUT_INT8,
+    FLAG_QUANTIZE_OUTPUT_UINT8,
 )
 
 from extractor.operator_options import (
@@ -64,6 +65,7 @@ def flags_pretty(
     parts = []
 
     if optype == "QUANTIZE":
+        parts.append("OUTPUT_UINT8" if flags & FLAG_QUANTIZE_OUTPUT_UINT8 else "OUTPUT_INT8")
         if (
             flags
             & FLAG_QUANTIZE_INPUT_INT8
