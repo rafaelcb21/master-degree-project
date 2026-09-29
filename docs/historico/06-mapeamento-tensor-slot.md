@@ -1,3 +1,5 @@
+> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+
 # 06 — Mapeamento de tensors para slots (`tensor_mapping.py`)
 
 ## 1. Objetivo do módulo

@@ -1,74 +1,174 @@
-# Pacotes de modelo TFLite → WebAssembly
+# TFLite → WAT/WASM com pacotes de modelo
 
-Requer Python 3.10+ e as dependências de `requirements.txt`.
+Este projeto extrai redes quantizadas compatíveis de arquivos TFLite, organiza grafo, pesos, quantização e memória, materializa um template WAT e compila um módulo WASM. Depois executa imagens RAW com Wasmtime e grava resultados por modelo. O objetivo é estudar e inspecionar a tradução para um runtime WebAssembly próprio, incluindo reutilização de slots e contrato binário entre Python e kernels.
+
+Há dois pacotes: **drowsiness**, classificação binária de sonolência com RAW RGB565, e **mobilenetv2_alpha035**, classificação ImageNet Top-15 com RAW BGR888. Cada um possui `model.toml`, TFLite, testes e destinos independentes. O projeto não é um conversor universal de qualquer TFLite; as restrições estão descritas abaixo e na documentação técnica.
+
+**Comece pelo [índice técnico](docs/README.md)**. Ele reúne arquitetura, APIs de cada módulo, contrato de 29 campos, modelos, tutorial e limitações. Os textos anteriores foram preservados em `docs/historico/`.
+
+## Instalação
+
+Requer Python 3.10+ disponível no sistema. Na raiz do repositório, em PowerShell:
 
 ```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+```
+
+Em shell POSIX, a ativação equivalente é `source .venv/bin/activate`. O script `setup_env.ps1` também cria/ativa `.venv` e instala dependências, mas não repara uma venv existente que aponte para Python removido. Nesta máquina, as verificações usaram `.venv-models/Scripts/python.exe`; `.venv` é um ambiente antigo com interpretador de origem ausente. Ambientes virtuais não substituem a instalação de um Python válido em outra máquina.
+
+| Dependência | Versão declarada | Responsabilidade |
+|---|---|---|
+| flatbuffers | 25.12.19 | Acesso ao formato FlatBuffer |
+| numpy | 2.2.6 | Arrays, bytes, quantização e ranking |
+| tflite | 2.18.0 | Bindings do schema; não é o interpretador TensorFlow |
+| wasmtime | >=49,<50 | WAT→WASM e execução do binário |
+| tomli | >=2,<3, apenas Python<3.11 | Parser TOML; em 3.11+ usa tomllib |
+
+Não é necessário instalar o executável WABT `wat2wasm`: o compilador chama `wasmtime.wat2wasm` pela API Python.
+
+## Comandos
+
+```powershell
 python main.py --list-models
 python main.py
 python main.py --model drowsiness
 python main.py --model mobilenetv2_alpha035
-```
-
-Nesta máquina, a validação usou `.venv-models/Scripts/python.exe`; o ambiente
-`.venv` antigo aponta para uma instalação de Python ausente.
-
-## Organização
-
-Cada pasta em `models/` tem um `model.toml`, o TFLite original, testes e,
-após a execução, `generated/model.wat`, `generated/model.wasm` e `reports/`.
-Todos os caminhos do manifesto são relativos ao pacote, independentemente
-do diretório em que o comando é executado. O TFLite e o template são fontes;
-o pipeline escreve apenas os artefatos e relatórios.
-
-`main.py` seleciona o `ModelPackage`; `ModelPipeline` compartilha extração,
-memória, geração e compilação. O registry em `adapters/registry.py` seleciona
-o adapter pelo campo `test.adapter`.
-
-- `binary-folders`: RAW RGB565, datasets com labels e duas classes na ordem
-  dos índices da saída. Relata acertos, empates e acurácia entre os casos processados.
-- `imagenet-topk`: RAW BGR888/RGB888 com dimensões do tensor de entrada;
-  converte BGR para RGB, interpreta a saída com tipo, escala e zero point
-  do TFLite e ordena os scores. Empates usam a ordem dos índices.
-  Para entrada INT8, aplica a normalização MobileNet `pixel / 127.5 - 1`
-  antes de quantizar; entrada UINT8 recebe os pixels diretamente.
-
-O pacote ImageNet usa o RAW de avião que estava em `img_mobilenetv2/`.
-O arquivo `a0397.raw`, de 32.768 bytes, foi preservado em `test/incompatible/`:
-não tem o tamanho necessário para a entrada 224×224×3 desse modelo.
-Os labels foram obtidos de
-https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json.
-
-## Adicionar um modelo
-
-1. Crie `models/<nome>/model.toml`, usando um dos manifests como referência.
-2. Defina `model.tflite` e `runtime.wat_template`. O template pode ser
-   compartilhado (`../../wat/templates/mobilenet_int8_v1.wat`) ou local.
-3. Configure o formato, a camada sintética e os testes.
-4. Execute `python main.py --model <nome>`.
-
-Um novo protocolo exige suporte no código: contratos diferentes de
-`layerparam-v1` são rejeitados. Esse contrato usa 29 inteiros de 32 bits por
-LayerParam (116 bytes), três slots e os exports `memory`, `run_mobilenetv2`
-e `get_result_ptr`. O pipeline atual aceita uma entrada e uma saída de 8 bits
-e as operações já suportadas pelo extrator; cadastrar um pacote não adiciona
-novos operadores ao runtime.
-
-Em `QUANTIZE`, o bit 0 de `flags` indica entrada INT8 e o bit 1 indica saída
-UINT8. Os templates dos pacotes usam esses bits para carregar e limitar os
-valores, sem depender de um índice fixo de camada. Templates personalizados
-precisam respeitar essa convenção; o tamanho do LayerParam permanece 116 bytes.
-
-`input.synthetic_layer = "rgb565_to_rgb888"` acrescenta uma camada e desloca
-o mapeamento de slots em 1. Com `"none"`, ambos são zero.
-Pastas ausentes, RAW inválido e falhas de inferência produzem erro;
-falhas por caso ficam registradas em `12-inferencia-wasm.txt`.
-
-Os documentos numerados em `docs/` detalham o extrator original. Para a seleção
-de modelo e a configuração de caminhos, use os manifests e este README.
-
-## Verificação
-
-```powershell
 python -m unittest discover -s tests -v
 ```
+
+Sem `--model`, executa drowsiness. A listagem mostra nome da pasta e descrição do manifest. A CLI não possui modo de somente compilação nem filtro de casos: o fluxo completo descobre testes, extrai, gera, compila e infere. Use o nome de uma pasta em `models/`, não o caminho direto de um TFLite.
+
+## Arquitetura completa
+
+```text
+                         USUÁRIO
+                            │
+                            ▼
+               python main.py --model X
+                            │
+                            ▼
+               ModelPackage / ModelConfig
+                    models/X/model.toml
+                            │
+           ┌────────────────┼───────────────────┐
+           ▼                ▼                   ▼
+      TFLite original   template WAT      configuração de teste
+           │                │                   │
+           ▼                │                   ▼
+     ModelPipeline          │              registry.py
+           │                │                   │
+           │ valida fontes e descobre casos ◄── adapter
+           ▼                │                   │
+        EXTRACTOR           │                   │
+           ├── grafo / slots / tensor→slot       │
+           ├── pesos / quantização / memória    │
+           └── LayerParams / params_blob        │
+           │                │                   │
+           └───────┬────────┘                   │
+                   ▼                            │
+             wat_generator                      │
+                   ▼                            │
+       models/X/generated/model.wat             │
+                   ▼                            │
+        wasmtime.wat2wasm (compilação)           │
+                   ▼                            │
+       models/X/generated/model.wasm            │
+                   └───────────┬────────────────┘
+                               ▼
+                    inference/wasm_inference.py
+                               │
+           prepare_input → memory.write → run → memory.read
+                               │
+                     evaluate_output por caso
+                               ▼
+                    build_report + lista de erros
+                               ▼
+                models/X/reports/12-inferencia-wasm.txt
+```
+
+Entram o nome do pacote, suas fontes e os testes. `ModelPipeline` transforma os dados do TFLite em estruturas do runtime e coordena os dois ramos. Saem WAT, WASM e relatórios. Caminhos, classes, formato e pesos são específicos do modelo; serialização, alocação e protocolo de execução são compartilhados. Os relatórios 02–11 são gravados durante a extração, antes da inferência; a posição de `reports/` ao final não significa uma gravação única.
+
+## Árvore do repositório
+
+```text
+master-degree-project/
+├── main.py                         CLI
+├── requirements.txt                dependências Python
+├── setup_env.ps1                    criação/ativação de .venv
+├── README.md
+├── .gitignore
+├── adapters/                       base, binary_folders, imagenet_topk, registry
+├── extractor/                      15 arquivos Python, incluindo __init__.py
+├── inference/
+│   └── wasm_inference.py            host Wasmtime
+├── pipeline/                       config, package, pipeline, compiler
+├── models/
+│   ├── drowsiness/
+│   │   ├── model.toml
+│   │   ├── model_int8_esp32.tflite
+│   │   ├── test/{drowsy,non_drowsy}/
+│   │   ├── generated/{model.wat,model.wasm}
+│   │   └── reports/                11 relatórios
+│   └── mobilenetv2_alpha035/
+│       ├── model.toml
+│       ├── mobilenetv2_alpha035_quant.tflite
+│       ├── labels/imagenet_class_index.json
+│       ├── test/img/aviao_uint8.raw
+│       ├── wat/model_template.wat
+│       ├── generated/{model.wat,model.wasm}
+│       └── reports/                11 relatórios
+├── img_mobilenetv2/aviao_uint8.raw   cópia fora do pacote
+├── wat/templates/
+│   ├── mobilenet_int8_v1.wat        selecionado por drowsiness
+│   └── model_template.wat          legado, sem manifest apontando para ele
+├── tests/test_model_packages.py
+├── docs/                           referência atual e material histórico
+├── .venv/                          ambiente local antigo
+├── .venv-models/                    ambiente usado nas verificações
+└── __pycache__/                    cache local; também existe em módulos
+```
+
+Esta árvore agrupa arquivos repetitivos; o [inventário](docs/14-inventario-e-rastreabilidade.md) relaciona cada módulo e os conjuntos de dados. Entra a configuração de cada diretório `models/`; o pipeline lê suas fontes e escreve nas duas pastas de artefatos. `img_mobilenetv2/` não é consultado pelo manifesto atual. `.git/`, caches e ambientes são infraestrutura local, não parte do runtime gerado.
+
+## Conceitos de uso
+
+**TFLite** é a fonte FlatBuffer com operadores/tensores. **WAT** é o texto WebAssembly produzido a partir de um template mais os dados extraídos. **WASM** é o binário compilado. A rede executa os kernels do template, não um interpretador TFLite embutido.
+
+**ModelPackage** agrupa root/config e resolve fontes/destinos. **model.toml** declara `model.name`, `model.tflite`, contrato/template/slots, formato/camada sintética e o adapter de testes. Caminhos nos manifests atuais são relativos à pasta do pacote; o resolvedor também permite caminhos absolutos. Veja a [referência campo por campo](docs/03-model-config-manifesto.md).
+
+**Adapter** prepara arquivos e interpreta saídas pela interface TestAdapter. `binary-folders` associa labels a pastas e calcula acurácia; `imagenet-topk` troca BGR→RGB, dequantiza e apresenta classes/wnid/scores. Seleção é feita pelo registry usando `test.adapter`.
+
+**synthetic_layer** representa uma operação inserida pelo extrator que não pertence ao grafo TFLite original. `rgb565_to_rgb888` acrescenta um kernel SLOT0→SLOT1 e shift de slots 1. `none` não insere kernel, com shift 0; o adapter prepara a entrada. Veja os [diagramas das duas variantes](docs/09-modelos-e-pacotes.md).
+
+**layerparam-v1** é o nome do ABI, não um arquivo: cada camada é serializada em 29 int32 little-endian, total 116 bytes, lidos por offsets fixos no WAT. O template deve respeitar códigos de operações, flags, campos e exports. Trocar somente o caminho do template não assegura compatibilidade. Consulte a [tabela completa](docs/08-contrato-layerparam-v1.md).
+
+## Saídas, relatórios e fontes
+
+O pipeline escreve `models/<nome>/generated/model.wat`, `model.wasm` e os relatórios 02–12 em `models/<nome>/reports/`. Fontes são código, manifest, TFLite original, template, labels e RAWs; artefatos são generated e reports. Uma execução completa pode recriá-los, mas não apaga arquivos extras, não mantém histórico e não é atômica. Falhas podem deixar arquivos de diferentes execuções juntos.
+
+Templates ativos: `wat/templates/mobilenet_int8_v1.wat` para sonolência e `models/mobilenetv2_alpha035/wat/model_template.wat` para ImageNet. O arquivo `wat/templates/model_template.wat` é legado, não selecionado pelos manifests e com comportamento antigo de QUANTIZE.
+
+| Pacote | Entrada host | Saída | Evidência nos relatórios existentes |
+|---|---|---|---|
+| [drowsiness](models/drowsiness/README.md) | 128×128 RGB565, 32768 bytes | 2 classes UINT8 | 1965/2000 acertos; 98,25%; 5 inválidos; 0 erros |
+| [mobilenetv2_alpha035](models/mobilenetv2_alpha035/README.md) | 224×224 BGR888, 150528 bytes | 1000 classes, Top-15 | Um RAW; primeiro: airliner, q=226, score=0,8828125 |
+
+Esses números são observações do runtime e dados presentes, não validação de equivalência completa com TFLite nem de desempenho em dados novos. Scores são valores dequantizados; não são apresentados como probabilidades calibradas.
+
+## Adicionar um terceiro modelo
+
+1. Crie `models/<nome>/` com TFLite e `model.toml`.
+2. Confirme shapes/dtypes/opcodes e selecione template compatível com layerparam-v1.
+3. Configure formato e sintética; escolha adapter e prepare RAWs não vazios.
+4. Configure ordem das classes ou labels por índice.
+5. Execute `python main.py --model <nome>` e inspecione relatórios/intermediários.
+
+O [tutorial detalhado](docs/10-como-adicionar-modelo.md) inclui um comando de inspeção do TFLite, árvore e condições em que cadastro não basta. Novos adapters exigem implementar a interface e registrar uma classe; novos operadores exigem também extrator/kernel/contrato adequados.
+
+## Limitações atuais
+
+O fluxo aceita uma entrada e saída de 8 bits, entrada NHWC batch 1 com três canais e exatamente três slots. Kernels cobrem CONV_2D, DEPTHWISE_CONV_2D, FULLY_CONNECTED, ADD, MEAN, SOFTMAX, QUANTIZE e a sintética RGB565, com restrições: depthwise presume multiplicador 1; MEAN é espacial; ADD não faz broadcasting; certas ativações fundidas não são aplicadas. O softmax WAT usa multiplicador fixo, apesar de Python extrair parâmetros por modelo. Operadores desconhecidos podem ser pulados pelo builder, por isso compilação bem-sucedida não comprova cobertura da rede.
+
+Há sete testes direcionados, incluindo um kernel QUANTIZE real em WASM; não existe comparação automática completa com um interpretador TFLite. Não há treinamento, preprocessamento de imagens comprimidas, múltiplos outputs, timeout por inferência ou integração de execução em hardware no fluxo atual. Leia o [registro de inconsistências e limitações](docs/99-inconsistencias-e-limitacoes.md) antes de ampliar o escopo.

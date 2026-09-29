@@ -45,7 +45,7 @@ op_index          : 0
 optype            : QUANTIZE
 op_type           : 7 (QUANTIZE)
 act               : 0 (NONE)
-flags             : 0 (INPUT_UINT8)
+flags             : 0 (OUTPUT_INT8|INPUT_UINT8)
 in_slot/out_slot  : 1 -> 1
 in_ptr/out_ptr    : 703856 -> 703856
 
@@ -2214,7 +2214,7 @@ op_index          : 66
 optype            : QUANTIZE
 op_type           : 7 (QUANTIZE)
 act               : 0 (NONE)
-flags             : 3 (INPUT_INT8)
+flags             : 3 (OUTPUT_UINT8|INPUT_INT8)
 in_slot/out_slot  : 1 -> 1
 in_ptr/out_ptr    : 703856 -> 703856
 

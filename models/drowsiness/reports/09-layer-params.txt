@@ -40,7 +40,12 @@ SOFTMAX (op_type=6)
   pad_t    = input_ptr
 
 QUANTIZE (op_type=7)
-  flags    = 0 para uint8, 1 para int8
+  flags bit 0: 0 = input UINT8, 1 = input INT8
+  flags bit 1: 0 = output INT8, 1 = output UINT8
+  flags = 0 -> input UINT8 / output INT8
+  flags = 1 -> input INT8  / output INT8
+  flags = 2 -> input UINT8 / output UINT8
+  flags = 3 -> input INT8  / output UINT8
   kh       = multiplier
   kw       = shift
   pad_t    = input_ptr
