@@ -1,0 +1,13 @@
+# Diretórios de build e dependências
+/build/*
+/managed_components/
+
+# Configurações de IDEs
+/.vscode/
+/.idea/
+
+# Arquivos temporários e caches comuns
+*.pyc
+__pycache__/
+*.log
+.DS_Store

@@ -1,0 +1,8 @@
+## IDF Component Manager Manifest File
+dependencies:
+  wasm-micro-runtime:
+    version: "^1"
+  idf:
+    version: ">=4.4"
+  espressif/esp32-camera:
+    version: "*"
