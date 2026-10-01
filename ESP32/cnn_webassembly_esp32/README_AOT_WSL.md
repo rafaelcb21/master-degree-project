@@ -490,7 +490,66 @@ A segunda mensagem usa o nome genérico do runtime mesmo quando o módulo é
 AOT. Depois do benchmark, consulte o CSV em `http://<ip-do-esp32>:80/report`,
 ou na porta/caminho configurados. Para sair do monitor, use `Ctrl+]`.
 
-### 8.3. Volte ao interpretado para comparação
+### 8.3. Encontre o IP do ESP32 e abra o relatório
+
+1. No **terminal ESP-IDF**, entre na pasta do projeto e abra o monitor serial:
+
+   ```powershell
+   Set-Location 'C:\Users\rafae\Downloads\master-degree-project\ESP32\cnn_webassembly_esp32'
+   idf.py -p COM3 monitor
+   ```
+
+   `COM3` foi a porta identificada nesta placa. Se aparecer `could not open
+   port`, confira a lista `Available ports` do próprio monitor ou a seção
+   **Portas (COM e LPT)** do Gerenciador de Dispositivos do Windows e ajuste
+   o comando. Feche outros programas que estejam usando a mesma porta.
+
+2. Procure a mensagem de conexão Wi-Fi. Exemplo observado nesta placa:
+
+   ```text
+   wi-fi: Conectado ao Wi-Fi. IP: 192.168.0.24
+   ```
+
+   O endereço também pode aparecer na linha `esp_netif_handlers: sta ip:`.
+   Se perdeu essas mensagens, reinicie a placa com o monitor aberto para
+   acompanhar a conexão novamente. Isso também reinicia o benchmark.
+
+3. Substitua `<ip-do-esp32>` pelo endereço mostrado. Para o exemplo acima,
+   cole no navegador:
+
+   ```text
+   http://192.168.0.24/report
+   ```
+
+   Com a porta padrão 80, essa URL equivale a
+   `http://192.168.0.24:80/report`. Se alterou `REPORT_HTTP_PORT` ou
+   `REPORT_HTTP_URI` em `host_config.h`, use os valores configurados.
+
+4. No host atual, aguarde o término de todas as imagens e a mensagem
+   `Servidor HTTP iniciado` antes de acessar. O CSV completo só fica
+   disponível depois do benchmark. Mantenha a placa ligada e conectada:
+   o relatório fica na memória e é perdido quando ela reinicia.
+
+O computador deve ter acesso ao ESP32 pela rede; normalmente, conecte ambos
+à mesma rede local, sem isolamento entre dispositivos. O comando `ipconfig`
+mostra os endereços **do computador**, não o IP atribuído à placa. O endereço
+`192.168.0.24` é um exemplo real desta sessão e pode mudar após reconexões;
+confira sempre o monitor.
+
+**Se aparecer `Checksum mismatch between flashed and built applications`:**
+o firmware na placa difere do build local. `monitor` apenas acompanha a
+execução; ele não grava o código novo. Para atualizar, saia com `Ctrl+]`,
+confira `host_config.h` e execute:
+
+```powershell
+idf.py build
+idf.py -p COM3 flash monitor
+```
+
+Só execute a gravação se o build terminar com sucesso. Depois, confira
+novamente o IP e aguarde o benchmark do firmware atualizado.
+
+### 8.4. Volte ao interpretado para comparação
 
 No **terminal ESP-IDF**, preserve o AOT fora do nome reconhecido pelo CMake:
 
