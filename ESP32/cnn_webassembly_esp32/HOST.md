@@ -1,97 +1,73 @@
-# Host ESP32 para benchmarks WASM/AOT
+﻿# ESP32 host for WASM/AOT benchmarks
 
-Este projeto e independente do Python. O host baixa arquivos RAW do
-Cloudinary, copia a entrada para a memoria do modulo, executa a inferencia
-e registra os resultados e as medicoes.
+[English](HOST.md) | [Português (Brasil)](HOST.pt-BR.md)
 
-## Arquivos para editar
+This project is independent of Python. The host downloads RAW files from Cloudinary, copies the input into module memory, runs inference, and records results and measurements.
 
-- `main/host_config.h`: Wi-Fi, dimensoes e tamanho da entrada, flag de formato,
-  exports WASM, handshake, tipo e quantidade de saidas, rotulos, timeouts,
-  tamanhos de pilha e endereco HTTP do relatorio.
-- `main/image_list.h`: uma lista de URLs Cloudinary e rotulos, na ordem de
-  execucao. As 2.000 entradas anteriores foram preservadas. Use `-1` como
-  rotulo quando quiser apenas executar e medir, sem avaliar acuracia.
+## Files to edit
 
-As credenciais Wi-Fi sao placeholders: preencha-as em `host_config.h`.
-Alteracoes nesses arquivos exigem recompilar e gravar o firmware.
+- `main/host_config.h`: Wi-Fi, input dimensions and size, format flag, WASM exports, handshake, output type and count, labels, timeouts, stack sizes, and the HTTP report address.
+- `main/image_list.h`: Cloudinary URLs and labels in execution order. The previous 2,000 entries have been preserved. Use `-1` as the label to run and measure without evaluating accuracy.
 
-Exemplo de entrada na lista:
+Wi-Fi credentials are placeholders: fill them in in `host_config.h`.
+Changes to these files require rebuilding and flashing the firmware.
+
+Example list entry:
 
 ```c
 { "https://res.cloudinary.com/SEU_CLOUD/raw/upload/imagem.raw", 0 },
 ```
 
-`CLASS_LABELS` mapeia a ordem do tensor de saida para os rotulos da lista.
-O valor inicial `{ 1, 0 }` preserva a associacao do modelo anterior.
-Para um modelo com tres classes rotuladas de 0 a 2, use `NUM_CLASSES 3`
-e `CLASS_LABELS { 0, 1, 2 }`.
+`CLASS_LABELS` maps output tensor order to the labels in the list.
+The initial value `{ 1, 0 }` preserves the previous model's mapping.
+For a model with three classes labeled 0 through 2, use `NUM_CLASSES 3`
+and `CLASS_LABELS { 0, 1, 2 }`.
 
-## Contrato do modulo
+## Module contract
 
-O host suporta modulos que respeitem esta interface; os nomes dos exports
-sao configuraveis, mas suas assinaturas devem ser `() -> i32`:
+The host supports modules that follow this interface. Export names are configurable, but their signatures must be `() -> i32`:
 
-| Configuracao | Retorno esperado |
+| Setting | Expected return value |
 |---|---|
-| `WASM_READY_EXPORT` | 1 quando pode receber uma imagem; 0 quando ocupado |
-| `WASM_INPUT_PTR_EXPORT` | Offset do buffer de entrada |
-| `WASM_RUN_EXPORT` | `INFERENCE_SUCCESS_CODE` quando termina com sucesso |
-| `WASM_OUTPUT_PTR_EXPORT` | Offset do tensor de saida contiguo |
+| `WASM_READY_EXPORT` | 1 when ready to receive an image; 0 when busy |
+| `WASM_INPUT_PTR_EXPORT` | Input buffer offset |
+| `WASM_RUN_EXPORT` | `INFERENCE_SUCCESS_CODE` on successful completion |
+| `WASM_OUTPUT_PTR_EXPORT` | Contiguous output tensor offset |
 
-Os nomes iniciais preservam os exports dos modulos existentes, incluindo
-`run_mobilenetv2`. Esse nome nao determina o modelo executado pelo host.
-`USE_READY_HANDSHAKE 0` permite modulos sem o export de prontidao.
-A execucao e sequencial e sincrona. Timeout ou erro aborta aquela imagem.
-Uma falha interna pode deixar o modulo indisponivel para as proximas imagens;
-o host nao limpa a flag nem forca uma recuperacao do estado do modelo.
+The initial names preserve the existing modules' exports, including `run_mobilenetv2`. This name does not determine which model the host runs.
+`USE_READY_HANDSHAKE 0` allows modules without a readiness export.
+Execution is sequential and synchronous. A timeout or error aborts that image.
+An internal failure may leave the module unavailable for subsequent images; the host does not clear the flag or force recovery of the model state.
 
-O RAW deve conter exatamente `INPUT_BYTES` bytes, na ordem e codificacao
-esperadas pelo modulo. O host nao redimensiona, normaliza nem troca canais.
-O valor inicial usa 128 x 128 pixels RGB565 (32.768 bytes).
-Para RGB888/BGR888, ajuste `INPUT_BYTES_PER_PIXEL` para 3 e configure
-`WRITE_FORMAT_FLAG` conforme o contrato do modulo. Desative essa escrita
-quando o modulo nao usar a flag de formato.
+The RAW file must contain exactly `INPUT_BYTES` bytes in the order and encoding expected by the module. The host does not resize, normalize, or swap channels.
+The initial setting uses 128 × 128 RGB565 pixels (32,768 bytes).
+For RGB888/BGR888, set `INPUT_BYTES_PER_PIXEL` to 3 and configure `WRITE_FORMAT_FLAG` according to the module contract. Disable this write when the module does not use the format flag.
 
-A saida pode ser `OUTPUT_UINT8`, `OUTPUT_INT8` ou `OUTPUT_FLOAT32`.
-`NUM_CLASSES` deve corresponder ao numero de elementos da saida. O host
-valida os limites da memoria linear, mas nao consegue deduzir a capacidade
-dos tensores: tamanhos e formato precisam corresponder ao modulo.
-O resultado e o rotulo do maior elemento; empate produz `-1`.
-Para saidas quantizadas, essa comparacao pressupoe escala positiva e
-zero point comuns as classes. Os valores brutos nao sao convertidos em
-porcentagens. Modelos com varias saidas, deteccao ou outro pos-processamento
-precisam de adaptacao desse contrato.
+The output may be `OUTPUT_UINT8`, `OUTPUT_INT8`, or `OUTPUT_FLOAT32`.
+`NUM_CLASSES` must match the number of output elements. The host validates linear memory bounds, but cannot infer tensor capacity: sizes and format must match the module.
+The result is the label of the largest element; a tie produces `-1`.
+For quantized outputs, this comparison assumes a common positive scale and zero point across classes. Raw values are not converted to percentages.
+Models with multiple outputs, detection, or other postprocessing need an adapted contract.
 
-## Modulo incorporado
+## Embedded module
 
-Coloque `main.aot` ou `main.wasm` em `main/`. A regra existente do CMake
-continua priorizando `main.aot` quando presente; para usar o interpretado,
-retire esse AOT da pasta antes de reconfigurar/compilar o projeto.
-O host nao gera esses arquivos. O AOT deve corresponder ao alvo e ao WAMR
-usados no firmware.
+Place `main.aot` or `main.wasm` in `main/`. The existing CMake rule gives `main.aot` priority when present. To use interpreted WASM, remove that AOT from the folder before reconfiguring/building the project.
+The host does not generate these files. The AOT must match the target and WAMR used in the firmware.
 
-## Medicoes e CSV
+## Measurements and CSV
 
-Depois do benchmark, o servidor disponibiliza o CSV em
-`http://<ip-do-esp32>:80/report` (porta e caminho configuraveis).
-Ele inicia depois da coleta para servir um relatorio completo e imutavel.
+After the benchmark, the server serves the CSV at `http://<esp32-ip>:80/report` (the port and path are configurable).
+It starts after data collection to serve a complete, immutable report.
 
-Cada imagem gera `ok`, `class_0_raw` ate `class_N_raw`, resultado, rotulo,
-acerto, tempo de download, tempo de inferencia, heap e PSRAM antes/depois,
-diferencas de memoria e menor espaco livre observado na pilha da tarefa.
-`right=-1` significa sem avaliacao (falha ou rotulo desconhecido).
-Em falhas, as saidas ficam vazias; medicoes nao realizadas ficam em zero.
-As medias de tempo e a acuracia consideram apenas imagens processadas com
-sucesso; a acuracia exclui imagens sem rotulo. Empates contam como erro de
-classificacao para imagens rotuladas.
+Each image produces `ok`, `class_0_raw` through `class_N_raw`, the result, label, correctness, download time, inference time, heap and PSRAM before/after inference, memory differences, and the lowest observed free task stack space.
+`right=-1` means no evaluation (failure or unknown label).
+On failure, outputs are blank; measurements that were not taken remain zero.
+Time averages and accuracy only include successfully processed images; accuracy excludes unlabeled images. Ties count as classification errors for labeled images.
 
-O tempo de inferencia mede a chamada ao export, incluindo lookup e entrada
-no WAMR; download e copia de entrada ficam fora dessa janela. As diferencas
-de heap/PSRAM nao representam o pico de memoria durante uma inferencia.
-Os minimos historicos do resumo incluem outras tarefas e a inicializacao.
+Inference time measures the export call, including lookup and entry into WAMR; download and input copying are outside this interval.
+Heap/PSRAM differences do not represent peak memory use during inference.
+Historical minima in the summary include other tasks and initialization.
 
-O CSV acumulado fica na PSRAM; muitas imagens/classes podem esgotar esse
-espaco. Nesse caso o host registra a falha e o endpoint retorna erro HTTP,
-sem apresentar o CSV parcial como completo. Ha apenas um buffer de imagem
-e uma estrutura de resultado reutilizados durante o benchmark.
+The accumulated CSV resides in PSRAM; many images/classes may exhaust this space. In that case, the host logs the failure and the endpoint returns an HTTP error rather than presenting a partial CSV as complete.
+One image buffer and one result structure are reused throughout the benchmark.
+

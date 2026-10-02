@@ -1,260 +1,57 @@
-> **Guia WASM → AOT no WSL:** [README_AOT_WSL.md](README_AOT_WSL.md).
-> Passo a passo com versões do projeto, LLVM Xtensa, wamrc, firmware e diagnóstico.
-> Para configurar o host e a lista de imagens: [HOST.md](HOST.md).
-> O host atual baixa arquivos RAW do Cloudinary; as seções antigas sobre câmera são históricas.
+﻿# ESP32-CAM project with WebAssembly (WAMR) — legacy guide
 
+[English](README_ptBR.md) | [Português (Brasil)](README_ptBR.pt-BR.md)
 
----
-# Idioma ptBR
-# Projeto ESP32-CAM com WebAssembly (WAMR)
+> **WASM → AOT in WSL:** [README_AOT_WSL.md](README_AOT_WSL.md).
+> Step-by-step instructions covering project versions, Xtensa LLVM, wamrc, firmware, and troubleshooting.
+> Configure the host and image list with [HOST.md](HOST.md).
+> The current host downloads RAW files from Cloudinary; older camera sections are historical.
+>
+> This is the complete English translation of the longer legacy Portuguese guide. Its original filename, `README_ptBR.md`, is retained to preserve references. The historical module names, measurements, and memory explanations below describe that earlier implementation; use HOST.md and README_AOT_WSL.md for the current host.
 
-Este projeto tem como objetivo configurar e executar um firmware customizado na placa **ESP32-CAM**, integrando a captura de imagem com a execução de módulos WebAssembly através do **WASM-Micro-Runtime (WAMR)**.
+This project aims to configure and run custom firmware on the **ESP32-CAM**, integrating image capture with WebAssembly module execution through **WASM-Micro-Runtime (WAMR)**.
 
-## 1. Instalação e Configuração do Ambiente ESP32-CAM
+## 1. Installing and setting up the ESP32-CAM environment
 
-### 📦 Instalar o ESP-IDF
+### Install ESP-IDF
 
-- Faça o download do ESP-IDF no endereço oficial:  
-  [https://dl.espressif.com/dl/esp-idf/](https://dl.espressif.com/dl/esp-idf/)
+- Download ESP-IDF from the [official address](https://dl.espressif.com/dl/esp-idf/).
+- Add the `idf.py.exe` executable to the system **PATH**:
 
-- Adicione o executável `idf.py.exe` ao **PATH** do sistema:  
+```text
 C:\Espressif\tools\idf-exe\1.0.3
+```
 
+### Create the project
 
-### 📁 Criar o Projeto
+Use the official [ESP-IDF sample project](https://github.com/espressif/esp-idf/tree/master/tools/templates/sample_project) as a base.
+Run the initial build to generate `sdkconfig` automatically:
 
-- Use o template oficial como base do projeto:  
-[Sample Project - ESP-IDF GitHub](https://github.com/espressif/esp-idf/tree/master/tools/templates/sample_project)
-
-- Execute o primeiro build para gerar automaticamente o arquivo `sdkconfig`:
 ```bash
 idf.py build
 ```
 
-### 🧠 Habilitar PSRAM (memória externa)
-* Ative os 4MB de PSRAM manualmente no `sdkconfig`:
+### Enable PSRAM (external memory)
+
+Enable 4 MB of PSRAM manually in `sdkconfig`:
+
 ```
 CONFIG_SPIRAM=y
 ```
 
-### 🧠 Habilitar na placa ESP32-CAM o PSRAM:
+### Enable PSRAM on the ESP32-CAM board
 
-* Execute `idf.py menuconfig` e habilite no segunte menu: `Component config → ESP PSRAM | [*] Support for external | SPI-connected RAM`
+Run `idf.py menuconfig` and enable `Component config → ESP PSRAM → [*] Support for external SPI-connected RAM`.
 
+### Configure a custom partition table
 
-### 🗂️ Configurar Partição Customizada
-
-* No `menuconfig`, vá para:
-
-  ```
-  Partition Table → Partition Table → Custom partition table CSV
-  ```
-
-* Insira o seguinte conteúdo no arquivo `partitions.csv` na raiz do projeto:
-
-  ```csv
-  # Name, Type, SubType, Offset, Size, Flags
-  nvs,data,nvs,0x9000,24K,
-  phy_init,data,phy,0xf000,4K,
-  factory,app,factory,0x10000,2M,
-  spiffs,data,spiffs,0x210000,0x100000,
-  ```
-
-  Isso reserva 2MB para o firmware na partição `factory` e 1MB para arquivos na partição `spiffs`.
-
----
-
-## 2. Adicionar WebAssembly Micro Runtime (WAMR)
-
-* No arquivo `idf_component.yml`, adicione:
-
-  ```yaml
-  ## IDF Component Manager Manifest File
-  dependencies:
-    wasm-micro-runtime:
-      version: "^1"
-    idf:
-      version: ">=4.4"
-    espressif/esp32-camera:
-      version: "*"
-  ```
-
-> O gerenciador de componentes do ESP-IDF buscará automaticamente as dependências durante o build. Não é necessário clonar manualmente repositórios como o WAMR.
-
----
-
-## 2.1. Como o módulo WASM é incorporado ao firmware
-
-Na versão atual do projeto, o arquivo WebAssembly não é mais convertido para um `header` C com um array gigante do tipo `unsigned char[]`.
-
-Antes, o fluxo era este:
+In `menuconfig`, navigate to:
 
 ```text
-arquivo .wasm
-  -> conversão com xxd -i
-  -> arquivo .h com array binário em texto C
-  -> #include no main.c
-  -> compilador processa todo o conteúdo do array
+Partition Table → Partition Table → Custom partition table CSV
 ```
 
-Esse método funciona, mas tem uma desvantagem importante: o compilador precisa ler e processar um arquivo `.h` muito grande a cada recompilação relevante, o que aumenta bastante o tempo de build, especialmente após `idf.py fullclean`.
-
-No arranjo atual, o fluxo ficou assim:
-
-```text
-main/rust_drowsiness_trucker.wasm
-  -> declarado em main/CMakeLists.txt com EMBED_FILES
-  -> incorporado ao binário final pelo processo de linkedição
-  -> acessado em main.c por símbolos gerados automaticamente
-```
-
-Em [main/CMakeLists.txt](./main/CMakeLists.txt), a linha abaixo instrui o ESP-IDF a embutir o arquivo binário diretamente no firmware:
-
-```cmake
-idf_component_register(
-    SRCS "main.c"
-    EMBED_FILES "rust_drowsiness_trucker.wasm"
-    ...
-)
-```
-
-No [main/main.c](./main/main.c), o conteúdo embutido é acessado pelos símbolos gerados pelo build:
-
-```c
-extern const uint8_t rust_drowsiness_trucker_wasm_start[] asm("_binary_rust_drowsiness_trucker_wasm_start");
-extern const uint8_t rust_drowsiness_trucker_wasm_end[] asm("_binary_rust_drowsiness_trucker_wasm_end");
-```
-
-Depois, o código obtém:
-
-- o endereço inicial do arquivo WASM embutido
-- o tamanho do arquivo, calculado pela diferença entre o ponteiro final e o inicial
-
-```c
-uint8_t *wasm_file_buf = (uint8_t *)rust_drowsiness_trucker_wasm_start;
-uint32_t wasm_file_size = (uint32_t)(rust_drowsiness_trucker_wasm_end - rust_drowsiness_trucker_wasm_start);
-```
-
-Por fim, esse buffer é passado ao WAMR:
-
-```c
-wasm_module_t module = wasm_runtime_load(wasm_file_buf, wasm_file_size, error_buf, sizeof(error_buf));
-```
-
----
-
-## 2.2. O que é o linker neste contexto
-
-O **compilador** transforma cada arquivo-fonte (`.c`) em arquivos objeto intermediários.
-
-O **linker** é a etapa seguinte: ele junta todos esses objetos compilados, bibliotecas, tabelas e arquivos embutidos em uma única imagem final do firmware, como por exemplo:
-
-- `bootloader.bin`
-- `partition-table.bin`
-- `cnn_webassembly_esp32.bin`
-
-Quando se usa `EMBED_FILES`, o arquivo `.wasm` não vira código C. Em vez disso, o build o entrega ao linker, que o coloca dentro da imagem final do firmware como um bloco binário embutido. Além disso, o linker cria símbolos com nomes como:
-
-- `_binary_rust_drowsiness_trucker_wasm_start`
-- `_binary_rust_drowsiness_trucker_wasm_end`
-
-Esses símbolos funcionam como marcadores de memória, permitindo ao código C localizar onde o arquivo embutido começa e termina.
-
----
-
-## 2.3. Onde o arquivo WASM fica no firmware e na execução
-
-É importante separar duas fases:
-
-### 1. No firmware armazenado na placa
-
-O arquivo `rust_drowsiness_trucker.wasm` fica embutido dentro da partição de aplicação (`factory`) na **memória flash** do ESP32.
-
-Portanto:
-
-- não fica na stack
-- não fica na heap
-- não fica no SPIFFS
-- não fica inicialmente na PSRAM
-
-Ele passa a compor a imagem do firmware gravada em flash.
-
-### 2. Durante a execução do programa
-
-Quando o `main.c` chama `wasm_runtime_load()`, o runtime lê esse conteúdo embutido e cria as estruturas internas necessárias para interpretar/instanciar o módulo WebAssembly.
-
-No projeto atual:
-
-- o **arquivo WASM bruto** está embutido no firmware em **flash**
-- a **memória linear do módulo**, estruturas do runtime, buffers e áreas de execução passam a usar **RAM**
-- a estratégia implementada prioriza a **PSRAM** para as alocações do WAMR, por meio de:
-
-```c
-init_args.mem_alloc_type = Alloc_With_Allocator;
-init_args.mem_alloc_option.allocator.malloc_func  = (void *)psram_malloc;
-init_args.mem_alloc_option.allocator.realloc_func = (void *)psram_realloc;
-init_args.mem_alloc_option.allocator.free_func    = (void *)psram_free;
-```
-
-Ou seja, o módulo tem o seguinte comportamento:
-
-- **WASM bruto**: armazenado em flash, dentro do firmware
-- **memória de execução do WASM**: alocada majoritariamente em PSRAM
-- **heap interna**: usada apenas como fallback quando a PSRAM não consegue atender
-
----
-
-## 2.4. Diferença entre flash, stack, heap, PSRAM e SPIFFS
-
-### Flash
-
-É a memória não volátil onde o firmware fica gravado. Ao desligar a placa, o conteúdo permanece. O `.wasm` embutido por `EMBED_FILES` fica aqui como parte da imagem do aplicativo.
-
-### Stack
-
-É a memória usada por chamadas de função, variáveis locais e contexto das tasks. Ela é pequena e volátil. O arquivo `.wasm` não é armazenado na stack.
-
-### Heap interna
-
-É a RAM dinâmica principal do ESP32, usada por `malloc()`. Ela é mais limitada e disputada por Wi-Fi, TCP/IP, HTTP e outras estruturas do sistema.
-
-### PSRAM
-
-É a RAM externa da ESP32-CAM. No presente projeto, ela é usada para aliviar a pressão sobre a heap interna, especialmente para a memória linear do módulo WebAssembly e outras estruturas mais pesadas em tempo de execução.
-
-### SPIFFS
-
-É um sistema de arquivos em flash. Ele serviria se o projeto optasse por armazenar o `.wasm` como arquivo externo e carregá-lo dinamicamente em tempo de execução. No arranjo atual, isso não ocorre: o `.wasm` não é carregado do SPIFFS, mas sim embutido diretamente no firmware.
-
----
-
-## 2.5. Resumo técnico para dissertação
-
-Pode-se descrever a solução da seguinte forma:
-
-> O módulo WebAssembly do modelo de inferência passou a ser incorporado ao firmware por meio do mecanismo `EMBED_FILES` do ESP-IDF, substituindo a estratégia anterior baseada na conversão do binário `.wasm` para um array em linguagem C. Com isso, o arquivo binário deixou de ser processado como texto-fonte pelo compilador e passou a ser embutido na imagem final do firmware durante a etapa de linkedição. Em tempo de execução, o conteúdo é acessado por símbolos gerados automaticamente pelo linker, enquanto as estruturas dinâmicas do runtime WebAssembly são alocadas preferencialmente em PSRAM. Essa abordagem reduz o custo de compilação, melhora a manutenção do projeto e preserva a capacidade de carregar o módulo WASM localmente no dispositivo.
-
----
-
-## 2.6. Estrutura atual de memória e partições do projeto
-
-### Tamanho total de flash configurado
-
-O projeto está atualmente configurado para **4 MB de flash**, conforme o `sdkconfig`:
-
-```text
-CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
-```
-
-Essa configuração é necessária porque a tabela de partições reservou:
-
-- 2 MB para a aplicação principal
-- 1 MB para SPIFFS
-- além de áreas menores para NVS e `phy_init`
-
-### Tabela de partições em uso
-
-O projeto usa uma **tabela customizada** definida em [partitions.csv](./partitions.csv), com as seguintes entradas:
+Put the following in the root-level `partitions.csv`:
 
 ```csv
 # Name, Type, SubType, Offset, Size, Flags
@@ -264,153 +61,127 @@ factory,app,factory,0x10000,2M,
 spiffs,data,spiffs,0x210000,0x100000,
 ```
 
-No `sdkconfig`, isso aparece como:
+This reserves 2 MB for firmware in the `factory` partition and 1 MB for files in the `spiffs` partition.
 
-```text
-CONFIG_PARTITION_TABLE_CUSTOM=y
-CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
-CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
+## 2. Add WebAssembly Micro Runtime (WAMR)
+
+Add to `idf_component.yml`:
+
+```yaml
+## IDF Component Manager Manifest File
+dependencies:
+  wasm-micro-runtime:
+    version: "^1"
+  idf:
+    version: ">=4.4"
+  espressif/esp32-camera:
+    version: "*"
 ```
 
-### Interpretação de cada partição
+The ESP-IDF component manager automatically fetches dependencies during the build. You do not need to clone repositories such as WAMR manually.
 
-#### `nvs`
+## 2.1. How the WASM module is embedded in firmware
 
-- tipo: `data`
-- subtipo: `nvs`
-- offset: `0x9000`
-- tamanho: `24 KB`
+In the version documented here, the WebAssembly file is no longer converted into a C header containing a large `unsigned char[]` array.
 
-Essa área é usada pelo ESP-IDF para armazenamento não volátil de parâmetros, como dados persistentes, configurações de Wi-Fi, credenciais, calibrações e outras informações pequenas.
-
-#### `phy_init`
-
-- tipo: `data`
-- subtipo: `phy`
-- offset: `0xF000`
-- tamanho: `4 KB`
-
-Essa partição armazena dados de inicialização da camada física do rádio do ESP32.
-
-#### `factory`
-
-- tipo: `app`
-- subtipo: `factory`
-- offset: `0x10000`
-- tamanho: `2 MB` (`0x200000` bytes)
-
-Essa é a partição principal do firmware. É nela que fica o binário final da aplicação, incluindo:
-
-- o código compilado em C/C++
-- bibliotecas do ESP-IDF
-- bibliotecas do WAMR
-- tabelas internas e metadados do firmware
-- o arquivo `rust_drowsiness_trucker.wasm` embutido por `EMBED_FILES`
-
-#### `spiffs`
-
-- tipo: `data`
-- subtipo: `spiffs`
-- offset: `0x210000`
-- tamanho: `1 MB` (`0x100000` bytes)
-
-Essa partição é reservada para sistema de arquivos SPIFFS. Na estrutura atual do projeto, o módulo WASM **não** está sendo carregado a partir do SPIFFS. Ele está embutido diretamente no firmware, dentro da partição `factory`.
-
----
-
-## 2.7. Endereçamento e ocupação atual da flash
-
-Considerando a configuração atual, a organização prática fica assim:
+Previously, the workflow was:
 
 ```text
-Flash total configurada: 4 MB
-
-0x0000  -> região inicial / boot metadata
-0x1000  -> bootloader
-0x8000  -> partition table
-0x9000  -> NVS (24 KB)
-0xF000  -> phy_init (4 KB)
-0x10000 -> app factory (2 MB)
-0x210000 -> SPIFFS (1 MB)
+.wasm file
+  -> conversion with xxd -i
+  -> .h file containing a binary array as C text
+  -> #include in main.c
+  -> compiler processes the entire array
 ```
 
-### Artefatos gerados no build
+This method works, but has a significant drawback: the compiler must read and process a very large `.h` file on each relevant rebuild, substantially increasing build time, especially after `idf.py fullclean`.
 
-No build atual, os artefatos principais ficaram com os seguintes tamanhos:
-
-- `bootloader.bin`: `26.752 bytes` (aprox. `26,1 KB`)
-- `partition-table.bin`: `3.072 bytes` (aprox. `3,0 KB`)
-- `cnn_webassembly_esp32.bin`: `1.702.080 bytes` (aprox. `1,62 MiB`)
-
-### Ocupação da partição `factory`
-
-A partição `factory` possui:
-
-- capacidade total: `2.097.152 bytes` (`2 MB`)
-- firmware atual: `1.702.080 bytes`
-- espaço livre aproximado: `395.072 bytes`
-
-Em termos percentuais:
-
-- uso da partição `factory`: aproximadamente `81,2%`
-- espaço livre restante: aproximadamente `18,8%`
-
-Esse número é coerente com a saída do build:
+The arrangement described here uses:
 
 ```text
-cnn_webassembly_esp32.bin binary size 0x19f8c0 bytes.
-Smallest app partition is 0x200000 bytes.
-0x60740 bytes (19%) free.
+main/rust_drowsiness_trucker.wasm
+  -> declared in main/CMakeLists.txt with EMBED_FILES
+  -> embedded in the final binary during linking
+  -> accessed in main.c through automatically generated symbols
 ```
 
-### Ocupação da partição `spiffs`
+In [main/CMakeLists.txt](./main/CMakeLists.txt), this line instructs ESP-IDF to embed the binary directly in the firmware:
 
-Atualmente, a partição `spiffs` está apenas **reservada** na tabela de partições. O processo de build do firmware não está usando esse espaço para armazenar o módulo WASM.
+```cmake
+idf_component_register(
+    SRCS "main.c"
+    EMBED_FILES "rust_drowsiness_trucker.wasm"
+    ...
+)
+```
 
-Portanto, no arranjo atual:
+In [main/main.c](./main/main.c), the embedded contents are accessed through build-generated symbols:
 
-- `factory`: usada ativamente pela aplicação
-- `spiffs`: reservada para uso futuro ou armazenamento de arquivos externos
+```c
+extern const uint8_t rust_drowsiness_trucker_wasm_start[] asm("_binary_rust_drowsiness_trucker_wasm_start");
+extern const uint8_t rust_drowsiness_trucker_wasm_end[] asm("_binary_rust_drowsiness_trucker_wasm_end");
+```
 
----
+The code then obtains:
 
-## 2.8. Onde cada elemento fica armazenado
+- The starting address of the embedded WASM file.
+- Its size, calculated by subtracting the start pointer from the end pointer.
 
-### O firmware principal
+```c
+uint8_t *wasm_file_buf = (uint8_t *)rust_drowsiness_trucker_wasm_start;
+uint32_t wasm_file_size = (uint32_t)(rust_drowsiness_trucker_wasm_end - rust_drowsiness_trucker_wasm_start);
+```
 
-O arquivo:
+Finally, this buffer is passed to WAMR:
 
-- `build/cnn_webassembly_esp32.bin`
+```c
+wasm_module_t module = wasm_runtime_load(wasm_file_buf, wasm_file_size, error_buf, sizeof(error_buf));
+```
 
-fica gravado na partição `factory` da flash.
+## 2.2. What the linker does here
 
-### O arquivo WASM
+The **compiler** transforms each source file (`.c`) into intermediate object files.
 
-O arquivo:
+The **linker** is the next stage: it combines compiled objects, libraries, tables, and embedded files into a final firmware image. Firmware build images include:
 
-- [main/rust_drowsiness_trucker.wasm](./main/rust_drowsiness_trucker.wasm)
+- `bootloader.bin`
+- `partition-table.bin`
+- `cnn_webassembly_esp32.bin`
 
-é incorporado ao firmware na etapa de linkedição e, portanto, também passa a ficar armazenado dentro da partição `factory`.
+With `EMBED_FILES`, the `.wasm` file does not become C code. Instead, the build passes it to the linker, which places it in the final firmware image as an embedded binary block.
+The linker also creates symbols such as:
 
-Ele **não** fica:
+- `_binary_rust_drowsiness_trucker_wasm_start`
+- `_binary_rust_drowsiness_trucker_wasm_end`
 
-- na stack
-- na heap
-- na partição SPIFFS
-- em um arquivo externo separado na flash
+These symbols serve as memory markers, letting C code locate the beginning and end of the embedded file.
 
-Ele passa a existir como parte integrante da imagem binária principal da aplicação.
+## 2.3. Where WASM resides in firmware and during execution
 
-### A memória dinâmica do WAMR
+Distinguish two phases:
 
-Durante a execução, o conteúdo bruto do arquivo `.wasm` está em flash, porém a execução do módulo exige estruturas dinâmicas em RAM, tais como:
+### 1. Firmware stored on the board
 
-- memória linear do módulo
-- heap interna do módulo WebAssembly
-- stack de execução do runtime
-- buffers auxiliares
+`rust_drowsiness_trucker.wasm` is embedded in the application partition (`factory`) in ESP32 **flash memory**.
 
-No código atual, essas alocações foram configuradas para priorizar PSRAM:
+Therefore, it is:
+
+- Not on the stack.
+- Not on the heap.
+- Not in SPIFFS.
+- Not initially in PSRAM.
+
+It becomes part of the firmware image written to flash.
+
+### 2. Program execution
+
+When `main.c` calls `wasm_runtime_load()`, the runtime reads the embedded contents and creates the internal structures needed to interpret/instantiate the WebAssembly module.
+
+In the arrangement documented here:
+
+- The **raw WASM file** is embedded in firmware in **flash**.
+- **Module linear memory**, runtime structures, buffers, and execution areas use **RAM**.
+- The implemented allocation strategy prioritizes **PSRAM** for WAMR through:
 
 ```c
 init_args.mem_alloc_type = Alloc_With_Allocator;
@@ -419,20 +190,235 @@ init_args.mem_alloc_option.allocator.realloc_func = (void *)psram_realloc;
 init_args.mem_alloc_option.allocator.free_func    = (void *)psram_free;
 ```
 
-Isso significa que:
+Thus:
 
-- o **binário WASM** fica na flash
-- a **execução do módulo** consome RAM
-- o projeto tenta usar **PSRAM** para essa RAM dinâmica
-- se a PSRAM não estiver disponível, o código cai para `malloc()` comum
+- **Raw WASM:** stored in flash, inside firmware.
+- **WASM execution memory:** allocated mostly in PSRAM.
+- **Internal heap:** used as fallback when PSRAM cannot satisfy a request.
 
----
+## 2.4. Flash, stack, heap, PSRAM, and SPIFFS
 
-## 2.9. Estado atual de PSRAM na configuração do projeto
+### Flash
 
-Na configuração atual do projeto, a PSRAM foi reativada no `sdkconfig` e persistida no `sdkconfig.defaults`.
+Nonvolatile memory where firmware is stored. Contents remain when the board is powered off.
+The `.wasm` embedded through `EMBED_FILES` resides here as part of the application image.
 
-Os pontos principais são:
+### Stack
+
+Memory used for function calls, local variables, and task context. It is small and volatile. The `.wasm` file is not stored on the stack.
+
+### Internal heap
+
+The ESP32's main dynamic RAM, used by `malloc()`. It is more limited and shared by Wi-Fi, TCP/IP, HTTP, and other system structures.
+
+### PSRAM
+
+The ESP32-CAM's external RAM. This project uses it to relieve pressure on the internal heap, particularly for WebAssembly linear memory and larger runtime structures.
+
+### SPIFFS
+
+A filesystem in flash. It could be used if the project stored `.wasm` as an external file and loaded it dynamically at runtime.
+That does not happen in this arrangement: `.wasm` is embedded directly in firmware rather than loaded from SPIFFS.
+
+## 2.5. Technical description for the dissertation
+
+The solution can be described as follows:
+
+> The inference model's WebAssembly module is embedded in firmware through ESP-IDF's `EMBED_FILES` mechanism, replacing the previous strategy of converting the `.wasm` binary into a C array. Consequently, the binary is no longer processed as source text by the compiler; it is embedded in the final firmware image during linking. At runtime, its contents are accessed through automatically generated linker symbols, while the WebAssembly runtime's dynamic structures are allocated preferentially in PSRAM. This approach reduces compilation overhead, improves project maintenance, and preserves the ability to load the WASM module locally on the device.
+
+## 2.6. Memory and partition structure documented for the project
+
+### Configured total flash size
+
+The project is configured for **4 MB of flash**, according to `sdkconfig`:
+
+```text
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
+```
+
+This configuration is needed because the partition table reserves:
+
+- 2 MB for the main application.
+- 1 MB for SPIFFS.
+- Smaller areas for NVS and `phy_init`.
+
+### Partition table in use
+
+The project uses a **custom table** defined in [partitions.csv](./partitions.csv), with these entries:
+
+```csv
+# Name, Type, SubType, Offset, Size, Flags
+nvs,data,nvs,0x9000,24K,
+phy_init,data,phy,0xf000,4K,
+factory,app,factory,0x10000,2M,
+spiffs,data,spiffs,0x210000,0x100000,
+```
+
+In `sdkconfig`:
+
+```text
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
+```
+
+### Meaning of each partition
+
+#### nvs
+
+- Type: `data`
+- Subtype: `nvs`
+- Offset: `0x9000`
+- Size: `24 KB`
+
+ESP-IDF uses this area for nonvolatile storage of parameters such as persistent data, Wi-Fi settings, credentials, calibration, and other small pieces of information.
+
+#### phy_init
+
+- Type: `data`
+- Subtype: `phy`
+- Offset: `0xF000`
+- Size: `4 KB`
+
+Stores initialization data for the ESP32 radio's physical layer.
+
+#### factory
+
+- Type: `app`
+- Subtype: `factory`
+- Offset: `0x10000`
+- Size: `2 MB` (`0x200000` bytes)
+
+The main firmware partition, containing the final application binary, including:
+
+- Compiled C/C++ code.
+- ESP-IDF libraries.
+- WAMR libraries.
+- Internal tables and firmware metadata.
+- `rust_drowsiness_trucker.wasm`, embedded through `EMBED_FILES`.
+
+#### spiffs
+
+- Type: `data`
+- Subtype: `spiffs`
+- Offset: `0x210000`
+- Size: `1 MB` (`0x100000` bytes)
+
+Reserved for a SPIFFS filesystem.
+In this project structure, WASM is **not** loaded from SPIFFS. It is embedded directly in firmware within `factory`.
+
+## 2.7. Flash addressing and recorded usage
+
+Given the documented configuration, the practical layout is:
+
+```text
+Total configured flash: 4 MB
+
+0x0000  -> initial region / boot metadata
+0x1000  -> bootloader
+0x8000  -> partition table
+0x9000  -> NVS (24 KB)
+0xF000  -> phy_init (4 KB)
+0x10000 -> app factory (2 MB)
+0x210000 -> SPIFFS (1 MB)
+```
+
+### Build artifacts
+
+The recorded build produced these main artifact sizes:
+
+- `bootloader.bin`: `26,752 bytes` (about `26.1 KB`).
+- `partition-table.bin`: `3,072 bytes` (about `3.0 KB`).
+- `cnn_webassembly_esp32.bin`: `1,702,080 bytes` (about `1.62 MiB`).
+
+### factory partition usage
+
+The `factory` partition has:
+
+- Total capacity: `2,097,152 bytes` (`2 MB`).
+- Recorded firmware: `1,702,080 bytes`.
+- Approximate free space: `395,072 bytes`.
+
+Percentages:
+
+- `factory` usage: approximately `81.2%`.
+- Remaining space: approximately `18.8%`.
+
+This agrees with the build output:
+
+```text
+cnn_webassembly_esp32.bin binary size 0x19f8c0 bytes.
+Smallest app partition is 0x200000 bytes.
+0x60740 bytes (19%) free.
+```
+
+### spiffs partition usage
+
+The `spiffs` partition is only **reserved** in the partition table.
+The firmware build does not use this space to store WASM.
+
+Thus:
+
+- `factory`: actively used by the application.
+- `spiffs`: reserved for future use or external file storage.
+
+## 2.8. Where each element is stored
+
+### Main firmware
+
+The file:
+
+- `build/cnn_webassembly_esp32.bin`
+
+is written to the flash `factory` partition.
+
+### WASM file
+
+The file:
+
+- `main/rust_drowsiness_trucker.wasm` (historical artifact name)
+
+is embedded in firmware during linking and therefore also stored in `factory`.
+
+It is **not**:
+
+- On the stack.
+- On the heap.
+- In the SPIFFS partition.
+- A separate external file in flash.
+
+It becomes an integral part of the main application binary image.
+
+### Runtime memory
+
+During execution, WAMR needs memory for:
+
+- Module linear memory.
+- Runtime internal structures.
+- Execution buffers.
+- Module execution stack.
+
+In this project, these allocations preferentially use **PSRAM** through custom allocation functions:
+
+```c
+init_args.mem_alloc_type = Alloc_With_Allocator;
+init_args.mem_alloc_option.allocator.malloc_func  = (void *)psram_malloc;
+init_args.mem_alloc_option.allocator.realloc_func = (void *)psram_realloc;
+init_args.mem_alloc_option.allocator.free_func    = (void *)psram_free;
+```
+
+This means:
+
+- The **WASM binary** resides in flash.
+- **Module execution** consumes RAM.
+- The project tries to use **PSRAM** for that dynamic RAM.
+- If PSRAM is unavailable, code falls back to ordinary `malloc()`.
+
+## 2.9. PSRAM state in the documented project configuration
+
+PSRAM was reenabled in `sdkconfig` and persisted in `sdkconfig.defaults`.
+
+Main settings:
 
 ```text
 CONFIG_SPIRAM=y
@@ -442,145 +428,141 @@ CONFIG_SPIRAM_SPEED_40M=y
 CONFIG_SPIRAM_BOOT_INIT=y
 ```
 
-Além disso, o projeto mantém:
+The project also retains:
 
 ```text
 CONFIG_SPIRAM_USE_MALLOC=y
 CONFIG_SPIRAM_MEMTEST=y
 ```
 
-Na prática, isso significa que:
+In practice:
 
-- o suporte à PSRAM está habilitado no build
-- a inicialização da PSRAM ocorre no boot
-- o projeto pode usar `MALLOC_CAP_SPIRAM`
-- o runtime WASM pode alocar sua memória dinâmica preferencialmente em PSRAM
-- a heap interna permanece como fallback quando necessário
+- PSRAM support is enabled in the build.
+- PSRAM initializes at boot.
+- The project can use `MALLOC_CAP_SPIRAM`.
+- The WASM runtime can allocate dynamic memory preferentially in PSRAM.
+- Internal heap remains available as fallback.
 
-Isso deixa a configuração coerente com o código de inicialização do WAMR em `main.c`.
+This makes configuration consistent with the WAMR initialization code in `main.c`.
 
----
+## 2.10. Memory made available at runtime
 
-## 2.10. Memória disponibilizada em tempo de execução
+Besides where resources reside, it is useful to record how much memory the code explicitly requests from the runtime.
 
-O README já descreve onde cada recurso fica armazenado. Além disso, é útil registrar quanto de memória o código solicita explicitamente ao runtime.
+### Memory configured for the WASM module
 
-### Memória configurada para o módulo WASM
-
-Na chamada abaixo:
+In this call:
 
 ```c
 module_inst = wasm_runtime_instantiate(module, 1024 * 1024, 512 * 1024, error_buf, sizeof(error_buf));
 ```
 
-o projeto solicita ao WAMR:
+the project requests:
 
-- `1024 * 1024` bytes = **1 MB**
-- `512 * 1024` bytes = **512 KB**
+- `1024 * 1024` bytes = **1 MB**.
+- `512 * 1024` bytes = **512 KB**.
 
-Em termos práticos, isso significa que o runtime tenta disponibilizar aproximadamente:
+The original guide describes these as approximately:
 
-- **1 MB** para a área principal associada à instanciação do módulo
-- **512 KB** para a heap/área auxiliar configurada do módulo
+- **1 MB** for the main area associated with module instantiation.
+- **512 KB** for the module's configured heap/auxiliary area.
 
-Além disso, o ambiente de execução de chamadas WASM é criado com:
+The WASM call execution environment is also created with:
 
 ```c
 exec_env = wasm_runtime_create_exec_env(module_inst, 32 * 1024);
 ```
 
-ou seja:
+That is:
 
-- **32 KB** para o `exec_env`
+- **32 KB** for `exec_env`.
 
-### Buffer de imagem no lado C
+### C-side image buffer
 
-O código também mantém um buffer estático para a imagem de entrada:
+The code also maintains a static input image buffer:
 
 ```c
 #define RGB565_BYTES (IMG_W * IMG_H * 2)
 static uint8_t img_buf[RGB565_BYTES];
 ```
 
-Como `IMG_W = 128` e `IMG_H = 128`, o buffer ocupa:
+With `IMG_W = 128` and `IMG_H = 128`, the buffer occupies:
 
-- `128 * 128 * 2 = 32768 bytes`
-- ou seja, **32 KB**
+- `128 * 128 * 2 = 32768 bytes`.
+- **32 KB**.
 
-### Consumo adicional no lado C
+### Additional C-side usage
 
-Há ainda outras estruturas de memória que também participam do consumo:
+Other memory structures also contribute:
 
-- vetor `g_rows[MAX_REPORT_ROWS]`, que cresce conforme a quantidade de imagens configuradas no benchmark
-- buffer dinâmico `g_report_text`, que cresce conforme o relatório é acumulado
-- estruturas do Wi-Fi, pilha TCP/IP, HTTP client e HTTP server
-- alocações internas do próprio ESP-IDF e do WAMR
+- `g_rows[MAX_REPORT_ROWS]`, which grows with the number of configured benchmark images.
+- Dynamic `g_report_text`, which grows as the report accumulates.
+- Wi-Fi, TCP/IP stack, HTTP client, and HTTP server structures.
+- Internal ESP-IDF and WAMR allocations.
 
-Por isso, o consumo real total em RAM não é apenas a soma direta de `1 MB + 512 KB + 32 KB + 32 KB`.
+Total RAM use is therefore not simply `1 MB + 512 KB + 32 KB + 32 KB`.
 
-### Resumo numérico do que está explicitamente configurado
+### Numerical overview of explicit configuration
 
-Os valores diretamente definidos no código são:
+Values directly defined in the documented code:
 
-- módulo WASM instanciado com **1 MB**
-- heap auxiliar/configurada do módulo com **512 KB**
-- `exec_env` com **32 KB**
-- buffer de imagem RGB565 com **32 KB**
+- WASM module instantiated with **1 MB**.
+- Module auxiliary/configured heap of **512 KB**.
+- `exec_env` of **32 KB**.
+- RGB565 image buffer of **32 KB**.
 
-Somando apenas esses blocos principais explicitamente visíveis no código:
+Adding only these main explicitly visible blocks:
 
-- **aproximadamente 1,56 MB**
+- **Approximately 1.56 MB**.
 
-Esse valor deve ser entendido como uma **estimativa estrutural mínima dos blocos principais configurados**, e não como medida exata do consumo total do firmware em tempo de execução.
+This should be understood as a **minimum structural estimate of the main configured blocks**, not an exact measurement of total firmware memory use at runtime.
 
-### Onde essa memória tende a ficar
+### Where this memory tends to reside
 
-No arranjo atual:
+In this arrangement:
 
-- o arquivo `.wasm` bruto continua armazenado em **flash**
-- a memória dinâmica do runtime tende a ser alocada preferencialmente em **PSRAM**
-- a heap interna pode ser usada como fallback
-- a stack das tasks continua separada disso
+- Raw `.wasm` remains in **flash**.
+- Dynamic runtime memory is preferentially allocated in **PSRAM**.
+- Internal heap may serve as fallback.
+- Task stacks remain separate.
 
-Portanto, o leitor pode interpretar a arquitetura assim:
+The architecture can therefore be read as:
 
 ```text
 Flash:
   - firmware
-  - .wasm embutido
+  - embedded .wasm
 
-PSRAM (preferencialmente):
-  - memória principal da instância WASM
-  - heap/configuração auxiliar do módulo
-  - parte relevante das alocações dinâmicas do WAMR
+PSRAM (preferred):
+  - main WASM instance memory
+  - module auxiliary heap/configuration
+  - a substantial part of WAMR dynamic allocations
 
-RAM interna:
-  - fallback de malloc
+Internal RAM:
+  - malloc fallback
   - stacks
-  - estruturas do sistema, Wi-Fi e rede
+  - system, Wi-Fi, and network structures
 ```
 
-### Observação metodológica importante
+### Methodological note
 
-Embora o código configure esses tamanhos, a quantidade efetivamente consumida em tempo de execução depende de:
+Although the code configures these sizes, actual runtime use depends on:
 
-- disponibilidade real de PSRAM na placa
-- sucesso da inicialização da PSRAM no boot
-- comportamento interno do WAMR
-- número de imagens processadas
-- buffers de rede ativos
-- uso simultâneo de Wi-Fi, HTTP e relatório
+- Actual PSRAM availability on the board.
+- Successful PSRAM initialization at boot.
+- WAMR internal behavior.
+- Number of images processed.
+- Active network buffers.
+- Simultaneous Wi-Fi, HTTP, and report usage.
 
-Por isso, a forma correta de relatar resultados experimentais no mestrado é combinar:
+Experimental dissertation results should therefore combine:
 
-- **configuração nominal** do código, descrita nesta seção
-- **medição empírica** pelos logs de `heap_caps_get_free_size(MALLOC_CAP_SPIRAM)`, `esp_get_free_heap_size()` e `heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM)`
+- **Nominal code configuration**, described here.
+- **Empirical measurements** from `heap_caps_get_free_size(MALLOC_CAP_SPIRAM)`, `esp_get_free_heap_size()`, and `heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM)` logs.
 
----
+## 2.11. Final structural overview
 
-## 2.11. Resumo estrutural final
-
-Em termos de arquitetura de armazenamento e execução, o projeto ficou assim:
+Storage and execution architecture:
 
 ```text
 FLASH (4 MB)
@@ -589,76 +571,74 @@ FLASH (4 MB)
 ├── nvs
 ├── phy_init
 ├── factory (2 MB)
-│   ├── firmware principal
-│   ├── código C/C++ compilado
-│   ├── bibliotecas ESP-IDF
+│   ├── main firmware
+│   ├── compiled C/C++ code
+│   ├── ESP-IDF libraries
 │   ├── WAMR
-│   └── rust_drowsiness_trucker.wasm embutido
-└── spiffs (1 MB reservado)
+│   └── embedded rust_drowsiness_trucker.wasm
+└── spiffs (1 MB reserved)
 
-RAM em tempo de execução
-├── stack das tasks
-├── heap interna
-└── PSRAM (quando habilitada)
-    └── alvo preferencial das alocações do runtime WASM
+Runtime RAM
+├── task stacks
+├── internal heap
+└── PSRAM (when enabled)
+    └── preferred target for WASM runtime allocations
 ```
 
-Esse arranjo evita o uso de um `header` gigante com array binário e torna mais clara a separação entre:
+This arrangement avoids a giant binary-array header and makes the separation clearer between:
 
-- armazenamento persistente do módulo (`flash`, dentro do firmware)
-- memória dinâmica de execução (`RAM`, preferencialmente `PSRAM`)
+- Persistent module storage (`flash`, within firmware).
+- Dynamic execution memory (`RAM`, preferentially `PSRAM`).
 
----
+## 3. Build, flash, and monitor the firmware
 
-## 3. Compilar, Gravar e Monitorar o Firmware
-
-Utilize um terminal do ESP-IDF como **ESP-IDF PowerShell** ou **ESP-IDF CMD** e execute:
+Use an ESP-IDF terminal such as **ESP-IDF PowerShell** or **ESP-IDF CMD**:
 
 ```bash
-idf.py menuconfig # mexer nas configurações caso precis
-idf.py set-target esp32 # utilizado somente 1 vez para setar o ambiente
+idf.py menuconfig # adjust settings if needed
+idf.py set-target esp32 # used once to set the target
 idf.py fullclean
 idf.py build
 idf.py flash monitor
 ```
 
-* O comando `monitor` permite visualizar a saída de logs e mensagens da ESP32-CAM diretamente no seu terminal.
-
----
+The `monitor` command shows ESP32-CAM logs and messages directly in the terminal.
 
 ## AOT
 
-1) Gerar o .aot a partir do seu .wasm
+1. Generate `.aot` from `.wasm` (historical command):
 
+```sh
 wamrc --target=xtensa --target-abi=ilp32 --cpu=esp32 --enable-multi-thread -o main.aot main.wasm
+```
 
----
+Use [README_AOT_WSL.md](README_AOT_WSL.md) for the current version-specific procedure.
 
-## ✅ Requisitos
+## Requirements
 
-* Placa: **ESP32-CAM com suporte a PSRAM**
-* Sistema: **Windows (recomendado)** com ESP-IDF instalado
-* Ferramentas:
+- Board: **ESP32-CAM with PSRAM support**.
+- System: **Windows (recommended)** with ESP-IDF installed.
+- Tools:
+  - Git.
+  - Python 3.8+.
+  - `idf.py` configured in PATH.
 
-  * Git
-  * Python 3.8+
-  * `idf.py` configurado no PATH
+## wat2wasm commands
 
----
-* Comandos `wat2wasm`
-O comando `wat2wasm` esta dentro do programa WABT que precisa ser feito o download no seguinte endereço [WABT GitHub](https://github.com/WebAssembly/wabt/releases)
+`wat2wasm` is part of WABT, available from [WABT GitHub releases](https://github.com/WebAssembly/wabt/releases).
+After downloading, add the program to the environment variables.
 
-Após o download, inserir o programa nas variaveis de ambiente.
+`wat2wasm` converts a WAT file into a WASM binary:
 
-O comando `wat2wasm` serve para converter o arquivo wat para o binario wasm
 ```sh
 wat2wasm .\hello_word.wat -o .\hello_word.wasm
 ```
 
-Na versão atual do projeto, não é mais necessário usar `xxd` para converter o `.wasm` em `header` C. O arquivo `.wasm` deve permanecer binário e ser embutido com `EMBED_FILES`.
+In this version, `xxd` is no longer needed to convert `.wasm` to a C header.
+Keep `.wasm` binary and embed it with `EMBED_FILES`.
 
----
-* Variaveis de Ambiente: 
+## Environment variables
+
 ```sh
 IDF-PATH: C:\Espressif\frameworks\esp-idf-v5.3.1\
 PATH: 
@@ -667,6 +647,8 @@ PATH:
     C:\Program Files (x86)\WABT\bin
 ```
 
-## 📎 Observação
+## Note
 
-O projeto assume que o firmware será executado com suporte a WebAssembly via WAMR. Certifique-se de que o seu código WebAssembly esteja preparado para lidar com buffers de imagem capturados pela câmera integrada.
+The project assumes the firmware runs with WebAssembly support through WAMR.
+For the historical camera setup described here, ensure the WebAssembly code can handle buffers captured by the integrated camera.
+
