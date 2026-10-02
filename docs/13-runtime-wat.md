@@ -1,20 +1,22 @@
-# 13 — Templates e runtime WebAssembly
+[English](13-runtime-wat.md) | [Português (Brasil)](13-runtime-wat.pt-BR.md)
 
-[Índice](README.md) · [ABI](08-contrato-layerparam-v1.md) · [Gerador](32-extractor-wat-generator.md)
+# 13 — WebAssembly templates and runtime
 
-## Arquivos e seleção real
+[Index](README.md) · [ABI](08-contrato-layerparam-v1.md) · [Generator](32-extractor-wat-generator.md)
 
-Há três templates fonte: [mobilenet_int8_v1.wat](../wat/templates/mobilenet_int8_v1.wat), selecionado por sonolência; [template local ImageNet](../models/mobilenetv2_alpha035/wat/model_template.wat), selecionado pelo outro pacote; e [model_template.wat legado](../wat/templates/model_template.wat), sem referência nos manifests atuais. Os dois ativos têm conteúdo idêntico na inspeção. A seleção vem de `runtime.wat_template`; não há factory de kernels por modelo.
+## Files and actual selection
 
-O template é um módulo WebAssembly com memória linear exportada, globals de bases/tamanhos, funções de matemática inteira, kernels e dispatcher. Não importa WASI nem TensorFlow. Data segments são inseridos pelo gerador. O nome `run_mobilenetv2` é um nome de export fixo exigido pelo host, embora o corpo percorra uma lista de operações descrita pelos parâmetros.
+There are three source templates: [mobilenet_int8_v1.wat](../wat/templates/mobilenet_int8_v1.wat), selected by drowsiness; the [local ImageNet template](../models/mobilenetv2_alpha035/wat/model_template.wat), selected by the other package; and [legacy model_template.wat](../wat/templates/model_template.wat), unreferenced by current manifests. The two active templates have identical contents at inspection. Selection comes from `runtime.wat_template`; there is no per-model kernel factory.
 
-## Memória e controle
+The template is a WebAssembly module with exported linear memory, base/size globals, integer math functions, kernels, and a dispatcher. It imports neither WASI nor TensorFlow. The generator inserts data segments. `run_mobilenetv2` is a fixed export name required by the host, although its body iterates over a list of operations described by parameters.
+
+## Memory and control
 
 ```text
-memory exportada
+exported memory
   │
-  ├── endereço 0: marcador RGB565 do host (65)
-  ├── endereço 4: FLAG_BASE; 1 durante run, 0 ao terminar
+  ├── address 0: host RGB565 marker (65)
+  ├── address 4: FLAG_BASE; 1 during run, 0 on completion
   ├── WEIGHTS / BIAS / MUL / SHIFT / Q6
   ├── PARAMS: base + layer_index × LP_SIZE
   └── SLOT0 / SLOT1 / SLOT2
@@ -23,88 +25,89 @@ memory exportada
                 RESULT_BASE / RESULT_COUNT
 ```
 
-Entram dados inicializados e imagem escrita pelo host. O runtime lê registros e escreve ativações nos slots; sai o vetor na base definida pelo gerador. Endereços e tamanhos são específicos do modelo; as flags e offsets de registro são compartilhados. O comentário junto a FLAG_BASE menciona endereço 0, mas o valor executado é 4; a documentação segue o código.
+Inputs are initialized data and an image written by the host. The runtime reads records and writes activations to slots; the output is a vector at the generator-defined base. Addresses and sizes are model-specific; flags and record offsets are shared. The comment beside FLAG_BASE mentions address 0, but the executed value is 4; this documentation follows the code.
 
-`layerparam_base(layer_idx)` calcula `PARAMS_BASE + layer_idx*LP_SIZE`. `run_layer` lê op_type e despacha 1–8. Código desconhecido simplesmente termina a função. `run_mobilenetv2` marca busy, percorre índices de 0 até NUM_LAYERS−1, chama `run_layer`, libera busy e retorna i32 0. Não há checagem de op_index original ou identidade do tensor de saída.
+`layerparam_base(layer_idx)` calculates `PARAMS_BASE + layer_idx*LP_SIZE`. `run_layer` reads op_type and dispatches 1–8. Unknown codes simply return from the function. `run_mobilenetv2` marks busy, iterates indices 0 through NUM_LAYERS−1, calls `run_layer`, clears busy, and returns i32 0. It does not check the original op_index or output tensor identity.
 
-## Kernels executados
+## Executed kernels
 
 ### CONV_2D
 
-Lê os 29 campos, percorre H/W de saída, canal de saída, posições do kernel e canais de entrada. Índice de ativação é NHWC; pesos são OHWI, com bloco por canal de saída. Soma bias e produtos `(x-zx)*(w-zw)` em i32. Padding pula coordenadas fora da área válida; stride e dilatação entram no cálculo de linha/coluna. Aplica `multiply_by_quantized_multiplier_3`, soma zy, aplica RELU ou RELU6 quando act=1/3 e limita a INT8. Bias, multiplier e shift são lidos por canal sem uma validação semântica de ausência.
+Reads the 29 fields and iterates output H/W, output channel, kernel positions, and input channels. Activation indexing is NHWC; weights are OHWI, with a block per output channel. Adds bias and `(x-zx)*(w-zw)` products in i32. Padding skips coordinates outside the valid area; stride and dilation enter row/column calculations. Applies `multiply_by_quantized_multiplier_3`, adds zy, applies RELU or RELU6 when act=1/3, and clamps to INT8. Bias, multiplier, and shift are read per channel without semantic validation of absence.
 
 ### DEPTHWISE_CONV_2D
 
-Percorre pixels de saída e canal de saída; acessa ativação em `((row*in_w+col)*cin + oc)` e pesos em `((ki*kw+kj)*cout + oc)`. Essa associação direta de `oc` à entrada presume depth multiplier 1. O Python registra `depth_mult`, mas não o serializa; não há cálculo `input_channel=oc/depth_mult`. Requantização/ativação são semelhantes à convolução e a saída é INT8.
+Iterates output pixels and output channel; accesses activation at `((row*in_w+col)*cin + oc)` and weights at `((ki*kw+kj)*cout + oc)`. This direct association of `oc` with input assumes depth multiplier 1. Python records `depth_mult` but does not serialize it; there is no `input_channel=oc/depth_mult` calculation. Requantization/activation resemble convolution, and output is INT8.
 
 ### FULLY_CONNECTED
 
-Para cada oc, inicia acumulador com bias[oc], percorre ic de 0 a cin−1, lê `input[ic]` e `weight[oc*cin+ic]` como signed bytes, remove zero points, multiplica e soma. Requantiza, soma zy e limita INT8. O corpo não lê act; a ativação fundida registrada pelo Python não é aplicada. Também não implementa flatten arbitrário de H×W×C: depende de cin preparado corretamente para o tensor de entrada, como os vetores após MEAN nos modelos atuais.
+For each oc, initializes the accumulator with bias[oc], iterates ic from 0 to cin−1, reads `input[ic]` and `weight[oc*cin+ic]` as signed bytes, removes zero points, multiplies, and adds. Requantizes, adds zy, and clamps to INT8. The body does not read act; fused activation recorded by Python is not applied. It also does not implement arbitrary H×W×C flattening: it depends on cin being prepared correctly for the input tensor, as with vectors following MEAN in current models.
 
 ### ADD
 
-Lê ponteiros A/B dos campos pad_t/pad_b, zA/zB de pad_l/pad_r, pares de multiplicador/shift dos campos reaproveitados e zy. Para cada elemento de H×W×cin, dequantiza implicitamente os inteiros para uma escala comum, soma, aplica requantização de saída e clamp INT8. Não lê act, não verifica shapes nem faz broadcasting. A nomenclatura de campos de padding aqui não representa padding de imagem.
+Reads A/B pointers from pad_t/pad_b, zA/zB from pad_l/pad_r, multiplier/shift pairs from repurposed fields, and zy. For each of H×W×cin elements, it implicitly converts integers to a common scale, adds, applies output requantization, and clamps to INT8. It does not read act, check shapes, or broadcast. Padding field names here do not represent image padding.
 
 ### MEAN
 
-Para cada canal, soma `x-zX` nas H×W posições, divide a soma por H×W com `i32.div_s` (truncamento em direção a zero), requantiza com kh/kw, soma zY e limita INT8. Recalcula spatial_size por H×W, embora o Python também o registre em stride_h. Não lê axis/keep_dims; não é implementação de todos os casos de MEAN TFLite. A função auxiliar `div_round_nearest` existe no template, mas este kernel usa `i32.div_s` diretamente.
+For each channel, sums `x-zX` over H×W positions, divides by H×W with `i32.div_s` (truncation toward zero), requantizes with kh/kw, adds zY, and clamps to INT8. Recalculates spatial_size from H×W, although Python also records it in stride_h. It does not read axis/keep_dims and does not implement all TFLite MEAN cases. The template includes the `div_round_nearest` helper, but this kernel directly uses `i32.div_s`.
 
 ### QUANTIZE
 
-Percorre out_h×out_w×cout. Bit 0 de flags escolhe load8_s ou load8_u; subtrai zx, aplica kh/kw, soma zy. Bit 1 escolhe clamp UINT8 `[0,255]` ou INT8 `[-128,127]`, então store8. Python aloca esse operador in-place. No template legado, o clamp depende de `layer_idx==67`; nos dois templates ativos depende de flags.
+Iterates out_h×out_w×cout. Flag bit 0 selects load8_s or load8_u; subtracts zx, applies kh/kw, and adds zy. Bit 1 selects UINT8 `[0,255]` or INT8 `[-128,127]` clamp, followed by store8. Python allocates this operator in place. In the legacy template, clamp depends on `layer_idx==67`; in both active templates it depends on flags.
 
-### SOFTMAX: implementação efetiva
+### SOFTMAX: actual implementation
 
 ```text
-cin logits INT8
+cin INT8 logits
       │
       ▼
-máximo dos logits
+maximum logit
       │
       ▼
 diff = ((val - max) × 7877) >> 16
       │
       ▼
-exp_q15: tabela discreta para diff inteiro em [-11,0]
+exp_q15: discrete table for integer diff in [-11,0]
       │
       ▼
-soma das aproximações exponenciais
+sum of exponential approximations
       │
       ▼
-q = (exp_val × 256) / soma + zY
-      │ divisão inteira unsigned
+q = (exp_val × 256) / sum + zY
+      │ unsigned integer division
       ▼
-clamp INT8 e store8
+INT8 clamp and store8
 ```
 
-Entram logits da camada anterior; o kernel usa um fator fixo, aproximações tabuladas e normalização inteira. Saem bytes INT8, posteriormente convertidos por QUANTIZE nos dois modelos. Cin e zY são dados do modelo; 7877, shift 16, fator 256 e tabela são constantes do runtime. `kh`, `kw`, `stride_h/w`, MUL e SHIFT produzidos para softmax não determinam esse cálculo. Portanto score de saída não deve ser apresentado como probabilidade calibrada ou reprodução exata do operador TFLite.
+Inputs are logits from the previous layer; the kernel uses a fixed factor, table approximations, and integer normalization. Outputs are INT8 bytes, subsequently converted by QUANTIZE in both models. Cin and zY are model data; 7877, shift 16, factor 256, and the table are runtime constants. `kh`, `kw`, `stride_h/w`, MUL, and SHIFT produced for softmax do not determine this calculation. Therefore, output scores should not be presented as calibrated probabilities or exact reproductions of the TFLite operator.
 
-`exp_q15(x)` retorna zero abaixo de −11, limita positivos a zero e usa tabela para −11…0: `1,1,4,11,30,81,221,600,1631,4435,12055,32768`. São valores inteiros aproximados de exponencial escalada. A escala efetiva de logit usada é aproximadamente 7877/65536, não necessariamente `input_scale` do TFLite.
+`exp_q15(x)` returns zero below −11, clamps positive inputs to zero, and uses this table for −11…0: `1,1,4,11,30,81,221,600,1631,4435,12055,32768`. These are approximate integer values of a scaled exponential. The effective logit scale is approximately 7877/65536, not necessarily the TFLite `input_scale`.
 
 ### RGB565_TO_RGB888
 
-Lê flags como endereço do marcador e kh como sentinela. Se memória[flags]==kh, lê `load16_u` little-endian e extrai R5=(pixel>>11)&31, G6=(pixel>>5)&63, B5=pixel&31. Expande R/B por `(v<<3)|(v>>2)` e G por `(v<<2)|(v>>4)`. Escreve bytes R,G,B nessa ordem. Caso contrário, copia H×W×3 bytes RGB888 de input para output. O host atual só usa esse kernel com sentinela RGB565, e não expõe o ramo de cópia no manifest.
+Reads flags as the marker address and kh as the sentinel. If memory[flags]==kh, reads little-endian `load16_u` and extracts R5=(pixel>>11)&31, G6=(pixel>>5)&63, B5=pixel&31. Expands R/B using `(v<<3)|(v>>2)` and G using `(v<<2)|(v>>4)`. Writes bytes in R,G,B order. Otherwise, copies H×W×3 RGB888 bytes from input to output. The current host uses this kernel only with the RGB565 sentinel and does not expose the copy branch in the manifest.
 
-## Helpers de aritmética inteira
+## Integer arithmetic helpers
 
-`multiply_by_quantized_multiplier_3` é chamado pelos kernels CONV, DW, FC, ADD, MEAN e QUANTIZE. Primeiro aplica left shift se shift>0, depois high multiply arredondado e, para shift<0, divide por potência de dois. `saturating_rounding_doubling_high_mul_3` usa produto i64, adiciona 2³⁰, faz shift aritmético 31 e retorna i32; trata explicitamente INT32_MIN×INT32_MIN como INT32_MAX. `rounding_divide_by_pot_3` retorna x para expoente≤0; nos demais, usa nudge=2^(exponent−1), adicionando nudge−1 para x≥0 e nudge para x<0 antes de shift aritmético. Os empates não devem ser presumidos iguais a todos os backends TFLite.
+`multiply_by_quantized_multiplier_3` is called by CONV, DW, FC, ADD, MEAN, and QUANTIZE kernels. It first applies a left shift if shift>0, then a rounded high multiply, and for shift<0 divides by a power of two. `saturating_rounding_doubling_high_mul_3` uses an i64 product, adds 2³⁰, performs arithmetic shift 31, and returns i32; it explicitly handles INT32_MIN×INT32_MIN as INT32_MAX. `rounding_divide_by_pot_3` returns x for exponent≤0; otherwise it uses nudge=2^(exponent−1), adding nudge−1 for x≥0 and nudge for x<0 before arithmetic shifting. Do not assume ties match every TFLite backend.
 
-Também existem variantes `_2`, funções exportadas sem sufixo e `multiply_by_quantized_multiplier_softmax`. Não são todas equivalentes: a função exportada `multiply_by_quantized_multiplier` faz high multiply e divisão por `-shift`, sem o left shift prévio usado por `_3`. As variantes `_2` usam outra lógica de limiar/remainder para divisão. A presença desses exports não significa que o pipeline os use. Não há teste cobrindo a equivalência entre variantes.
+There are also `_2` variants, exported functions without suffixes, and `multiply_by_quantized_multiplier_softmax`. They are not all equivalent: exported `multiply_by_quantized_multiplier` performs high multiply and division by `-shift`, without the prior left shift used by `_3`. The `_2` variants use different threshold/remainder logic for division. These exports' presence does not mean the pipeline uses them. No test covers equivalence between variants.
 
-## Exports e uso pelo host
+## Exports and host use
 
-| Família | Funções | Uso |
+| Family | Functions | Use |
 |---|---|---|
-| Essenciais | `memory`, `run_mobilenetv2`, `get_result_ptr` | Exigidos pelo runner |
-| Bases e tamanhos | `get_weights_base`, `get_bias_base`, `get_mul_base`, `get_shift_base`, `get_q6_base`, `get_params_base`, `get_slot0_base`, `get_slot1_base`, `get_slot2_base`, `get_result_count` | Diagnóstico; host principal usa seus próprios metadados |
-| Controle | `get_flag_base`, `is_ready_for_image` | Busy flag em 4; não consultada pelo runner síncrono |
-| Kernels | `conv2d`, `depthwise_conv2d`, `fully_connected`, `add`, `mean`, `softmax`, `quantize`, `rgb565_to_rgb888`, `run_layer` | Chamados pelo dispatcher; quantize também é testado isoladamente |
-| Ranking | `get_top_class`, `get_top5` | Não usados pelos adapters; leem signed bytes |
-| Matemática | três helpers exportados sem sufixo | Inspeção/uso externo, não a variante principal `_3` |
-| Debug | `debug_memory(ptr,size)` | Soma quadrados de bytes assinados; não imprime a memória |
+| Essential | `memory`, `run_mobilenetv2`, `get_result_ptr` | Required by the runner |
+| Bases and sizes | `get_weights_base`, `get_bias_base`, `get_mul_base`, `get_shift_base`, `get_q6_base`, `get_params_base`, `get_slot0_base`, `get_slot1_base`, `get_slot2_base`, `get_result_count` | Diagnostics; main host uses its own metadata |
+| Control | `get_flag_base`, `is_ready_for_image` | Busy flag at 4; not queried by the synchronous runner |
+| Kernels | `conv2d`, `depthwise_conv2d`, `fully_connected`, `add`, `mean`, `softmax`, `quantize`, `rgb565_to_rgb888`, `run_layer` | Called by dispatcher; quantize is also tested independently |
+| Ranking | `get_top_class`, `get_top5` | Unused by adapters; read signed bytes |
+| Math | three exported helpers without suffixes | Inspection/external use, not the main `_3` variant |
+| Debug | `debug_memory(ptr,size)` | Sums squared signed bytes; does not print memory |
 
-`get_top5` escreve cinco pares `(índice i32,valor i32)` em 40 bytes a partir do ponteiro fornecido, inicializando índices −1 e valores −128. Ambos os exports de ranking leem INT8, inadequado para interpretar diretamente as saídas UINT8 atuais. O Top-15 usado no projeto é calculado pelo adapter Python com dtype correto.
+`get_top5` writes five `(index i32,value i32)` pairs in 40 bytes starting at the supplied pointer, initializing indices to −1 and values to −128. Both ranking exports read INT8, unsuitable for directly interpreting current UINT8 outputs. The project's Top-15 is calculated by the Python adapter using the correct dtype.
 
-## Limitações de contrato versus implementação
+## Contract versus implementation limitations
 
-Os 29 campos permitem descrever mais situações que os kernels efetivamente implementam. Bias_ptr=0 não é um bias opcional seguro em todos os kernels, pois há loads sem teste de presença. Os kernels não validam cada ponteiro contra o tamanho do slot. O WASM pode detectar acesso fora da memória inteira com trap, mas não detecta leitura da região errada que ainda está dentro dela. Essas restrições são registradas em [99](99-inconsistencias-e-limitacoes.md); nenhuma foi corrigida nesta tarefa documental.
+The 29 fields can describe more cases than the kernels actually implement. Bias_ptr=0 does not safely represent optional bias in every kernel because loads occur without presence checks. Kernels do not validate each pointer against slot size. WASM may trap on access outside all memory, but does not detect reads from a wrong region still inside it. These restrictions are recorded in [99](99-inconsistencias-e-limitacoes.md); none was fixed in this documentation task.
+

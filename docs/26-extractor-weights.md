@@ -1,66 +1,68 @@
-# 26 — Extração de pesos e bias
+[English](26-extractor-weights.md) | [Português (Brasil)](26-extractor-weights.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/weights.py](../extractor/weights.py)
+# 26 — Extracting weights and bias
 
-## Responsabilidade
+[Index](README.md) · Source: [extractor/weights.py](../extractor/weights.py)
 
-`extract_weights_and_bias(model,subgraph)` identifica constantes das operações em `WEIGHT_OPERATORS`: CONV_2D, DEPTHWISE_CONV_2D e FULLY_CONNECTED. É chamado depois do mapa lógico e antes da quantização. Não dequantiza, transpõe kernels ou dobra batch normalization. Preserva a ordem dos bytes extraídos pelo helper.
+## Responsibility
 
-## Algoritmo e estruturas
+`extract_weights_and_bias(model,subgraph)` identifies constants for operations in `WEIGHT_OPERATORS`: CONV_2D, DEPTHWISE_CONV_2D, and FULLY_CONNECTED. It is called after the logical map and before quantization. It does not dequantize, transpose kernels, or fold batch normalization. It preserves the byte order extracted by the helper.
 
-Percorre operadores na ordem TFLite e filtra IDs negativos. Se houver pelo menos duas entradas, a segunda é considerada peso. `safe_bytes_from_tensor` devolve tensor/array/raw; se houver array e o ID ainda não foi extraído, registra o offset atual, concatena raw e adiciona metadados. Se houver terceira entrada, ela é candidata a bias; só é extraída quando o array existe, tem uma dimensão e ainda não foi registrado. IDs compartilhados são deduplicados separadamente nos mapas de pesos e bias.
+## Algorithm and structures
 
-Retorna seis campos: `weights_raw` e `bias_raw` como bytes; `weight_tensor_off` e `bias_tensor_off` como dicts ID→offset; `weight_records` e `bias_records` com op_index, op_type, tensor_id, offset, nbytes, shape e dtype. O offset é relativo ao início do respectivo blob, não ao arquivo TFLite nem à memória WASM.
+It visits operators in TFLite order and filters negative IDs. With at least two inputs, the second is treated as a weight. `safe_bytes_from_tensor` returns tensor/array/raw; if an array exists and the ID has not already been extracted, it records the current offset, appends raw bytes, and adds metadata. If there is a third input, it is a bias candidate; it is extracted only when the array exists, is one-dimensional, and has not already been recorded. Shared IDs are deduplicated separately in the weight and bias maps.
+
+Returns six fields: `weights_raw` and `bias_raw` as bytes; `weight_tensor_off` and `bias_tensor_off` as ID→offset dicts; and `weight_records` and `bias_records` with op_index, op_type, tensor_id, offset, nbytes, shape, and dtype. The offset is relative to the start of its respective blob, not to the TFLite file or WASM memory.
 
 ```text
-op inputs: [ativação, peso, bias opcional]
+op inputs: [activation, weight, optional bias]
                           │       │
                           ▼       ▼
                  safe_bytes_from_tensor
                           │       │
-                    dedup por tensor_id
+                    dedup by tensor_id
                           │       │
                           ▼       ▼
                   weights_raw   bias_raw
                           │       │
-                  offset relativo por tensor
+                  relative offset per tensor
                           └───┬───┘
                               ▼
                    memory → LayerParams → blob
 ```
 
-Entram constantes do modelo. O extrator concatena e registra sua localização. Saem bytes e offsets, consumidos pelo layout físico e pelos builders de camadas. Pesos e shapes são específicos; as regras de armazenamento compartilhadas exigem que o WAT interprete o layout TFLite preservado.
+Inputs are model constants. The extractor concatenates them and records their locations. Outputs are bytes and offsets, consumed by the physical layout and layer builders. Weights and shapes are model-specific; shared storage rules require the WAT to interpret the preserved TFLite layout.
 
-## Layouts esperados pelo runtime
+## Layouts expected by the runtime
 
-CONV usa pesos indexados como `[cout,kh,kw,cin]`; depthwise como `[1,kh,kw,cout]`; FC usa matriz `[cout,cin]`. O módulo não valida todas essas dimensões antes de copiar. Bias deve ser int32 para os kernels que fazem `i32.load`, mas este extrator não restringe o dtype do bias; apenas verifica dimensionalidade. O suporte declarado a um operador depende também dos builders e kernels.
+CONV indexes weights as `[cout,kh,kw,cin]`; depthwise as `[1,kh,kw,cout]`; FC uses a `[cout,cin]` matrix. The module does not validate all these dimensions before copying. Bias must be int32 for kernels using `i32.load`, but this extractor does not restrict bias dtype; it only checks dimensionality. Declared operator support also depends on builders and kernels.
 
-## Falhas e comportamento permissivo
+## Failures and permissive behavior
 
-Tensor ilegível/sem buffer/dtype desconhecido pode ser pulado pelo helper sem exceção. Menos entradas também é motivo de skip. Os offsets faltantes são usados com defaults em builders posteriores; isso pode ocultar dados obrigatórios ausentes. Não há alinhamento entre cada tensor deste blob; o alinhamento é aplicado às bases de regiões em `memory.py`. Tamanhos típicos mantêm offsets int32 de bias alinhados, mas não há checagem de alinhamento por registro.
+An unreadable tensor, absent buffer, or unknown dtype may be skipped by the helper without an exception. Too few inputs also cause a skip. Later builders use defaults for missing offsets; this may hide absent required data. Individual tensors in this blob are not aligned; `memory.py` aligns region bases. Typical sizes keep int32 bias offsets aligned, but alignment is not checked per record.
 
-`weights_bias_to_text` lista registros de pesos e bias, seguidos de número de tensores e total de bytes. Recebe o dict de extração e retorna string para 05. Não inclui os valores completos dos pesos nem reconstitui os arrays. Use os offsets e os comprimentos para localizar o trecho no data segment.
+`weights_bias_to_text` lists weight and bias records followed by tensor counts and total bytes. It receives the extraction dict and returns a string for 05. It does not include complete weight values or reconstruct arrays. Use offsets and lengths to locate the corresponding data-segment range.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 from extractor.tflite_utils import op_name, safe_bytes_from_tensor
 ```
 
-### `extract_weights_and_bias` — assinatura
+### `extract_weights_and_bias` — signature
 
 ```python
 def extract_weights_and_bias(model, subgraph)
 ```
 
-### `weights_bias_to_text` — assinatura
+### `weights_bias_to_text` — signature
 
 ```python
 def weights_bias_to_text(extraction)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [07-extracao-pesos-bias.md](historico/07-extracao-pesos-bias.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [07-extracao-pesos-bias.md](historico/07-extracao-pesos-bias.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

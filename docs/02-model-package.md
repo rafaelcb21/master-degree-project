@@ -1,55 +1,48 @@
-# 02 — ModelPackage e resolução de caminhos
+[English](02-model-package.md) | [Português (Brasil)](02-model-package.pt-BR.md)
 
-[Índice](README.md) · Fonte: [pipeline/model_package.py](../pipeline/model_package.py)
+# 02 — ModelPackage and path resolution
 
-## Objeto e posição no fluxo
+[Index](README.md) · Source: [pipeline/model_package.py](../pipeline/model_package.py)
 
-`ModelPackage` é uma dataclass congelada com `root: Path` e `config: ModelConfig`. A imutabilidade impede reatribuir os atributos, mas não torna profundamente imutáveis os dicionários contidos em `config`. O objeto é criado pela CLI, recebido pelo pipeline e compartilhado com o adapter.
+## Object and place in the flow
 
-`MODELS_DIR = Path(__file__).resolve().parents[1] / "models"` ancora a seleção na raiz do repositório. O identificador CLI é o nome da pasta; `model.name` é uma descrição para exibição e pode ser diferente.
+ModelPackage is a frozen dataclass with `root: Path` and `config: ModelConfig`. Freezing prevents attribute reassignment but does not deeply freeze dictionaries within config. The CLI creates the object; the pipeline receives it and shares it with the adapter.
+
+`MODELS_DIR = Path(__file__).resolve().parents[1] / "models"` anchors selection to the repository root. The CLI identifier is the directory name; model.name is a display description and can differ.
 
 ```text
---model drowsiness
-          │
-          ▼
-MODELS_DIR / nome ──► root
-          │
-          ├── root/model.toml ──► ModelConfig.load
-          │
-          ▼
-┌─────────────────────────────┐
-│ ModelPackage                │
-│ root + config               │
-├─────────────────────────────┤
-│ resolve(config.tflite)       │──► TFLite fonte
-│ resolve(config.wat_template) │──► WAT fonte
-│ wat_path / wasm_path        │──► generated/
-│ reports_dir                 │──► reports/
-└─────────────────────────────┘
+--model drowsiness → MODELS_DIR / name → root
+                                      ├─ model.toml → ModelConfig.load
+                                      └─ ModelPackage(root, config)
+                                           ├─ resolve(config.tflite) → source TFLite
+                                           ├─ resolve(config.wat_template) → source WAT
+                                           ├─ wat_path / wasm_path → generated/
+                                           └─ reports_dir → reports/
 ```
 
-Entram um nome e, opcionalmente, outro `models_dir`; o módulo monta caminhos e lê o manifest. Sai um pacote, sem criar diretórios ou compilar. Nomes de arquivos são específicos do pacote; os destinos `generated/model.*` e `reports/` são convenções comuns.
+The input is a name and optional models_dir. The module resolves paths and reads the manifest, returning a package without creating directories or compiling. Source names are package-specific; generated/model.* and reports/ are shared conventions.
 
-## Métodos, propriedades e erros
+## Methods, properties and errors
 
-| API | Entrada | Retorno e comportamento |
+| API | Input | Result/behavior |
 |---|---|---|
-| `load(name="drowsiness", models_dir=MODELS_DIR)` | Nome e diretório | Resolve `models_dir`, junta o nome, exige `root.parent == models_dir.resolve()`, lê `root/model.toml` e retorna a dataclass |
-| `resolve(path)` | Caminho configurado | Retorna `(root / path).resolve()`; não exige existência |
-| `reports_dir` | Estado do pacote | `root / "reports"` |
-| `wat_path` | Estado do pacote | `root / "generated/model.wat"` |
-| `wasm_path` | Estado do pacote | Mesmo caminho com extensão `.wasm` |
-| `validate_sources()` | Estado do pacote | Verifica TFLite e template como arquivos não vazios; retorna `None` |
-| `available(models_dir=MODELS_DIR)` | Diretório | Lista ordenada de pacotes para `*/model.toml`, carregando cada um |
+| `load(name="drowsiness", models_dir=MODELS_DIR)` | Name and directory | Resolves models_dir, appends name, requires root.parent == models_dir.resolve(), reads root/model.toml, returns dataclass |
+| `resolve(path)` | Configured path | Returns (root / path).resolve(); existence is not required |
+| `reports_dir` | Package state | root / "reports" |
+| `wat_path` | Package state | root / "generated/model.wat" |
+| `wasm_path` | Package state | Same path with .wasm extension |
+| `validate_sources()` | Package state | Requires nonempty TFLite and template files; returns None |
+| `available(models_dir=MODELS_DIR)` | Directory | Sorted list of loaded packages matching */model.toml |
 
-`validate_sources` levanta `ValueError` para fonte ausente/vazia; erros de acesso ao filesystem podem propagar. Não valida labels, testes, tamanho de tensor, formato WAT nem identidade de ABI. `available` não chama `validate_sources`; portanto listar um pacote não prova que ele pode executar. Um manifest inválido interrompe a listagem inteira; não há coleta por pacote. Diretório sem manifests produz lista vazia.
+validate_sources raises ValueError for missing/empty sources; filesystem access errors may propagate. It does not validate labels, tests, tensor size, WAT syntax or ABI identity. available does not call validate_sources: listing a package does not prove it can run. An invalid manifest stops the entire listing; errors are not collected per package. No manifests means an empty list.
 
-## Semântica real dos caminhos
+## Actual path semantics
 
-O código aplica a restrição de pai ao nome solicitado. A resolução de uma fonte permite `..`, necessário para o template compartilhado, e também aceita caminhos absolutos: a operação `Path / absoluto` usa o caminho absoluto. Portanto a descrição “todos os caminhos são relativos” é uma convenção dos manifests atuais, não uma barreira de acesso implementada por `resolve`. Links simbólicos também não são validados como uma fronteira de segurança.
+The parent restriction applies to the requested package name. Source resolution allows `..`, needed for the shared template, and absolute paths: Path / absolute uses the absolute path. “All paths are relative” describes current manifest conventions, not a restriction enforced by resolve. Symlinks are not validated as a security boundary either.
 
-No pacote sonolência, `../../wat/templates/mobilenet_int8_v1.wat` sai de `models/drowsiness/` para o diretório compartilhado. O pacote não é transportável isoladamente sem levar esse template ou ajustar seu manifest. No ImageNet, o template selecionado está dentro de `wat/` do pacote.
+Drowsiness uses ../../wat/templates/mobilenet_int8_v1.wat, leaving models/drowsiness/ for the shared directory. That package cannot be moved independently without including the template or adjusting its manifest. ImageNet's selected template is under its own wat/ directory.
 
-## Persistência e colisões
+## Persistence and collisions
 
-As propriedades não criam pastas. A criação ocorre nos escritores de WAT, WASM e relatórios. Duas execuções simultâneas do mesmo pacote usam os mesmos destinos e podem interferir; pacotes distintos têm destinos distintos. Não há bloqueio, diretório temporário por execução ou versionamento. A fonte e os destinos não são comparados para impedir uma configuração que aponte o template para o próprio artefato gerado: mantenha-os separados ao cadastrar modelos.
+Properties do not create directories; WAT/WASM/report writers do. Concurrent executions of the same package share destinations and may interfere; different packages have different destinations. There is no locking, per-run temporary directory or versioning. Source/output paths are not compared to prevent a template from pointing at the generated artifact itself. Keep sources and destinations separate.
+

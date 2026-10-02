@@ -1,78 +1,73 @@
-# 00 — Visão geral e arquitetura
+[English](00-visao-geral-arquitetura.md) | [Português (Brasil)](00-visao-geral-arquitetura.pt-BR.md)
 
-[Índice da documentação](README.md) · [Fluxo completo](12-fluxo-completo.md) · [Limitações](99-inconsistencias-e-limitacoes.md)
+# 00 — Overview and architecture
 
-## Escopo e evidência
+[Index](README.md) · [Complete flow](12-fluxo-completo.md) · [Limitations](99-inconsistencias-e-limitacoes.md)
 
-Esta documentação descreve os arquivos presentes na revisão local de 28/09/2026. Foram lidos os módulos Python, manifests, templates e relatórios; shapes, tipos e quantização foram extraídos dos dois FlatBuffers TFLite. Os resultados publicados são observações dos relatórios existentes, não garantias de equivalência com um interpretador TFLite. A tarefa documental não altera kernels, modelos, manifests ou testes.
+## Scope and evidence
 
-O projeto transforma **modelos TFLite compatíveis** em módulos WebAssembly especializados. Python extrai a descrição da rede e seus parâmetros; um template WAT fornece os kernels; Wasmtime converte o texto em WASM e executa os testes RAW. Não há treinamento, conversão de imagens PNG/JPEG, execução em ESP32 ou servidor web neste fluxo.
+This documentation describes the local files inspected on September 28, 2026. Python modules, manifests, templates and reports were read; shapes, types and quantization were extracted from both TFLite FlatBuffers. Published results are observations from existing reports, not guarantees of equivalence with a TFLite interpreter. The documentation task does not change kernels, models, manifests or tests.
 
-TFLite é o FlatBuffer de origem, contendo tensores, operadores e buffers. WAT é a representação textual de WebAssembly, com código e segmentos de dados. WASM é o binário compilado desse WAT. O arquivo WASM resultante não contém um interpretador TFLite: contém o runtime descrito pelo template e os dados extraídos daquele pacote.
+The project turns **supported TFLite models** into specialized WebAssembly modules. Python extracts network descriptions/parameters, a WAT template supplies kernels, and Wasmtime converts text into WASM and runs RAW tests. Training, PNG/JPEG conversion, ESP32 execution and a web server are not part of this Python flow. The separate ESP32 project has its own host and documentation.
 
-## Visão do sistema
+TFLite is the source FlatBuffer containing tensors, operators and buffers. WAT is WebAssembly text with code/data segments. WASM is its compiled binary. The resulting module contains the template runtime and extracted package data, not a TFLite interpreter.
+
+## System view
 
 ```text
-                         USUÁRIO
-                            │
-                            ▼
-               python main.py --model X
-                            │
-                            ▼
-               ModelPackage / ModelConfig
-                    models/X/model.toml
-                            │
-           ┌────────────────┼───────────────────┐
-           ▼                ▼                   ▼
-      TFLite original   template WAT      configuração de teste
-           │                │                   │
-           ▼                │                   ▼
-     ModelPipeline          │              registry.py
-           │                │                   │
-           │ valida fontes e descobre casos ◄── adapter
-           ▼                │                   │
-        EXTRACTOR           │                   │
-           ├── grafo / slots / tensor→slot       │
-           ├── pesos / quantização / memória    │
-           └── LayerParams / params_blob        │
-           │                │                   │
-           └───────┬────────┘                   │
-                   ▼                            │
-             wat_generator                      │
-                   ▼                            │
-       models/X/generated/model.wat             │
-                   ▼                            │
-        wasmtime.wat2wasm (compilação)           │
-                   ▼                            │
-       models/X/generated/model.wasm            │
-                   └───────────┬────────────────┘
-                               ▼
-                    inference/wasm_inference.py
-                               │
-           prepare_input → memory.write → run → memory.read
-                               │
-                     evaluate_output por caso
-                               ▼
-                    build_report + lista de erros
-                               ▼
-                models/X/reports/12-inferencia-wasm.txt
+python main.py --model X
+        │
+        ▼
+ModelPackage / ModelConfig ← models/X/model.toml
+        │
+        ├── original TFLite
+        ├── WAT template
+        └── test configuration → registry → adapter
+        │
+        ▼
+ModelPipeline: validate sources and discover cases
+        │
+        ▼
+extractor
+  graph → slots → tensor/slot mapping
+  weights → quantization → memory layout
+  LayerParams → params_blob
+        │
+        ▼
+wat_generator + template
+        │
+        ▼
+models/X/generated/model.wat
+        │
+        ▼
+wasmtime.wat2wasm → models/X/generated/model.wasm
+        │
+        ▼
+inference/wasm_inference.py + adapter
+  prepare_input → memory.write → run → memory.read
+        │
+        ▼
+evaluate_output → build_report + errors
+        │
+        ▼
+models/X/reports/12-inferencia-wasm.txt
 ```
 
-Entram o nome do pacote, suas fontes e os testes. `ModelPipeline` transforma os dados do TFLite em estruturas do runtime e coordena os dois ramos. Saem WAT, WASM e relatórios. Caminhos, classes, formato e pesos são específicos do modelo; serialização, alocação e protocolo de execução são compartilhados. Os relatórios 02–11 são gravados durante a extração, antes da inferência; a posição de `reports/` ao final não significa uma gravação única.
+Inputs are a package name, sources and tests. ModelPipeline converts TFLite data into runtime structures and coordinates both branches. Outputs are WAT, WASM and reports. Paths, classes, format and weights vary by model; serialization, allocation and execution protocol are shared. Reports 02–11 are written during extraction, before inference; placing reports last in the diagram does not imply one final write.
 
-## Árvore observada
+## Repository layout
 
 ```text
 master-degree-project/
 ├── main.py                         CLI
-├── requirements.txt                dependências Python
-├── setup_env.ps1                    criação/ativação de .venv
+├── requirements.txt                Python dependencies
+├── setup_env.ps1                    .venv creation/activation
 ├── README.md
+├── README.pt-BR.md
 ├── .gitignore
 ├── adapters/                       base, binary_folders, imagenet_topk, registry
-├── extractor/                      15 arquivos Python, incluindo __init__.py
-├── inference/
-│   └── wasm_inference.py            host Wasmtime
+├── extractor/                      15 Python files, including __init__.py
+├── inference/wasm_inference.py      Wasmtime host
 ├── pipeline/                       config, package, pipeline, compiler
 ├── models/
 │   ├── drowsiness/
@@ -80,7 +75,7 @@ master-degree-project/
 │   │   ├── model_int8_esp32.tflite
 │   │   ├── test/{drowsy,non_drowsy}/
 │   │   ├── generated/{model.wat,model.wasm}
-│   │   └── reports/                11 relatórios
+│   │   └── reports/                11 reports
 │   └── mobilenetv2_alpha035/
 │       ├── model.toml
 │       ├── mobilenetv2_alpha035_quant.tflite
@@ -88,40 +83,42 @@ master-degree-project/
 │       ├── test/img/aviao_uint8.raw
 │       ├── wat/model_template.wat
 │       ├── generated/{model.wat,model.wasm}
-│       └── reports/                11 relatórios
-├── img_mobilenetv2/aviao_uint8.raw   cópia fora do pacote
+│       └── reports/                11 reports
+├── ESP32/cnn_webassembly_esp32/     independent firmware
+├── img_mobilenetv2/aviao_uint8.raw   copy outside the package
 ├── wat/templates/
-│   ├── mobilenet_int8_v1.wat        selecionado por drowsiness
-│   └── model_template.wat          legado, sem manifest apontando para ele
+│   ├── mobilenet_int8_v1.wat        used by drowsiness
+│   └── model_template.wat          legacy, unused by manifests
 ├── tests/test_model_packages.py
-├── docs/                           referência atual e material histórico
-├── .venv/                          ambiente local antigo
-├── .venv-models/                    ambiente usado nas verificações
-└── __pycache__/                    cache local; também existe em módulos
+├── docs/                           current and historical documentation
+├── .venv/                          older local environment
+├── .venv-models/                    used for the original checks
+└── __pycache__/                    local cache, also present in modules
 ```
 
-Esta árvore agrupa arquivos repetitivos; o [inventário](14-inventario-e-rastreabilidade.md) relaciona cada módulo e os conjuntos de dados. Entra a configuração de cada diretório `models/`; o pipeline lê suas fontes e escreve nas duas pastas de artefatos. `img_mobilenetv2/` não é consultado pelo manifesto atual. `.git/`, caches e ambientes são infraestrutura local, não parte do runtime gerado.
+The tree groups repetitive files; the [inventory](14-inventario-e-rastreabilidade.md) lists modules and datasets. Each models/ directory supplies configuration/sources and receives files in generated/ and reports/. The current manifest does not read img_mobilenetv2/. Git metadata, caches and environments are local infrastructure, not part of the generated runtime.
 
-## Responsabilidades e fronteiras
+## Responsibilities and boundaries
 
-| Camada | Decide | Não decide |
+| Layer | Decides | Does not decide |
 |---|---|---|
-| CLI | Nome e listagem dos pacotes | Arquitetura da rede |
-| ModelPackage | Resolução de fontes e destinos | Layout binário |
-| ModelConfig | Leitura TOML e validações explícitas | Compatibilidade numérica completa |
-| ModelPipeline | Ordem das etapas e persistência | Classes ImageNet ou labels binários |
-| extractor | Grafo, blobs e parâmetros de operadores | Seleção do adapter |
-| wat_generator | Placeholders e data segments | Implementação matemática dos kernels |
-| wasm_compiler | Conversão textual para binário | Inferência e métricas |
-| inference | Instância, memória, chamada e coleta de erros | Ranking e acurácia |
-| adapters | Descoberta, preparação e interpretação | Compilação WAT |
+| CLI | Package selection/listing | Network architecture |
+| ModelPackage | Source/output path resolution | Binary layout |
+| ModelConfig | TOML loading and explicit validation | Full numerical compatibility |
+| ModelPipeline | Stage order and persistence | ImageNet classes or binary labels |
+| extractor | Graph, blobs, operator parameters | Adapter selection |
+| wat_generator | Placeholders/data segments | Kernel mathematics |
+| wasm_compiler | Text-to-binary conversion | Inference/metrics |
+| inference | Instance, memory, calls, error collection | Ranking/accuracy |
+| adapters | Discovery, preparation, interpretation | WAT compilation |
 
-`ModelPipeline` é uma orquestração sequencial fixa, semelhante à ideia de pipeline/Template Method, mas não implementa uma classe-base com hooks de subclasses. `TestAdapter` usa Strategy/Adapter por composição. `ADAPTERS` e `create_adapter` formam Registry/Simple Factory. Não existe descoberta automática de plugins.
+ModelPipeline is fixed sequential orchestration, resembling a pipeline/Template Method, but it has no base class with subclass hooks. TestAdapter uses Strategy/Adapter through composition. ADAPTERS and create_adapter form an explicit Registry/Simple Factory. There is no automatic plugin discovery.
 
-## Fontes e artefatos
+## Sources and artifacts
 
-Fontes: Python, `model.toml`, TFLite, template, labels e RAWs. Artefatos: `generated/model.wat`, `generated/model.wasm`, `reports/02-...` até `12-...`. O pipeline pode recriar esses arquivos se fontes, dependências e testes forem válidos. Não limpa arquivos extras, não cria versões, não escreve atomicamente e pode deixar resultados de execuções distintas após uma falha. Não modifica o TFLite durante uma execução normal.
+Sources: Python, model.toml, TFLite, templates, labels and RAWs. Artifacts: generated/model.wat, generated/model.wasm, reports/02-... through 12-.... They can be regenerated when sources, dependencies and tests are valid. The pipeline does not remove extra files, version outputs or write atomically. A failed run may leave mixed results. Normal execution does not modify the TFLite.
 
-## Ordem recomendada de leitura
+## Suggested reading order
 
-Comece por CLI, pacote e manifesto (01–03); acompanhe a orquestração (04) e as interfaces de teste (05–07); leia o ABI (08) antes de editar templates; consulte modelos, tutorial, testes e fluxo (09–12). Os capítulos 20–33 descrevem cada módulo do extrator. O capítulo 99 separa limitações atuais de propostas de evolução.
+Start with CLI, package and manifest (01–03), then orchestration (04) and testing interfaces (05–07). Read the ABI (08) before editing templates; consult models, tutorial, tests and complete flow (09–12). Chapters 20–33 cover individual extractor modules. Chapter 99 distinguishes current limitations from proposed improvements.
+

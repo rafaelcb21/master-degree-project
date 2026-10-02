@@ -1,52 +1,54 @@
-# 33 — Persistência dos relatórios
+[English](33-extractor-reporting.md) | [Português (Brasil)](33-extractor-reporting.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/reporting.py](../extractor/reporting.py)
+# 33 — Report persistence
 
-## Interface e responsabilidade
+[Index](README.md) · Source: [extractor/reporting.py](../extractor/reporting.py)
 
-`save_report(path: Path,content: str)` executa duas ações: cria o pai com `mkdir(parents=True,exist_ok=True)` e escreve o conteúdo com `path.write_text(...,encoding="utf-8")`. Retorna None. O pipeline chama esse helper após cada formatter e após o adapter. O módulo não formata, calcula métricas ou decide qual pacote está em execução.
+## Interface and responsibility
+
+`save_report(path: Path,content: str)` performs two actions: creates the parent with `mkdir(parents=True,exist_ok=True)` and writes content using `path.write_text(...,encoding="utf-8")`. Returns None. The pipeline calls this helper after each formatter and after the adapter. The module does not format, calculate metrics, or decide which package is running.
 
 ```text
-dict de etapa ──► formatter específico ──► string
-                                              │
-package.reports_dir / nome ────────────────────┤
-                                              ▼
-                                         save_report
-                                              │ mkdir pai
-                                              ▼
-                                      arquivo UTF-8
+stage dict ──► specific formatter ──► string
+                                         │
+package.reports_dir / name ───────────────┤
+                                         ▼
+                                    save_report
+                                         │ mkdir parent
+                                         ▼
+                                     UTF-8 file
 ```
 
-Entram caminho e texto produzidos por outros módulos. O helper garante a existência do diretório e escreve; sai o arquivo. O conteúdo e o diretório pertencem ao pacote/etapa; a política de persistência é comum. A extensão não é interpretada.
+Inputs are a path and text produced by other modules. The helper ensures the directory exists and writes; the output is a file. Content and directory belong to the package/stage; persistence policy is shared. The extension is not interpreted.
 
-## Comportamento observável
+## Observable behavior
 
-Arquivo existente é substituído, não anexado. Não acrescenta newline, timestamp, cabeçalho, checksum ou metadados de execução. O conteúdo termina exatamente onde a string termina. Type hints não convertem string em Path; passar uma string diretamente causa AttributeError em `.parent`. O pipeline passa Path corretamente.
+An existing file is replaced, not appended to. No newline, timestamp, header, checksum, or run metadata is added. Content ends exactly where the string ends. Type hints do not convert a string to Path; passing a string directly causes AttributeError at `.parent`. The pipeline correctly passes Path.
 
-Não captura OSError nem implementa fallback. Falha de relatório interrompe a etapa e pode impedir geração/inferência posteriores, mesmo quando o cálculo que o produziu terminou. Não há escrita atômica, histórico, lock ou limpeza de relatórios antigos. `exist_ok=True` permite diretório já existente, mas não resolve um arquivo ocupando o lugar do diretório.
+It does not catch OSError or implement a fallback. Report failure interrupts the stage and may prevent later generation/inference, even when the calculation producing the report finished. There is no atomic writing, history, lock, or cleanup of old reports. `exist_ok=True` allows an existing directory but does not resolve a file occupying the directory's location.
 
-## Posição na arquitetura atual
+## Position in the current architecture
 
-Quem escolhe os nomes 02–12 e chama save_report é `ModelPipeline`, não a CLI. `reports_dir` vem de ModelPackage; não existe REPORTS_DIR global no config atual. A função não lê relatórios anteriores: eles são saídas de diagnóstico, não entradas para reconstruir o modelo. Uma execução completa pode recriá-los; uma interrompida pode deixar um conjunto parcialmente atualizado.
+`ModelPipeline`, not the CLI, chooses names 02–12 and calls save_report. `reports_dir` comes from ModelPackage; current config has no global REPORTS_DIR. The function does not read previous reports: they are diagnostic outputs, not inputs for reconstructing the model. A complete run can recreate them; an interrupted run may leave a partially updated set.
 
-## Demais arquivos de inicialização
+## Other initialization files
 
-`extractor/__init__.py` contém somente uma docstring sobre ferramentas de extração. `pipeline/__init__.py` e `adapters/__init__.py` estão vazios. Nenhum deles registra classes, carrega modelos ou cria estado global adicional. Não há `inference/__init__.py` ou `tests/__init__.py` na árvore inspecionada. Essas observações evitam atribuir efeitos de inicialização inexistentes às importações.
+`extractor/__init__.py` contains only a docstring about extraction tools. `pipeline/__init__.py` and `adapters/__init__.py` are empty. None registers classes, loads models, or creates extra global state. There is no `inference/__init__.py` or `tests/__init__.py` in the inspected tree. These observations avoid attributing nonexistent initialization effects to imports.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 from pathlib import Path
 ```
 
-### `save_report` — assinatura
+### `save_report` — signature
 
 ```python
 def save_report(path: Path, content: str)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [14-relatorios.md](historico/14-relatorios.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [14-relatorios.md](historico/14-relatorios.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

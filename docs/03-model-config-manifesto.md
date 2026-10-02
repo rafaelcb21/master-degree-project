@@ -1,69 +1,63 @@
-# 03 — ModelConfig e referência de model.toml
+[English](03-model-config-manifesto.md) | [Português (Brasil)](03-model-config-manifesto.pt-BR.md)
 
-[Índice](README.md) · Fonte: [pipeline/model_config.py](../pipeline/model_config.py)
+# 03 — ModelConfig and model.toml reference
 
-## Leitura e representação
+[Index](README.md) · Source: [pipeline/model_config.py](../pipeline/model_config.py)
 
-`ModelConfig.load(path)` abre o TOML em modo binário e usa `tomllib` (Python 3.11+) ou `tomli` como fallback. Lê as quatro tabelas `model`, `runtime`, `input`, `test` e constrói uma dataclass congelada. Os campos planos são `name`, `tflite`, `wat_template`, `contract`, `num_slots`, `input_format`, `synthetic_layer`, `test`, `classes`. `test` e `classes` permanecem coleções mutáveis, sem conversão para objetos especializados.
+## Loading and representation
+
+ModelConfig.load(path) opens TOML in binary mode and uses tomllib on Python 3.11+, falling back to tomli. It reads model, runtime, input and test tables and creates a frozen dataclass. Flat fields are name, tflite, wat_template, contract, num_slots, input_format, synthetic_layer, test and classes. test/classes remain mutable collections rather than specialized objects.
 
 ```text
-model.toml (bytes)
-        │
-        ▼
-tomllib.load / tomli.load
-        │  dict de tabelas
-        ▼
-campos obrigatórios + defaults
-        │
-        ├── contrato == layerparam-v1?
-        ├── num_slots == 3?
-        └── par formato/camada permitido?
-        │
-        ▼
-ModelConfig ──► ModelPackage ──► pipeline + adapter
+model.toml → tomllib.load / tomli.load → table dictionary
+           → required fields + defaults
+           → contract == layerparam-v1?
+           → num_slots == 3?
+           → allowed format/layer pair?
+           → ModelConfig → ModelPackage → pipeline + adapter
 ```
 
-Entra o arquivo do pacote; o loader extrai valores e aplica três verificações explícitas; sai a dataclass. Caminhos, classes e testes são específicos do modelo; os valores admitidos representam os limites comuns do runtime e dos adapters atuais.
+The loader applies three explicit checks and returns the dataclass. Paths, classes and tests are model-specific; allowed values reflect current runtime/adapter constraints.
 
-## Campos: tipos esperados, defaults e consumidores
+## Fields, defaults and consumers
 
-Os tipos desta tabela são os tipos esperados para uso correto. Type hints não validam tipos em runtime; o loader não implementa um schema TOML completo.
+These are expected types for correct use. Type hints do not perform runtime validation; the loader does not implement a complete TOML schema.
 
-| Campo TOML | Tipo esperado | Obrigatoriedade/default | Quem usa / valores e exemplo |
+| TOML field | Expected type | Required/default | Consumer and examples |
 |---|---|---|---|
-| `[model].name` | string | Obrigatório | CLI na listagem; `"Drowsiness MobileNetV2"` |
-| `[model].tflite` | string de caminho | Obrigatório | Package valida, loader lê; `"model_int8_esp32.tflite"` |
-| `[runtime].wat_template` | string de caminho | Obrigatório | Package valida, gerador lê; `"wat/model_template.wat"` |
-| `[runtime].contract` | string | Obrigatório | Config exige exatamente `"layerparam-v1"` |
-| `[runtime].num_slots` | inteiro | Opcional: `3` | Config exige igualdade com 3; alocação, mapeamento e memória |
-| `[input].format` | string | Obrigatório | `rgb565`, `bgr888`, `rgb888`, nas combinações abaixo; usado pelo adapter |
-| `[input].synthetic_layer` | string | Obrigatório | `rgb565_to_rgb888` ou `none`; pipeline, LayerParams e runner |
-| `[test].adapter` | string | Obrigatório | Registry: `binary-folders` ou `imagenet-topk` |
-| `[test].datasets` | lista de tabelas | Exigida pelo adapter binário; default interno `[]` rejeitado | Cada tabela tem `path` e `label` |
-| `[[test.datasets]].path` | string de caminho | Obrigatório no dataset | `raw_files`, ex.: `"test/drowsy"` |
-| `[[test.datasets]].label` | inteiro esperado | Obrigatório no dataset | Deve pertencer aos labels das classes; ex.: `1` |
-| `[test].path` | string de caminho | Obrigatório para ImageNet | `raw_files`, ex.: `"test/img"` |
-| `[test].labels` | string de caminho | Obrigatório para ImageNet | JSON objeto índice → `[wnid, class_name]` |
-| `[test].top_k` | inteiro positivo | Opcional: `15` | ImageNet valida no discovery e usa no slice do ranking |
-| `[[classes]]` | lista de tabelas | Default `[]`; binário exige tamanho 2 | Ordem dos elementos corresponde à ordem da saída |
-| `[[classes]].name` | string esperada | Usada nos manifests atuais | Aparece no relatório da lista de classes; o código não a exige para decidir o vencedor |
-| `[[classes]].label` | inteiro esperado | Obrigatório para o adapter binário | Valor retornado ao vencer aquele índice |
+| [model].name | string | Required | CLI listing; "Drowsiness MobileNetV2" |
+| [model].tflite | path string | Required | Package validation, model loader; "model_int8_esp32.tflite" |
+| [runtime].wat_template | path string | Required | Package validation, generator; "wat/model_template.wat" |
+| [runtime].contract | string | Required | Must equal "layerparam-v1" |
+| [runtime].num_slots | integer | Optional: 3 | Must equal 3; allocation, mapping, memory |
+| [input].format | string | Required | rgb565, bgr888, rgb888 in the combinations below; adapter |
+| [input].synthetic_layer | string | Required | rgb565_to_rgb888 or none; pipeline, LayerParams, runner |
+| [test].adapter | string | Required | Registry: binary-folders or imagenet-topk |
+| [test].datasets | list of tables | Binary adapter requires it; internal default [] is rejected | Each entry has path and label |
+| [[test.datasets]].path | path string | Required per dataset | raw_files; "test/drowsy" |
+| [[test.datasets]].label | integer expected | Required per dataset | Must belong to class labels; e.g. 1 |
+| [test].path | path string | Required for ImageNet | raw_files; "test/img" |
+| [test].labels | path string | Required for ImageNet | JSON mapping index → [wnid, class_name] |
+| [test].top_k | positive integer | Optional: 15 | Checked during discovery, used for ranking slice |
+| [[classes]] | list of tables | Default []; binary adapter requires length 2 | Order matches output elements |
+| [[classes]].name | string expected | Used by current manifests | Class list in report; not required to choose a winner |
+| [[classes]].label | integer expected | Required by binary adapter | Label returned when that index wins |
 
-Não existem campos configuráveis de batch, alinhamento, kernel base, normalização, endereço de entrada, caminho de saída ou nome do export de execução. `BATCH`, `ALIGN` e `KERNEL_BASE_HINT` vêm de `extractor/config.py`.
+Batch, alignment, kernel base, normalization, input address, output paths and execution export names are not configurable fields. BATCH, ALIGN and KERNEL_BASE_HINT come from extractor/config.py.
 
-## Combinações realmente aceitas
+## Accepted combinations
 
-| `format` | `synthetic_layer` | Count/shift | Adapter que atualmente implementa a preparação |
+| format | synthetic_layer | Count/shift | Adapter implementing preparation |
 |---|---|---|---|
-| `rgb565` | `rgb565_to_rgb888` | 1 | `binary-folders` |
-| `bgr888` | `none` | 0 | `imagenet-topk`, troca B/R |
-| `rgb888` | `none` | 0 | `imagenet-topk`, mantém canais |
+| rgb565 | rgb565_to_rgb888 | 1 | binary-folders |
+| bgr888 | none | 0 | imagenet-topk swaps B/R |
+| rgb888 | none | 0 | imagenet-topk preserves channels |
 
-A propriedade `synthetic_layer_count` retorna `int(self.synthetic_layer != "none")`; depende da validação anterior para que qualquer valor diferente de `none` represente precisamente uma camada. O loader valida o par formato/camada, mas não o cruzamento com o adapter. Por exemplo, `binary-folders` com BGR/none passa pela configuração e falha em `prepare_input`.
+synthetic_layer_count returns int(self.synthetic_layer != "none"); prior validation ensures every non-none value means exactly one layer. The loader checks format/layer pairs, not their compatibility with the adapter. binary-folders with BGR/none passes configuration validation but fails in prepare_input.
 
-## Exemplos completos e mínimos
+## Complete minimal example
 
-Consulte os manifests reais [drowsiness](../models/drowsiness/model.toml) e [ImageNet](../models/mobilenetv2_alpha035/model.toml). Exemplo de um terceiro pacote binário compatível, com nomes meramente ilustrativos:
+See the real [drowsiness](../models/drowsiness/model.toml) and [ImageNet](../models/mobilenetv2_alpha035/model.toml) manifests. The following names are illustrative; the executable example is preserved from the Portuguese document.
 
 ```toml
 [model]
@@ -92,10 +86,11 @@ name = "negativo"
 label = 0
 ```
 
-Esse exemplo só é correto se o índice 0 da saída do TFLite significar positivo e o índice 1 negativo. O código não infere a semântica das classes a partir do modelo ou da ordem alfabética das pastas.
+This is valid only when TFLite output index 0 means positive and index 1 means negative. The code does not infer class meaning from the model or alphabetical folder order.
 
-## Validações e limites
+## Validation limits
 
-Faltas de chaves e alguns tipos inválidos durante a construção viram `ValueError("Manifesto incompleto...")`. Erro de sintaxe TOML é levantado pelo parser; ausência do arquivo vem do filesystem. Chaves desconhecidas são ignoradas, não rejeitadas. A propriedade `contract` não seleciona implementações diferentes: hoje ela apenas aceita ou rejeita o único nome conhecido.
+Missing keys and some invalid construction-time types become ValueError("Manifesto incompleto..."). The parser raises TOML syntax errors; the filesystem reports missing files. Unknown keys are ignored. contract currently accepts/rejects the sole known name rather than selecting different implementations.
 
-`num_slots=3.0` pode passar pela comparação de igualdade, mas falhar adiante quando usado em `range`; `top_k=true` é um `bool`, subclasse de `int`, e passa na checagem do adapter. Esses são limites da validação atual, não formatos recomendados. Labels duplicados, conjuntos incompletos de datasets e tipos de labels não são auditados de forma abrangente. A existência dos caminhos é verificada em fases posteriores, conforme o consumidor.
+num_slots=3.0 may pass equality checking but later fail in range. top_k=true is a bool, an int subclass, and passes the adapter's check. These are validation gaps, not recommended formats. Duplicate labels, incomplete dataset sets and label types are not comprehensively audited. Consumers check path existence at later stages.
+

@@ -1,94 +1,96 @@
-# 29 — Opções de operadores e geometria
+[English](29-extractor-operator-options.md) | [Português (Brasil)](29-extractor-operator-options.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/operator_options.py](../extractor/operator_options.py)
+# 29 — Operator options and geometry
 
-## Objetivo e contrato
+[Index](README.md) · Source: [extractor/operator_options.py](../extractor/operator_options.py)
 
-Decodifica `BuiltinOptions` do binding para os builders de LayerParams. Não descobre operadores nem valida redes completas. Usa classes tflite e tolera tanto import de classe direta quanto módulo contendo classe. Em vários métodos, captura qualquer `Exception` e retorna defaults: esse comportamento deve ser levado em conta ao depurar um modelo incompatível.
+## Purpose and contract
 
-## Funções
+Decodes the binding's `BuiltinOptions` for LayerParams builders. It does not discover operators or validate complete networks. It uses tflite classes and tolerates both a directly imported class and a module containing the class. Several methods catch any `Exception` and return defaults: consider this behavior when debugging an incompatible model.
 
-`parse_fused_activation` reconhece NONE, RELU e RELU6 usando enum, depois valores numéricos 0,1,3. Qualquer outra ativação retorna NONE. Os códigos são os usados pelo ABI, não uma lista de tudo que o TFLite suporta.
+## Functions
 
-`parse_add_options` e `parse_fc_options` acessam Bytes/Pos de BuiltinOptions, inicializam a classe apropriada e devolvem a ativação normalizada. Falha ou forma inesperada resulta em ACT_NONE.
+`parse_fused_activation` recognizes NONE, RELU, and RELU6 using the enum, then numeric values 0,1,3. Any other activation returns NONE. These codes are those used by the ABI, not a list of everything TFLite supports.
 
-`padding_is_same` compara com Padding.SAME; se houver exceção, compara com zero. `parse_conv2d_options` retorna `(stride_h,stride_w,dil_h,dil_w,padding_kind,activation)`; dilatação ausente recebe 1; padding_kind é 0 para SAME e 1 para outro. Fallback integral é `(1,1,1,1,1,ACT_NONE)`, ou seja, caminho tratado como VALID. `parse_dwconv2d_options` acrescenta `depth_mult`, com fallback 1. Ler depth_mult não implica que ele seja serializado ou respeitado pelo kernel.
+`parse_add_options` and `parse_fc_options` access BuiltinOptions Bytes/Pos, initialize the appropriate class, and return the normalized activation. Failure or an unexpected form results in ACT_NONE.
 
-`same_padding` recebe dimensão, kernel, stride e dilatação. Calcula `out=ceil(in/stride)`, `effective_kernel=(kernel-1)*dilation+1`, `total=max(0,(out-1)*stride+effective_kernel-in)`. Divide o total: anterior=floor(total/2), posterior=restante. Retorna top,bottom,left,right,out_h,out_w. Exemplo unidimensional: in=4,kernel=3,stride=2,dilation=1 → out=2,total=1,antes=0,depois=1.
+`padding_is_same` compares against Padding.SAME; on exception, it compares against zero. `parse_conv2d_options` returns `(stride_h,stride_w,dil_h,dil_w,padding_kind,activation)`; absent dilation defaults to 1; padding_kind is 0 for SAME and 1 otherwise. The complete fallback is `(1,1,1,1,1,ACT_NONE)`, a path treated as VALID. `parse_dwconv2d_options` adds `depth_mult`, with fallback 1. Reading depth_mult does not imply that it is serialized or honored by the kernel.
+
+`same_padding` receives dimensions, kernel, stride, and dilation. Calculates `out=ceil(in/stride)`, `effective_kernel=(kernel-1)*dilation+1`, `total=max(0,(out-1)*stride+effective_kernel-in)`. Splits the total: before=floor(total/2), after=remainder. Returns top,bottom,left,right,out_h,out_w. One-dimensional example: in=4,kernel=3,stride=2,dilation=1 → out=2,total=1,before=0,after=1.
 
 ```text
 BuiltinOptions (Bytes, Pos)
               │
               ▼
- classe Conv2D/Depthwise/Add/FC
+ Conv2D/Depthwise/Add/FC class
               │
       ┌───────┴─────────┐
       ▼                 ▼
-  leitura OK       exceção/ausência
+ successful read   exception/absence
       │                 │
       ▼                 ▼
- valores reais       defaults
+ actual values       defaults
       └────────┬────────┘
                ▼
-     builder → geometria / flags / act
+     builder → geometry / flags / act
 ```
 
-Entram opções específicas do operador; o módulo traduz enums e calcula padding. Saem valores inteiros para LayerParams. Geometria é do modelo; codificação de flags/ativação é do runtime. O ramo de fallback não avisa no relatório que o valor foi substituído, o que limita a auditabilidade.
+Inputs are operator-specific options; the module translates enums and calculates padding. Outputs are integer values for LayerParams. Geometry belongs to the model; flag/activation encoding belongs to the runtime. The fallback branch does not report that a value was replaced, limiting auditability.
 
-## Limitações
+## Limitations
 
-Stride zero pode causar divisão por zero em `same_padding`; não há validação geral de valores positivos. Operadores com opções não implementadas podem receber defaults silenciosos. A ativação extraída para ADD/FC é registrada, mas os kernels observados não aplicam o campo; a documentação distingue parsing de execução. Não há leitura de axis de MEAN ou beta de SOFTMAX neste módulo.
+Zero stride may cause division by zero in `same_padding`; there is no general validation of positive values. Operators with unimplemented options may silently receive defaults. Activation extracted for ADD/FC is recorded, but the observed kernels do not apply the field; this documentation distinguishes parsing from execution. This module does not read MEAN axis or SOFTMAX beta.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 from tflite import ActivationFunctionType, AddOptions, Padding, Conv2DOptions, DepthwiseConv2DOptions, FullyConnectedOptions
 ```
 
-### `parse_fused_activation` — assinatura
+### `parse_fused_activation` — signature
 
 ```python
 def parse_fused_activation(activation_value)
 ```
 
-### `parse_add_options` — assinatura
+### `parse_add_options` — signature
 
 ```python
 def parse_add_options(op)
 ```
 
-### `padding_is_same` — assinatura
+### `padding_is_same` — signature
 
 ```python
 def padding_is_same(padding_value)
 ```
 
-### `parse_conv2d_options` — assinatura
+### `parse_conv2d_options` — signature
 
 ```python
 def parse_conv2d_options(op)
 ```
 
-### `parse_dwconv2d_options` — assinatura
+### `parse_dwconv2d_options` — signature
 
 ```python
 def parse_dwconv2d_options(op)
 ```
 
-### `parse_fc_options` — assinatura
+### `parse_fc_options` — signature
 
 ```python
 def parse_fc_options(op)
 ```
 
-### `same_padding` — assinatura
+### `same_padding` — signature
 
 ```python
 def same_padding(in_h, in_w, kernel_h, kernel_w, stride_h, stride_w, dil_h=1, dil_w=1)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [10-operacoes-opcoes.md](historico/10-operacoes-opcoes.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [10-operacoes-opcoes.md](historico/10-operacoes-opcoes.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

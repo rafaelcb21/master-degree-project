@@ -1,22 +1,24 @@
-# 24 — Alocação de slots e vida útil
+[English](24-extractor-slots.md) | [Português (Brasil)](24-extractor-slots.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/slots.py](../extractor/slots.py)
+# 24 — Slot allocation and lifetimes
 
-## Objetivo e contrato
+[Index](README.md) · Source: [extractor/slots.py](../extractor/slots.py)
 
-`allocate_slots(layers,num_slots)` recebe a lista de dicts do grafo em ordem topológica e devolve `(allocation,layer_output_slot)`. O primeiro contém `layer,type,input_slots,output_slot,in_place`; o segundo associa nome de layer ao slot lógico. Não há endereços nem bytes aqui. O pipeline fornece três slots, mas a função isolada não valida positividade de `num_slots`.
+## Purpose and contract
 
-## Estado e algoritmo exato
+`allocate_slots(layers,num_slots)` receives the graph's list of dicts in topological order and returns `(allocation,layer_output_slot)`. The first contains `layer,type,input_slots,output_slot,in_place`; the second maps layer names to logical slots. There are no addresses or bytes here. The pipeline supplies three slots, but the standalone function does not validate that `num_slots` is positive.
 
-`layer_output_slot` lembra onde ficou a saída de cada camada. `slot_readers_count` conta consumidores ainda pendentes por slot. `next_slot` começa em 1 e define uma preferência de rotação; não significa que a alternância seja suficiente para preservar residuais.
+## State and exact algorithm
 
-Para cada camada normal: sem predecessores, usa input `[0]` e reseta preferência para 1; com predecessores, consulta os slots de suas saídas. Monta todos os índices `[0,num_slots)`, excluindo slots com contagem positiva. Se não sobrar nenhum, lança `RuntimeError("Sem slots livres em ...")`. Escolhe `next_slot` se livre, senão o menor índice livre. Só então decrementa os leitores dos inputs e remove entradas que chegam a zero. Registra o número de consumidores de saída quando `below` não é vazio; acrescenta o registro e avança preferência circular.
+`layer_output_slot` remembers where each layer's output was stored. `slot_readers_count` counts consumers still pending per slot. `next_slot` starts at 1 and defines a rotation preference; this does not mean alternation alone is sufficient to preserve residuals.
 
-A seleção ocorre **antes** de liberar inputs consumidos nessa própria operação. Portanto a função pode exigir um slot adicional mesmo quando um planejamento mais agressivo permitiria escrever sobre uma entrada. Ela não verifica individualmente se o kernel suporta overlap.
+For each normal layer: without predecessors, it uses input `[0]` and resets the preference to 1; with predecessors, it looks up their output slots. It builds all indices `[0,num_slots)`, excluding slots with a positive count. If none remain, it raises `RuntimeError("Sem slots livres em ...")`. It chooses `next_slot` if free, otherwise the smallest free index. Only then does it decrement input reader counts and remove entries that reach zero. It records the number of output consumers when `below` is nonempty, appends the record, and advances the circular preference.
+
+Selection happens **before** releasing inputs consumed by the current operation. Therefore, the function may require an extra slot even when more aggressive planning could overwrite an input. It does not individually check whether the kernel supports overlap.
 
 ```text
 Layer A → SLOT1 ───────────────────────────┐
-             │                            │ atalho residual
+             │                            │ residual shortcut
              ▼                            │
 Layer B → SLOT2                            │
              │                            │
@@ -26,50 +28,50 @@ Layer B → SLOT2                            │
                         ▼
                       SLOT0
 
-slot ocupado
+occupied slot
      │
      ▼
-ainda existem consumidores pendentes?
+are there still pending consumers?
      │
   ┌──┴───────────┐
   ▼              ▼
- sim            não
+ yes             no
   │              │
-mantém       volta a ser candidato
+retain       becomes a candidate again
 ```
 
-Entra a dependência A→B→ADD com A também consumido por ADD. O alocador mantém SLOT1 até o atalho ser lido e escolhe SLOT0 para a saída. Saem slots reutilizáveis, não cópias de tensores. O padrão residual depende do grafo; contagem de leitores e escolha de área são genéricas. O exemplo é ilustrativo do algoritmo, não a transcrição de uma layer específica dos modelos.
+The input is the A→B→ADD dependency with A also consumed by ADD. The allocator retains SLOT1 until the shortcut is read and chooses SLOT0 for the output. Outputs are reusable slots, not tensor copies. The residual pattern depends on the graph; reader counting and area selection are generic. The example illustrates the algorithm and is not a transcription of a particular layer in the models.
 
-## Exceção QUANTIZE
+## QUANTIZE exception
 
-Para QUANTIZE, a função toma SLOT0 se não houver predecessor, senão o slot do primeiro predecessor. Define o mesmo slot de saída, marca `in_place=True` e executa `continue`. Esse ramo **não atualiza** `slot_readers_count`, não decrementa leituras e não avança `next_slot`. Funciona nos caminhos observados de entrada/saída, mas não constitui um algoritmo geral de liveness para QUANTIZE no meio de ramificações. Não trate essa simplificação como otimização formalmente segura para qualquer grafo.
+For QUANTIZE, the function takes SLOT0 if there is no predecessor, otherwise the first predecessor's slot. It sets the same output slot, marks `in_place=True`, and executes `continue`. This branch **does not update** `slot_readers_count`, decrement reads, or advance `next_slot`. It works in the observed input/output paths, but is not a general liveness algorithm for QUANTIZE in the middle of branches. Do not treat this simplification as an optimization formally proven safe for every graph.
 
-## Formatação, erros e invariantes
+## Formatting, errors, and invariants
 
-`slot_allocation_to_text` recebe a lista, imprime tipo e label com `[inputs -> output]`, usa ` e ` para vários inputs e acrescenta `(in-place)` quando indicado. Retorna string; não modifica a alocação. IDs de predecessor ausentes causam `KeyError`; ausência de slot causa `RuntimeError`; não existe spill para uma quarta área ou realocação automática.
+`slot_allocation_to_text` receives the list, prints type and label with `[inputs -> output]`, uses ` e ` for multiple inputs, and appends `(in-place)` where indicated. It returns a string without modifying allocation. Missing predecessor IDs cause `KeyError`; no available slot causes `RuntimeError`; there is no spill to a fourth area or automatic reallocation.
 
-Um slot é uma área de capacidade uniforme calculada posteriormente pelo maior tensor, não uma variável de dimensão fixa no grafo. O mesmo slot pode conter shapes diferentes em momentos diferentes. A contagem por consumidores de operador pressupõe que o grafo represente adequadamente o tempo de vida dos valores. Sem essa hipótese, um mapa tensor→slot completo ainda pode estar numericamente incorreto.
+A slot is an area with uniform capacity calculated later from the largest tensor, not a graph variable with fixed dimensions. The same slot may contain different shapes at different times. Counting operator consumers assumes the graph adequately represents value lifetimes. Without that assumption, a complete tensor→slot map can still be numerically incorrect.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 
 ```
 
-### `allocate_slots` — assinatura
+### `allocate_slots` — signature
 
 ```python
 def allocate_slots(layers, num_slots)
 ```
 
-### `slot_allocation_to_text` — assinatura
+### `slot_allocation_to_text` — signature
 
 ```python
 def slot_allocation_to_text(allocation)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [05-alocacao-slots.md](historico/05-alocacao-slots.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [05-alocacao-slots.md](historico/05-alocacao-slots.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

@@ -1,84 +1,68 @@
-# 12 — Fluxo completo e leitura dos relatórios
+[English](12-fluxo-completo.md) | [Português (Brasil)](12-fluxo-completo.pt-BR.md)
 
-[Índice](README.md) · [Orquestração](04-model-pipeline.md) · [Comparação dos pacotes](09-modelos-e-pacotes.md)
+# 12 — Complete flow and reading reports
 
-## Exemplo acompanhado: sonolência
+[Index](README.md) · [Orchestration](04-model-pipeline.md) · [Package comparison](09-modelos-e-pacotes.md)
+
+## Walkthrough: drowsiness
 
 ```text
 python main.py --model drowsiness
-                │
-                ▼
-model.toml → ModelPackage → BinaryFoldersAdapter
-                │           2000 TestCase com label por pasta
-                ▼
-model_int8_esp32.tflite
-                │ 67 operadores / 175 tensores
-                ▼
-grafo → 3 slots lógicos → tensor_to_slot
-                │
-                ├── pesos = 384608 bytes
-                ├── bias  = 28168 bytes
-                └── MUL/SHIFT/Q6
-                ▼
-slot_bytes = 196608; PARAMS_BASE = 499360
-                │ synthetic_count=1, slot_shift=1
-                ▼
-68 LayerParams → 7888 bytes de PARAMS
-                ▼
-SLOT0=507248  SLOT1=703856  SLOT2=900464
-                ▼
-MEM_END=1097072 → 17 páginas
-                ▼
-template compartilhado → generated/model.wat → model.wasm
-                │
-                ▼
-RAW 32768 bytes → SLOT0 → RGB565_TO_RGB888 → SLOT1
-                ▼
-67 operações reais → vetor UINT8 com 2 elementos
-                ▼
-adapter: índice 0=label 1; índice 1=label 0
-                ▼
-reports/12-inferencia-wasm.txt
+ → model.toml → ModelPackage → BinaryFoldersAdapter
+                               2000 TestCase objects with folder labels
+ → model_int8_esp32.tflite: 67 operators / 175 tensors
+ → graph → 3 logical slots → tensor_to_slot
+   weights = 384608 bytes; bias = 28168 bytes; MUL/SHIFT/Q6
+ → slot_bytes = 196608; PARAMS_BASE = 499360
+   synthetic_count=1; slot_shift=1
+ → 68 LayerParams → 7888 PARAMS bytes
+ → SLOT0=507248; SLOT1=703856; SLOT2=900464
+ → MEM_END=1097072 → 17 pages
+ → shared template → generated/model.wat → model.wasm
+ → 32768-byte RAW → SLOT0 → RGB565_TO_RGB888 → SLOT1
+ → 67 real operations → two-element UINT8 output
+ → adapter: index 0=label 1; index 1=label 0
+ → reports/12-inferencia-wasm.txt
 ```
 
-Entram o pacote de sonolência e seus RAWs. O pipeline calcula os números indicados a partir das fontes; os valores foram confirmados nos relatórios existentes. Saem artefatos para 68 kernels, incluindo a sintética. Pesos, dimensões e número de casos são específicos; ABI, três slots e páginas de 65536 bytes são compartilhados.
+The pipeline computes these values from the package sources; existing reports confirm them. Artifacts contain 68 kernels including the synthetic operation. Weights, dimensions and case count vary by model; ABI, three slots and 65536-byte pages are shared.
 
-## Variante ImageNet
+## ImageNet variant
 
-O outro pacote tem os mesmos 67 tipos/quantidades de operações TFLite, mas sem sintética. `PARAMS_BASE=1792768`, área de parâmetros 7776 bytes, `slot_bytes=602112`; slots em 1800544, 2402656 e 3004768. `MEM_END=3606880`, 56 páginas. O adapter converte BGR para RGB antes de escrever 150528 bytes em SLOT0. A saída tem 1000 elementos e produz Top-15. Não existe label esperado por pasta nesse adapter.
+The other package has the same 67 TFLite operation types/counts but no synthetic layer. PARAMS_BASE=1792768, parameter region=7776 bytes, slot_bytes=602112; slot bases are 1800544, 2402656 and 3004768. MEM_END=3606880, requiring 56 pages. The adapter swaps BGR→RGB before writing 150528 bytes to SLOT0. Output has 1000 elements and yields Top-15; this adapter has no expected folder label.
 
-## Catálogo dos 11 relatórios
+## Catalog of 11 reports
 
-Todos ficam em `models/<nome>/reports/`; não existe relatório 01 produzido pelo pipeline atual.
+All are under models/<name>/reports/. The current pipeline does not produce report 01.
 
-| Arquivo | Conteúdo | Pergunta de diagnóstico |
+| File | Content | Diagnostic question |
 |---|---|---|
-| `02-grafo.txt` | Tipo, label e vizinhos acima/abaixo | As dependências do residual estão presentes? |
-| `03-alocacao-slots.txt` | Slots lógicos de entrada/saída e marca in-place | Uma área está sendo reutilizada enquanto ainda possui leitores? |
-| `04-mapeamento-tensor-slot.txt` | Tensor IDs, produtores, pendências e fechamento | Todos os tensores usados têm armazenamento? |
-| `05-pesos-bias.txt` | Offsets, shapes, dtypes e tamanhos | O tensor constante esperado foi extraído? |
-| `06-quantizacao.txt` | Scales, zero points, multiplicadores, shifts, Q6 e offsets | A razão de escalas/quantização por canal corresponde ao modelo? |
-| `07-slot-bytes.txt` | Tensores não constantes e maior necessidade de bytes | Qual tensor determina a memória de cada slot? |
-| `08-layout-parametros.txt` | Bases e comprimentos dos blobs | Os blocos começam nos endereços esperados? |
-| `09-layer-params.txt` | Campos por operação, slots e parâmetros especiais | ADD, QUANTIZE e sintética estão codificados corretamente? |
-| `10-params-blob.txt` | Registros serializados, ponteiros e padding | Qual endereço o WAT realmente lerá? |
-| `11-layout-final-memoria.txt` | Regiões, finais, páginas e espaço residual | Há memória suficiente para os slots e dados? |
-| `12-inferencia-wasm.txt` | Resultado por RAW, resumo do adapter e erros | Quais casos foram processados e como foram interpretados? |
+| 02-grafo.txt | Types, labels, upstream/downstream neighbors | Are residual dependencies present? |
+| 03-alocacao-slots.txt | Logical input/output slots, in-place marker | Is storage reused while readers still need it? |
+| 04-mapeamento-tensor-slot.txt | Tensor IDs, producers, pending entries, closure | Do all consumed tensors have storage? |
+| 05-pesos-bias.txt | Offsets, shapes, dtypes, sizes | Was the expected constant extracted? |
+| 06-quantizacao.txt | Scales, zero points, multipliers, shifts, Q6, offsets | Do per-channel scale ratios match the model? |
+| 07-slot-bytes.txt | Nonconstant tensors and largest byte requirement | Which tensor determines slot memory? |
+| 08-layout-parametros.txt | Blob bases and lengths | Do regions start where expected? |
+| 09-layer-params.txt | Operation fields, slots, special parameters | Are ADD, QUANTIZE and the synthetic layer encoded correctly? |
+| 10-params-blob.txt | Serialized records, pointers, padding | Which address will WAT actually read? |
+| 11-layout-final-memoria.txt | Regions, ends, pages, unused space | Is there enough memory for slots and data? |
+| 12-inferencia-wasm.txt | Per-RAW results, adapter summary, errors | Which cases were processed and how were they interpreted? |
 
-## Da hipótese ao erro localizado
+## From symptom to candidate cause
 
 ```text
-resultado inesperado
-        │
-        ├── RAW rejeitado? ──────► 12: tamanho/caminho/preparação
-        ├── trap? ──────────────► 10/11: ponteiros e regiões
-        ├── classes trocadas? ──► manifest classes/JSON/ordem dos canais
-        ├── saturação? ─────────► 06/09: dtype, scale, zero point, flags
-        └── valor divergente? ──► kernel WAT + tensores intermediários
+unexpected result
+ ├─ RAW rejected? → 12: size/path/preparation
+ ├─ trap? → 10/11: pointers and regions
+ ├─ swapped classes? → manifest classes / JSON / channel order
+ ├─ saturation? → 06/09: dtype, scale, zero point, flags
+ └─ numerical difference? → WAT kernel + intermediate tensors
 ```
 
-Entra um sintoma; os relatórios permitem seguir do host até a representação binária. Sai uma etapa candidata para investigação, não uma prova automática da causa. Fontes do modelo determinam os dados esperados; o runtime determina a matemática e o endereçamento. Ausência de erro no relatório 12 não significa equivalência numérica com TFLite.
+Reports let you trace symptoms from the host to binary representation. They identify candidates for investigation, not automatic proof of cause. Model sources determine expected data; the runtime determines mathematics/addressing. No errors in report 12 does not mean numerical TFLite equivalence.
 
-## Recriar e interpretar com cuidado
+## Regeneration and interpretation
 
-Uma execução bem-sucedida pode recriar os 11 relatórios e os dois artefatos. Não há histórico nem remoção de arquivos antigos. Caminhos absolutos nos registros tornam o texto diferente entre máquinas, mesmo quando os bytes inferidos coincidem. Alterações somente na documentação não regeneram os relatórios; um cabeçalho antigo em 09 pode ser apenas um artefato anterior, não o texto emitido pelo código atual.
+A successful run can regenerate all 11 reports and both artifacts. There is no history or stale-file removal. Absolute paths in records make text differ across computers even if inferred bytes match. Documentation-only changes do not regenerate reports; an older heading in 09 may come from a previous artifact rather than current writer code.
+

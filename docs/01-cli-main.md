@@ -1,40 +1,31 @@
+[English](01-cli-main.md) | [Português (Brasil)](01-cli-main.pt-BR.md)
+
 # 01 — CLI: main.py
 
-[Índice](README.md) · Fonte: [main.py](../main.py)
+[Index](README.md) · Source: [main.py](../main.py)
 
-## Função e dependências
+## Purpose and dependencies
 
-`main(argv=None)` é o único ponto de entrada. Recebe uma lista opcional de argumentos para `argparse`; com `None`, usa os argumentos do processo. Importa `ModelPackage` no carregamento do módulo e importa `ModelPipeline` apenas no ramo de execução. Assim, `--list-models` não importa NumPy, TFLite e Wasmtime através do pipeline, embora ainda precise de Python e de `tomllib`/`tomli` para ler manifests.
+`main(argv=None)` is the sole entry point. It accepts an optional argument list for argparse; `None` uses process arguments. ModelPackage is imported when the module loads; ModelPipeline is imported only in the execution branch. Thus `--list-models` avoids importing NumPy, TFLite and Wasmtime through the pipeline, but still needs Python and tomllib/tomli to read manifests.
 
-| Argumento | Tipo/ação | Default | Efeito |
+| Argument | Type/action | Default | Effect |
 |---|---|---|---|
-| `--model` | string | `drowsiness` | Nome de pasta em `models/` |
-| `--list-models` | `store_true` | `False` | Lista nome da pasta e `model.name` |
-| `-h`, `--help` | automático do argparse | — | Mostra ajuda e encerra |
+| `--model` | string | `drowsiness` | Directory name under models/ |
+| `--list-models` | store_true | False | Lists directory names and model.name |
+| `-h`, `--help` | automatic argparse option | — | Prints help and exits |
 
-Não há `--one`, filtro de imagens, seleção de subgrafo, modo apenas compilação, escolha direta de template ou opção de top-K na CLI. Essas decisões estão no manifest ou no código. Se `--list-models` e `--model` forem usados juntos, a listagem prevalece.
+There is no --one, image filter, subgraph selector, compile-only mode, direct template selector or CLI top-K option. These choices belong to manifests or code. Listing takes precedence if both --list-models and --model are supplied.
 
 ```text
-argv
- │
- ▼
-ArgumentParser.parse_args
- │
- ├── --list-models ──► ModelPackage.available()
- │                         │
- │                         └──► imprime pacotes; return 0
- │
- └── execução ───────► ModelPackage.load(args.model)
-                           │
-                           ▼
-                     ModelPipeline(package).run()
-                           │
-                           └──► return 0 se não houve exceção
+argv → ArgumentParser.parse_args
+       ├─ --list-models → ModelPackage.available() → print packages → return 0
+       └─ execution → ModelPackage.load(args.model)
+                    → ModelPipeline(package).run() → return 0 unless an exception occurs
 ```
 
-Entram argumentos textuais; `main.py` seleciona um ramo, carrega o pacote e delega. Sai um código de retorno ou uma exceção de encerramento. O nome é específico do modelo; o controle da CLI é genérico. Nenhum byte de imagem passa pela CLI.
+Text arguments select a branch, load a package and delegate execution. The result is an exit code or terminating exception. Model names vary by package; CLI control is generic. No image bytes pass through the CLI.
 
-## Comandos reais
+## Commands
 
 ```powershell
 python main.py
@@ -44,14 +35,15 @@ python main.py --model mobilenetv2_alpha035
 python main.py --help
 ```
 
-Execute na raiz para que `main.py` seja encontrado. Ao fornecer o caminho absoluto do script, os caminhos dos pacotes continuam independentes do diretório de trabalho, pois `MODELS_DIR` deriva de `__file__`.
+Run from the repository root so main.py can be found. When using the script's absolute path, package resolution remains independent of the working directory because MODELS_DIR is derived from __file__.
 
-## Saídas e falhas
+## Outputs and failures
 
-O bloco `try` captura apenas `OSError`, `ValueError` e `RuntimeError`, emitindo `Erro: ...` no stderr por `parser.exit(1, ...)`. Retorna 0 quando a listagem ou execução termina normalmente. `raise SystemExit(main())` propaga esse resultado ao sistema operacional. Argumentos inválidos são tratados por argparse antes do `try` e normalmente encerram com código 2.
+The try block catches only OSError, ValueError and RuntimeError, writing `Erro: ...` to stderr through `parser.exit(1, ...)`. Normal listing/execution returns 0. `raise SystemExit(main())` propagates this to the operating system. argparse handles invalid arguments before the try block, normally exiting with code 2.
 
-`KeyError`, `TypeError` e exceções específicas que não herdam das classes capturadas podem produzir traceback. Não se deve documentar que todo manifest incorreto gera uma mensagem amigável. Um manifest ausente causa `OSError`; um contrato desconhecido causa `ValueError`. Erros por imagem são coletados pelo runner e levam a `RuntimeError` no final do pipeline, após gravar o relatório.
+KeyError, TypeError and exceptions outside the caught hierarchy may produce tracebacks. Not every invalid manifest yields a friendly error. A missing manifest causes OSError; an unknown contract causes ValueError. The runner collects per-image failures and the pipeline raises RuntimeError after writing its report.
 
-## Extensão e invariantes
+## Extension and invariants
 
-Adicionar uma pasta válida e um manifest não exige alterar `main.py`. Adicionar um novo nome ao comando tampouco implica suporte automático a novos operadores. O contrato de retorno de `ModelPipeline.run()` é um dicionário de inferência; a CLI o ignora, usando as mensagens impressas e os arquivos como interface do usuário.
+A valid package directory and manifest require no main.py changes. Adding a model name does not add support for new operators. ModelPipeline.run() returns an inference dictionary, which the CLI ignores: printed messages and files are its user interface.
+

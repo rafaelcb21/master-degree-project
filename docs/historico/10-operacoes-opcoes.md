@@ -1,46 +1,48 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](10-operacoes-opcoes.md) | [Português (Brasil)](10-operacoes-opcoes.pt-BR.md)
 
-# 10 — Leitura das opções dos operadores (`operator_operations.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 10 — Reading operator options (`operator_operations.py`)
 
-O arquivo `extractor/operator_operations.py` é responsável por interpretar as opções específicas armazenadas nos operadores TFLite.
+## 1. Module purpose
 
-O grafo informa que determinada operação é, por exemplo:
+`extractor/operator_operations.py` interprets the specific options stored in TFLite operators.
+
+The graph tells us that an operation is, for example:
 
 ```text
 CONV_2D
 ```
 
-mas isso ainda não informa:
+but does not yet specify:
 
 ```text
-stride vertical
-stride horizontal
-dilatação vertical
-dilatação horizontal
+vertical stride
+horizontal stride
+vertical dilation
+horizontal dilation
 padding
-ativação fundida
+fused activation
 ```
 
-Da mesma forma, saber que uma operação é:
+Similarly, knowing that an operation is:
 
 ```text
 DEPTHWISE_CONV_2D
 ```
 
-não informa automaticamente:
+does not automatically specify:
 
 ```text
 depth multiplier
 ```
 
-Esses valores estão armazenados dentro das `BuiltinOptions` de cada operador.
+These values are stored in each operator's `BuiltinOptions`.
 
-Este módulo faz a transformação:
+This module performs the transformation:
 
 ```text
-BuiltinOptions do TFLite
+TFLite BuiltinOptions
           │
           ▼
 operator_operations.py
@@ -54,19 +56,19 @@ operator_operations.py
           └── depth_mult
 ```
 
-Além disso, o módulo implementa:
+The module also implements:
 
 ```python
 same_padding(...)
 ```
 
-que calcula explicitamente o padding necessário para reproduzir a semântica `SAME`.
+which explicitly calculates the padding needed to reproduce `SAME` semantics.
 
 ---
 
-# 2. Código atual
+# 2. Current code
 
-O módulo trabalha com estas estruturas do binding TFLite:
+The module uses these TFLite binding structures:
 
 ```python
 from tflite import (
@@ -79,7 +81,7 @@ from tflite import (
 )
 ```
 
-E define três códigos internos de ativação:
+It defines three internal activation codes:
 
 ```python
 ACT_NONE = 0
@@ -87,7 +89,7 @@ ACT_RELU = 1
 ACT_RELU6 = 3
 ```
 
-As funções principais são:
+The main functions are:
 
 ```text
 parse_fused_activation()
@@ -107,21 +109,21 @@ same_padding()
 
 ---
 
-# 3. Papel arquitetural
+# 3. Architectural role
 
-Esse módulo funciona como uma camada de tradução entre:
-
-```text
-representação TFLite
-```
-
-e:
+This module translates between:
 
 ```text
-representação interna do runtime
+TFLite representation
 ```
 
-O TFLite utiliza objetos como:
+and:
+
+```text
+internal runtime representation
+```
+
+TFLite uses objects such as:
 
 ```text
 Conv2DOptions
@@ -130,7 +132,7 @@ FullyConnectedOptions
 AddOptions
 ```
 
-Já o restante do extrator prefere trabalhar com valores simples:
+The rest of the extractor prefers simple values:
 
 ```python
 stride_h = 1
@@ -144,7 +146,7 @@ padding_kind = 0
 activation = ACT_RELU6
 ```
 
-Assim:
+Thus:
 
 ```text
 TFLite FlatBuffer
@@ -153,7 +155,7 @@ TFLite FlatBuffer
 operator_operations.py
        │
        ▼
-inteiros e booleanos simples
+simple integers and booleans
        │
        ▼
 layer_params.py
@@ -161,51 +163,51 @@ layer_params.py
 
 ---
 
-# 4. Por que separar essa lógica?
+# 4. Why separate this logic?
 
-Sem este módulo, `layer_params.py` precisaria conter código semelhante a:
-
-```text
-ler BuiltinOptions
-instanciar Conv2DOptions
-inicializar FlatBuffer
-ler stride
-ler dilation
-ler padding
-ler fused activation
-```
-
-para cada operação.
-
-Isso misturaria duas responsabilidades:
+Without this module, `layer_params.py` would need code like:
 
 ```text
-como interpretar TFLite
+read BuiltinOptions
+instantiate Conv2DOptions
+initialize FlatBuffer
+read stride
+read dilation
+read padding
+read fused activation
 ```
 
-e:
+for each operation.
+
+This would mix two responsibilities:
 
 ```text
-como construir LayerParam
+how to interpret TFLite
 ```
 
-A divisão atual é:
+and:
+
+```text
+how to construct LayerParam
+```
+
+The current division is:
 
 ```text
 operator_operations.py
     ↓
-interpreta opções TFLite
+interprets TFLite options
 
 layer_params.py
     ↓
-utiliza os valores já interpretados
+uses the already interpreted values
 ```
 
 ---
 
-# 5. Constantes de ativação
+# 5. Activation constants
 
-O módulo define:
+The module defines:
 
 ```python
 ACT_NONE = 0
@@ -213,20 +215,20 @@ ACT_RELU = 1
 ACT_RELU6 = 3
 ```
 
-Esses valores constituem a representação interna utilizada pelo runtime.
+These values form the internal representation used by the runtime.
 
 ---
 
-# 6. Significado
+# 6. Meaning
 
 ```text
 ACT_NONE = 0
 ```
 
-representa:
+represents:
 
 ```text
-nenhuma ativação fundida
+no fused activation
 ```
 
 ---
@@ -235,7 +237,7 @@ nenhuma ativação fundida
 ACT_RELU = 1
 ```
 
-representa:
+represents:
 
 ```text
 ReLU
@@ -247,7 +249,7 @@ ReLU
 ACT_RELU6 = 3
 ```
 
-representa:
+represents:
 
 ```text
 ReLU6
@@ -255,11 +257,11 @@ ReLU6
 
 ---
 
-# 7. Ativação fundida
+# 7. Fused activation
 
-No TFLite, determinadas operações podem incorporar uma ativação diretamente.
+In TFLite, certain operations can incorporate an activation directly.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 CONV_2D
@@ -267,30 +269,30 @@ CONV_2D
 ReLU6
 ```
 
-pode estar representado como uma única operação:
+may be represented as a single operation:
 
 ```text
 CONV_2D
 fused_activation = RELU6
 ```
 
-Em vez de aparecerem dois operadores independentes.
+Instead of two independent operators.
 
 ---
 
-# 8. Por que isso importa para o runtime?
+# 8. Why does this matter to the runtime?
 
-Se a operação possui:
+If the operation has:
 
 ```text
 ReLU6
 ```
 
-fundido, o kernel precisa aplicar a saturação apropriada antes de gravar a saída.
+fused into it, the kernel must apply appropriate saturation before writing the output.
 
-Logo a informação precisa chegar à `LayerParam`.
+This information must therefore reach `LayerParam`.
 
-Fluxo:
+Flow:
 
 ```text
 TFLite
@@ -307,14 +309,14 @@ ACT_RELU6
 LayerParam.act
                 │
                 ▼
-kernel WASM
+WASM kernel
 ```
 
 ---
 
-# 9. Função `parse_fused_activation()`
+# 9. The `parse_fused_activation()` function
 
-A primeira função é:
+The first function is:
 
 ```python
 def parse_fused_activation(
@@ -322,13 +324,13 @@ def parse_fused_activation(
 ):
 ```
 
-Seu objetivo é normalizar diferentes formas pelas quais o binding pode representar uma ativação.
+It normalizes the different ways the binding may represent an activation.
 
 ---
 
-# 10. Primeira estratégia
+# 10. First strategy
 
-Inicialmente a função tenta comparar com:
+The function first tries comparing with:
 
 ```python
 ActivationFunctionType.NONE
@@ -344,9 +346,9 @@ ActivationFunctionType.RELU6
 
 ---
 
-# 11. Exemplo
+# 11. Example
 
-Se:
+If:
 
 ```python
 activation_value == (
@@ -354,7 +356,7 @@ activation_value == (
 )
 ```
 
-o retorno será:
+the return value will be:
 
 ```python
 ACT_RELU6
@@ -362,23 +364,23 @@ ACT_RELU6
 
 ---
 
-# 12. Por que existe `try/except`?
+# 12. Why use `try/except`?
 
-O binding Python do TFLite pode apresentar diferenças de empacotamento ou estrutura dependendo da versão utilizada.
+The Python TFLite binding may differ in packaging or structure across versions.
 
-Por isso o código primeiro tenta trabalhar semanticamente com:
+The code therefore first tries to use the semantics of:
 
 ```text
 ActivationFunctionType
 ```
 
-mas possui um segundo caminho baseado diretamente nos valores inteiros.
+but has a second path based directly on integer values.
 
 ---
 
-# 13. Fallback numérico
+# 13. Numeric fallback
 
-Se a primeira tentativa não funcionar, o código testa:
+If the first attempt fails, the code tests:
 
 ```python
 if activation_value == 0:
@@ -393,85 +395,85 @@ if activation_value == 3:
 
 ---
 
-# 14. Duas camadas de compatibilidade
+# 14. Two compatibility layers
 
-Portanto:
+Therefore:
 
 ```text
-primeira tentativa
+first attempt
       ↓
-enum do binding TFLite
+TFLite binding enum
 
-segunda tentativa
+second attempt
       ↓
-valor numérico
+numeric value
 ```
 
-Isso torna a rotina menos dependente da forma exata como o pacote Python expõe o enum.
+This makes the routine less dependent on exactly how the Python package exposes the enum.
 
 ---
 
-# 15. Ativação desconhecida
+# 15. Unknown activation
 
-Se nenhum caso for reconhecido:
+If no case is recognized:
 
 ```python
 return ACT_NONE
 ```
 
-Ou seja, o comportamento atual é conservador:
+In other words, the current behavior is conservative:
 
 ```text
-ativação desconhecida
+unknown activation
         ↓
 ACT_NONE
 ```
 
 ---
 
-# 16. Consequência importante
+# 16. Important consequence
 
-Essa estratégia evita interromper o extrator.
+This strategy avoids stopping the extractor.
 
-Entretanto, em um modelo futuro contendo uma ativação fundida diferente, como outra opção suportada pelo TFLite mas não implementada pelo runtime, o código atual poderia convertê-la silenciosamente para:
+However, for a future model containing a different fused activation supported by TFLite but not implemented by the runtime, the current code could silently convert it to:
 
 ```text
 ACT_NONE
 ```
 
-Isso é uma característica importante da implementação atual.
+This is an important feature of the current implementation.
 
 ---
 
-# 17. Possível evolução futura
+# 17. Possible future development
 
-Em uma ferramenta mais genérica, poderia ser preferível:
+In a more generic tool, the following might be preferable:
 
 ```text
-ativação conhecida
+known activation
     ↓
-converter
+convert
 
-ativação desconhecida
+unknown activation
     ↓
 RuntimeError
 ```
 
-Isso impediria gerar um artefato semanticamente diferente do modelo original.
+This would prevent generating an artifact with semantics different from the original model.
 
-No código atual, porém, preserva-se o comportamento existente.
+The current code preserves existing behavior.
 
 ---
 
-# 18. Função `parse_add_options()`
+# 18. The `parse_add_options()` function
 
-A função:
+The function:
 
 ```python
 def parse_add_options(op):
 ```
 
-extrai a ativação fundida de um operador:
+extracts the fused activation of an:
 
 ```text
 ADD
@@ -479,15 +481,15 @@ ADD
 
 ---
 
-# 19. Por que o ADD possui opções?
+# 19. Why does ADD have options?
 
-Um `ADD` pode conceitualmente representar:
+An `ADD` may conceptually represent:
 
 ```text
 A + B
 ```
 
-mas também pode possuir:
+but may also have:
 
 ```text
 A + B
@@ -495,7 +497,7 @@ A + B
 ReLU
 ```
 
-ou:
+or:
 
 ```text
 A + B
@@ -503,13 +505,13 @@ A + B
 ReLU6
 ```
 
-como ativação fundida.
+as a fused activation.
 
 ---
 
-# 20. Obtendo `BuiltinOptions`
+# 20. Getting `BuiltinOptions`
 
-A função começa com:
+The function starts with:
 
 ```python
 builtin_options = (
@@ -517,13 +519,13 @@ builtin_options = (
 )
 ```
 
-Esse objeto representa a posição dos dados específicos daquele operador dentro do FlatBuffer.
+This object represents the position of that operator's specific data within the FlatBuffer.
 
 ---
 
-# 21. Verificação de `Bytes` e `Pos`
+# 21. Checking `Bytes` and `Pos`
 
-Depois:
+Then:
 
 ```python
 if (
@@ -538,40 +540,40 @@ if (
 ):
 ```
 
-O parser precisa dessas duas informações para inicializar o objeto de opções correto.
+The parser needs both pieces of information to initialize the correct options object.
 
 ---
 
-# 22. Significado conceitual
+# 22. Conceptual meaning
 
-O objeto:
+The object:
 
 ```text
 builtin_options
 ```
 
-funciona como referência para uma região dentro do buffer TFLite.
+acts as a reference to a region in the TFLite buffer.
 
-Os campos:
+The fields:
 
 ```text
 Bytes
 Pos
 ```
 
-permitem que:
+allow:
 
 ```text
 AddOptions
 ```
 
-interprete aquela região segundo seu schema.
+to interpret that region according to its schema.
 
 ---
 
-# 23. Compatibilidade na construção de `AddOptions`
+# 23. Compatibility when constructing `AddOptions`
 
-O código:
+The code:
 
 ```python
 options = (
@@ -584,13 +586,13 @@ options = (
 )
 ```
 
-suporta duas possíveis formas do binding.
+supports two possible binding forms.
 
 ---
 
-# 24. Primeira forma
+# 24. First form
 
-Em alguns ambientes:
+In some environments:
 
 ```text
 AddOptions
@@ -598,51 +600,51 @@ AddOptions
     └── AddOptions
 ```
 
-Então:
+Then:
 
 ```python
 AddOptions.AddOptions()
 ```
 
-cria a estrutura.
+creates the structure.
 
 ---
 
-# 25. Segunda forma
+# 25. Second form
 
-Em outros:
+In others:
 
 ```python
 AddOptions()
 ```
 
-já é diretamente a classe instanciável.
+is already the instantiable class itself.
 
 ---
 
-# 26. Mesmo problema observado no carregamento do modelo
+# 26. Same issue observed during model loading
 
-Essa lógica é semelhante àquela vista em:
+This logic resembles that in:
 
 ```text
 model_loader.py
 ```
 
-onde o binding poderia expor:
+where the binding could expose:
 
 ```text
 GetRootAsModel
 ```
 
-em diferentes níveis.
+at different levels.
 
-O objetivo aqui é novamente reduzir dependência de uma única organização do pacote Python.
+The objective is again to reduce dependence on a single Python package organization.
 
 ---
 
-# 27. Inicialização das opções
+# 27. Initializing options
 
-Depois:
+Then:
 
 ```python
 options.Init(
@@ -651,13 +653,13 @@ options.Init(
 )
 ```
 
-Agora:
+Now:
 
 ```text
 options
 ```
 
-passa a interpretar aquela região do FlatBuffer como:
+starts interpreting that FlatBuffer region as:
 
 ```text
 AddOptions
@@ -665,22 +667,22 @@ AddOptions
 
 ---
 
-# 28. Leitura da ativação
+# 28. Reading the activation
 
-Então:
+Then:
 
 ```python
 options
 .FusedActivationFunction()
 ```
 
-é convertido para inteiro:
+is converted to an integer:
 
 ```python
 int(...)
 ```
 
-e passado para:
+and passed to:
 
 ```python
 parse_fused_activation(...)
@@ -688,9 +690,9 @@ parse_fused_activation(...)
 
 ---
 
-# 29. Retorno do ADD
+# 29. ADD return value
 
-O resultado final é um dos códigos:
+The final result is one of the codes:
 
 ```text
 ACT_NONE
@@ -702,16 +704,16 @@ ACT_RELU6
 
 ---
 
-# 30. Falha de leitura
+# 30. Read failure
 
-Se qualquer etapa gerar exceção:
+If any stage raises an exception:
 
 ```python
 except Exception:
     pass
 ```
 
-e a função retorna:
+and the function returns:
 
 ```python
 ACT_NONE
@@ -719,19 +721,19 @@ ACT_NONE
 
 ---
 
-# 31. Filosofia de fallback
+# 31. Fallback approach
 
-O padrão deste módulo é:
+This module follows the pattern:
 
 ```text
-tentar extrair a opção real
+try to extract the actual option
         │
-        ├── sucesso → usar valor
+        ├── success → use value
         │
-        └── falha → usar default seguro
+        └── failure → use the chosen default
 ```
 
-Para o ADD:
+For ADD:
 
 ```text
 default = ACT_NONE
@@ -739,9 +741,9 @@ default = ACT_NONE
 
 ---
 
-# 32. Função `padding_is_same()`
+# 32. The `padding_is_same()` function
 
-A função:
+The function:
 
 ```python
 def padding_is_same(
@@ -749,7 +751,7 @@ def padding_is_same(
 ):
 ```
 
-normaliza a identificação do padding:
+normalizes identification of padding:
 
 ```text
 SAME
@@ -757,9 +759,9 @@ SAME
 
 ---
 
-# 33. Primeira comparação
+# 33. First comparison
 
-O código tenta:
+The code tries:
 
 ```python
 padding_value
@@ -769,74 +771,74 @@ Padding.SAME
 
 ---
 
-# 34. Fallback numérico
+# 34. Numeric fallback
 
-Caso haja problema ao acessar o enum:
+If accessing the enum fails:
 
 ```python
 except Exception:
     return padding_value == 0
 ```
 
-Assim, a representação numérica:
+Thus, the numeric representation:
 
 ```text
 0
 ```
 
-é tratada como:
+is treated as:
 
 ```text
 SAME
 ```
 
-na implementação atual.
+in the current implementation.
 
 ---
 
-# 35. Resultado booleano
+# 35. Boolean result
 
-A função retorna:
+The function returns:
 
 ```text
 True
 ```
 
-para `SAME`,
+for `SAME`,
 
-ou:
+or:
 
 ```text
 False
 ```
 
-para outro tipo de padding.
+for another padding type.
 
 ---
 
-# 36. Por que usar uma função separada?
+# 36. Why use a separate function?
 
-Sem ela, tanto:
+Without it, both:
 
 ```text
 CONV_2D
 ```
 
-quanto:
+and:
 
 ```text
 DEPTHWISE_CONV_2D
 ```
 
-teriam que repetir a lógica de compatibilidade com o enum.
+would have to repeat enum compatibility logic.
 
-Centralizar isso evita duplicação.
+Centralizing it avoids duplication.
 
 ---
 
-# 37. Convenção interna de padding
+# 37. Internal padding convention
 
-As funções de convolução transformam o booleano em:
+The convolution functions convert the boolean into:
 
 ```python
 padding_kind = (
@@ -845,7 +847,7 @@ padding_kind = (
 )
 ```
 
-Assim:
+Thus:
 
 ```text
 padding_kind = 0
@@ -854,44 +856,44 @@ SAME
 
 padding_kind = 1
     ↓
-não-SAME
+non-SAME
 ```
 
-No fluxo atual, o segundo caso corresponde à alternativa utilizada pela operação para padding não `SAME`.
+In the current flow, the second case corresponds to the operation's alternative for non-`SAME` padding.
 
 ---
 
-# 38. Importante
+# 38. Important
 
-O valor:
+The value:
 
 ```text
 0
 ```
 
-em `padding_kind`
+in `padding_kind`
 
-não é necessariamente utilizado como o próprio enum TFLite.
+is not necessarily used as the TFLite enum itself.
 
-É uma convenção interna do extrator/runtime.
+It is an internal extractor/runtime convention.
 
-A tradução é:
+The translation is:
 
 ```text
 TFLite padding
       ↓
 padding_is_same()
       ↓
-booleano
+boolean
       ↓
-padding_kind interno
+internal padding_kind
 ```
 
 ---
 
-# 39. Função `parse_conv2d_options()`
+# 39. The `parse_conv2d_options()` function
 
-Essa função interpreta as opções de:
+This function interprets options for:
 
 ```text
 CONV_2D
@@ -899,9 +901,9 @@ CONV_2D
 
 ---
 
-# 40. Valores retornados
+# 40. Returned values
 
-O retorno normal possui:
+The normal return value contains:
 
 ```python
 (
@@ -916,7 +918,7 @@ O retorno normal possui:
 
 ---
 
-# 41. Visualmente
+# 41. Visual representation
 
 ```text
 Conv2DOptions
@@ -929,14 +931,14 @@ Conv2DOptions
       └── FusedActivationFunction
              │
              ▼
-      tuple Python simples
+      simple Python tuple
 ```
 
 ---
 
-# 42. Obtenção das opções
+# 42. Getting options
 
-Novamente:
+Again:
 
 ```python
 builtin_options = (
@@ -944,7 +946,7 @@ builtin_options = (
 )
 ```
 
-seguido pela verificação de:
+followed by checking:
 
 ```text
 Bytes
@@ -953,9 +955,9 @@ Pos
 
 ---
 
-# 43. Compatibilidade do binding
+# 43. Binding compatibility
 
-A estrutura é criada com:
+The structure is created with:
 
 ```python
 options = (
@@ -968,11 +970,11 @@ options = (
 )
 ```
 
-O objetivo é suportar ambas as formas conhecidas do binding.
+The objective is to support both known binding forms.
 
 ---
 
-# 44. Inicialização
+# 44. Initialization
 
 ```python
 options.Init(
@@ -981,13 +983,13 @@ options.Init(
 )
 ```
 
-Depois dessa chamada, os métodos específicos podem ser consultados.
+After this call, the specific methods can be queried.
 
 ---
 
 # 45. `stride_h`
 
-O stride vertical é:
+The vertical stride is:
 
 ```python
 stride_h = int(
@@ -999,7 +1001,7 @@ stride_h = int(
 
 # 46. `stride_w`
 
-O horizontal:
+The horizontal stride:
 
 ```python
 stride_w = int(
@@ -1009,23 +1011,23 @@ stride_w = int(
 
 ---
 
-# 47. O que é stride?
+# 47. What is stride?
 
-O stride indica quanto o kernel avança entre duas posições consecutivas.
+Stride indicates how far the kernel advances between consecutive positions.
 
-Exemplo:
+Example:
 
 ```text
 stride = 1
 ```
 
-significa:
+means:
 
 ```text
-posição 0
-posição 1
-posição 2
-posição 3
+position 0
+position 1
+position 2
+position 3
 ...
 ```
 
@@ -1033,61 +1035,61 @@ posição 3
 
 # 48. Stride 2
 
-Com:
+With:
 
 ```text
 stride = 2
 ```
 
-o kernel avança:
+the kernel advances through:
 
 ```text
-posição 0
-posição 2
-posição 4
-posição 6
+position 0
+position 2
+position 4
+position 6
 ...
 ```
 
-Isso reduz espacialmente a saída.
+This reduces the output's spatial size.
 
 ---
 
-# 49. Strides independentes
+# 49. Independent strides
 
-O formato permite:
+The format allows:
 
 ```text
 stride_h
 ```
 
-e:
+and:
 
 ```text
 stride_w
 ```
 
-diferentes.
+to differ.
 
-Embora arquiteturas comuns frequentemente utilizem:
+Although common architectures often use:
 
 ```text
 stride_h == stride_w
 ```
 
-o extrator não impõe isso.
+the extractor does not enforce this.
 
 ---
 
-# 50. Dilatação
+# 50. Dilation
 
-A função tenta ler:
+The function tries to read:
 
 ```python
 options.DilationHFactor()
 ```
 
-e:
+and:
 
 ```python
 options.DilationWFactor()
@@ -1095,9 +1097,9 @@ options.DilationWFactor()
 
 ---
 
-# 51. Fallback da dilatação
+# 51. Dilation fallback
 
-Se essa leitura falhar:
+If this read fails:
 
 ```python
 dil_h = 1
@@ -1106,28 +1108,28 @@ dil_w = 1
 
 ---
 
-# 52. Por que `1` é o valor padrão?
+# 52. Why is `1` the default?
 
-Dilatação 1 representa:
+Dilation 1 represents:
 
 ```text
-kernel normal
+a normal kernel
 ```
 
-sem espaçamento adicional entre seus elementos.
+with no additional spacing between its elements.
 
 ---
 
-# 53. Exemplo com kernel 3
+# 53. Example with kernel size 3
 
-Para:
+For:
 
 ```text
 kernel = 3
 dilation = 1
 ```
 
-os pontos utilizados são:
+the points used are:
 
 ```text
 x x x
@@ -1135,34 +1137,34 @@ x x x
 
 ---
 
-# 54. Dilatação 2
+# 54. Dilation 2
 
-Para:
+For:
 
 ```text
 kernel = 3
 dilation = 2
 ```
 
-conceitualmente:
+conceptually:
 
 ```text
 x . x . x
 ```
 
-O kernel possui três coeficientes, mas cobre uma região efetiva maior.
+The kernel has three coefficients but covers a larger effective region.
 
 ---
 
 # 55. Padding
 
-O código lê:
+The code reads:
 
 ```python
 options.Padding()
 ```
 
-converte para inteiro e passa para:
+converts to an integer, and passes it to:
 
 ```python
 padding_is_same(...)
@@ -1170,7 +1172,7 @@ padding_is_same(...)
 
 ---
 
-# 56. Resultado
+# 56. Result
 
 ```python
 padding_same = (
@@ -1178,13 +1180,13 @@ padding_same = (
 )
 ```
 
-produz:
+produces:
 
 ```text
 True
 ```
 
-ou:
+or:
 
 ```text
 False
@@ -1192,9 +1194,9 @@ False
 
 ---
 
-# 57. Conversão para `padding_kind`
+# 57. Conversion to `padding_kind`
 
-Depois:
+Then:
 
 ```python
 padding_kind = (
@@ -1205,9 +1207,9 @@ padding_kind = (
 
 ---
 
-# 58. Ativação
+# 58. Activation
 
-A ativação fundida é lida por:
+The fused activation is read through:
 
 ```python
 parse_fused_activation(
@@ -1220,9 +1222,9 @@ parse_fused_activation(
 
 ---
 
-# 59. Retorno normal
+# 59. Normal return value
 
-A função retorna:
+The function returns:
 
 ```python
 (
@@ -1237,9 +1239,9 @@ A função retorna:
 
 ---
 
-# 60. Exemplo
+# 60. Example
 
-Uma convolução pode resultar em:
+A convolution may result in:
 
 ```python
 (
@@ -1252,7 +1254,7 @@ Uma convolução pode resultar em:
 )
 ```
 
-Isso representa:
+This represents:
 
 ```text
 stride = 2 × 2
@@ -1266,9 +1268,9 @@ activation = ReLU6
 
 ---
 
-# 61. Fallback de `CONV_2D`
+# 61. `CONV_2D` fallback
 
-Se a leitura das opções falhar por completo:
+If reading options fails entirely:
 
 ```python
 return (
@@ -1283,7 +1285,7 @@ return (
 
 ---
 
-# 62. Interpretação do fallback
+# 62. Interpreting the fallback
 
 ```text
 stride_h = 1
@@ -1301,25 +1303,25 @@ activation = NONE
 
 ---
 
-# 63. Característica importante
+# 63. Important feature
 
-O fallback não representa necessariamente as opções originais do modelo.
+The fallback does not necessarily represent the model's original options.
 
-Ele é apenas o conjunto padrão escolhido pela implementação quando as opções não podem ser interpretadas.
+It is simply the set of defaults chosen when options cannot be interpreted.
 
-Isso evita falha imediata, mas pode esconder uma incompatibilidade em um modelo diferente.
+This avoids immediate failure, but may hide an incompatibility in a different model.
 
 ---
 
-# 64. Função `parse_dwconv2d_options()`
+# 64. The `parse_dwconv2d_options()` function
 
-Essa função é equivalente à de `CONV_2D`, mas interpreta:
+This function is equivalent to the `CONV_2D` parser but interprets:
 
 ```text
 DEPTHWISE_CONV_2D
 ```
 
-e possui um parâmetro adicional:
+and has an additional parameter:
 
 ```text
 depth_multiplier
@@ -1327,7 +1329,7 @@ depth_multiplier
 
 ---
 
-# 65. Retorno
+# 65. Return value
 
 ```python
 (
@@ -1343,22 +1345,22 @@ depth_multiplier
 
 ---
 
-# 66. Construção das opções
+# 66. Constructing options
 
-A classe utilizada é:
+The class used is:
 
 ```text
 DepthwiseConv2DOptions
 ```
 
-novamente com compatibilidade entre:
+again supporting compatibility between:
 
 ```python
 DepthwiseConv2DOptions
 .DepthwiseConv2DOptions()
 ```
 
-e:
+and:
 
 ```python
 DepthwiseConv2DOptions()
@@ -1366,11 +1368,11 @@ DepthwiseConv2DOptions()
 
 ---
 
-# 67. Stride e dilation
+# 67. Stride and dilation
 
-A leitura ocorre da mesma forma que em `CONV_2D`.
+Reading follows the same process as for `CONV_2D`.
 
-Logo:
+Therefore:
 
 ```text
 StrideH
@@ -1379,13 +1381,13 @@ DilationHFactor
 DilationWFactor
 ```
 
-possuem a mesma interpretação.
+have the same meaning.
 
 ---
 
 # 68. `depth_mult`
 
-O valor adicional é:
+The additional value is:
 
 ```python
 depth_mult = int(
@@ -1395,13 +1397,13 @@ depth_mult = int(
 
 ---
 
-# 69. O que representa o depth multiplier?
+# 69. What does the depth multiplier represent?
 
-Na convolução depthwise, os filtros são aplicados separadamente sobre os canais de entrada.
+In depthwise convolution, filters are applied separately to input channels.
 
-O `depth_multiplier` informa quantos canais de saída são produzidos para cada canal de entrada.
+`depth_multiplier` specifies how many output channels are produced for each input channel.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 Cout =
@@ -1410,16 +1412,16 @@ Cin × depth_multiplier
 
 ---
 
-# 70. Exemplo
+# 70. Example
 
-Se:
+If:
 
 ```text
 Cin = 32
 depth_multiplier = 1
 ```
 
-então:
+then:
 
 ```text
 Cout = 32
@@ -1427,16 +1429,16 @@ Cout = 32
 
 ---
 
-# 71. Exemplo com multiplier 2
+# 71. Example with multiplier 2
 
-Se:
+If:
 
 ```text
 Cin = 32
 depth_multiplier = 2
 ```
 
-então:
+then:
 
 ```text
 Cout = 64
@@ -1446,19 +1448,19 @@ Cout = 64
 
 # 72. MobileNetV2
 
-No padrão de depthwise convolutions empregado por MobileNetV2, o caso comum é:
+In MobileNetV2's depthwise convolution pattern, the common case is:
 
 ```text
 depth_multiplier = 1
 ```
 
-mas o parser preserva o valor que estiver no modelo.
+but the parser preserves the value present in the model.
 
 ---
 
-# 73. Padding e ativação
+# 73. Padding and activation
 
-São processados exatamente como em `CONV_2D`:
+They are processed exactly as in `CONV_2D`:
 
 ```text
 Padding()
@@ -1468,7 +1470,7 @@ padding_is_same()
 padding_kind
 ```
 
-e:
+and:
 
 ```text
 FusedActivationFunction()
@@ -1480,9 +1482,9 @@ activation
 
 ---
 
-# 74. Fallback do depthwise
+# 74. Depthwise fallback
 
-Se ocorrer falha:
+If a failure occurs:
 
 ```python
 return (
@@ -1498,7 +1500,7 @@ return (
 
 ---
 
-# 75. Interpretação
+# 75. Interpretation
 
 ```text
 stride = 1
@@ -1514,9 +1516,9 @@ depth_multiplier = 1
 
 ---
 
-# 76. Função `parse_fc_options()`
+# 76. The `parse_fc_options()` function
 
-Essa função interpreta as opções de:
+This function interprets options for:
 
 ```text
 FULLY_CONNECTED
@@ -1524,21 +1526,21 @@ FULLY_CONNECTED
 
 ---
 
-# 77. O que é extraído?
+# 77. What is extracted?
 
-Na implementação atual, apenas:
+In the current implementation, only:
 
 ```text
 fused activation
 ```
 
-é necessária.
+is needed.
 
 ---
 
-# 78. Construção de `FullyConnectedOptions`
+# 78. Constructing `FullyConnectedOptions`
 
-A mesma técnica de compatibilidade é utilizada:
+The same compatibility technique is used:
 
 ```python
 options = (
@@ -1554,7 +1556,7 @@ options = (
 
 ---
 
-# 79. Inicialização
+# 79. Initialization
 
 ```python
 options.Init(
@@ -1565,9 +1567,9 @@ options.Init(
 
 ---
 
-# 80. Retorno
+# 80. Return value
 
-Depois:
+Then:
 
 ```python
 return (
@@ -1584,7 +1586,7 @@ return (
 
 # 81. Fallback
 
-Em caso de falha:
+On failure:
 
 ```python
 return ACT_NONE
@@ -1592,51 +1594,51 @@ return ACT_NONE
 
 ---
 
-# 82. Comparação das funções de parsing
+# 82. Comparing parsing functions
 
-| Operação            | Valores extraídos                                     |
+| Operation | Extracted values |
 | ------------------- | ----------------------------------------------------- |
-| `ADD`               | ativação                                              |
-| `CONV_2D`           | stride, dilation, padding, ativação                   |
-| `DEPTHWISE_CONV_2D` | stride, dilation, padding, ativação, depth multiplier |
-| `FULLY_CONNECTED`   | ativação                                              |
+| `ADD` | activation |
+| `CONV_2D` | stride, dilation, padding, activation |
+| `DEPTHWISE_CONV_2D` | stride, dilation, padding, activation, depth multiplier |
+| `FULLY_CONNECTED` | activation |
 
 ---
 
-# 83. Por que `SOFTMAX`, `MEAN` e `QUANTIZE` não aparecem aqui?
+# 83. Why are `SOFTMAX`, `MEAN`, and `QUANTIZE` absent?
 
-Porque suas informações necessárias são tratadas em outras partes do pipeline.
+Because their required information is handled elsewhere in the pipeline.
 
-Este arquivo concentra as opções específicas das operações que realmente exigem esses objetos `BuiltinOptions`.
+This file focuses on specific options of operations that require these `BuiltinOptions` objects.
 
 ---
 
-# 84. Função `same_padding()`
+# 84. The `same_padding()` function
 
-A última função é matematicamente diferente das anteriores.
+The last function is mathematically different from the others.
 
-Ela não lê o FlatBuffer.
+It does not read the FlatBuffer.
 
-Recebe diretamente:
+It directly receives:
 
 ```text
-dimensões da entrada
+input dimensions
 kernel
 stride
 dilation
 ```
 
-e calcula:
+and calculates:
 
 ```text
-padding explícito
+explicit padding
 +
-shape da saída
+output shape
 ```
 
 ---
 
-# 85. Assinatura
+# 85. Signature
 
 ```python
 def same_padding(
@@ -1653,45 +1655,45 @@ def same_padding(
 
 ---
 
-# 86. Entradas
+# 86. Inputs
 
 ### `in_h`
 
-Altura da entrada.
+Input height.
 
 ### `in_w`
 
-Largura da entrada.
+Input width.
 
 ### `kernel_h`
 
-Altura do kernel.
+Kernel height.
 
 ### `kernel_w`
 
-Largura do kernel.
+Kernel width.
 
 ### `stride_h`
 
-Stride vertical.
+Vertical stride.
 
 ### `stride_w`
 
-Stride horizontal.
+Horizontal stride.
 
 ### `dil_h`
 
-Dilatação vertical.
+Vertical dilation.
 
 ### `dil_w`
 
-Dilatação horizontal.
+Horizontal dilation.
 
 ---
 
-# 87. Saídas
+# 87. Outputs
 
-A função retorna:
+The function returns:
 
 ```python
 (
@@ -1706,15 +1708,15 @@ A função retorna:
 
 ---
 
-# 88. Por que calcular explicitamente o padding?
+# 88. Why explicitly calculate padding?
 
-No TFLite, saber apenas:
+In TFLite, knowing only:
 
 ```text
 padding = SAME
 ```
 
-não informa diretamente quantas posições precisam ser adicionadas em:
+does not directly specify how many positions must be added at:
 
 ```text
 top
@@ -1723,9 +1725,9 @@ left
 right
 ```
 
-O kernel WASM precisa dos valores concretos.
+The WASM kernel needs concrete values.
 
-Portanto:
+Therefore:
 
 ```text
 SAME
@@ -1740,9 +1742,9 @@ pad_right
 
 ---
 
-# 89. Cálculo da altura da saída
+# 89. Calculating output height
 
-Primeiro:
+First:
 
 ```python
 out_h = (
@@ -1750,7 +1752,7 @@ out_h = (
 ) // stride_h
 ```
 
-Isso equivale a:
+This is equivalent to:
 
 ```text
 out_h =
@@ -1759,20 +1761,20 @@ ceil(
 )
 ```
 
-para inteiros positivos.
+for positive integers.
 
 ---
 
-# 90. Por que essa fórmula implementa `ceil`?
+# 90. Why does this formula implement `ceil`?
 
-Considere:
+Consider:
 
 ```text
 in_h = 5
 stride_h = 2
 ```
 
-Então:
+Then:
 
 ```text
 (5 + 2 - 1) // 2
@@ -1782,7 +1784,7 @@ Então:
 3
 ```
 
-E:
+And:
 
 ```text
 ceil(5 / 2)
@@ -1792,9 +1794,9 @@ ceil(5 / 2)
 
 ---
 
-# 91. Largura da saída
+# 91. Output width
 
-O mesmo é feito:
+The same is done:
 
 ```python
 out_w = (
@@ -1804,7 +1806,7 @@ out_w = (
 
 ---
 
-# 92. Exemplo com entrada 128 × 128 e stride 2
+# 92. Example with 128 × 128 input and stride 2
 
 ```text
 out_h =
@@ -1822,11 +1824,11 @@ ceil(128 / 2)
 
 ---
 
-# 93. Kernel efetivo
+# 93. Effective kernel
 
-A dilatação altera a área efetivamente coberta pelo kernel.
+Dilation changes the area effectively covered by the kernel.
 
-O código calcula:
+The code calculates:
 
 ```python
 effective_kernel_h = (
@@ -1838,9 +1840,9 @@ effective_kernel_h = (
 
 ---
 
-# 94. Largura efetiva
+# 94. Effective width
 
-Da mesma maneira:
+Similarly:
 
 ```python
 effective_kernel_w = (
@@ -1852,7 +1854,7 @@ effective_kernel_w = (
 
 ---
 
-# 95. Kernel 3 com dilatação 1
+# 95. Kernel size 3 with dilation 1
 
 ```text
 effective_kernel =
@@ -1861,11 +1863,11 @@ effective_kernel =
 3
 ```
 
-Nenhuma mudança.
+No change.
 
 ---
 
-# 96. Kernel 3 com dilatação 2
+# 96. Kernel size 3 with dilation 2
 
 ```text
 effective_kernel =
@@ -1874,17 +1876,17 @@ effective_kernel =
 5
 ```
 
-Visualmente:
+Visually:
 
 ```text
 x . x . x
 ```
 
-São três coeficientes cobrindo cinco posições.
+Three coefficients cover five positions.
 
 ---
 
-# 97. Kernel 3 com dilatação 3
+# 97. Kernel size 3 with dilation 3
 
 ```text
 effective_kernel =
@@ -1893,7 +1895,7 @@ effective_kernel =
 7
 ```
 
-Visualmente:
+Visually:
 
 ```text
 x . . x . . x
@@ -1901,9 +1903,9 @@ x . . x . . x
 
 ---
 
-# 98. Padding total vertical
+# 98. Total vertical padding
 
-Depois:
+Then:
 
 ```python
 pad_h_total = max(
@@ -1919,45 +1921,45 @@ pad_h_total = max(
 
 ---
 
-# 99. Intuição da fórmula
+# 99. Formula intuition
 
-O termo:
+The term:
 
 ```text
 (out_h - 1) × stride_h
 ```
 
-representa a posição inicial do último kernel.
+represents the starting position of the last kernel.
 
-Ao adicionar:
+Adding:
 
 ```text
 effective_kernel_h
 ```
 
-obtemos até onde esse kernel precisa alcançar.
+gives the extent that kernel must reach.
 
-Subtrair:
+Subtracting:
 
 ```text
 in_h
 ```
 
-revela quanto falta fora da entrada original.
+reveals how much extends beyond the original input.
 
 ---
 
-# 100. Uso de `max(0, ...)`
+# 100. Using `max(0, ...)`
 
-Isso garante que:
+This ensures that:
 
 ```text
-padding total
+total padding
 ```
 
-nunca seja negativo.
+is never negative.
 
-Se a geometria não exigir preenchimento:
+If the geometry requires no padding:
 
 ```text
 padding = 0
@@ -1965,9 +1967,9 @@ padding = 0
 
 ---
 
-# 101. Padding horizontal
+# 101. Horizontal padding
 
-O mesmo cálculo ocorre:
+The same calculation applies:
 
 ```python
 pad_w_total = max(
@@ -1983,9 +1985,9 @@ pad_w_total = max(
 
 ---
 
-# 102. Divisão vertical
+# 102. Vertical split
 
-Depois:
+Then:
 
 ```python
 pad_top = (
@@ -1993,7 +1995,7 @@ pad_top = (
 )
 ```
 
-e:
+and:
 
 ```python
 pad_bottom = (
@@ -2003,15 +2005,15 @@ pad_bottom = (
 
 ---
 
-# 103. Padding par
+# 103. Even padding
 
-Se:
+If:
 
 ```text
 pad_h_total = 2
 ```
 
-então:
+then:
 
 ```text
 pad_top = 1
@@ -2021,15 +2023,15 @@ pad_bottom = 1
 
 ---
 
-# 104. Padding ímpar
+# 104. Odd padding
 
-Se:
+If:
 
 ```text
 pad_h_total = 1
 ```
 
-então:
+then:
 
 ```text
 pad_top = 0
@@ -2039,21 +2041,21 @@ pad_bottom = 1
 
 ---
 
-# 105. Consequência
+# 105. Consequence
 
-Quando o padding total é ímpar, o elemento extra fica no:
+When total padding is odd, the extra element goes to:
 
 ```text
 bottom
 ```
 
-na dimensão vertical.
+in the vertical dimension.
 
 ---
 
-# 106. Divisão horizontal
+# 106. Horizontal split
 
-A mesma lógica é usada:
+The same logic is used:
 
 ```python
 pad_left = (
@@ -2069,15 +2071,15 @@ pad_right = (
 
 ---
 
-# 107. Padding ímpar horizontal
+# 107. Odd horizontal padding
 
-Se:
+If:
 
 ```text
 pad_w_total = 1
 ```
 
-então:
+then:
 
 ```text
 pad_left = 0
@@ -2087,12 +2089,12 @@ pad_right = 1
 
 ---
 
-# 108. Exemplo 1 — kernel 3×3, stride 1
+# 108. Example 1 — 3×3 kernel, stride 1
 
-Considere:
+Consider:
 
 ```text
-entrada = 128 × 128
+input = 128 × 128
 
 kernel = 3 × 3
 
@@ -2103,7 +2105,7 @@ dilation = 1 × 1
 
 ---
 
-# 109. Saída
+# 109. Output
 
 ```text
 out_h =
@@ -2119,7 +2121,7 @@ out_w =
 
 ---
 
-# 110. Kernel efetivo
+# 110. Effective kernel
 
 ```text
 effective_kernel_h = 3
@@ -2129,7 +2131,7 @@ effective_kernel_w = 3
 
 ---
 
-# 111. Padding vertical
+# 111. Vertical padding
 
 ```text
 pad_h_total =
@@ -2146,7 +2148,7 @@ pad_h_total =
 
 ---
 
-# 112. Divisão
+# 112. Split
 
 ```text
 pad_top = 1
@@ -2158,7 +2160,7 @@ pad_bottom = 1
 
 # 113. Horizontal
 
-Da mesma forma:
+Similarly:
 
 ```text
 pad_left = 1
@@ -2168,7 +2170,7 @@ pad_right = 1
 
 ---
 
-# 114. Resultado
+# 114. Result
 
 ```python
 (
@@ -2183,10 +2185,10 @@ pad_right = 1
 
 ---
 
-# 115. Visualmente
+# 115. Visual representation
 
 ```text
-entrada 128×128
+128×128 input
        │
        │ SAME
        ▼
@@ -2199,17 +2201,17 @@ right  = 1
 
        │
        ▼
-saída 128×128
+128×128 output
 ```
 
 ---
 
-# 116. Exemplo 2 — kernel 3×3, stride 2
+# 116. Example 2 — 3×3 kernel, stride 2
 
-Considere:
+Consider:
 
 ```text
-entrada = 128 × 128
+input = 128 × 128
 
 kernel = 3 × 3
 
@@ -2218,7 +2220,7 @@ stride = 2 × 2
 
 ---
 
-# 117. Shape da saída
+# 117. Output shape
 
 ```text
 out_h =
@@ -2227,7 +2229,7 @@ ceil(128 / 2)
 64
 ```
 
-e:
+and:
 
 ```text
 out_w = 64
@@ -2235,7 +2237,7 @@ out_w = 64
 
 ---
 
-# 118. Padding total
+# 118. Total padding
 
 ```text
 pad_h_total =
@@ -2252,7 +2254,7 @@ pad_h_total =
 
 ---
 
-# 119. Divisão vertical
+# 119. Vertical split
 
 ```text
 pad_top = 0
@@ -2272,7 +2274,7 @@ pad_right = 1
 
 ---
 
-# 121. Resultado
+# 121. Result
 
 ```python
 (
@@ -2287,32 +2289,32 @@ pad_right = 1
 
 ---
 
-# 122. Assimetria é esperada
+# 122. Asymmetry is expected
 
-Nesse exemplo:
+In this example:
 
 ```text
 top ≠ bottom
 ```
 
-e:
+and:
 
 ```text
 left ≠ right
 ```
 
-Isso não representa erro.
+This is not an error.
 
-Quando o padding necessário é ímpar, a distribuição precisa necessariamente ser assimétrica.
+When the required padding is odd, its distribution must be asymmetric.
 
 ---
 
-# 123. Exemplo 3 — dilatação
+# 123. Example 3 — dilation
 
-Considere:
+Consider:
 
 ```text
-entrada = 10 × 10
+input = 10 × 10
 
 kernel = 3 × 3
 
@@ -2323,7 +2325,7 @@ dilation = 2
 
 ---
 
-# 124. Kernel efetivo
+# 124. Effective kernel
 
 ```text
 effective_kernel =
@@ -2335,7 +2337,7 @@ effective_kernel =
 
 ---
 
-# 125. Saída SAME
+# 125. SAME output
 
 ```text
 out_h = 10
@@ -2345,7 +2347,7 @@ out_w = 10
 
 ---
 
-# 126. Padding total
+# 126. Total padding
 
 ```text
 pad_total =
@@ -2359,7 +2361,7 @@ pad_total =
 
 ---
 
-# 127. Divisão
+# 127. Split
 
 ```text
 top = 2
@@ -2371,42 +2373,42 @@ left = 2
 right = 2
 ```
 
-A dilatação aumenta o padding necessário porque aumenta o tamanho efetivo do kernel.
+Dilation increases the required padding because it increases effective kernel size.
 
 ---
 
-# 128. Relação com `padding_kind`
+# 128. Relationship with `padding_kind`
 
-`same_padding()` não recebe:
+`same_padding()` does not receive:
 
 ```text
 padding_kind
 ```
 
-Ela é chamada apenas quando o código superior já determinou que a operação precisa de `SAME`.
+It is called only after higher-level code determines that the operation requires `SAME`.
 
-A lógica posterior é conceitualmente:
+The subsequent logic is conceptually:
 
 ```text
 padding_kind == SAME?
         │
-        ├── sim
+        ├── yes
         │    ↓
         │ same_padding(...)
         │    ↓
         │ top/bottom/left/right
         │
-        └── não
+        └── no
              ↓
-           padding zero
-           ou tratamento correspondente
+           zero padding
+           or corresponding handling
 ```
 
 ---
 
-# 129. Relação com `layer_params.py`
+# 129. Relationship to `layer_params.py`
 
-`layer_params.py` utiliza esses valores para preencher campos como:
+`layer_params.py` uses these values to fill fields such as:
 
 ```text
 stride_h
@@ -2425,9 +2427,9 @@ act
 
 ---
 
-# 130. Exemplo de transformação
+# 130. Transformation example
 
-TFLite fornece:
+TFLite provides:
 
 ```text
 CONV_2D
@@ -2442,7 +2444,7 @@ Padding = SAME
 FusedActivation = RELU6
 ```
 
-`operator_operations.py` devolve:
+`operator_operations.py` returns:
 
 ```text
 stride_h = 2
@@ -2456,13 +2458,13 @@ padding_kind = 0
 activation = ACT_RELU6
 ```
 
-Depois:
+Then:
 
 ```text
 same_padding()
 ```
 
-pode produzir:
+may produce:
 
 ```text
 pad_t = 0
@@ -2471,11 +2473,11 @@ pad_l = 0
 pad_r = 1
 ```
 
-Finalmente `layer_params.py` reúne tudo.
+Finally, `layer_params.py` combines everything.
 
 ---
 
-# 131. Fluxo completo
+# 131. Complete flow
 
 ```text
 TFLite Operator
@@ -2508,9 +2510,9 @@ layer_params.py
 
 ---
 
-# 132. Por que calcular `out_h` e `out_w` aqui?
+# 132. Why calculate `out_h` and `out_w` here?
 
-O shape de saída existe no próprio TFLite, mas o runtime precisa que a geometria utilizada pelo kernel seja coerente com:
+TFLite already contains the output shape, but the runtime needs kernel geometry consistent with:
 
 ```text
 input
@@ -2520,98 +2522,98 @@ dilation
 padding
 ```
 
-A função retorna:
+The function returns:
 
 ```text
 out_h
 out_w
 ```
 
-como parte do cálculo matemático do `SAME`.
+as part of the mathematical calculation of `SAME`.
 
-Isso permite utilizar a mesma lógica para preencher a estrutura de execução.
+This allows using the same logic to fill the execution structure.
 
 ---
 
-# 133. Distinção entre shape do tensor e shape calculado
+# 133. Tensor shape versus calculated shape
 
-Existem portanto duas possíveis fontes:
+There are therefore two possible sources:
 
 ```text
 Tensor.ShapeAsNumpy()
 ```
 
-e:
+and:
 
 ```text
 same_padding(...)
 ```
 
-A primeira descreve o modelo.
+The first describes the model.
 
-A segunda deriva a geometria a partir dos parâmetros da operação.
+The second derives geometry from operation parameters.
 
-Essa redundância também pode servir como mecanismo de validação futura.
+This redundancy may also support future validation.
 
 ---
 
-# 134. Possível validação futura
+# 134. Possible future validation
 
-Poderíamos verificar:
-
-```text
-out_h calculado
-==
-altura do tensor de saída
-```
-
-e:
+We could check:
 
 ```text
-out_w calculado
+calculated out_h
 ==
-largura do tensor de saída
+output tensor height
 ```
 
-Caso contrário:
+and:
+
+```text
+calculated out_w
+==
+output tensor width
+```
+
+Otherwise:
 
 ```text
 RuntimeError
 ```
 
-Isso permitiria detectar inconsistências de parsing ou implementação.
+This would detect parsing or implementation inconsistencies.
 
 ---
 
-# 135. Tratamento de exceções
+# 135. Exception handling
 
-Uma característica marcante deste módulo é o uso de:
+A notable feature of this module is its use of:
 
 ```python
 except Exception:
     pass
 ```
 
-em vários parsers.
+in several parsers.
 
 ---
 
-# 136. Benefício
+# 136. Benefit
 
-Isso aumenta a compatibilidade com diferenças entre versões do binding.
+This improves compatibility across binding versions.
 
-O pipeline não depende de cada método estar disponível exatamente da mesma forma.
+The pipeline does not require every method to be available in exactly the same form.
 
 ---
 
-# 137. Custo dessa estratégia
+# 137. Cost of this strategy
 
-Por outro lado, uma exceção inesperada também pode ser convertida silenciosamente em um valor padrão.
+An unexpected exception may also be silently converted into a default value.
 
-Exemplo:
+Example:
 
 ```text
-erro ao interpretar Conv2DOptions
+error interpreting Conv2DOptions
        ↓
 stride = 1
 dilation = 1
@@ -2621,76 +2623,76 @@ activation = NONE
 
 ---
 
-# 138. Implicação
+# 138. Implication
 
-Para o modelo atual, cuja saída foi validada, essa estratégia preserva o comportamento do código original.
+For the current model, whose output was validated, this strategy preserves the original code's behavior.
 
-Para uma ferramenta genérica futura, será interessante separar:
+A future generic tool should distinguish:
 
 ```text
-diferença conhecida do binding
+known binding difference
 ```
 
-de:
+from:
 
 ```text
-erro real no modelo
+actual model error
 ```
 
 ---
 
-# 139. Estratégia futura possível
+# 139. Possible future strategy
 
-Em vez de:
+Instead of:
 
 ```python
 except Exception:
     pass
 ```
 
-poderíamos capturar apenas exceções específicas.
+we could catch only specific exceptions.
 
-Ou utilizar validações explícitas:
+Or use explicit validations:
 
 ```text
-BuiltinOptions ausente
+missing BuiltinOptions
     ↓
-fallback permitido
+fallback allowed
 
-campo obrigatório ausente
+missing required field
     ↓
-erro
+error
 ```
 
 ---
 
-# 140. Por que não alterar agora?
+# 140. Why not change it now?
 
-O objetivo desta etapa de refatoração e documentação é primeiro:
+This refactoring and documentation stage first aims to:
 
 ```text
-preservar o comportamento
+preserve the behavior
 ```
 
-e tornar explícitas as decisões existentes.
+and make existing decisions explicit.
 
-Modificar simultaneamente todos os fallbacks dificultaria saber se diferenças posteriores vêm de:
+Changing all fallbacks at the same time would make it difficult to determine whether later differences come from:
 
 ```text
-refatoração
+refactoring
 ```
 
-ou:
+or:
 
 ```text
-mudança semântica
+semantic change
 ```
 
 ---
 
-# 141. Separação entre parsing e semântica do kernel
+# 141. Separating parsing and kernel semantics
 
-Este módulo conhece:
+This module knows:
 
 ```text
 StrideH
@@ -2701,48 +2703,48 @@ Activation
 DepthMultiplier
 ```
 
-mas não conhece:
+but does not know:
 
 ```text
-como fazer uma convolução em WAT
+how to perform convolution in WAT
 ```
 
-Essa separação é importante.
+This separation matters.
 
 ---
 
-# 142. Ele não executa a convolução
+# 142. It does not execute convolution
 
-`parse_conv2d_options()` apenas produz:
-
-```text
-parâmetros
-```
-
-Não existe aqui:
+`parse_conv2d_options()` only produces:
 
 ```text
-loop em H
-loop em W
-loop em canais
-multiplicação peso × entrada
-acumulador
-requantização
+parameters
 ```
 
-Essas operações pertencem ao runtime WAT.
+There is no:
+
+```text
+loop over H
+loop over W
+loop over channels
+weight × input multiplication
+accumulator
+requantization
+```
+
+These operations belong to the WAT runtime.
 
 ---
 
-# 143. Da mesma forma para depthwise
+# 143. Same for depthwise
 
-Este módulo descobre:
+This module finds:
 
 ```text
 depth_multiplier
 ```
 
-mas não decide como indexar:
+but does not decide how to index:
 
 ```text
 input channel
@@ -2750,98 +2752,98 @@ output channel
 weight channel
 ```
 
-Isso pertence ao kernel `DEPTHWISE_CONV_2D`.
+That belongs to the `DEPTHWISE_CONV_2D` kernel.
 
 ---
 
-# 144. E para ativação
+# 144. And for activation
 
-O módulo retorna:
+The module returns:
 
 ```text
 ACT_RELU6
 ```
 
-mas não calcula:
+but does not calculate:
 
 ```text
 min(max(x, 0), 6)
 ```
 
-nem sua versão quantizada.
+or its quantized version.
 
-A execução pertence ao runtime.
+Execution belongs to the runtime.
 
 ---
 
-# 145. Relação com `quantization.py`
+# 145. Relationship with `quantization.py`
 
-Quando:
+When:
 
 ```text
 activation = ACT_RELU6
 ```
 
-a execução também depende do:
+execution also depends on:
 
 ```text
 Q6
 ```
 
-calculado por `quantization.py`.
+calculated by `quantization.py`.
 
-Portanto:
+Therefore:
 
 ```text
 operator_operations.py
         │
-        └── "esta camada usa ReLU6"
+        └── "this layer uses ReLU6"
 
 quantization.py
         │
-        └── "este é o valor quantizado correspondente a 6"
+        └── "this is the quantized value corresponding to 6"
 
 layer_params.py
         │
-        └── combina ambos
+        └── combines both
 ```
 
 ---
 
-# 146. Exemplo
+# 146. Example
 
-Uma camada pode receber:
+A layer may receive:
 
 ```text
 activation = ACT_RELU6
 ```
 
-e:
+and:
 
 ```text
-q6_ptr = endereço da tabela Q6
+q6_ptr = Q6 table address
 ```
 
-Então o kernel sabe:
+The kernel then knows to:
 
 ```text
-aplicar limite superior
-usando Q6 correspondente
+apply the upper bound
+using the corresponding Q6
 ```
 
 ---
 
-# 147. Relação com flags
+# 147. Relationship with flags
 
-O módulo não define diretamente:
+The module does not directly define:
 
 ```text
 FLAG_PADDING_SAME
 ```
 
-Essa representação pertence à camada de `LayerParam`.
+This representation belongs to the `LayerParam` stage.
 
-Aqui é produzido apenas:
+Here it only produces:
 
 ```text
 padding_kind
@@ -2849,9 +2851,9 @@ padding_kind
 
 ---
 
-# 148. Conversão posterior
+# 148. Subsequent conversion
 
-Conceitualmente:
+Conceptually:
 
 ```text
 padding_kind == 0
@@ -2861,65 +2863,65 @@ SAME
 FLAG_PADDING_SAME
 ```
 
-Essa transformação pertence à construção da camada.
+This transformation belongs to layer construction.
 
 ---
 
-# 149. Por que não retornar diretamente o flag?
+# 149. Why not return the flag directly?
 
-Porque este módulo deve permanecer o mais próximo possível do conceito da operação:
+Because this module should remain as close as possible to the operation's concept:
 
 ```text
-qual é o tipo de padding?
+what is the padding type?
 ```
 
-A escolha de bits dentro de:
+Choosing bits within:
 
 ```text
 LayerParam.flags
 ```
 
-é específica da representação do runtime.
+is specific to the runtime representation.
 
 ---
 
-# 150. Estrutura modular
+# 150. Modular structure
 
 ```text
 operator_operations.py
       ↓
-semântica da opção
+option semantics
 
 layer_params.py
       ↓
-codificação da opção
+option encoding
 
 params_blob.py
       ↓
-serialização da codificação
+serialization of the encoding
 
 WAT
       ↓
-execução
+execution
 ```
 
 ---
 
-# 151. Fallbacks atuais resumidos
+# 151. Current fallback summary
 
-## Ativação desconhecida
-
-```text
-ACT_NONE
-```
-
-## ADD não interpretável
+## Unknown activation
 
 ```text
 ACT_NONE
 ```
 
-## CONV não interpretável
+## Unreadable ADD options
+
+```text
+ACT_NONE
+```
+
+## Unreadable CONV options
 
 ```text
 stride = 1
@@ -2928,7 +2930,7 @@ padding_kind = 1
 activation = NONE
 ```
 
-## DEPTHWISE não interpretável
+## Unreadable DEPTHWISE options
 
 ```text
 stride = 1
@@ -2938,7 +2940,7 @@ activation = NONE
 depth_multiplier = 1
 ```
 
-## FC não interpretável
+## Unreadable FC options
 
 ```text
 ACT_NONE
@@ -2946,25 +2948,25 @@ ACT_NONE
 
 ---
 
-# 152. Por que documentar os defaults?
+# 152. Why document defaults?
 
-Porque eles influenciam diretamente o artefato gerado.
+Because they directly affect the generated artifact.
 
-Se uma opção não for lida corretamente, o runtime não recebe:
+If an option is not read correctly, the runtime does not receive:
 
 ```text
 None
 ```
 
-Ele recebe valores concretos.
+It receives concrete values.
 
-Portanto o comportamento resultante continua definido, embora possa não corresponder ao modelo pretendido.
+The resulting behavior therefore remains defined, although it may not match the intended model.
 
 ---
 
-# 153. Invariantes esperados
+# 153. Expected invariants
 
-Para operações suportadas do modelo atual, espera-se:
+For supported operations in the current model, we expect:
 
 ```text
 stride_h >= 1
@@ -2978,9 +2980,9 @@ dil_w >= 1
 
 ---
 
-# 154. Para depthwise
+# 154. For depthwise
 
-Também:
+Also:
 
 ```text
 depth_mult >= 1
@@ -2988,9 +2990,9 @@ depth_mult >= 1
 
 ---
 
-# 155. Ativação
+# 155. Activation
 
-O runtime atual espera um dos valores:
+The current runtime expects one of:
 
 ```text
 ACT_NONE
@@ -3004,19 +3006,19 @@ ACT_RELU6
 
 # 156. Padding
 
-O código atual reduz o estado relevante a:
+The current code reduces the relevant state to:
 
 ```text
 SAME
 ```
 
-ou:
+or:
 
 ```text
-não-SAME
+non-SAME
 ```
 
-através de:
+through:
 
 ```python
 padding_is_same()
@@ -3024,9 +3026,9 @@ padding_is_same()
 
 ---
 
-# 157. `same_padding()` e valores positivos
+# 157. `same_padding()` and positive values
 
-A função pressupõe dimensionalidades coerentes como:
+The function assumes consistent dimensions such as:
 
 ```text
 in_h > 0
@@ -3046,35 +3048,35 @@ dil_h > 0
 dil_w > 0
 ```
 
-O código não valida explicitamente essas condições.
+The code does not explicitly validate these conditions.
 
 ---
 
-# 158. Stride zero
+# 158. Zero stride
 
-Por exemplo, se:
+For example, if:
 
 ```text
 stride_h = 0
 ```
 
-a função acabaria tentando uma divisão por zero.
+the function would attempt division by zero.
 
-Isso não é esperado em um modelo TFLite válido utilizado pelo projeto.
-
----
-
-# 159. Kernel zero
-
-Da mesma maneira, um kernel com dimensão zero produziria uma geometria sem sentido.
-
-Essa validação não pertence à implementação atual.
+This is not expected in a valid TFLite model used by the project.
 
 ---
 
-# 160. Exemplo completo de uma CONV
+# 159. Zero kernel size
 
-Suponha:
+Likewise, a zero-sized kernel dimension would produce meaningless geometry.
+
+The current implementation does not include this validation.
+
+---
+
+# 160. Complete CONV example
+
+Suppose:
 
 ```text
 input:
@@ -3100,7 +3102,7 @@ ReLU6
 
 # 161. Parsing
 
-`parse_conv2d_options()` retorna:
+`parse_conv2d_options()` returns:
 
 ```python
 (
@@ -3117,7 +3119,7 @@ ReLU6
 
 # 162. Padding
 
-`same_padding()` recebe:
+`same_padding()` receives:
 
 ```python
 same_padding(
@@ -3134,7 +3136,7 @@ same_padding(
 
 ---
 
-# 163. Resultado
+# 163. Result
 
 ```text
 pad_top = 0
@@ -3152,9 +3154,9 @@ out_w = 64
 
 ---
 
-# 164. Informações entregues para `LayerParam`
+# 164. Information passed to `LayerParam`
 
-Conceitualmente:
+Conceptually:
 
 ```text
 stride_h = 2
@@ -3178,25 +3180,25 @@ out_w = 64
 
 # 165. Runtime
 
-Essas informações permitem que o kernel WAT saiba:
+This information tells the WAT kernel:
 
 ```text
-onde posicionar o kernel
+where to position the kernel
 
-quanto avançar
+how far to advance
 
-quando acessar padding
+when to access padding
 
-quantas posições produzir
+how many positions to produce
 
-qual ativação aplicar
+which activation to apply
 ```
 
 ---
 
-# 166. Exemplo completo de Depthwise
+# 166. Complete Depthwise example
 
-Suponha:
+Suppose:
 
 ```text
 input:
@@ -3250,7 +3252,7 @@ right = 1
 
 ---
 
-# 169. Saída espacial
+# 169. Spatial output
 
 ```text
 64 × 64
@@ -3258,9 +3260,9 @@ right = 1
 
 ---
 
-# 170. Número de canais
+# 170. Channel count
 
-Com:
+With:
 
 ```text
 Cin = 32
@@ -3268,7 +3270,7 @@ Cin = 32
 depth_multiplier = 1
 ```
 
-temos:
+we have:
 
 ```text
 Cout = 32
@@ -3276,33 +3278,33 @@ Cout = 32
 
 ---
 
-# 171. Exemplo de FC
+# 171. FC example
 
-Uma `FULLY_CONNECTED` pode possuir:
+A `FULLY_CONNECTED` may have:
 
 ```text
 fused activation = NONE
 ```
 
-Então:
+Then:
 
 ```python
 parse_fc_options(...)
 ```
 
-retorna:
+returns:
 
 ```python
 ACT_NONE
 ```
 
-Não há stride, dilation ou padding para essa representação.
+This representation has no stride, dilation, or padding.
 
 ---
 
-# 172. Exemplo de ADD
+# 172. ADD example
 
-Se:
+If:
 
 ```text
 ADD
@@ -3310,71 +3312,71 @@ ADD
 ReLU6
 ```
 
-estiver fundido:
+are fused:
 
 ```python
 parse_add_options(...)
 ```
 
-retorna:
+returns:
 
 ```python
 ACT_RELU6
 ```
 
-Essa informação será usada junto aos parâmetros específicos de quantização calculados para o ADD.
+This information will be used with the specific quantization parameters calculated for ADD.
 
 ---
 
-# 173. O que este módulo deliberadamente não faz
+# 173. What this module deliberately does not do
 
-`operator_operations.py` não:
+`operator_operations.py` does not:
 
 ```text
-lê pesos
+read weights
 
-lê bias
+read bias
 
-calcula quantização
+compute quantization
 
-calcula multiplier
+calculate multiplier
 
-calcula shift
+calculate shift
 
-calcula Q6
+calculate Q6
 
-aloca slots
+allocate slots
 
-calcula endereços de memória
+calculate memory addresses
 
-serializa LayerParam
+serialize LayerParam
 
-gera WAT
+generate WAT
 ```
 
 ---
 
-# 174. Responsabilidade exata
+# 174. Exact responsibility
 
-Ele responde:
+It answers:
 
 ```text
-quais são as opções operacionais
-que descrevem como esta camada deve executar?
+what operational options
+describe how this layer should execute?
 ```
 
 ---
 
-# 175. Tipos de informação tratados
+# 175. Types of information handled
 
 ```text
-geometria
+geometry
     ↓
 stride
 dilation
 padding
 
-ativação
+activation
     ↓
 NONE
 RELU
@@ -3387,7 +3389,7 @@ depth_multiplier
 
 ---
 
-# 176. Relação com outros módulos
+# 176. Relationship with other modules
 
 ```text
 TFLite
@@ -3403,7 +3405,7 @@ operator_operations.py
 layer_params.py
 ```
 
-Enquanto:
+While:
 
 ```text
 quantization.py
@@ -3416,7 +3418,7 @@ quantization.py
 layer_params.py
 ```
 
-E:
+And:
 
 ```text
 memory.py
@@ -3429,11 +3431,11 @@ layer_params.py
 
 ---
 
-# 177. `layer_params.py` como ponto de convergência
+# 177. `layer_params.py` as the point of convergence
 
-Isso mostra por que o próximo módulo será especialmente importante.
+This shows why the next module is especially important.
 
-Ele reúne:
+It combines:
 
 ```text
 graph
@@ -3445,9 +3447,9 @@ memory
 operator options
 ```
 
-em uma estrutura única.
+into one structure.
 
-Visualmente:
+Visually:
 
 ```text
                 graph.py
@@ -3467,31 +3469,31 @@ memory.py ─────────┘
 
 ---
 
-# 178. Possível questão de nomenclatura
+# 178. Possible naming issue
 
-O nome:
+The name:
 
 ```text
 operator_operations.py
 ```
 
-funciona, mas semanticamente o módulo faz principalmente parsing de:
+works, but semantically the module mainly parses:
 
 ```text
 operator options
 ```
 
-e cálculo de padding.
+and calculates padding.
 
-Por isso um nome como:
+A name such as:
 
 ```text
 operator_options.py
 ```
 
-também descreveria bem sua função.
+would also describe its role well.
 
-Entretanto, a documentação deve seguir o nome efetivamente utilizado no projeto enquanto ele permanecer:
+Documentation must follow the name actually used by the project while it remains:
 
 ```text
 operator_operations.py
@@ -3499,31 +3501,31 @@ operator_operations.py
 
 ---
 
-# 179. Resumo das funções
+# 179. Function summary
 
-| Função                     | Responsabilidade                              |
+| Function | Responsibility |
 | -------------------------- | --------------------------------------------- |
-| `parse_fused_activation()` | Converter ativação TFLite para código interno |
-| `parse_add_options()`      | Extrair ativação do ADD                       |
-| `padding_is_same()`        | Identificar padding SAME                      |
-| `parse_conv2d_options()`   | Extrair opções da CONV_2D                     |
-| `parse_dwconv2d_options()` | Extrair opções da DEPTHWISE_CONV_2D           |
-| `parse_fc_options()`       | Extrair ativação da FULLY_CONNECTED           |
-| `same_padding()`           | Calcular padding explícito e shape de saída   |
+| `parse_fused_activation()` | Convert TFLite activation to internal code |
+| `parse_add_options()` | Extract ADD activation |
+| `padding_is_same()` | Identify SAME padding |
+| `parse_conv2d_options()` | Extract CONV_2D options |
+| `parse_dwconv2d_options()` | Extract DEPTHWISE_CONV_2D options |
+| `parse_fc_options()` | Extract FULLY_CONNECTED activation |
+| `same_padding()` | Calculate explicit padding and output shape |
 
 ---
 
-# 180. Resumo das constantes
+# 180. Constant summary
 
-| Constante   | Significado              |
+| Constant | Meaning |
 | ----------- | ------------------------ |
-| `ACT_NONE`  | Nenhuma ativação fundida |
-| `ACT_RELU`  | ReLU                     |
-| `ACT_RELU6` | ReLU6                    |
+| `ACT_NONE` | No fused activation |
+| `ACT_RELU` | ReLU |
+| `ACT_RELU6` | ReLU6 |
 
 ---
 
-# 181. Resumo do parsing de CONV
+# 181. CONV parsing summary
 
 ```text
 Conv2DOptions
@@ -3548,7 +3550,7 @@ Conv2DOptions
 
 ---
 
-# 182. Resumo do parsing de Depthwise
+# 182. Depthwise parsing summary
 
 ```text
 DepthwiseConv2DOptions
@@ -3575,22 +3577,22 @@ DepthwiseConv2DOptions
 
 ---
 
-# 183. Resumo de `same_padding()`
+# 183. `same_padding()` summary
 
 ```text
-entrada
+input
 kernel
 stride
 dilation
     │
     ▼
-kernel efetivo
+effective kernel
     │
     ▼
-shape SAME da saída
+SAME output shape
     │
     ▼
-padding total
+total padding
     │
     ├── top
     ├── bottom
@@ -3600,9 +3602,9 @@ padding total
 
 ---
 
-# 184. Fórmulas principais
+# 184. Main formulas
 
-## Shape da saída
+## Output shape
 
 ```text
 out_h =
@@ -3612,7 +3614,7 @@ out_w =
 ceil(in_w / stride_w)
 ```
 
-Implementadas como:
+Implemented as:
 
 ```text
 (in + stride - 1) // stride
@@ -3620,7 +3622,7 @@ Implementadas como:
 
 ---
 
-## Kernel efetivo
+## Effective kernel
 
 ```text
 effective_kernel_h =
@@ -3634,7 +3636,7 @@ effective_kernel_w =
 
 ---
 
-## Padding total
+## Total padding
 
 ```text
 pad_h_total =
@@ -3658,7 +3660,7 @@ max(
 
 ---
 
-## Distribuição
+## Distribution
 
 ```text
 pad_top =
@@ -3682,17 +3684,17 @@ pad_w_total - pad_left
 
 ---
 
-# 185. Síntese
+# 185. Summary
 
-`operator_operations.py` transforma a configuração específica armazenada nos operadores TFLite em uma representação simples utilizada pelo restante do extrator.
+`operator_operations.py` converts the specific configuration stored in TFLite operators into a simple representation used by the rest of the extractor.
 
-Sua primeira responsabilidade é interpretar:
+Its first responsibility is to interpret:
 
 ```text
-ativação fundida
+fused activation
 ```
 
-normalizando:
+normalizing:
 
 ```text
 NONE
@@ -3700,7 +3702,7 @@ RELU
 RELU6
 ```
 
-para os códigos internos:
+to the internal codes:
 
 ```text
 ACT_NONE
@@ -3708,7 +3710,7 @@ ACT_RELU
 ACT_RELU6
 ```
 
-Sua segunda responsabilidade é interpretar as opções geométricas das convoluções:
+Its second responsibility is to interpret convolution geometry options:
 
 ```text
 stride
@@ -3716,19 +3718,19 @@ dilation
 padding
 ```
 
-e, no caso da convolução depthwise:
+and, for depthwise convolution:
 
 ```text
 depth_multiplier
 ```
 
-Sua terceira responsabilidade é transformar a descrição abstrata:
+Its third responsibility is to convert the abstract description:
 
 ```text
 padding = SAME
 ```
 
-em valores concretos:
+into concrete values:
 
 ```text
 pad_top
@@ -3739,20 +3741,20 @@ out_h
 out_w
 ```
 
-que podem ser utilizados diretamente pelo kernel WebAssembly.
+that the WebAssembly kernel can use directly.
 
-Assim, o módulo atua como fronteira entre:
-
-```text
-schema específico do TFLite
-```
-
-e:
+The module thus separates:
 
 ```text
-representação operacional do runtime
+the TFLite-specific schema
 ```
 
-sem conhecer pesos, quantização, memória ou o código WAT propriamente dito.
+and:
 
-O resultado é que `layer_params.py` não precisa compreender os detalhes do FlatBuffer. Ele recebe valores já normalizados e pode concentrar-se exclusivamente em montar a estrutura binária que será consumida pelo runtime.
+```text
+the runtime's operational representation
+```
+
+without knowing weights, quantization, memory, or the WAT code itself.
+
+As a result, `layer_params.py` does not need to understand FlatBuffer details. It receives normalized values and can focus exclusively on assembling the binary structure consumed by the runtime.

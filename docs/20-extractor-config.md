@@ -1,46 +1,48 @@
-# 20 — Constantes compartilhadas do extrator
+[English](20-extractor-config.md) | [Português (Brasil)](20-extractor-config.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/config.py](../extractor/config.py)
+# 20 — Shared extractor constants
 
-## Responsabilidade e posição no pipeline
+[Index](README.md) · Source: [extractor/config.py](../extractor/config.py)
 
-O módulo contém apenas `BATCH=1`, `ALIGN=16` e `KERNEL_BASE_HINT=2048`. Não recebe parâmetros, não tem funções e não escreve arquivos. `ModelPipeline` importa essas constantes e as passa explicitamente aos cálculos de memória. Não há mais caminhos de modelo, template ou relatório nesse arquivo.
+## Responsibility and position in the pipeline
 
-| Constante | Consumidor | Efeito real |
+The module contains only `BATCH=1`, `ALIGN=16`, and `KERNEL_BASE_HINT=2048`. It takes no parameters, has no functions, and writes no files. `ModelPipeline` imports these constants and passes them explicitly to memory calculations. This file no longer contains model, template, or report paths.
+
+| Constant | Consumer | Actual effect |
 |---|---|---|
-| BATCH | `calculate_slot_bytes` → `tensor_numel` | Substitui dimensões negativas pelo valor 1 na contagem; não implementa batching de imagens |
-| ALIGN | Layout de blobs, slots e parâmetros | Alinha bases/tamanhos em múltiplos de 16 |
-| KERNEL_BASE_HINT | `calculate_parameter_layout` | Inicia a região WEIGHTS em `align_up(2048,16)` |
+| BATCH | `calculate_slot_bytes` → `tensor_numel` | Replaces negative dimensions with 1 when counting; does not implement image batching |
+| ALIGN | Blob, slot, and parameter layout | Aligns bases/sizes to multiples of 16 |
+| KERNEL_BASE_HINT | `calculate_parameter_layout` | Starts the WEIGHTS region at `align_up(2048,16)` |
 
 ```text
 config.py                         model.toml
-   │ constantes compartilhadas       │ escolhas por pacote
-   └───────────────┬──────────────────┘
-                   ▼
-              ModelPipeline
-                   │
-                   ├── memory: ALIGN / base de pesos / BATCH
-                   └── slots: num_slots do manifest
+   │ shared constants                │ per-package choices
+   └────────────────┬────────────────┘
+                    ▼
+               ModelPipeline
+                    │
+                    ├── memory: ALIGN / weight base / BATCH
+                    └── slots: num_slots from manifest
 ```
 
-Entram constantes e configuração do pacote; o pipeline encaminha cada valor ao módulo responsável. Saem decisões de layout. As constantes são genéricas do runtime atual; número de slots é lido do modelo, mas validado como 3. Alterar BATCH não supera a validação de entrada batch 1 em `ModelPipeline`.
+Constants and package configuration enter the pipeline, which forwards each value to the responsible module. Layout decisions are the output. These constants apply to the current runtime in general; the slot count is read from the model but validated as 3. Changing BATCH does not bypass the batch-1 input validation in `ModelPipeline`.
 
-## Invariantes e armadilhas
+## Invariants and pitfalls
 
-`align_up` em `memory.py` usa máscara de bits, exigindo alinhamento positivo e potência de dois para a fórmula funcionar como pretendido. Não existe validação dessa condição no módulo de configuração. O espaço abaixo de 2048 reserva as flags usadas pelo template, mas não tem um allocator independente. Reduzir essa base pode sobrepor áreas de controle. A constante é chamada HINT, porém o código não procura outro endereço: apenas a alinha.
+`align_up` in `memory.py` uses a bit mask, requiring positive, power-of-two alignment for the formula to work as intended. The configuration module does not validate this condition. The space below 2048 reserves the flags used by the template, but has no independent allocator. Reducing this base can overlap control areas. Although the constant is called HINT, the code does not search for another address: it simply aligns it.
 
-## Migração documental
+## Documentation migration
 
-Textos antigos sobre `MODEL_PATH`, `WAT_TEMPLATE_PATH`, `OUT_WAT_PATH`, `REPORTS_DIR` e `NUM_SLOTS` como globais descrevem a arquitetura anterior. Agora os caminhos vêm de `ModelPackage`, `ModelConfig` e `model.toml`. Este módulo não depende de `Path`, de TOML nem do pacote.
+Older descriptions of `MODEL_PATH`, `WAT_TEMPLATE_PATH`, `OUT_WAT_PATH`, `REPORTS_DIR`, and `NUM_SLOTS` as globals describe the previous architecture. Paths now come from `ModelPackage`, `ModelConfig`, and `model.toml`. This module does not depend on `Path`, TOML, or the package.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [01-configuracao.md](historico/01-configuracao.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [01-configuracao.md](historico/01-configuracao.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

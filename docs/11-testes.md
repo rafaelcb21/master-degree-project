@@ -1,54 +1,50 @@
-# 11 — Testes e alcance da validação
+[English](11-testes.md) | [Português (Brasil)](11-testes.pt-BR.md)
 
-[Índice](README.md) · Fonte: [tests/test_model_packages.py](../tests/test_model_packages.py)
+# 11 — Tests and validation scope
 
-## Execução e organização
+[Index](README.md) · Source: [tests/test_model_packages.py](../tests/test_model_packages.py)
+
+## Execution and organization
 
 ```powershell
 python -m unittest discover -s tests -v
 ```
 
-Há uma classe `ModelPackagesTests(unittest.TestCase)` com sete métodos. Depende de `tempfile`, `re`, `struct`, `Path`, `SimpleNamespace`, `unittest.mock.patch`, dos adapters e do extrator; um teste importa Wasmtime. Não requer pytest. `if __name__ == "__main__": unittest.main()` também permite execução direta, desde que o repositório esteja no caminho de importação.
+ModelPackagesTests(unittest.TestCase) contains seven methods. Dependencies are tempfile, re, struct, Path, SimpleNamespace, unittest.mock.patch, adapters and extractor; one test imports Wasmtime. pytest is not required. The unittest.main() entry point also supports direct execution if the repository is on the import path.
 
-| Método | Grupo | Intenção, execução e regressão protegida |
+| Method | Group | Execution and protected regression |
 |---|---|---|
-| `test_wasm_quantize_uses_output_type_at_any_layer_index` | ABI/QUANTIZE/dtypes | Lê o template ativo de drowsiness, substitui placeholders para um módulo de uma página, grava um WASM temporário e escreve manualmente 29 int32 na memória. Chama o export `quantize` no índice 0 com flags 3: entrada bytes `[128,0,127]` como INT8 deve virar UINT8 `[0,128,255]`. Depois usa flags 0 e converte UINT8 `[0,128,255]` para INT8 representado por bytes `[128,0,127]`. Evita voltar à dependência do índice fixo 67. |
-| `test_paths_are_relative_to_package` | Paths/fontes | Carrega todos os pacotes, valida fontes, verifica que o WAT gerado fica em `root/generated` e difere do template. Protege convenção de destinos, mas não muda cwd nem testa confinamento de paths. |
-| `test_unknown_contract_rejected` | Manifesto/ABI | Copia o manifest de sonolência para diretório temporário e troca v1 por v2; exige `ValueError` contendo “Contrato”. Evita aceitação silenciosa de versão não implementada. |
-| `test_synthetic_layer_optional` | Sintética | Usa subgrafo sem operadores e mock de `build_rgb565_layer`. Com `none`, lista vazia e helper não chamado; com default, uma camada. Não executa o kernel RGB565. |
-| `test_bgr_conversion_and_invalid_size` | Entrada | RAW temporário de um pixel `[10,20,30]`; exige bytes `[30,20,10]`. Depois exige erro quando metadados pedem seis elementos. Protege ordem de canais e tamanho. |
-| `test_signed_output_and_stable_topk` | Saída/Top-K | Decodifica bytes `[128,255,127]` como `[-128,-1,127]`, verifica scores e ranking estável em empate. Fixtures de labels usam `[wnid,nome]`. Não compara o texto inteiro do relatório. |
-| `test_binary_class_order_and_ties` | Classificação | Confirma acerto para `[200,55]` no label 1, invalidação de empate `[100,100]` e vetor zero. Protege ordem das classes e critério de invalidez. |
+| test_wasm_quantize_uses_output_type_at_any_layer_index | ABI/QUANTIZE/dtypes | Reads the active drowsiness template, substitutes placeholders for a one-page module, writes a temporary WASM and manually stores 29 int32 fields. Calls quantize at index 0 with flags 3: INT8 bytes [128,0,127] must become UINT8 [0,128,255]. With flags 0, UINT8 [0,128,255] becomes INT8 bytes [128,0,127]. Prevents reintroducing fixed index 67. |
+| test_paths_are_relative_to_package | Paths/sources | Loads all packages, validates sources, checks generated WAT is under root/generated and differs from the template. Protects destination conventions, but does not change cwd or test path confinement. |
+| test_unknown_contract_rejected | Manifest/ABI | Copies the drowsiness manifest into a temporary directory, replaces v1 with v2 and requires ValueError containing “Contrato”. Prevents silent acceptance of unimplemented versions. |
+| test_synthetic_layer_optional | Synthetic layer | Uses an operator-free subgraph and mocked build_rgb565_layer. none gives an empty list without calling the helper; default gives one layer. Does not run the RGB565 kernel. |
+| test_bgr_conversion_and_invalid_size | Input | Temporary one-pixel RAW [10,20,30] must yield [30,20,10]; metadata requesting six elements must fail. Protects channel order and size. |
+| test_signed_output_and_stable_topk | Output/Top-K | Decodes [128,255,127] as [-128,-1,127], verifies scores and stable tie ranking. Label fixtures use [wnid,name]. Does not compare the complete report text. |
+| test_binary_class_order_and_ties | Classification | Checks [200,55] predicts label 1 correctly, and rejects [100,100] ties and a zero vector. Protects class order and invalidity criteria. |
 
-## O teste binário de ABI
+## Binary ABI test
 
 ```text
-template WAT ativo
-        │ placeholders mínimos
-        ▼
-wasmtime.wat2wasm ──► arquivo temporário
-                              │
-                              ▼
-                       Store / Instance
-                              │
-struct.pack("<29i") ──► memory[1024:1140]
-bytes de entrada ─────► memory[4096:4099]
-                              │
-                              ▼
-                    export quantize(store, 0)
-                              │
-                              ▼
-                    memory[8192:8195] → assert
+active WAT template → minimal placeholders → wasmtime.wat2wasm → temporary file
+                                                                  ↓
+                                                            Store / Instance
+struct.pack("<29i") → memory[1024:1140]                             │
+input bytes        → memory[4096:4099]                             │
+                                                                  ▼
+                                                       export quantize(store, 0)
+                                                                  ▼
+                                                       memory[8192:8195] → assert
 ```
 
-Entram um template e parâmetros artificiais, não um TFLite. O teste exercita o kernel real e compara bytes. Sai uma assertiva sobre flags e quantização no índice 0. Os ponteiros e valores são dados do teste; layout de registro e assinatura do export são do runtime. A cobertura é mais forte que apenas testar uma função Python que monta flags, mas não cobre a rede inteira.
+Inputs are a template and artificial parameters, not a TFLite. The real kernel is exercised and bytes compared, establishing behavior for flags and quantization at index 0. Pointers/values are fixtures; record layout and export signature belong to the runtime. This exceeds merely testing Python flag construction, but does not cover the full network.
 
-## Resultados e lacunas
+## Results and gaps
 
-Os sete testes foram executados durante esta revisão documental. O resultado detalhado está em [verificação](98-verificacao-documental.md). Os relatórios dos pacotes existentes fornecem evidência adicional, mas não são assertions desta suíte.
+The original documentation review ran all seven tests; see [verification](98-verificacao-documental.md). This translation does not represent a new test run. Existing package reports supply additional evidence but are not assertions in this suite.
 
-Não há testes atuais de equivalência completa TFLite/WASM, de todos os kernels isolados, de liveness em grafos arbitrários, de trap seguido de nova imagem, de JSON malformado, de broadcast ADD, de axis MEAN, de softmax com diferentes escalas ou de normalização INT8 do adapter. Não documente essas coberturas como existentes. Também não há testes de licença/proveniência ou avaliação estatística do dataset.
+There are no current tests for complete TFLite/WASM equivalence, every isolated kernel, liveness on arbitrary graphs, a trap followed by another image, malformed JSON, broadcasting ADD, MEAN axes, softmax across scales or adapter INT8 normalization. Dataset provenance/licensing and statistical evaluation are also not tested. Do not describe these as existing coverage.
 
-## Possíveis evoluções
+## Possible improvements
 
-Adicionar casos diferenciais contra uma referência TFLite, cobrindo tensores intermediários e arredondamento, permitiria distinguir regressão de integração de divergência numérica já presente. Ampliar casos para formatos inválidos e validação de manifests melhoraria mensagens de erro. Essas propostas não fazem parte da suíte atual e não foram implementadas nesta tarefa.
+Differential TFLite tests with intermediate tensors and rounding checks would distinguish integration regressions from existing numerical differences. Invalid-format and manifest cases would improve error reporting. These are proposals, not implemented parts of this suite or translation task.
+

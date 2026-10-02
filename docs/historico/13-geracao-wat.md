@@ -1,55 +1,57 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](13-geracao-wat.md) | [Português (Brasil)](13-geracao-wat.pt-BR.md)
 
-# 13 — Geração do módulo WAT (`wat_generator.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 13 — Generating the WAT module (`wat_generator.py`)
 
-O arquivo `extractor/wat_generator.py` é responsável pela última etapa do pipeline de extração: transformar um template WAT estático em um arquivo WAT completamente configurado para o modelo processado.
+## 1. Module purpose
 
-Até este momento, todas as informações dependentes do modelo já foram calculadas:
+`extractor/wat_generator.py` performs the final extraction stage: converting a static WAT template into a WAT file fully configured for the processed model.
+
+All model-dependent information has already been calculated:
 
 ```text
-pesos
-bias
+weights
+biases
 multipliers
 shifts
 Q6
 
 LayerParams
 
-layout de memória
+memory layout
 
-bases dos slots
+slot bases
 
-número de camadas
+number of layers
 
-tamanho da memória
+memory size
 
-endereço da saída
+output address
 ```
 
-O gerador não precisa mais interpretar o TFLite.
+The generator no longer needs to interpret TFLite.
 
-Ele apenas realiza:
+It only combines:
 
 ```text
-template WAT
+WAT template
     +
-valores calculados
+calculated values
     +
-blobs binários
+binary blobs
         │
         ▼
-WAT final
+final WAT
 ```
 
-O fluxo geral é:
+The overall flow is:
 
 ```text
 model.tflite
      │
      ▼
-extração e cálculos
+extraction and calculations
      │
      ├── weights_raw
      ├── bias_raw
@@ -58,7 +60,7 @@ extração e cálculos
      ├── q6_blob
      ├── params_blob
      │
-     ├── endereços
+     ├── addresses
      ├── slots
      └── MEM_PAGES
              │
@@ -71,93 +73,93 @@ extração e cálculos
 
 ---
 
-# 2. Responsabilidade arquitetural
+# 2. Architectural responsibility
 
-A principal decisão arquitetural deste módulo é que ele **não calcula parâmetros do modelo**.
+This module's main architectural decision is that it **does not calculate model parameters**.
 
-Ele não decide:
+It does not decide:
 
 ```text
-quanto ocupa um slot
+how much space a slot occupies
 
-onde começam os pesos
+where weights start
 
-qual é o multiplier de uma convolução
+what a convolution's multiplier is
 
-como calcular SAME padding
+how to calculate SAME padding
 
-qual tensor vai para qual slot
+which tensor goes into which slot
 
-qual é o zero point
+what the zero point is
 
-como montar uma LayerParam
+how to build a LayerParam
 ```
 
-Todas essas decisões já foram tomadas anteriormente.
+All these decisions have already been made.
 
-O gerador responde apenas:
+The generator only answers:
 
 ```text
-como inserir os resultados já calculados
-no template WAT?
+how can the calculated results be inserted
+into the WAT template?
 ```
 
-Isso cria uma separação clara entre:
+This clearly separates:
 
 ```text
-CÁLCULO
+CALCULATION
    ↓
 extractor/*
 
-MATERIALIZAÇÃO
+FINAL GENERATION
    ↓
 wat_generator.py
 ```
 
 ---
 
-# 3. Importações
+# 3. Imports
 
-O arquivo começa com:
+The file starts with:
 
 ```python
 from pathlib import Path
 import re
 ```
 
-São necessárias apenas duas funcionalidades externas à biblioteca padrão.
+Only two functions outside the standard library are needed.
 
 ---
 
 # 4. `Path`
 
-`Path` é utilizado para:
+`Path` is used to:
 
 ```text
-ler o template
+read the template
 
-criar o diretório de saída
+create the output directory
 
-escrever o WAT gerado
+write the generated WAT
 
-obter o tamanho final do arquivo
+get the final file size
 ```
 
-Assim os caminhos permanecem representados como objetos `Path`.
+Paths therefore remain represented as `Path` objects.
 
 ---
 
 # 5. `re`
 
-O módulo `re` é utilizado para localizar placeholders que permaneceram no WAT depois das substituições.
+The `re` module finds placeholders remaining in WAT after substitutions.
 
-Isso funciona como uma validação final do template.
+This serves as a final template check.
 
 ---
 
 # 6. `PLACEHOLDER_PATTERN`
 
-A expressão regular é:
+The regular expression is:
 
 ```python
 PLACEHOLDER_PATTERN = re.compile(
@@ -165,13 +167,13 @@ PLACEHOLDER_PATTERN = re.compile(
 )
 ```
 
-Ela reconhece placeholders no formato:
+It recognizes placeholders in the form:
 
 ```text
-@@NOME@@
+@@NAME@@
 ```
 
-onde `NOME` pode conter:
+where `NAME` may contain:
 
 ```text
 A-Z
@@ -183,7 +185,7 @@ _
 
 ---
 
-# 7. Exemplos reconhecidos
+# 7. Recognized examples
 
 ```text
 @@MEM_PAGES@@
@@ -201,33 +203,33 @@ _
 
 ---
 
-# 8. Exemplos não reconhecidos
+# 8. Unrecognized examples
 
-Por essa regex, formas como:
+With this regex, forms such as:
 
 ```text
 @@mem_pages@@
 ```
 
-ou:
+or:
 
 ```text
 @MEM_PAGES@
 ```
 
-não correspondem ao padrão.
+do not match the pattern.
 
-Portanto a convenção do projeto é:
+The project's convention is therefore:
 
 ```text
-@@PLACEHOLDER_EM_MAIÚSCULAS@@
+@@UPPERCASE_PLACEHOLDER@@
 ```
 
 ---
 
-# 9. Por que validar placeholders?
+# 9. Why validate placeholders?
 
-Sem essa verificação, seria possível gerar algo como:
+Without this check, the generator could produce something like:
 
 ```wat
 (memory
@@ -236,21 +238,21 @@ Sem essa verificação, seria possível gerar algo como:
 )
 ```
 
-e somente descobrir o problema posteriormente durante a compilação.
+and the issue would only be discovered during compilation.
 
-O código prefere detectar isso no próprio gerador.
+The code instead detects it in the generator itself.
 
 ---
 
-# 10. Função `_as_bytes()`
+# 10. The `_as_bytes()` function
 
-A primeira função auxiliar é:
+The first helper function is:
 
 ```python
 def _as_bytes(value):
 ```
 
-Sua responsabilidade é normalizar diferentes objetos binários para:
+Its responsibility is to normalize different binary objects into:
 
 ```python
 bytes
@@ -258,9 +260,9 @@ bytes
 
 ---
 
-# 11. Entrada já `bytes`
+# 11. Input already of type `bytes`
 
-Se:
+If:
 
 ```python
 isinstance(
@@ -269,25 +271,25 @@ isinstance(
 )
 ```
 
-a função simplesmente retorna:
+the function simply returns:
 
 ```python
 return value
 ```
 
-Nenhuma cópia explícita é necessária.
+No explicit copy is needed.
 
 ---
 
-# 12. Entrada `bytearray`
+# 12. `bytearray` input
 
-Se o objeto for:
+If the object is:
 
 ```python
 bytearray
 ```
 
-é convertido por:
+it is converted through:
 
 ```python
 bytes(value)
@@ -295,27 +297,27 @@ bytes(value)
 
 ---
 
-# 13. Por que converter `bytearray`?
+# 13. Why convert `bytearray`?
 
-Durante etapas de construção, os blobs são frequentemente montados como estruturas mutáveis:
+During construction, blobs are often assembled as mutable structures:
 
 ```text
 bytearray
 ```
 
-Depois de prontos, é conveniente tratá-los como:
+Once ready, it is convenient to treat them as:
 
 ```text
 bytes
 ```
 
-imutáveis.
+which are immutable.
 
 ---
 
-# 14. Entrada `memoryview`
+# 14. `memoryview` input
 
-Se:
+If:
 
 ```python
 isinstance(
@@ -324,7 +326,7 @@ isinstance(
 )
 ```
 
-é utilizado:
+the following is used:
 
 ```python
 value.tobytes()
@@ -332,9 +334,9 @@ value.tobytes()
 
 ---
 
-# 15. Objetos com `.tobytes()`
+# 15. Objects with `.tobytes()`
 
-Depois existe uma regra mais genérica:
+There is then a more general rule:
 
 ```python
 if hasattr(
@@ -344,15 +346,15 @@ if hasattr(
     return value.tobytes()
 ```
 
-Isso permite aceitar objetos binários que forneçam esse método.
+This accepts binary objects providing that method.
 
-Um exemplo comum no ecossistema científico Python seria um objeto NumPy.
+A common example in scientific Python is a NumPy object.
 
 ---
 
-# 16. Por que essa flexibilidade?
+# 16. Why this flexibility?
 
-Os diferentes módulos podem trabalhar com:
+Different modules may work with:
 
 ```text
 bytes
@@ -361,22 +363,22 @@ bytearray
 
 memoryview
 
-arrays com tobytes()
+arrays with tobytes()
 ```
 
-`_as_bytes()` cria uma fronteira única:
+`_as_bytes()` provides a single boundary:
 
 ```text
-qualquer representação binária suportada
+any supported binary representation
             ↓
           bytes
 ```
 
 ---
 
-# 17. Tipo incompatível
+# 17. Incompatible type
 
-Se nenhuma das condições for satisfeita:
+If none of the conditions is met:
 
 ```python
 raise TypeError(...)
@@ -384,47 +386,47 @@ raise TypeError(...)
 
 ---
 
-# 18. Exemplo
+# 18. Example
 
-Passar algo como:
+Passing something like:
 
 ```python
 "abc"
 ```
 
-não é interpretado automaticamente como:
+is not automatically interpreted as:
 
 ```text
 UTF-8
 ```
 
-A função gera erro.
+The function raises an error.
 
-Isso é importante porque o gerador espera:
+This matters because the generator expects:
 
 ```text
-dados binários
+binary data
 ```
 
-e não texto arbitrário.
+rather than arbitrary text.
 
 ---
 
-# 19. Mensagem de erro
+# 19. Error message
 
-A exceção inclui:
+The exception includes:
 
 ```python
 type(value)
 ```
 
-permitindo descobrir qual tipo inesperado chegou ao gerador.
+revealing which unexpected type reached the generator.
 
 ---
 
-# 20. Responsabilidade de `_as_bytes()`
+# 20. Responsibility of `_as_bytes()`
 
-Podemos resumir:
+We can summarize:
 
 ```text
 bytes ───────────────┐
@@ -435,7 +437,7 @@ memoryview ──────────┤
                      ▼
                 _as_bytes()
                      │
-objeto.tobytes() ────┤
+object.tobytes() ────┤
                      │
                      ▼
                    bytes
@@ -443,9 +445,9 @@ objeto.tobytes() ────┤
 
 ---
 
-# 21. Função `wat_data_from_bytes()`
+# 21. The `wat_data_from_bytes()` function
 
-A segunda função é:
+The second function is:
 
 ```python
 def wat_data_from_bytes(
@@ -454,38 +456,38 @@ def wat_data_from_bytes(
 ):
 ```
 
-Seu objetivo é transformar um blob binário em um:
+It converts a binary blob into an:
 
 ```text
 active data segment
 ```
 
-da sintaxe WAT.
+in WAT syntax.
 
 ---
 
-# 22. Conceito de data segment
+# 22. Data segment concept
 
-No WebAssembly, um data segment permite inicializar a memória linear com bytes definidos no módulo.
+In WebAssembly, a data segment initializes linear memory with bytes defined in the module.
 
-Conceitualmente:
+Conceptually:
 
 ```text
-arquivo WASM é carregado
+WASM file is loaded
         │
         ▼
-bytes do segmento
+segment bytes
         │
         ▼
-copiados para a memória
-a partir do endereço configurado
+copied into memory
+starting at the configured address
 ```
 
 ---
 
-# 23. Forma gerada
+# 23. Generated form
 
-A função produz:
+The function produces:
 
 ```wat
 (data
@@ -494,7 +496,7 @@ A função produz:
 )
 ```
 
-Na implementação a representação fica em uma única string:
+The implementation represents it as a single string:
 
 ```wat
 (data (i32.const BASE) "...")
@@ -504,25 +506,25 @@ Na implementação a representação fica em uma única string:
 
 # 24. `base`
 
-O argumento:
+The argument:
 
 ```python
 base
 ```
 
-representa o endereço inicial da memória linear no qual os dados devem ser colocados.
+represents the starting linear-memory address where data should be placed.
 
 ---
 
-# 25. Exemplo conceitual
+# 25. Conceptual example
 
-Se:
+If:
 
 ```text
 base = 2048
 ```
 
-o segmento terá forma:
+the segment will have the form:
 
 ```wat
 (data
@@ -533,9 +535,9 @@ o segmento terá forma:
 
 ---
 
-# 26. Normalização dos dados
+# 26. Normalizing data
 
-Primeiro:
+First:
 
 ```python
 raw = _as_bytes(
@@ -543,7 +545,7 @@ raw = _as_bytes(
 )
 ```
 
-Assim todo o restante da função trabalha exclusivamente com:
+The rest of the function therefore works exclusively with:
 
 ```text
 bytes
@@ -551,15 +553,15 @@ bytes
 
 ---
 
-# 27. Blob vazio
+# 27. Empty blob
 
-Se:
+If:
 
 ```python
 len(raw) == 0
 ```
 
-o retorno é:
+the return value is:
 
 ```python
 ""
@@ -567,9 +569,9 @@ o retorno é:
 
 ---
 
-# 28. Por que não gerar um segmento vazio?
+# 28. Why not generate an empty segment?
 
-Algo como:
+Something like:
 
 ```wat
 (data
@@ -578,15 +580,15 @@ Algo como:
 )
 ```
 
-não acrescentaria dados à memória.
+would add no data to memory.
 
-A função simplesmente não produz segmento.
+The function simply produces no segment.
 
 ---
 
-# 29. Codificação dos bytes
+# 29. Byte encoding
 
-A parte central é:
+The central part is:
 
 ```python
 encoded = "".join(
@@ -597,15 +599,15 @@ encoded = "".join(
 
 ---
 
-# 30. O que `byte` representa?
+# 30. What does `byte` represent?
 
-Ao iterar sobre um objeto `bytes` em Python, cada item é um inteiro:
+When iterating over a Python `bytes` object, each item is an integer:
 
 ```text
 0 ... 255
 ```
 
-Por exemplo:
+For example:
 
 ```python
 raw = bytes([
@@ -616,7 +618,7 @@ raw = bytes([
 ])
 ```
 
-produz valores:
+produces values:
 
 ```text
 0
@@ -625,26 +627,26 @@ produz valores:
 255
 ```
 
-durante o loop.
+during the loop.
 
 ---
 
-# 31. Formatação hexadecimal
+# 31. Hexadecimal formatting
 
-O especificador:
+The format specifier:
 
 ```text
 02x
 ```
 
-gera:
+produces:
 
 ```text
-hexadecimal minúsculo
-com dois dígitos
+lowercase hexadecimal
+with two digits
 ```
 
-Exemplos:
+Examples:
 
 ```text
 0   → 00
@@ -660,9 +662,9 @@ Exemplos:
 
 ---
 
-# 32. Escape WAT
+# 32. WAT escape
 
-Cada byte recebe uma barra invertida:
+Each byte receives a backslash:
 
 ```text
 \00
@@ -674,7 +676,7 @@ Cada byte recebe uma barra invertida:
 \ff
 ```
 
-Assim:
+Thus:
 
 ```python
 bytes([
@@ -684,7 +686,7 @@ bytes([
 ])
 ```
 
-produz conceitualmente:
+conceptually produces:
 
 ```text
 \01\7f\ff
@@ -692,34 +694,34 @@ produz conceitualmente:
 
 ---
 
-# 33. Por que codificar todos os bytes?
+# 33. Why encode every byte?
 
-A própria docstring explica a decisão:
-
-```text
-Todos os bytes são escritos como escapes hexadecimais,
-evitando problemas com caracteres especiais.
-```
-
-Isso significa que o gerador não tenta decidir:
+The docstring itself explains the decision (translated):
 
 ```text
-este byte pode ser escrito como caractere?
-
-este precisa escapar?
-
-aspas precisam escapar?
-
-barra precisa escapar?
+All bytes are written as hexadecimal escapes,
+avoiding problems with special characters.
 ```
 
-Todos seguem a mesma regra.
+The generator therefore does not try to decide:
+
+```text
+can this byte be written as a character?
+
+does this one need escaping?
+
+do quotation marks need escaping?
+
+does a backslash need escaping?
+```
+
+All follow the same rule.
 
 ---
 
-# 34. Vantagem
+# 34. Advantage
 
-Um blob pode conter qualquer byte:
+A blob may contain any byte:
 
 ```text
 00
@@ -731,25 +733,25 @@ Um blob pode conter qualquer byte:
 ff
 ```
 
-sem risco de o conteúdo binário ser confundido com:
+without risking confusion with:
 
 ```text
-aspas
+quotation marks
 
-barra
+backslash
 
 newline
 
-caractere textual
+text character
 ```
 
-dentro da string WAT.
+inside the WAT string.
 
 ---
 
-# 35. Resultado final
+# 35. Final result
 
-A função retorna:
+The function returns:
 
 ```python
 f'(data (i32.const {int(base)}) '
@@ -758,21 +760,21 @@ f'"{encoded}")'
 
 ---
 
-# 36. Conversão da base
+# 36. Converting the base
 
-O uso de:
+Using:
 
 ```python
 int(base)
 ```
 
-normaliza tipos inteiros externos, como valores NumPy, antes de escrevê-los no WAT.
+normalizes external integer types, such as NumPy values, before writing them into WAT.
 
 ---
 
-# 37. Exemplo simples
+# 37. Simple example
 
-Entrada:
+Input:
 
 ```python
 data = bytes([
@@ -784,7 +786,7 @@ data = bytes([
 base = 2048
 ```
 
-Saída:
+Output:
 
 ```wat
 (data (i32.const 2048) "\01\02\ff")
@@ -792,53 +794,53 @@ Saída:
 
 ---
 
-# 38. Relação com o layout
+# 38. Relationship with the layout
 
-Essa função não sabe se os bytes representam:
+This function does not know whether bytes represent:
 
 ```text
-pesos
+weights
 
-bias
+biases
 
 multipliers
 
 LayerParams
 ```
 
-Ela apenas sabe:
+It only knows:
 
 ```text
-dados
+data
 
 +
 
-endereço
+address
 ```
 
 ---
 
-# 39. Separação importante
+# 39. Important separation
 
 ```text
 weights.py
     ↓
-define conteúdo
+defines contents
 
 memory.py
     ↓
-define endereço
+defines address
 
 wat_data_from_bytes()
     ↓
-combina ambos em sintaxe WAT
+combines both in WAT syntax
 ```
 
 ---
 
-# 40. Função `build_data_segments()`
+# 40. The `build_data_segments()` function
 
-A função seguinte:
+The next function:
 
 ```python
 def build_data_segments(
@@ -850,25 +852,25 @@ def build_data_segments(
 ):
 ```
 
-constrói todos os data segments dependentes do modelo.
+builds all model-dependent data segments.
 
 ---
 
-# 41. Lista `segments`
+# 41. The `segments` list
 
-Inicialmente:
+Initially:
 
 ```python
 segments = []
 ```
 
-Cada blob não vazio produzirá um elemento dessa lista.
+Each nonempty blob produces one list element.
 
 ---
 
-# 42. Estrutura `sources`
+# 42. The `sources` structure
 
-O código monta uma lista explícita:
+The code builds an explicit list:
 
 ```python
 sources = [
@@ -876,15 +878,15 @@ sources = [
 ]
 ```
 
-contendo pares:
+containing pairs:
 
 ```text
-(base, dados)
+(base, data)
 ```
 
 ---
 
-# 43. Primeiro segmento: WEIGHTS
+# 43. First segment: WEIGHTS
 
 ```python
 (
@@ -897,7 +899,7 @@ contendo pares:
 )
 ```
 
-Assim:
+Thus:
 
 ```text
 weights_raw
@@ -907,7 +909,7 @@ WEIGHTS_BASE
 
 ---
 
-# 44. Segundo: BIAS
+# 44. Second: BIAS
 
 ```text
 bias_raw
@@ -917,7 +919,7 @@ BIAS_BASE
 
 ---
 
-# 45. Terceiro: MUL
+# 45. Third: MUL
 
 ```text
 mul_blob
@@ -927,7 +929,7 @@ MUL_BASE
 
 ---
 
-# 46. Quarto: SHIFT
+# 46. Fourth: SHIFT
 
 ```text
 shift_blob
@@ -937,7 +939,7 @@ SHIFT_BASE
 
 ---
 
-# 47. Quinto: Q6
+# 47. Fifth: Q6
 
 ```text
 q6_blob
@@ -947,7 +949,7 @@ Q6_BASE
 
 ---
 
-# 48. Sexto: PARAMS
+# 48. Sixth: PARAMS
 
 ```text
 params_blob
@@ -957,9 +959,9 @@ PARAMS_BASE
 
 ---
 
-# 49. Ordem dos segmentos
+# 49. Segment order
 
-Portanto a ordem textual atual é:
+The current textual order is therefore:
 
 ```text
 WEIGHTS
@@ -975,35 +977,35 @@ Q6
 PARAMS
 ```
 
-Isso acompanha a organização lógica utilizada no layout de memória.
+This follows the logical organization used in the memory layout.
 
 ---
 
-# 50. A ordem textual define os endereços?
+# 50. Does textual order define addresses?
 
-Não.
+No.
 
-Os endereços são explicitamente definidos por:
+Addresses are explicitly defined through:
 
 ```wat
 (i32.const BASE)
 ```
 
-Portanto é o:
+Therefore it is the:
 
 ```text
 base
 ```
 
-de cada segmento que determina onde seus bytes serão inicializados.
+of each segment that determines where its bytes are initialized.
 
-A ordem textual apenas torna o arquivo mais previsível e legível.
+Textual order only makes the file more predictable and readable.
 
 ---
 
-# 51. Iteração
+# 51. Iteration
 
-O código executa:
+The code executes:
 
 ```python
 for base, data in sources:
@@ -1011,71 +1013,71 @@ for base, data in sources:
 
 ---
 
-# 52. Normalização novamente
+# 52. Normalization again
 
-Cada:
+Each:
 
 ```python
 data
 ```
 
-é passado por:
+is passed through:
 
 ```python
 _as_bytes()
 ```
 
-antes da criação do segmento.
+before the segment is created.
 
 ---
 
-# 53. Segmentos vazios
+# 53. Empty segments
 
-Se:
+If:
 
 ```python
 if not raw:
     continue
 ```
 
-o segmento é omitido completamente.
+the segment is omitted entirely.
 
 ---
 
-# 54. Exemplo
+# 54. Example
 
-Se hipoteticamente:
+If, hypothetically:
 
 ```text
 bias_raw = b""
 ```
 
-nenhum:
+no:
 
 ```wat
 (data ... bias ...)
 ```
 
-será escrito.
+will be written.
 
 ---
 
-# 55. Região de memória ainda pode existir logicamente
+# 55. A memory region may still exist logically
 
-A ausência do data segment não implica necessariamente que o layout não possua uma base associada.
+Absence of a data segment does not necessarily mean the layout lacks an associated base.
 
-Significa apenas:
+It only means:
 
 ```text
-não existem bytes para inicializar
-naquela região
+there are no bytes to initialize
+in that region
 ```
 
 ---
 
-# 56. Geração do segmento
+# 56. Generating the segment
 
-Para dados não vazios:
+For nonempty data:
 
 ```python
 wat_data_from_bytes(
@@ -1084,27 +1086,27 @@ wat_data_from_bytes(
 )
 ```
 
-é chamada.
+is called.
 
 ---
 
-# 57. Indentação
+# 57. Indentation
 
-O código adiciona:
+The code adds:
 
 ```python
 "  "
 ```
 
-antes de cada segmento.
+before each segment.
 
-Assim o texto inserido dentro do módulo WAT fica visualmente indentado.
+Text inserted into the WAT module is thus visually indented.
 
 ---
 
-# 58. Separação visual
+# 58. Visual separation
 
-Finalmente:
+Finally:
 
 ```python
 "\n\n".join(
@@ -1112,9 +1114,9 @@ Finalmente:
 )
 ```
 
-coloca uma linha em branco entre os segmentos.
+places a blank line between segments.
 
-O resultado fica conceitualmente:
+The result is conceptually:
 
 ```wat
   (data ... WEIGHTS ...)
@@ -1132,42 +1134,42 @@ O resultado fica conceitualmente:
 
 ---
 
-# 59. Por que um segmento por grande região?
+# 59. Why one segment per major region?
 
-O gerador não cria um data segment individual para cada:
+The generator does not create an individual data segment for each:
 
 ```text
-tensor de peso
+weight tensor
 
-tensor de bias
+bias tensor
 
 LayerParam
 ```
 
-porque os módulos anteriores já concatenaram esses dados em blobs.
+because previous modules have already concatenated these data into blobs.
 
 ---
 
-# 60. Comparação
+# 60. Comparison
 
-Sem os blobs:
+Without blobs:
 
 ```text
-peso 0 → data segment
+weight 0 → data segment
 
-peso 1 → data segment
+weight 1 → data segment
 
-peso 2 → data segment
+weight 2 → data segment
 
 bias 0 → data segment
 
 ...
 ```
 
-Com a arquitetura atual:
+With the current architecture:
 
 ```text
-todos os pesos
+all weights
     ↓
 weights_raw
     ↓
@@ -1176,11 +1178,11 @@ weights_raw
 
 ---
 
-# 61. Vantagem
+# 61. Advantage
 
-Isso mantém o WAT mais simples.
+This keeps WAT simpler.
 
-Também preserva a abstração:
+It also preserves the abstraction of:
 
 ```text
 WEIGHTS
@@ -1191,39 +1193,39 @@ Q6
 PARAMS
 ```
 
-como grandes regiões contíguas.
+as large contiguous regions.
 
 ---
 
-# 62. O que `build_data_segments()` não faz?
+# 62. What does `build_data_segments()` not do?
 
-A função não:
+The function does not:
 
 ```text
-calcula bases
+calculate bases
 
-verifica sobreposição
+check overlap
 
-calcula tamanho da memória
+calculate memory size
 
-interpreta os bytes
+interpret bytes
 
-alinha regiões
+align regions
 ```
 
-Ela pressupõe que:
+It assumes that:
 
 ```text
 parameter_layout
 ```
 
-já contém endereços corretos.
+already contains correct addresses.
 
 ---
 
-# 63. Função `generate_wat()`
+# 63. The `generate_wat()` function
 
-Essa é a função principal do arquivo:
+This is the file's main function:
 
 ```python
 def generate_wat(
@@ -1240,29 +1242,29 @@ def generate_wat(
 ):
 ```
 
-Ela reúne todas as informações anteriores e produz o arquivo final.
+It combines all previous information and produces the final file.
 
 ---
 
-# 64. Entradas
+# 64. Inputs
 
 ### `template_path`
 
-Caminho para:
+Path to:
 
 ```text
 wat/model_template.wat
 ```
 
-ou outro template equivalente.
+or another equivalent template.
 
 ---
 
 ### `output_path`
 
-Caminho no qual o WAT final será salvo.
+Path where the final WAT will be saved.
 
-Exemplo:
+Example:
 
 ```text
 generated/model.wat
@@ -1272,7 +1274,7 @@ generated/model.wat
 
 ### `parameter_layout`
 
-Contém:
+Contains:
 
 ```text
 WEIGHTS_BASE
@@ -1292,31 +1294,31 @@ PARAMS_BASE
 
 ### `layer_memory`
 
-Fornece:
+Provides:
 
 ```text
 slot_bases
 ```
 
-e demais informações de memória das camadas.
+and other layer memory information.
 
 ---
 
 ### `final_memory`
 
-Fornece principalmente:
+Mainly provides:
 
 ```text
 MEM_PAGES
 ```
 
-já calculado.
+already calculated.
 
 ---
 
 ### `params_serialization`
 
-Contém:
+Contains:
 
 ```text
 params_blob
@@ -1325,14 +1327,14 @@ records
 
 LP_SIZE
 
-informações da serialização
+serialization information
 ```
 
 ---
 
 ### `weights_bias`
 
-Contém:
+Contains:
 
 ```text
 weights_raw
@@ -1344,7 +1346,7 @@ bias_raw
 
 ### `quantization`
 
-Contém:
+Contains:
 
 ```text
 mul_blob
@@ -1358,23 +1360,23 @@ q6_blob
 
 ### `layer_params`
 
-Lista estruturada das operações.
+Structured operation list.
 
-É utilizada principalmente para:
+It is mainly used for:
 
 ```text
-número de camadas
+number of layers
 
-identificação da última camada
+identifying the last layer
 
-shape da saída final
+final output shape
 ```
 
 ---
 
-# 65. Conversão dos caminhos
+# 65. Converting paths
 
-Primeiro:
+First:
 
 ```python
 template_path = Path(
@@ -1386,13 +1388,13 @@ output_path = Path(
 )
 ```
 
-Assim a função aceita caminhos compatíveis com `Path`.
+The function thus accepts `Path`-compatible paths.
 
 ---
 
-# 66. Leitura do template
+# 66. Reading the template
 
-O arquivo é carregado por:
+The file is loaded through:
 
 ```python
 wat = template_path.read_text(
@@ -1402,25 +1404,25 @@ wat = template_path.read_text(
 
 ---
 
-# 67. O template permanece textual
+# 67. The template remains text
 
-Nesse momento:
+At this point:
 
 ```text
 wat
 ```
 
-é uma string contendo:
+is a string containing:
 
 ```text
-código WAT
+WAT code
 
 +
 
 placeholders
 ```
 
-Exemplo conceitual:
+Conceptual example:
 
 ```wat
 (memory
@@ -1431,21 +1433,21 @@ Exemplo conceitual:
 
 ---
 
-# 68. Validação das LayerParams
+# 68. Validating LayerParams
 
-Antes de realizar substituições:
+Before making substitutions:
 
 ```python
 if not layer_params:
 ```
 
-gera:
+produces:
 
 ```text
 RuntimeError
 ```
 
-com:
+with:
 
 ```text
 "Nenhuma LayerParam foi gerada."
@@ -1453,23 +1455,23 @@ com:
 
 ---
 
-# 69. Por que isso é necessário?
+# 69. Why is this necessary?
 
-Sem camadas, o código posterior tentaria:
+Without layers, later code would try:
 
 ```python
 layer_params[-1]
 ```
 
-o que não teria significado.
+which would have no meaning.
 
-Além disso, um modelo executável nesse pipeline precisa possuir ao menos a camada sintética e/ou operações reais.
+An executable model in this pipeline must also contain at least the synthetic layer and/or actual operations.
 
 ---
 
-# 70. Registros da serialização
+# 70. Serialization records
 
-Depois:
+Then:
 
 ```python
 records = (
@@ -1481,29 +1483,29 @@ records = (
 
 ---
 
-# 71. Validação dos records
+# 71. Validating records
 
-Se estiver vazio:
+If empty:
 
 ```text
 RuntimeError
 ```
 
-é lançado.
+is raised.
 
 ---
 
-# 72. Por que `records` é necessário?
+# 72. Why are `records` needed?
 
-O gerador precisa recuperar:
+The generator needs to retrieve:
 
 ```text
 out_ptr
 ```
 
-da última camada serializada.
+from the last serialized layer.
 
-Essa informação está em:
+This information is in:
 
 ```text
 final_record
@@ -1511,9 +1513,9 @@ final_record
 
 ---
 
-# 73. Última camada
+# 73. Last layer
 
-O código utiliza:
+The code uses:
 
 ```python
 final_layer = (
@@ -1521,7 +1523,7 @@ final_layer = (
 )
 ```
 
-e:
+and:
 
 ```python
 final_record = (
@@ -1531,35 +1533,35 @@ final_record = (
 
 ---
 
-# 74. Suposição importante
+# 74. Important assumption
 
-A implementação presume que:
-
-```text
-último layer_params
-```
-
-e:
+The implementation assumes that:
 
 ```text
-último record
+last layer_params entry
 ```
 
-representam a mesma operação.
+and:
 
-Isso é verdadeiro no fluxo normal porque:
+```text
+last record
+```
+
+represent the same operation.
+
+This holds in the normal flow because:
 
 ```text
 params_blob.py
 ```
 
-serializa `layer_params` sequencialmente.
+serializes `layer_params` sequentially.
 
 ---
 
-# 75. Não existe comparação explícita de tamanhos
+# 75. No explicit size comparison
 
-O código atual não verifica diretamente:
+The current code does not directly check:
 
 ```text
 len(records)
@@ -1567,15 +1569,15 @@ len(records)
 len(layer_params)
 ```
 
-Essa igualdade é produzida naturalmente por `build_params_blob()` no pipeline esperado.
+`build_params_blob()` naturally produces this equality in the expected pipeline.
 
-Uma validação explícita poderia ser adicionada futuramente.
+An explicit check could be added later.
 
 ---
 
 # 76. `RESULT_BASE`
 
-O endereço da saída final é obtido por:
+The final output address is obtained through:
 
 ```python
 result_base = int(
@@ -1587,33 +1589,33 @@ result_base = int(
 
 ---
 
-# 77. Significado
+# 77. Meaning
 
-`result_base` é:
+`result_base` is:
 
 ```text
-base física do slot
-no qual a última camada
-gravou sua saída
+physical slot base
+where the last layer
+wrote its output
 ```
 
 ---
 
-# 78. Exemplo
+# 78. Example
 
-Se a última camada escreve em:
+If the last layer writes to:
 
 ```text
 SLOT2
 ```
 
-e:
+and:
 
 ```text
 SLOT2_BASE = 900464
 ```
 
-então:
+then:
 
 ```text
 RESULT_BASE = 900464
@@ -1621,24 +1623,24 @@ RESULT_BASE = 900464
 
 ---
 
-# 79. Importante
+# 79. Important
 
-`RESULT_BASE` não é uma nova região de memória.
+`RESULT_BASE` is not a new memory region.
 
-Ele aponta para:
+It points to:
 
 ```text
-um slot já existente
+an existing slot
 ```
 
-que contém o resultado da última operação.
+containing the last operation's result.
 
 ---
 
-# 80. Fluxo
+# 80. Flow
 
 ```text
-última LayerParam
+last LayerParam
       │
       ▼
 out_slot
@@ -1654,7 +1656,7 @@ RESULT_BASE
 
 # 81. `RESULT_COUNT`
 
-A quantidade de valores da saída é calculada por:
+The number of output values is calculated through:
 
 ```python
 result_count = int(
@@ -1666,7 +1668,7 @@ result_count = int(
 
 ---
 
-# 82. Fórmula
+# 82. Formula
 
 ```text
 RESULT_COUNT
@@ -1680,15 +1682,15 @@ cout
 
 ---
 
-# 83. Exemplo classificatório
+# 83. Classification example
 
-Se a saída for representada como:
+If output is represented as:
 
 ```text
 1 × 1 × 1000
 ```
 
-então:
+then:
 
 ```text
 RESULT_COUNT
@@ -1700,41 +1702,41 @@ RESULT_COUNT
 
 ---
 
-# 84. Vantagem sobre valor hardcoded
+# 84. Advantage over a hardcoded value
 
-O runtime não precisa ter:
+The runtime does not need:
 
 ```text
 1000
 ```
 
-fixado manualmente.
+fixed manually.
 
-Se outro modelo compatível produzir:
+If another compatible model produces:
 
 ```text
 10 classes
 ```
 
-teremos:
+we get:
 
 ```text
 RESULT_COUNT = 10
 ```
 
-automaticamente.
+automatically.
 
 ---
 
-# 85. Saída espacial
+# 85. Spatial output
 
-Se hipoteticamente a última camada produzir:
+If the last layer hypothetically produces:
 
 ```text
 7 × 7 × 32
 ```
 
-teríamos:
+we would have:
 
 ```text
 RESULT_COUNT
@@ -1746,31 +1748,31 @@ RESULT_COUNT
 
 ---
 
-# 86. Hipótese atual sobre batch
+# 86. Current batch assumption
 
-A fórmula utiliza apenas:
+The formula uses only:
 
 ```text
 H × W × C
 ```
 
-e não multiplica explicitamente por batch.
+and does not explicitly multiply by batch.
 
-Isso está coerente com o pipeline atual, que trabalha com:
+This matches the current pipeline, which uses:
 
 ```text
 batch = 1
 ```
 
-como convenção.
+as a convention.
 
-Para suporte genérico a batch maior que 1, essa parte precisaria ser revisitada.
+Generic support for batch sizes greater than 1 would require revisiting this part.
 
 ---
 
-# 87. Recuperação dos slots
+# 87. Retrieving slots
 
-O código obtém:
+The code obtains:
 
 ```python
 slot_bases = (
@@ -1782,21 +1784,21 @@ slot_bases = (
 
 ---
 
-# 88. Validação de três slots
+# 88. Validating three slots
 
-Depois:
+Then:
 
 ```python
 if len(slot_bases) != 3:
 ```
 
-gera erro.
+raises an error.
 
 ---
 
-# 89. Por que exatamente três?
+# 89. Why exactly three?
 
-O template WAT atual possui placeholders explícitos:
+The current WAT template has explicit placeholders:
 
 ```text
 @@SLOT0_BASE@@
@@ -1806,55 +1808,55 @@ O template WAT atual possui placeholders explícitos:
 @@SLOT2_BASE@@
 ```
 
-Logo existe uma dependência concreta:
+There is therefore a concrete dependency:
 
 ```text
-template atual
+current template
     ↕
 3 slots
 ```
 
 ---
 
-# 90. Isso não é uma limitação teórica do WebAssembly
+# 90. This is not a theoretical WebAssembly limitation
 
-É uma decisão do:
+It is a decision of the:
 
 ```text
-template atual
+current template
 +
-runtime atual
+current runtime
 ```
 
-O extrator poderia futuramente suportar outra quantidade, mas o template precisaria ser adaptado.
+The extractor could support another count in the future, but the template would need adaptation.
 
 ---
 
-# 91. Mensagem de erro
+# 91. Error message
 
-O código informa:
+The code reports:
 
 ```text
 "O template atual espera exatamente 3 slots..."
 ```
 
-Isso é importante porque deixa claro que:
+This clarifies that:
 
 ```text
-o problema não é NUM_SLOTS em abstrato
+the issue is not NUM_SLOTS in the abstract
 ```
 
-mas:
+but:
 
 ```text
-compatibilidade com o template atual
+compatibility with the current template
 ```
 
 ---
 
-# 92. Dicionário `replacements`
+# 92. The `replacements` dictionary
 
-A etapa central seguinte é:
+The next central stage is:
 
 ```python
 replacements = {
@@ -1862,19 +1864,19 @@ replacements = {
 }
 ```
 
-Ele relaciona:
+It relates:
 
 ```text
-placeholder textual
+text placeholder
         ↓
-valor calculado
+calculated value
 ```
 
 ---
 
 # 93. `@@MEM_PAGES@@`
 
-Recebe:
+Receives:
 
 ```python
 final_memory[
@@ -1882,11 +1884,11 @@ final_memory[
 ]
 ```
 
-Esse valor define a quantidade inicial de páginas WebAssembly.
+This value defines the initial WebAssembly page count.
 
 ---
 
-# 94. Origem
+# 94. Origin
 
 ```text
 memory.py
@@ -1902,7 +1904,7 @@ MEM_PAGES
 
 # 95. `@@PARAMS_BASE@@`
 
-Recebe:
+Receives:
 
 ```python
 parameter_layout[
@@ -1912,15 +1914,15 @@ parameter_layout[
 
 ---
 
-# 96. Uso no runtime
+# 96. Runtime use
 
-Permite ao WAT localizar:
+Allows WAT to locate:
 
 ```text
 LayerParam[0]
 ```
 
-e subsequentemente:
+and subsequently:
 
 ```text
 LayerParam[i]
@@ -1934,7 +1936,7 @@ i × LP_SIZE
 
 # 97. `@@LP_SIZE@@`
 
-Recebe:
+Receives:
 
 ```python
 params_serialization[
@@ -1944,9 +1946,9 @@ params_serialization[
 
 ---
 
-# 98. Valor atual
+# 98. Current value
 
-Com a estrutura atual:
+With the current structure:
 
 ```text
 LP_SIZE = 116
@@ -1954,21 +1956,21 @@ LP_SIZE = 116
 
 ---
 
-# 99. Por que pegar da serialização?
+# 99. Why get it from serialization?
 
-Isso mantém o gerador dependente do resultado real do pipeline e não de um número:
+This keeps the generator dependent on the actual pipeline result rather than a number:
 
 ```text
 116
 ```
 
-hardcoded dentro dele.
+hardcoded inside it.
 
 ---
 
 # 100. `@@NUM_LAYERS@@`
 
-Recebe:
+Receives:
 
 ```python
 len(
@@ -1978,29 +1980,29 @@ len(
 
 ---
 
-# 101. Inclui camada sintética
+# 101. Includes the synthetic layer
 
-Como `layer_params` começa com:
+Because `layer_params` starts with:
 
 ```text
 RGB565_TO_RGB888
 ```
 
-esse total já inclui a operação sintética.
+this total already includes the synthetic operation.
 
 ---
 
-# 102. Exemplo
+# 102. Example
 
 ```text
-67 operações reais
+67 actual operations
 +
-1 sintética
+1 synthetic operation
 =
 68 layers
 ```
 
-Logo:
+Therefore:
 
 ```text
 @@NUM_LAYERS@@
@@ -2012,19 +2014,19 @@ Logo:
 
 # 103. `@@WEIGHTS_BASE@@`
 
-Recebe:
+Receives:
 
 ```text
 kernel_base
 ```
 
-do layout.
+from the layout.
 
 ---
 
 # 104. `@@BIAS_BASE@@`
 
-Recebe:
+Receives:
 
 ```text
 bias_base
@@ -2034,7 +2036,7 @@ bias_base
 
 # 105. `@@MUL_BASE@@`
 
-Recebe:
+Receives:
 
 ```text
 mul_base
@@ -2044,7 +2046,7 @@ mul_base
 
 # 106. `@@SHIFT_BASE@@`
 
-Recebe:
+Receives:
 
 ```text
 shift_base
@@ -2054,7 +2056,7 @@ shift_base
 
 # 107. `@@Q6_BASE@@`
 
-Recebe:
+Receives:
 
 ```text
 q6_base
@@ -2062,31 +2064,31 @@ q6_base
 
 ---
 
-# 108. Por que o template recebe essas bases se as LayerParams já contêm ponteiros?
+# 108. Why does the template receive bases when LayerParams already contain pointers?
 
-As LayerParams já contêm muitos ponteiros absolutos.
+LayerParams already contain many absolute pointers.
 
-Mesmo assim, o template também pode precisar das bases globais para:
+The template may still need global bases for:
 
 ```text
 debug
 
 globals
 
-rotinas auxiliares
+helper routines
 
-documentação estrutural
+structural documentation
 
-ou lógica específica do runtime
+or runtime-specific logic
 ```
 
-O gerador apenas fornece os valores esperados pelo template.
+The generator simply supplies the values expected by the template.
 
 ---
 
-# 109. Bases dos slots
+# 109. Slot bases
 
-São substituídos:
+The following are replaced:
 
 ```text
 @@SLOT0_BASE@@
@@ -2098,7 +2100,7 @@ São substituídos:
 
 ---
 
-# 110. Valores
+# 110. Values
 
 ```python
 slot_bases[0]
@@ -2108,35 +2110,35 @@ slot_bases[1]
 slot_bases[2]
 ```
 
-respectivamente.
+respectively.
 
 ---
 
 # 111. `@@RESULT_BASE@@`
 
-Recebe:
+Receives:
 
 ```text
-out_ptr da última camada
+last layer's out_ptr
 ```
 
 ---
 
 # 112. `@@RESULT_COUNT@@`
 
-Recebe:
+Receives:
 
 ```text
 out_h × out_w × cout
 ```
 
-da última camada.
+of the last layer.
 
 ---
 
-# 113. Tabela dos placeholders
+# 113. Placeholder table
 
-| Placeholder        | Origem                                     |
+| Placeholder | Source |
 | ------------------ | ------------------------------------------ |
 | `@@MEM_PAGES@@`    | `final_memory["mem_pages"]`                |
 | `@@PARAMS_BASE@@`  | `parameter_layout["params_base"]`          |
@@ -2153,19 +2155,19 @@ da última camada.
 | `@@RESULT_BASE@@`  | `final_record["out_ptr"]`                  |
 | `@@RESULT_COUNT@@` | `out_h × out_w × cout`                     |
 
-Além deles existe:
+There is also:
 
 ```text
 @@DATA_SEGMENTS@@
 ```
 
-que é tratado separadamente.
+which is handled separately.
 
 ---
 
-# 114. Substituição dos valores
+# 114. Replacing values
 
-O código percorre:
+The code iterates over:
 
 ```python
 for placeholder, value
@@ -2174,9 +2176,9 @@ in replacements.items():
 
 ---
 
-# 115. Conversão
+# 115. Conversion
 
-Cada valor é transformado em:
+Each value is converted into:
 
 ```python
 str(
@@ -2186,25 +2188,25 @@ str(
 
 ---
 
-# 116. Por que primeiro `int()`?
+# 116. Why `int()` first?
 
-Assim valores que venham de tipos inteiros externos são normalizados.
+This normalizes values coming from external integer types.
 
 ---
 
-# 117. Por que depois `str()`?
+# 117. Why `str()` next?
 
-Porque:
+Because:
 
 ```python
 wat.replace()
 ```
 
-opera sobre strings.
+operates on strings.
 
 ---
 
-# 118. Exemplo
+# 118. Example
 
 Template:
 
@@ -2215,13 +2217,13 @@ Template:
 )
 ```
 
-Com:
+With:
 
 ```text
 MEM_PAGES = 17
 ```
 
-torna-se:
+becomes:
 
 ```wat
 (memory
@@ -2234,7 +2236,7 @@ torna-se:
 
 # 119. `str.replace()`
 
-A função utiliza:
+The function uses:
 
 ```python
 wat = wat.replace(
@@ -2245,39 +2247,39 @@ wat = wat.replace(
 
 ---
 
-# 120. Consequência
+# 120. Consequence
 
-Se o mesmo placeholder aparecer várias vezes no template, todas as ocorrências serão substituídas.
+If a placeholder appears multiple times in the template, every occurrence is replaced.
 
 ---
 
-# 121. Isso é útil
+# 121. Why this is useful
 
-Por exemplo:
+For example:
 
 ```text
 @@SLOT0_BASE@@
 ```
 
-pode aparecer em:
+may appear in:
 
 ```text
-um global
+a global
 
-um comentário
+a comment
 
-ou outra expressão
+or another expression
 ```
 
-e todas as ocorrências recebem o mesmo valor.
+and all occurrences receive the same value.
 
 ---
 
 # 122. `@@DATA_SEGMENTS@@`
 
-Os blobs não são inseridos pelo dicionário numérico.
+Blobs are not inserted through the numeric dictionary.
 
-Primeiro:
+First:
 
 ```python
 data_segments = (
@@ -2285,13 +2287,13 @@ data_segments = (
 )
 ```
 
-é chamado.
+is called.
 
 ---
 
-# 123. Entradas da função
+# 123. Function inputs
 
-São fornecidos:
+The following are supplied:
 
 ```text
 parameter_layout
@@ -2303,7 +2305,7 @@ quantization
 params_serialization
 ```
 
-Assim ela consegue unir:
+This allows combining:
 
 ```text
 BASE
@@ -2311,13 +2313,13 @@ BASE
 BLOB
 ```
 
-para cada região.
+for each region.
 
 ---
 
-# 124. Resultado
+# 124. Result
 
-`data_segments` é uma string semelhante a:
+`data_segments` is a string such as:
 
 ```wat
   (data
@@ -2331,13 +2333,13 @@ para cada região.
   ...
 ```
 
-na representação compacta produzida pela função.
+in the compact representation produced by the function.
 
 ---
 
-# 125. Inserção
+# 125. Insertion
 
-Depois:
+Then:
 
 ```python
 wat = wat.replace(
@@ -2348,29 +2350,29 @@ wat = wat.replace(
 
 ---
 
-# 126. Por que tratar separadamente?
+# 126. Why handle this separately?
 
-Os demais placeholders recebem:
+The other placeholders receive:
 
 ```text
-um número inteiro
+an integer
 ```
 
-Já:
+Whereas:
 
 ```text
 @@DATA_SEGMENTS@@
 ```
 
-recebe:
+receives:
 
 ```text
-um grande bloco de código WAT
+a large block of WAT code
 ```
 
 ---
 
-# 127. Relação com os blobs
+# 127. Relationship with blobs
 
 ```text
 weights_raw
@@ -2396,9 +2398,9 @@ WAT data segment
 
 ---
 
-# 128. Exemplo conceitual de memória inicializada
+# 128. Conceptual initialized-memory example
 
-Suponha:
+Suppose:
 
 ```text
 WEIGHTS_BASE = 2048
@@ -2408,7 +2410,7 @@ BIAS_BASE = 10000
 PARAMS_BASE = 20000
 ```
 
-O WAT poderia receber:
+WAT could receive:
 
 ```wat
 (data
@@ -2429,23 +2431,23 @@ O WAT poderia receber:
 
 ---
 
-# 129. O gerador não interpreta esses bytes
+# 129. The generator does not interpret these bytes
 
-Para ele:
+To it:
 
 ```text
 "\01\02..."
 ```
 
-é apenas conteúdo binário.
+is just binary contents.
 
-A semântica foi definida anteriormente.
+Semantics were defined earlier.
 
 ---
 
-# 130. Validação de placeholders não resolvidos
+# 130. Validating unresolved placeholders
 
-Depois de todas as substituições:
+After all substitutions:
 
 ```python
 unresolved = sorted(
@@ -2461,17 +2463,17 @@ unresolved = sorted(
 
 # 131. `findall()`
 
-A regex procura qualquer trecho restante do tipo:
+The regex searches for any remaining fragment of the form:
 
 ```text
-@@NOME@@
+@@NAME@@
 ```
 
 ---
 
-# 132. Uso de `set`
+# 132. Using `set`
 
-Se o mesmo placeholder aparecer várias vezes:
+If a placeholder appears multiple times:
 
 ```text
 @@FOO@@
@@ -2479,27 +2481,27 @@ Se o mesmo placeholder aparecer várias vezes:
 @@FOO@@
 ```
 
-o relatório de erro mostrará apenas:
+the error report shows only:
 
 ```text
 @@FOO@@
 ```
 
-uma vez.
+once.
 
 ---
 
-# 133. Uso de `sorted()`
+# 133. Using `sorted()`
 
-Os placeholders restantes são ordenados.
+Remaining placeholders are sorted.
 
-Isso torna a mensagem de erro determinística e mais fácil de ler.
+This makes the error message deterministic and easier to read.
 
 ---
 
-# 134. Erro
+# 134. Error
 
-Se a lista não estiver vazia:
+If the list is not empty:
 
 ```python
 raise RuntimeError(
@@ -2510,112 +2512,112 @@ raise RuntimeError(
 
 ---
 
-# 135. Exemplo
+# 135. Example
 
-Se o template ganhar:
+If the template adds:
 
 ```text
 @@SOMETHING_NEW@@
 ```
 
-mas `generate_wat()` não for atualizado, o resultado será:
+but `generate_wat()` is not updated, the result will be:
 
 ```text
 Placeholders WAT não resolvidos:
 @@SOMETHING_NEW@@
 ```
 
-em vez de gerar silenciosamente um template incompleto.
+instead of silently generating an incomplete template.
 
 ---
 
-# 136. Importância para evolução do template
+# 136. Importance for template evolution
 
-Esse mecanismo cria um contrato entre:
+This mechanism creates a contract between:
 
 ```text
 model_template.wat
 ```
 
-e:
+and:
 
 ```text
 wat_generator.py
 ```
 
-Se o template exigir uma nova variável:
+If the template requires a new variable:
 
 ```text
 @@NEW_VALUE@@
 ```
 
-o gerador precisa aprender a preenchê-la.
+the generator must learn to fill it.
 
 ---
 
-# 137. Limite dessa validação
+# 137. Limit of this validation
 
-A regex detecta apenas placeholders no padrão definido.
+The regex only detects placeholders matching the defined pattern.
 
-Ela não verifica:
+It does not check:
 
 ```text
-sintaxe WAT completa
+complete WAT syntax
 
-tipos WebAssembly
+WebAssembly types
 
-índices de funções
+function indices
 
-validade de imports
+import validity
 
-correção dos kernels
+kernel correctness
 ```
 
 ---
 
-# 138. Portanto
+# 138. Therefore
 
-Temos duas validações distintas:
+There are two distinct validations:
 
 ```text
 wat_generator.py
     ↓
-template completamente materializado
+fully populated template
 ```
 
-e posteriormente:
+and later:
 
 ```text
 wat2wasm
     ↓
-sintaxe e estrutura WebAssembly válidas
+valid WebAssembly syntax and structure
 ```
 
 ---
 
-# 139. O gerador não compila WAT
+# 139. The generator does not compile WAT
 
-Esse é um ponto importante.
+This is an important point.
 
-A função:
+The function:
 
 ```python
 generate_wat()
 ```
 
-gera:
+produces:
 
 ```text
 .wat
 ```
 
-Ela não chama:
+It does not call:
 
 ```text
 wat2wasm
 ```
 
-e não produz diretamente:
+and does not directly produce:
 
 ```text
 .wasm
@@ -2623,7 +2625,7 @@ e não produz diretamente:
 
 ---
 
-# 140. Separação de responsabilidades
+# 140. Separation of responsibilities
 
 ```text
 wat_generator.py
@@ -2635,13 +2637,13 @@ wat2wasm
 binary WASM
 ```
 
-Essa divisão mantém o extrator independente da ferramenta de compilação.
+This keeps the extractor independent of the compilation tool.
 
 ---
 
-# 141. Diretório de saída
+# 141. Output directory
 
-Antes de escrever o arquivo:
+Before writing the file:
 
 ```python
 output_path.parent.mkdir(
@@ -2650,33 +2652,33 @@ output_path.parent.mkdir(
 )
 ```
 
-é executado.
+the following executes.
 
 ---
 
 # 142. `parents=True`
 
-Permite criar toda a cadeia de diretórios necessária.
+Allows creating the entire required directory chain.
 
-Por exemplo:
+For example:
 
 ```text
 generated/models/esp32/model.wat
 ```
 
-pode ter seus diretórios intermediários criados.
+can have its intermediate directories created.
 
 ---
 
 # 143. `exist_ok=True`
 
-Se o diretório já existir, isso não é tratado como erro.
+An existing directory is not treated as an error.
 
 ---
 
-# 144. Escrita
+# 144. Writing
 
-O arquivo é salvo por:
+The file is saved through:
 
 ```python
 output_path.write_text(
@@ -2687,31 +2689,31 @@ output_path.write_text(
 
 ---
 
-# 145. Consequência
+# 145. Consequence
 
-Se o arquivo já existir:
+If the file already exists:
 
 ```text
 generated/model.wat
 ```
 
-ele será sobrescrito com o WAT atual.
+it is overwritten with the current WAT.
 
 ---
 
-# 146. Fonte de verdade
+# 146. Source of truth
 
-Isso reforça que:
+This reinforces that:
 
 ```text
 generated/model.wat
 ```
 
-é um artefato gerado.
+is a generated artifact.
 
-Não deve ser editado manualmente como fonte primária das configurações dependentes do modelo.
+It should not be manually edited as the primary source for model-dependent configuration.
 
-A fonte está em:
+The source is:
 
 ```text
 wat/model_template.wat
@@ -2720,14 +2722,14 @@ wat/model_template.wat
 *
 
 ```text
-dados calculados pelo extrator
+data calculated by the extractor
 ```
 
 ---
 
-# 147. Retorno da função
+# 147. Function return value
 
-Depois da escrita, a função retorna metadados:
+After writing, the function returns metadata:
 
 ```python
 {
@@ -2744,19 +2746,19 @@ Depois da escrita, a função retorna metadados:
 
 # 148. `output_path`
 
-É o próprio objeto:
+This is the:
 
 ```python
 Path
 ```
 
-do arquivo gerado.
+object for the generated file.
 
 ---
 
 # 149. `mem_pages`
 
-É:
+This is:
 
 ```python
 int(
@@ -2766,13 +2768,13 @@ int(
 )
 ```
 
-Isso permite ao chamador registrar a memória configurada sem reler o WAT.
+The caller can thus record configured memory without rereading WAT.
 
 ---
 
 # 150. `num_layers`
 
-É:
+This is:
 
 ```python
 len(
@@ -2784,13 +2786,13 @@ len(
 
 # 151. `result_base`
 
-É o endereço absoluto no qual começa a saída da última camada.
+The absolute address where the last layer's output starts.
 
 ---
 
 # 152. `result_count`
 
-É a quantidade de elementos dessa saída segundo:
+The number of output elements according to:
 
 ```text
 out_h × out_w × cout
@@ -2800,7 +2802,7 @@ out_h × out_w × cout
 
 # 153. `wat_bytes`
 
-É obtido por:
+It is obtained through:
 
 ```python
 output_path.stat().st_size
@@ -2808,83 +2810,83 @@ output_path.stat().st_size
 
 ---
 
-# 154. Significado
+# 154. Meaning
 
-Esse valor representa o tamanho real do arquivo WAT gravado no sistema de arquivos:
+This represents the actual WAT file size on the filesystem:
 
 ```text
-em bytes
+in bytes
 ```
 
 ---
 
-# 155. Não confundir com tamanho do WASM
+# 155. Do not confuse this with WASM size
 
 ```text
 wat_bytes
 ```
 
-é:
+is:
 
 ```text
-tamanho do arquivo textual .wat
+textual .wat file size
 ```
 
-Não representa:
+It does not represent:
 
 ```text
-tamanho do .wasm compilado
+compiled .wasm size
 ```
 
-nem:
+or:
 
 ```text
-quantidade de memória linear
+linear memory capacity
 ```
 
 ---
 
-# 156. Por que o WAT pode ficar grande?
+# 156. Why can WAT become large?
 
-Os blobs são codificados textualmente.
+Blobs are encoded as text.
 
-Um único byte binário:
+A single binary byte:
 
 ```text
 0xff
 ```
 
-vira textualmente:
+becomes, in text:
 
 ```text
 \ff
 ```
 
-ou seja, vários caracteres no arquivo WAT.
+that is, several characters in the WAT file.
 
-Assim o `.wat` pode ser significativamente maior que a soma dos blobs binários.
+The `.wat` may therefore be significantly larger than the sum of its binary blobs.
 
 ---
 
-# 157. Isso não significa que a memória WASM usa esse tamanho textual
+# 157. WASM memory does not use that textual size
 
-Depois da compilação:
+After compilation:
 
 ```text
 \ff
 ```
 
-representa novamente:
+again represents:
 
 ```text
-um byte
+one byte
 ```
 
-no data segment binário.
+in the binary data segment.
 
 ---
 
-# 158. Fluxo completo de `generate_wat()`
+# 158. Complete `generate_wat()` flow
 
 ```text
 template_path
@@ -2893,40 +2895,40 @@ template_path
 read_text()
       │
       ▼
-template WAT
+WAT template
       │
-      ├── validar layers
+      ├── validate layers
       │
-      ├── validar records
+      ├── validate records
       │
       ▼
-identificar última camada
+identify last layer
       │
       ├── RESULT_BASE
       └── RESULT_COUNT
       │
       ▼
-validar 3 slots
+validate 3 slots
       │
       ▼
-substituir placeholders numéricos
+replace numeric placeholders
       │
       ▼
 build_data_segments()
       │
       ▼
-substituir @@DATA_SEGMENTS@@
+replace @@DATA_SEGMENTS@@
       │
       ▼
-procurar placeholders restantes
+find remaining placeholders
       │
-      ├── encontrou
+      ├── found
       │       ↓
       │   RuntimeError
       │
-      └── nenhum
+      └── none
               ↓
-       criar diretório
+       create directory
               ↓
          write_text()
               ↓
@@ -2935,9 +2937,9 @@ procurar placeholders restantes
 
 ---
 
-# 159. Relação com `config.py`
+# 159. Relationship with `config.py`
 
-`config.py` fornece:
+`config.py` provides:
 
 ```text
 WAT_TEMPLATE_PATH
@@ -2945,7 +2947,7 @@ WAT_TEMPLATE_PATH
 OUT_WAT_PATH
 ```
 
-Esses caminhos podem ser passados diretamente como:
+These paths can be passed directly as:
 
 ```text
 template_path
@@ -2955,9 +2957,9 @@ output_path
 
 ---
 
-# 160. Relação com `weights.py`
+# 160. Relationship to `weights.py`
 
-`weights.py` produz:
+`weights.py` produces:
 
 ```text
 weights_raw
@@ -2965,7 +2967,7 @@ weights_raw
 bias_raw
 ```
 
-O gerador transforma esses blobs em:
+The generator converts these blobs into:
 
 ```wat
 (data ...)
@@ -2973,9 +2975,9 @@ O gerador transforma esses blobs em:
 
 ---
 
-# 161. Relação com `quantization.py`
+# 161. Relationship with `quantization.py`
 
-O módulo anterior produz:
+The previous module produces:
 
 ```text
 mul_blob
@@ -2985,7 +2987,7 @@ shift_blob
 q6_blob
 ```
 
-que também viram:
+which also become:
 
 ```wat
 (data ...)
@@ -2993,15 +2995,15 @@ que também viram:
 
 ---
 
-# 162. Relação com `params_blob.py`
+# 162. Relationship with `params_blob.py`
 
-Esse módulo produz:
+This module produces:
 
 ```text
 params_blob
 ```
 
-já contendo:
+already containing:
 
 ```text
 LayerParam[0]
@@ -3009,9 +3011,9 @@ LayerParam[1]
 ...
 ```
 
-em formato binário.
+in binary form.
 
-`wat_generator.py` simplesmente o posiciona em:
+`wat_generator.py` simply places it at:
 
 ```text
 PARAMS_BASE
@@ -3019,82 +3021,82 @@ PARAMS_BASE
 
 ---
 
-# 163. Relação com `memory.py`
+# 163. Relationship with `memory.py`
 
-`memory.py` determina:
+`memory.py` determines:
 
 ```text
-onde cada blob começa
+where each blob starts
 
-quantas páginas são necessárias
+how many pages are needed
 
-onde ficam os slots
+where slots are located
 ```
 
-O gerador apenas materializa esses valores.
+The generator simply inserts these values.
 
 ---
 
-# 164. Relação com `layer_params.py`
+# 164. Relationship to `layer_params.py`
 
-`layer_params.py` ainda é usado diretamente para:
+`layer_params.py` is still used directly for:
 
 ```text
 NUM_LAYERS
 
-shape da última saída
+last output shape
 ```
 
 ---
 
-# 165. Relação com o template
+# 165. Relationship with the template
 
-O template contém:
+The template contains:
 
 ```text
-algoritmos
+algorithms
 kernels
-funções
-controle de execução
+functions
+execution control
 ```
 
-que não dependem diretamente dos valores de um modelo específico.
+that do not directly depend on a particular model's values.
 
 ---
 
-# 166. O Python injeta apenas o que varia
+# 166. Python injects only what varies
 
-Por exemplo:
+For example:
 
 ```text
-endereços
+addresses
 
-quantidade de memória
+memory capacity
 
-quantidade de camadas
+layer count
 
 blobs
 
-saída
+output
 ```
 
 ---
 
-# 167. Separação central da arquitetura
+# 167. Central architectural separation
 
 ```text
 model_template.wat
     ↓
-LÓGICA ESTÁTICA
+STATIC LOGIC
 
 wat_generator.py
     ↓
-DADOS DINÂMICOS DO MODELO
+DYNAMIC MODEL DATA
 ```
 
 ---
 
-# 168. Exemplo conceitual
+# 168. Conceptual example
 
 Template:
 
@@ -3119,7 +3121,7 @@ Template:
 
 ---
 
-# 169. Depois da geração
+# 169. After generation
 
 ```wat
 (module
@@ -3145,13 +3147,13 @@ Template:
 )
 ```
 
-Os valores acima são apenas ilustrativos.
+These values are illustrative only.
 
 ---
 
-# 170. Por que essa arquitetura é melhor que gerar todo o WAT em Python?
+# 170. Why is this better than generating all WAT in Python?
 
-Uma alternativa seria fazer:
+One alternative would be:
 
 ```python
 sections.append(
@@ -3159,126 +3161,126 @@ sections.append(
 )
 ```
 
-para cada função, loop e kernel.
+for every function, loop, and kernel.
 
-Isso misturaria:
+That would mix:
 
 ```text
-algoritmo WASM
+WASM algorithm
 
 +
 
-geração Python
+Python generation
 ```
 
 ---
 
-# 171. Com template
+# 171. With a template
 
-Os kernels permanecem escritos diretamente em:
+Kernels remain written directly in:
 
 ```text
 WAT
 ```
 
-onde podem ser:
+where they can be:
 
 ```text
-lidos
+read
 
-editados
+edited
 
-testados
+tested
 
-otimizados
+optimized
 ```
 
-como código WebAssembly.
+as WebAssembly code.
 
 ---
 
-# 172. Python fica responsável apenas pela especialização
+# 172. Python handles only specialization
 
 ```text
-template genérico
+generic template
       +
-modelo específico
+specific model
       ↓
-módulo específico
+specific module
 ```
 
 ---
 
-# 173. Benefício para manutenção
+# 173. Maintenance benefit
 
-Se quisermos alterar:
+If we want to change:
 
 ```text
-implementação da convolução
+convolution implementation
 ```
 
-modificamos:
+we modify:
 
 ```text
 model_template.wat
 ```
 
-Se quisermos alterar:
+If we want to change:
 
 ```text
-como os pesos são extraídos
+how weights are extracted
 ```
 
-modificamos:
+we modify:
 
 ```text
 weights.py
 ```
 
-Se quisermos alterar:
+If we want to change:
 
 ```text
-layout de memória
+memory layout
 ```
 
-modificamos:
+we modify:
 
 ```text
 memory.py
 ```
 
-Isso reduz o acoplamento.
+This reduces coupling.
 
 ---
 
-# 174. Benefício para depuração
+# 174. Debugging benefit
 
-Quando surge um erro, podemos separar:
+When an error occurs, we can distinguish:
 
 ```text
-extração errada?
+incorrect extraction?
 
-layout errado?
+incorrect layout?
 
-params_blob errado?
+incorrect params_blob?
 
-template errado?
+incorrect template?
 
-compilação errada?
+incorrect compilation?
 ```
 
-em vez de tudo estar misturado num único gerador monolítico.
+instead of mixing everything in one monolithic generator.
 
 ---
 
-# 175. Data segments como imagem inicial da memória
+# 175. Data segments as the initial memory image
 
-Uma forma útil de pensar nos data segments é:
+A useful way to think about data segments is:
 
 ```text
-antes de executar a primeira inferência
+before the first inference executes
 
-memória WASM já contém:
+WASM memory already contains:
 
 WEIGHTS
 BIAS
@@ -3288,19 +3290,19 @@ Q6
 PARAMS
 ```
 
-Os slots, por outro lado, são regiões de trabalho.
+Slots are working regions instead.
 
 ---
 
-# 176. Visualização
+# 176. Visualization
 
 ```text
-inicialização do módulo
+module initialization
         │
         ▼
 
 ┌──────────────────────┐
-│ região inicial       │
+│ initial region       │
 ├──────────────────────┤
 │ WEIGHTS              │ ← data segment
 ├──────────────────────┤
@@ -3324,47 +3326,47 @@ inicialização do módulo
 
 ---
 
-# 177. Por que os slots não viram data segments?
+# 177. Why do slots not become data segments?
 
-Eles representam memória de trabalho.
+They represent working memory.
 
-Não precisam conter parâmetros persistentes específicos do modelo na inicialização.
+They need no persistent model-specific parameters at initialization.
 
-Seus valores serão preenchidos durante:
+Their values are filled during:
 
 ```text
-entrada
+input
 
-conversão RGB
+RGB conversion
 
-inferência
+inference
 ```
 
 ---
 
-# 178. `RESULT_BASE` também não cria data segment
+# 178. `RESULT_BASE` does not create a data segment either
 
-Ele apenas informa:
+It only indicates:
 
 ```text
-onde procurar o resultado
-depois da execução
+where to look for the result
+after execution
 ```
 
 ---
 
-# 179. `RESULT_COUNT` também é metadado
+# 179. `RESULT_COUNT` is also metadata
 
-Ele indica:
+It indicates:
 
 ```text
-quantos valores devem ser lidos
-a partir de RESULT_BASE
+how many values to read
+starting at RESULT_BASE
 ```
 
 ---
 
-# 180. Exemplo de classificação
+# 180. Classification example
 
 ```text
 RESULT_BASE = 900464
@@ -3372,71 +3374,71 @@ RESULT_BASE = 900464
 RESULT_COUNT = 5
 ```
 
-poderia significar:
+could mean:
 
 ```text
-900464 → score classe 0
+900464 → class 0 score
 
-900465 → score classe 1
+900465 → class 1 score
 
-900466 → score classe 2
+900466 → class 2 score
 
-900467 → score classe 3
+900467 → class 3 score
 
-900468 → score classe 4
+900468 → class 4 score
 ```
 
-dependendo do tipo de saída.
+depending on output type.
 
 ---
 
-# 181. Tipo da saída
+# 181. Output type
 
-O gerador não calcula:
-
-```text
-quantos bytes cada resultado ocupa
-```
-
-Ele calcula:
+The generator does not calculate:
 
 ```text
-quantidade de elementos
+how many bytes each result occupies
 ```
 
-A interpretação do tipo permanece determinada pelo modelo/runtime.
+It calculates:
 
-No modelo atual, o fluxo de classificação quantizada utiliza a representação esperada pelos kernels.
+```text
+number of elements
+```
+
+Type interpretation remains determined by the model/runtime.
+
+In the current model, quantized classification uses the representation expected by the kernels.
 
 ---
 
-# 182. Suposição sobre a última camada
+# 182. Assumption about the last layer
 
-O gerador assume:
+The generator assumes:
 
 ```text
-resultado da rede
+network result
 =
-saída da última LayerParam
+last LayerParam output
 ```
 
 ---
 
-# 183. Isso é adequado ao pipeline atual
+# 183. This suits the current pipeline
 
-A sequência de execução produzida é linearizada de modo que a última operação representa o resultado final utilizado pelo host.
+The execution sequence is linearized so the last operation represents the final result used by the host.
 
 ---
 
-# 184. Possível generalização futura
+# 184. Possible future generalization
 
-Um modelo com:
+A model with:
 
 ```text
-múltiplos outputs independentes
+multiple independent outputs
 ```
 
-poderia exigir:
+might require:
 
 ```text
 RESULT_BASE_0
@@ -3447,37 +3449,37 @@ RESULT_COUNT_1
 ...
 ```
 
-O código atual suporta apenas um resultado final selecionado pela última camada.
+The current code supports only one final result selected by the last layer.
 
 ---
 
-# 185. Outra hipótese: exatamente três slots
+# 185. Another assumption: exactly three slots
 
-A função possui uma verificação explícita.
+The function checks this explicitly.
 
-Portanto não existe ambiguidade:
+There is therefore no ambiguity:
 
 ```text
-2 slots → erro
+2 slots → error
 
-3 slots → aceito
+3 slots → accepted
 
-4 slots → erro
+4 slots → error
 ```
 
-para o template atual.
+for the current template.
 
 ---
 
-# 186. Isso protege contra inconsistência silenciosa
+# 186. This prevents silent inconsistency
 
-Sem essa verificação poderíamos ter:
+Without this check, we could have:
 
 ```text
 NUM_SLOTS = 4
 ```
 
-mas o template ainda só conhecer:
+while the template still knows only:
 
 ```text
 SLOT0
@@ -3485,13 +3487,13 @@ SLOT1
 SLOT2
 ```
 
-O quarto slot nunca seria configurado corretamente.
+The fourth slot would never be configured correctly.
 
 ---
 
-# 187. Placeholders como interface do template
+# 187. Placeholders as the template interface
 
-Podemos considerar o conjunto:
+We can view the set:
 
 ```text
 @@MEM_PAGES@@
@@ -3501,35 +3503,35 @@ Podemos considerar o conjunto:
 ...
 ```
 
-como uma espécie de:
+as a kind of:
 
 ```text
-API textual
+textual API
 ```
 
-entre:
+between:
 
 ```text
 Python
 ```
 
-e:
+and:
 
 ```text
-template WAT
+WAT template
 ```
 
 ---
 
-# 188. Se a interface mudar
+# 188. If the interface changes
 
-Por exemplo, se o template passar a precisar:
+For example, if the template starts requiring:
 
 ```text
 @@SLOT_BYTES@@
 ```
 
-será necessário atualizar:
+we must update:
 
 ```python
 replacements
@@ -3537,15 +3539,15 @@ replacements
 
 ---
 
-# 189. Detecção automática
+# 189. Automatic detection
 
-Se esquecermos:
+If we forget:
 
 ```text
 @@SLOT_BYTES@@
 ```
 
-continuará no texto e será capturado por:
+remains in the text and is caught by:
 
 ```text
 PLACEHOLDER_PATTERN
@@ -3553,54 +3555,54 @@ PLACEHOLDER_PATTERN
 
 ---
 
-# 190. Isso torna o template autochecking parcialmente
+# 190. This makes the template partly self-checking
 
-Não é uma validação semântica completa, mas impede uma classe importante de erros:
+It is not complete semantic validation, but prevents an important class of errors:
 
 ```text
-variável dependente do modelo
-não preenchida
+model-dependent variable
+left unfilled
 ```
 
 ---
 
-# 191. Uma limitação da regex
+# 191. A regex limitation
 
-Ela só detecta placeholders que respeitem exatamente:
+It only detects placeholders matching exactly:
 
 ```text
 @@[A-Z0-9_]+@@
 ```
 
-Portanto um erro de digitação como:
+Thus, a typo such as:
 
 ```text
 @@mem_pages@@
 ```
 
-não seria reconhecido pela regex como placeholder pendente.
+would not be recognized as a pending placeholder.
 
-A compilação WAT posterior provavelmente revelaria o problema, dependendo de onde esse texto aparecesse.
+Later WAT compilation would probably reveal the problem, depending on where the text appears.
 
 ---
 
-# 192. Possível melhoria futura
+# 192. Possible future improvement
 
-Uma política de template mais rígida poderia exigir que:
+A stricter template policy could require:
 
 ```text
-qualquer sequência iniciada por @@
+any sequence starting with @@
 ```
 
-fosse validada.
+to be validated.
 
-Mas a implementação atual utiliza uma convenção simples e explícita.
+The current implementation uses a simple, explicit convention.
 
 ---
 
-# 193. Outra validação futura possível
+# 193. Another possible future validation
 
-O gerador poderia verificar:
+The generator could check:
 
 ```text
 len(records)
@@ -3608,7 +3610,7 @@ len(records)
 len(layer_params)
 ```
 
-antes de escolher:
+before choosing:
 
 ```text
 records[-1]
@@ -3616,9 +3618,9 @@ records[-1]
 
 ---
 
-# 194. Outra possível validação
+# 194. Another possible validation
 
-Poderia conferir:
+It could check:
 
 ```text
 params_serialization["layer_count"]
@@ -3628,71 +3630,71 @@ len(layer_params)
 
 ---
 
-# 195. Outra possível validação
+# 195. Another possible validation
 
-Também:
+Also:
 
 ```text
 RESULT_BASE
 +
-bytes da saída
+output bytes
 <=
 MEM_END
 ```
 
-poderia ser verificado.
+could be checked.
 
-Hoje isso é consequência esperada do planejamento anterior.
+Currently this is an expected consequence of prior planning.
 
 ---
 
-# 196. Outra possível validação
+# 196. Another possible validation
 
-`build_data_segments()` poderia conferir:
+`build_data_segments()` could check:
 
 ```text
 base + len(blob)
 ```
 
-contra o início da próxima região.
+against the start of the next region.
 
-Isso detectaria sobreposição diretamente antes da geração.
+This would detect overlap directly before generation.
 
-No pipeline atual essa responsabilidade permanece em:
+In the current pipeline, this responsibility remains with:
 
 ```text
 memory.py
 ```
 
-e na coerência das estruturas anteriores.
+and the consistency of preceding structures.
 
 ---
 
-# 197. Outra possível validação
+# 197. Another possible validation
 
-Depois de escrever o WAT, uma etapa externa pode chamar:
+After WAT is written, an external stage can call:
 
 ```text
 wat2wasm
 ```
 
-para confirmar:
+to confirm:
 
 ```text
-sintaxe válida
+valid syntax
 
-tipagem válida
+valid typing
 
-estrutura WASM válida
+valid WASM structure
 ```
 
-Isso permanece fora da função atual.
+This remains outside the current function.
 
 ---
 
-# 198. O gerador não modifica blobs
+# 198. The generator does not modify blobs
 
-É importante observar que:
+Notice that:
 
 ```text
 weights_raw
@@ -3703,63 +3705,63 @@ q6_blob
 params_blob
 ```
 
-não sofrem transformação numérica.
+undergo no numeric transformation.
 
-A única transformação é:
+The only transformation is:
 
 ```text
-bytes binários
+binary bytes
       ↓
-escapes hexadecimais WAT
+WAT hexadecimal escapes
 ```
 
 ---
 
-# 199. Fidelidade dos blobs
+# 199. Blob fidelity
 
-Se:
+If:
 
 ```text
 weights_raw
 ```
 
-contém:
+contains:
 
 ```text
 01 ff 80
 ```
 
-o WAT contém:
+WAT contains:
 
 ```text
 \01\ff\80
 ```
 
-e o data segment representa os mesmos três bytes.
+and the data segment represents the same three bytes.
 
 ---
 
-# 200. Não há recomputação
+# 200. No recalculation
 
-`wat_generator.py` não deve:
+`wat_generator.py` should not:
 
 ```text
-recalcular multiplier
+recalculate multipliers
 
-reordenar pesos
+reorder weights
 
-recalcular offsets
+recalculate offsets
 
-alterar zero points
+change zero points
 
-reinterpretar LayerParam
+reinterpret LayerParam
 ```
 
-Essa ausência de lógica de modelo é uma característica desejável.
+This absence of model logic is desirable.
 
 ---
 
-# 201. Caminho dos pesos até o WAT
+# 201. Weight path to WAT
 
 ```text
 TFLite
@@ -3787,7 +3789,7 @@ wat_generator.py
 
 ---
 
-# 202. Caminho da quantização
+# 202. Quantization path
 
 ```text
 TFLite scales
@@ -3808,7 +3810,7 @@ quantization.py
 
 ---
 
-# 203. Caminho das LayerParams
+# 203. LayerParams path
 
 ```text
 layer_params.py
@@ -3826,12 +3828,12 @@ PARAMS_BASE
 wat_generator.py
       │
       ▼
-data segment PARAMS
+PARAMS data segment
 ```
 
 ---
 
-# 204. Caminho da memória
+# 204. Memory path
 
 ```text
 memory.py
@@ -3851,10 +3853,10 @@ memory.py
 
 ---
 
-# 205. Caminho do resultado
+# 205. Result path
 
 ```text
-última LayerParam
+last LayerParam
       │
       ▼
 out_ptr
@@ -3863,7 +3865,7 @@ out_ptr
 RESULT_BASE
 
 
-última LayerParam
+last LayerParam
       │
       ├── out_h
       ├── out_w
@@ -3875,7 +3877,7 @@ RESULT_BASE
 
 ---
 
-# 206. Visão arquitetural completa
+# 206. Complete architectural view
 
 ```text
                         TFLite
@@ -3901,11 +3903,11 @@ RESULT_BASE
                            │
                ┌───────────┴───────────┐
                ▼                       ▼
-       substituir números        inserir blobs
+       replace numbers           insert blobs
                │                       │
                └───────────┬───────────┘
                            ▼
-                  validar template
+                  validate template
                            │
                            ▼
                     model.wat
@@ -3919,14 +3921,14 @@ RESULT_BASE
 
 ---
 
-# 207. O template como código e os blobs como dados
+# 207. Template as code and blobs as data
 
-Essa arquitetura cria uma separação muito clara:
+This architecture clearly separates:
 
 ```text
 model_template.wat
         ↓
-código
+code
 
 
 weights_raw
@@ -3936,89 +3938,89 @@ shift_blob
 q6_blob
 params_blob
         ↓
-dados
+data
 ```
 
 ---
 
-# 208. Especialização do template
+# 208. Template specialization
 
-O gerador transforma:
-
-```text
-WAT genérico
-```
-
-em:
+The generator converts:
 
 ```text
-WAT específico do modelo
+generic WAT
 ```
 
-sem reconstruir os algoritmos.
+into:
+
+```text
+model-specific WAT
+```
+
+without rebuilding algorithms.
 
 ---
 
-# 209. Comparação com o extrator antigo
+# 209. Comparison with the old extractor
 
-Uma abordagem monolítica poderia ter:
+A monolithic approach could have:
 
 ```text
 Python
  │
- ├── calcula pesos
- ├── calcula memória
- ├── calcula quantização
- ├── escreve função conv WAT
- ├── escreve função add WAT
- ├── escreve debug
- ├── escreve data segments
- └── salva arquivo
+ ├── calculate weights
+ ├── calculate memory
+ ├── calculate quantization
+ ├── write WAT conv function
+ ├── write WAT add function
+ ├── write debug information
+ ├── write data segments
+ └── save file
 ```
 
-A arquitetura atual possui:
+The current architecture has:
 
 ```text
 Python extractor
       ↓
-dados estruturados
+structured data
 
-template WAT
+WAT template
       ↓
-algoritmos estáticos
+static algorithms
 
 wat_generator.py
       ↓
-união final
+final combination
 ```
 
 ---
 
-# 210. Benefício científico
+# 210. Research benefit
 
-Essa separação também facilita explicar o artefato.
+This separation also makes the artifact easier to explain.
 
-O runtime pode ser descrito como:
+The runtime can be described as:
 
 ```text
-conjunto fixo de kernels WAT
+a fixed set of WAT kernels
 ```
 
-enquanto o modelo é representado por:
+while the model is represented by:
 
 ```text
-dados
+data
 +
 LayerParams
 ```
 
-injetados durante a geração.
+injected during generation.
 
 ---
 
-# 211. `params_blob` como descrição da rede
+# 211. `params_blob` as the network description
 
-Em vez de gerar uma função WAT diferente para cada convolução:
+Instead of generating a separate WAT function for each convolution:
 
 ```text
 conv_layer_1()
@@ -4027,179 +4029,179 @@ conv_layer_3()
 ...
 ```
 
-o runtime pode possuir um kernel genérico:
+the runtime can have a generic kernel:
 
 ```text
 conv()
 ```
 
-e receber diferentes `LayerParams`.
+and receive different `LayerParams`.
 
 ---
 
-# 212. O gerador preserva essa ideia
+# 212. The generator preserves this idea
 
-Ele não produz código específico por camada.
+It does not produce layer-specific code.
 
-Os parâmetros específicos já estão em:
+Specific parameters are already in:
 
 ```text
 params_blob
 ```
 
-como a própria docstring de `generate_wat()` registra:
+as the `generate_wat()` docstring states (translated):
 
 ```text
-Os parâmetros específicos de cada camada
-já estão contidos no params_blob
-e não são inseridos diretamente
-nas funções WAT.
+Each layer's specific parameters
+are already contained in params_blob
+and are not inserted directly
+into WAT functions.
 ```
 
 ---
 
-# 213. Essa frase resume a arquitetura
+# 213. This statement summarizes the architecture
 
 ```text
-modelo
+model
     ↓
-dados
+data
 
 runtime
     ↓
-código
+code
 ```
 
-e não:
+rather than:
 
 ```text
-modelo
+model
     ↓
-gerar centenas de funções diferentes
+generate hundreds of different functions
 ```
 
 ---
 
-# 214. Invariantes esperados antes da chamada
+# 214. Expected invariants before the call
 
-Quando `generate_wat()` é executado, espera-se que:
+When `generate_wat()` executes, it expects:
 
 ```text
-layer_params não esteja vazio
+layer_params is not empty
 
-params_serialization.records não esteja vazio
+params_serialization.records is not empty
 
-slot_bases tenha exatamente 3 elementos
+slot_bases has exactly 3 elements
 
-todos os layouts já estejam calculados
+all layouts have been calculated
 
-todos os blobs já estejam serializados
+all blobs have been serialized
 
-MEM_PAGES já esteja fechado
+MEM_PAGES has been finalized
 ```
 
 ---
 
-# 215. Invariantes depois da chamada
+# 215. Invariants after the call
 
-Se a função retornar normalmente:
+If the function returns normally:
 
 ```text
-arquivo WAT foi escrito
+the WAT file has been written
 
-nenhum placeholder reconhecido permaneceu
+no recognized placeholder remains
 
-MEM_PAGES foi inserido
+MEM_PAGES has been inserted
 
-NUM_LAYERS foi inserido
+NUM_LAYERS has been inserted
 
-bases foram inseridas
+bases have been inserted
 
-result metadata foi inserida
+result metadata has been inserted
 
-data segments foram inseridos
+data segments have been inserted
 ```
 
 ---
 
-# 216. O que o retorno não garante
+# 216. What the return value does not guarantee
 
-Ele não garante por si só que:
+On its own, it does not guarantee:
 
 ```text
-o WAT compila
+WAT compiles
 
-a inferência é correta
+inference is correct
 
-os pesos estão corretos
+weights are correct
 
-os kernels são corretos
+kernels are correct
 
-os ponteiros não se sobrepõem
+pointers do not overlap
 
-a saída bate com o TFLite
+output matches TFLite
 ```
 
-Essas garantias pertencem a outras validações e testes.
+These guarantees belong to other validations and tests.
 
 ---
 
-# 217. O que o módulo deliberadamente não faz
+# 217. What the module deliberately does not do
 
-`wat_generator.py` não:
+`wat_generator.py` does not:
 
 ```text
-carrega TFLite
+load TFLite
 
-percorre operadores
+iterate over operators
 
-calcula slots
+calculate slots
 
-extrai pesos
+extract weights
 
-calcula quantização
+compute quantization
 
-calcula SAME padding
+calculate SAME padding
 
-constrói LayerParams
+build LayerParams
 
-serializa LayerParams
+serialize LayerParams
 
-calcula MEM_END
+calculate MEM_END
 
-compila WAT para WASM
+compile WAT into WASM
 
-executa inferência
+execute inference
 ```
 
 ---
 
-# 218. Responsabilidade exata
+# 218. Exact responsibility
 
-Ele responde apenas:
+It only answers:
 
 ```text
-dado um template WAT
-e todos os artefatos já calculados,
+given a WAT template
+and all previously calculated artifacts,
 
-como produzir o WAT final
-correspondente a esse modelo?
+how can we produce the final WAT
+corresponding to this model?
 ```
 
 ---
 
-# 219. Resumo das funções
+# 219. Function summary
 
-| Função                  | Responsabilidade                                                   |
+| Function | Responsibility |
 | ----------------------- | ------------------------------------------------------------------ |
-| `_as_bytes()`           | Normalizar diferentes representações binárias para `bytes`         |
-| `wat_data_from_bytes()` | Converter bytes em um active data segment WAT                      |
-| `build_data_segments()` | Construir os segmentos WEIGHTS, BIAS, MUL, SHIFT, Q6 e PARAMS      |
-| `generate_wat()`        | Substituir placeholders, inserir segmentos, validar e gravar o WAT |
+| `_as_bytes()` | Normalize binary representations into `bytes` |
+| `wat_data_from_bytes()` | Convert bytes into an active WAT data segment |
+| `build_data_segments()` | Build WEIGHTS, BIAS, MUL, SHIFT, Q6, and PARAMS segments |
+| `generate_wat()` | Replace placeholders, insert segments, validate, and write WAT |
 
 ---
 
-# 220. Resumo dos data segments
+# 220. Data segment summary
 
 ```text
 weights_raw
@@ -4246,7 +4248,7 @@ DATA PARAMS
 
 ---
 
-# 221. Resumo dos valores numéricos
+# 221. Numeric value summary
 
 ```text
 MEM_PAGES
@@ -4274,40 +4276,40 @@ SLOT2_BASE
     ← layer_memory
 
 RESULT_BASE
-    ← última LayerParam serializada
+    ← last serialized LayerParam
 
 RESULT_COUNT
-    ← shape da última camada
+    ← last layer shape
 ```
 
 ---
 
-# 222. Síntese
+# 222. Summary
 
-`wat_generator.py` representa a última etapa da construção do artefato WebAssembly.
+`wat_generator.py` represents the final stage of WebAssembly artifact construction.
 
-Todos os módulos anteriores trabalham para transformar o TFLite em estruturas independentes:
+All previous modules convert TFLite into independent structures:
 
 ```text
 weights.py
-    → pesos e bias
+    → weights and biases
 
 quantization.py
-    → MUL, SHIFT e Q6
+    → MUL, SHIFT, and Q6
 
 memory.py
-    → endereços
+    → addresses
 
 layer_params.py
-    → descrição das operações
+    → operation descriptions
 
 params_blob.py
-    → representação binária das operações
+    → binary operation representation
 ```
 
-O `wat_generator.py` recebe esses resultados prontos e realiza duas operações fundamentais.
+`wat_generator.py` receives these prepared results and performs two fundamental operations.
 
-A primeira é substituir os placeholders numéricos do template:
+The first replaces the template's numeric placeholders:
 
 ```text
 @@MEM_PAGES@@
@@ -4339,7 +4341,7 @@ A primeira é substituir os placeholders numéricos do template:
 @@RESULT_COUNT@@
 ```
 
-A segunda é transformar os blobs binários:
+The second converts binary blobs:
 
 ```text
 weights_raw
@@ -4355,41 +4357,41 @@ q6_blob
 params_blob
 ```
 
-em data segments WAT posicionados em seus respectivos endereços.
+into WAT data segments placed at their respective addresses.
 
-Assim:
+Thus:
 
 ```text
-template estático
+static template
         +
-dados específicos do modelo
+model-specific data
         +
-layout específico do modelo
+model-specific layout
         │
         ▼
-WAT completo
+complete WAT
 ```
 
-Ao final, o módulo ainda verifica se algum placeholder reconhecido permanece sem resolução e somente então grava:
+Finally, the module checks for unresolved recognized placeholders and only then writes:
 
 ```text
 generated/model.wat
 ```
 
-Essa arquitetura mantém uma separação muito importante:
+This architecture preserves an important separation:
 
 ```text
-EXTRAÇÃO / CÁLCULO
+EXTRACTION / CALCULATION
         ↓
 Python
 
-ALGORITMOS DE INFERÊNCIA
+INFERENCE ALGORITHMS
         ↓
-template WAT
+WAT template
 
-MATERIALIZAÇÃO
+FINAL GENERATION
         ↓
 wat_generator.py
 ```
 
-O gerador, portanto, não é responsável por “entender” novamente a rede neural. Quando ele é chamado, toda a engenharia de interpretação do TFLite já terminou. Sua função é apenas transformar os artefatos validados em um módulo WAT autocontido e específico para aquele modelo.
+The generator does not need to “understand” the neural network again. When called, TFLite interpretation is complete. It simply converts the validated artifacts into a self-contained WAT module specific to that model.

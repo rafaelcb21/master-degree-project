@@ -1,14 +1,16 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](01-configuracao.md) | [Português (Brasil)](01-configuracao.pt-BR.md)
 
-# 01 — Configuração do pipeline (`config.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body is retained in translation.
 
-## 1. Objetivo do módulo
+# 01 — Pipeline configuration (`config.py`)
 
-O arquivo `extractor/config.py` centraliza os parâmetros globais utilizados durante o processo de extração do modelo TFLite e geração do arquivo WebAssembly Text (`.wat`).
+## 1. Module purpose
 
-Seu objetivo é evitar que caminhos, alinhamentos, quantidade de slots e outros parâmetros estruturais sejam repetidos ou definidos diretamente em vários módulos do projeto.
+The `extractor/config.py` file centralizes the global parameters used to extract the TFLite model and generate the WebAssembly Text (`.wat`) file.
 
-O arquivo atual é:
+Its purpose is to prevent paths, alignments, slot counts, and other structural parameters from being repeated or defined directly in several project modules.
+
+The current file is:
 
 ```python
 from pathlib import Path
@@ -39,13 +41,13 @@ ALIGN = 16
 KERNEL_BASE_HINT = 2048
 ```
 
-O módulo não executa nenhuma extração nem modifica arquivos. Ele apenas disponibiliza valores de configuração para os demais componentes.
+The module does not perform extraction or modify files. It only makes configuration values available to the other components.
 
 ---
 
-# 2. Visão geral
+# 2. Overview
 
-O fluxo das configurações pode ser representado da seguinte forma:
+The flow of configuration values can be represented as follows:
 
 ```text
                          config.py
@@ -53,8 +55,8 @@ O fluxo das configurações pode ser representado da seguinte forma:
           ┌─────────────────┼─────────────────┐
           │                 │                 │
           ▼                 ▼                 ▼
-      MODEL_PATH        parâmetros         caminhos
-          │             de memória         de saída
+      MODEL_PATH          memory            output
+          │             parameters          paths
           │                 │                 │
           ▼                 ▼                 ▼
     model_loader.py     NUM_SLOTS        REPORTS_DIR
@@ -62,38 +64,38 @@ O fluxo das configurações pode ser representado da seguinte forma:
           │             ALIGN            WAT_TEMPLATE_PATH
           │             KERNEL_BASE_HINT
           ▼
-      modelo TFLite
+      TFLite model
           │
           ▼
-    pipeline de extração
+    extraction pipeline
           │
-          ├── grafo
+          ├── graph
           ├── slots
-          ├── pesos e bias
-          ├── quantização
-          ├── layout de memória
+          ├── weights and biases
+          ├── quantization
+          ├── memory layout
           ├── LayerParams
           ├── params_blob
           │
           ▼
-     geração do WAT
+     WAT generation
 ```
 
-Portanto, `config.py` está no início do fluxo, mas suas constantes influenciam diversas etapas posteriores.
+Thus, `config.py` is at the beginning of the flow, but its constants influence several later stages.
 
 ---
 
-# 3. `Path` e manipulação de caminhos
+# 3. `Path` and path handling
 
-O módulo começa com:
+The module begins with:
 
 ```python
 from pathlib import Path
 ```
 
-`Path` pertence à biblioteca padrão do Python e representa caminhos do sistema de arquivos como objetos.
+`Path` belongs to the Python standard library and represents filesystem paths as objects.
 
-Por exemplo:
+For example:
 
 ```python
 MODEL_PATH = Path(
@@ -101,49 +103,49 @@ MODEL_PATH = Path(
 )
 ```
 
-em vez de:
+instead of:
 
 ```python
 MODEL_PATH = "model_int8_esp32.tflite"
 ```
 
-A utilização de `Path` facilita operações posteriores como:
+Using `Path` makes subsequent operations easier, such as:
 
 ```python
 MODEL_PATH.read_bytes()
 ```
 
-ou:
+or:
 
 ```python
 REPORTS_DIR / "02-grafo.txt"
 ```
 
-Neste segundo caso:
+In this second case:
 
 ```python
 REPORTS_DIR = Path("reports")
 ```
 
-e:
+and:
 
 ```python
 REPORTS_DIR / "02-grafo.txt"
 ```
 
-produzem conceitualmente:
+conceptually produce:
 
 ```text
 reports/02-grafo.txt
 ```
 
-No Windows, o Python faz automaticamente a adaptação adequada do separador de diretórios.
+On Windows, Python automatically adapts the directory separator as needed.
 
 ---
 
-# 4. Caminhos relativos
+# 4. Relative paths
 
-Todos os caminhos definidos neste arquivo são relativos:
+All paths defined in this file are relative:
 
 ```python
 Path("model_int8_esp32.tflite")
@@ -152,40 +154,40 @@ Path("generated/model.wat")
 Path("reports")
 ```
 
-Isso significa que eles são interpretados em relação ao diretório de trabalho atual do processo Python.
+This means they are interpreted relative to the Python process's current working directory.
 
-No uso normal do projeto:
+In normal project usage:
 
 ```powershell
 PS C:\Users\rafae\Downloads\master-degree-project> python .\main.py
 ```
 
-o diretório de trabalho é:
+the working directory is:
 
 ```text
 C:\Users\rafae\Downloads\master-degree-project
 ```
 
-Consequentemente:
+Consequently:
 
 ```text
 MODEL_PATH
 ```
 
-representa:
+represents:
 
 ```text
 C:\Users\rafae\Downloads\master-degree-project\
 model_int8_esp32.tflite
 ```
 
-e:
+and:
 
 ```text
 WAT_TEMPLATE_PATH
 ```
 
-representa:
+represents:
 
 ```text
 C:\Users\rafae\Downloads\master-degree-project\
@@ -193,7 +195,7 @@ wat\
 model_template.wat
 ```
 
-A estrutura esperada é aproximadamente:
+The expected structure is approximately:
 
 ```text
 master-degree-project/
@@ -229,15 +231,15 @@ MODEL_PATH = Path(
 )
 ```
 
-## Função
+## Purpose
 
-Define o arquivo TFLite utilizado como entrada do pipeline.
+Defines the TFLite file used as pipeline input.
 
-Esse arquivo contém o modelo neural já convertido para TensorFlow Lite e quantizado.
+This file contains the neural model already converted to TensorFlow Lite and quantized.
 
-O extrator utiliza esse artefato como sua representação canônica do modelo.
+The extractor uses this artifact as the canonical representation of the model.
 
-Fluxo:
+Flow:
 
 ```text
 model_int8_esp32.tflite
@@ -246,29 +248,29 @@ model_int8_esp32.tflite
    model_loader.py
         │
         ▼
-   objeto Model
+   Model object
         │
         ▼
     SubGraph 0
         │
-        ├── operadores
+        ├── operators
         ├── tensors
         ├── buffers
         ├── shapes
-        ├── pesos
-        ├── bias
-        └── parâmetros de quantização
+        ├── weights
+        ├── biases
+        └── quantization parameters
 ```
 
-A partir desse arquivo são obtidas as informações necessárias para construir a representação executável usada posteriormente pelo WAT.
+This file provides the information needed to build the executable representation subsequently used by the WAT.
 
-## Importante
+## Important
 
-`MODEL_PATH` identifica apenas o arquivo de entrada.
+`MODEL_PATH` only identifies the input file.
 
-Ele não carrega o modelo.
+It does not load the model.
 
-O carregamento ocorre posteriormente, por exemplo:
+Loading happens later, for example:
 
 ```python
 model = load_model(
@@ -276,7 +278,7 @@ model = load_model(
 )
 ```
 
-Isso mantém `config.py` livre de efeitos colaterais.
+This keeps `config.py` free of side effects.
 
 ---
 
@@ -288,27 +290,27 @@ WAT_TEMPLATE_PATH = Path(
 )
 ```
 
-## Função
+## Purpose
 
-Indica onde está armazenado o template WebAssembly Text utilizado pela etapa final de geração.
+Specifies where the WebAssembly Text template used by the final generation stage is stored.
 
-Diferentemente da implementação antiga, o Python não constrói mais todo o código WAT linha por linha.
+Unlike the old implementation, Python no longer builds all the WAT code line by line.
 
-Agora existe uma separação entre:
+There is now a separation between:
 
 ```text
-algoritmos WebAssembly
+WebAssembly algorithms
         +
-dados extraídos do modelo
+data extracted from the model
 ```
 
-O arquivo:
+The file:
 
 ```text
 wat/model_template.wat
 ```
 
-contém a implementação relativamente estática dos algoritmos, como:
+contains the relatively static implementation of algorithms such as:
 
 ```text
 CONV_2D
@@ -321,11 +323,11 @@ QUANTIZE
 RGB565_TO_RGB888
 ```
 
-Além das funções auxiliares de requantização e execução.
+It also contains helper functions for requantization and execution.
 
-Os valores dependentes do modelo aparecem no template através de placeholders.
+Model-dependent values appear in the template through placeholders.
 
-Exemplo conceitual:
+Conceptual example:
 
 ```wat
 (memory (export "memory") @@MEM_PAGES@@)
@@ -341,17 +343,17 @@ Exemplo conceitual:
 )
 ```
 
-Durante a geração:
+During generation:
 
 ```text
-template WAT
+WAT template
       +
-dados produzidos pelo extrator
+data produced by the extractor
       ↓
 generated/model.wat
 ```
 
-Essa separação evita misturar a lógica dos algoritmos com a lógica de extração do TFLite.
+This separation avoids mixing algorithm logic with TFLite extraction logic.
 
 ---
 
@@ -363,19 +365,19 @@ OUT_WAT_PATH = Path(
 )
 ```
 
-## Função
+## Purpose
 
-Define o destino do arquivo WAT final gerado pelo pipeline.
+Defines the destination of the final WAT file generated by the pipeline.
 
-Depois que todos os valores foram extraídos e calculados, o gerador substitui os placeholders do template e insere os segmentos binários necessários.
+After all values have been extracted and calculated, the generator replaces the template placeholders and inserts the necessary binary segments.
 
-O resultado é gravado em:
+The result is written to:
 
 ```text
 generated/model.wat
 ```
 
-Fluxo:
+Flow:
 
 ```text
 wat/model_template.wat
@@ -384,7 +386,7 @@ wat/model_template.wat
           ├── MEM_PAGES
           ├── PARAMS_BASE
           ├── NUM_LAYERS
-          ├── bases de memória
+          ├── memory bases
           └── data segments
           │
           ▼
@@ -394,29 +396,29 @@ wat/model_template.wat
 generated/model.wat
 ```
 
-Posteriormente esse arquivo pode ser compilado com:
+This file can later be compiled with:
 
 ```text
 wat2wasm
 ```
 
-produzindo o módulo WebAssembly binário.
+to produce the binary WebAssembly module.
 
-O fato de o arquivo gerado ficar em `generated/` também separa claramente:
+Keeping the generated file in `generated/` also clearly separates:
 
 ```text
 wat/model_template.wat
 ```
 
-que é código-fonte mantido manualmente,
+which is manually maintained source code,
 
-de:
+from:
 
 ```text
 generated/model.wat
 ```
 
-que é um artefato produzido automaticamente.
+which is an automatically produced artifact.
 
 ---
 
@@ -428,26 +430,26 @@ REPORTS_DIR = Path(
 )
 ```
 
-## Função
+## Purpose
 
-Define o diretório no qual são gravados os relatórios das diferentes etapas da extração.
+Defines the directory where reports from the different extraction stages are written.
 
-Durante a refatoração, informações que anteriormente eram inseridas como comentários dentro do WAT passaram a ser registradas nesses arquivos.
+During refactoring, information previously inserted as comments inside the WAT was moved into these files.
 
-O princípio adotado é:
+The adopted principle is:
 
 ```text
 WAT
-    → somente o necessário para execução
+    → only what is needed for execution
 
 reports/
-    → explicação dos valores gerados
-    → rastreabilidade
-    → depuração
-    → validação do processo
+    → explanation of generated values
+    → traceability
+    → debugging
+    → process validation
 ```
 
-Exemplos:
+Examples:
 
 ```text
 reports/
@@ -463,7 +465,7 @@ reports/
 └── 11-layout-final-memoria.txt
 ```
 
-Essa organização permite verificar passo a passo como o modelo TFLite foi transformado na estrutura consumida pelo runtime WebAssembly.
+This organization lets you verify, step by step, how the TFLite model was transformed into the structure consumed by the WebAssembly runtime.
 
 ---
 
@@ -473,17 +475,17 @@ Essa organização permite verificar passo a passo como o modelo TFLite foi tran
 NUM_SLOTS = 3
 ```
 
-## Função
+## Purpose
 
-Define quantas regiões reutilizáveis de memória são disponibilizadas para armazenar tensors intermediários da rede.
+Defines how many reusable memory regions are available for storing the network's intermediate tensors.
 
-Neste projeto:
+In this project:
 
 ```text
 NUM_SLOTS = 3
 ```
 
-significa:
+means:
 
 ```text
 SLOT0
@@ -491,27 +493,27 @@ SLOT1
 SLOT2
 ```
 
-Esses slots não representam três tensors específicos.
+These slots do not represent three specific tensors.
 
-Eles são regiões físicas reutilizadas por diferentes tensors ao longo da execução da rede.
+They are physical regions reused by different tensors throughout network execution.
 
-A ideia é:
+The idea is:
 
 ```text
 tensor A → SLOT0
 
-tensor A deixa de ser necessário
+tensor A is no longer needed
 
 tensor D → SLOT0
 ```
 
-Assim, não é necessário reservar uma região de memória independente para cada tensor intermediário.
+This avoids reserving an independent memory region for every intermediate tensor.
 
 ---
 
-# 10. Relação entre tensors e slots
+# 10. Relationship between tensors and slots
 
-Considere uma sequência simplificada:
+Consider a simplified sequence:
 
 ```text
 L1
@@ -523,7 +525,7 @@ L3
 L4
 ```
 
-Uma possível alocação seria:
+One possible allocation would be:
 
 ```text
 L1 → SLOT1
@@ -532,10 +534,10 @@ L3 → SLOT0
 L4 → SLOT1
 ```
 
-Representação:
+Representation:
 
 ```text
-tempo ───────────────────────────────►
+time ────────────────────────────────►
 
 SLOT0                  [ L3 output ]
 
@@ -544,23 +546,23 @@ SLOT1     [ L1 output ]              [ L4 output ]
 SLOT2           [ L2 output ]
 ```
 
-O mesmo espaço físico pode ser reutilizado depois que seu conteúdo anterior deixa de ser necessário.
+The same physical space can be reused after its previous contents are no longer needed.
 
 ---
 
-# 11. Por que três slots?
+# 11. Why three slots?
 
-O valor atual:
+The current value:
 
 ```python
 NUM_SLOTS = 3
 ```
 
-faz parte da estratégia de alocação utilizada neste projeto.
+is part of the allocation strategy used in this project.
 
-O algoritmo de `slots.py` calcula quais outputs podem compartilhar as regiões sem sobrescrever tensors que ainda serão consumidos por camadas posteriores.
+The algorithm in `slots.py` calculates which outputs can share regions without overwriting tensors that later layers still need to consume.
 
-Além disso, o template WAT atual possui explicitamente:
+In addition, the current WAT template explicitly contains:
 
 ```text
 SLOT0_BASE
@@ -568,25 +570,25 @@ SLOT1_BASE
 SLOT2_BASE
 ```
 
-Portanto, neste momento existe uma relação estrutural entre:
+Thus, there is currently a structural relationship between:
 
 ```python
 NUM_SLOTS = 3
 ```
 
-e o template WAT.
+and the WAT template.
 
-Alterar simplesmente para:
+Simply changing it to:
 
 ```python
 NUM_SLOTS = 4
 ```
 
-não é suficiente.
+is not enough.
 
-O gerador atual valida essa condição e o template precisaria ser adaptado para aceitar um quarto slot.
+The current generator validates this condition, and the template would need to be adapted to accept a fourth slot.
 
-Assim, `NUM_SLOTS` atualmente deve ser considerado uma configuração estrutural do runtime, e não apenas um número arbitrário.
+Therefore, `NUM_SLOTS` should currently be treated as a structural runtime setting, rather than an arbitrary number.
 
 ---
 
@@ -596,97 +598,97 @@ Assim, `NUM_SLOTS` atualmente deve ser considerado uma configuração estrutural
 BATCH = 1
 ```
 
-## Função
+## Purpose
 
-Define o tamanho de batch considerado pelo planejamento de memória.
+Defines the batch size considered by memory planning.
 
-No modelo atual, a inferência é realizada para uma imagem por vez:
+In the current model, inference runs on one image at a time:
 
 ```text
 batch = 1
 ```
 
-Conceitualmente, uma entrada poderia ter shape:
+Conceptually, an input could have shape:
 
 ```text
 [1, 128, 128, 3]
 ```
 
-representando:
+representing:
 
 ```text
-1 imagem
-128 pixels de altura
-128 pixels de largura
-3 canais
+1 image
+128 pixels high
+128 pixels wide
+3 channels
 ```
 
-Número de elementos:
+Number of elements:
 
 ```text
 1 × 128 × 128 × 3
-= 49.152 elementos
+= 49,152 elements
 ```
 
-No caso de um tensor `int8` ou `uint8`:
+For an `int8` or `uint8` tensor:
 
 ```text
-49.152 × 1 byte
-= 49.152 bytes
+49,152 × 1 byte
+= 49,152 bytes
 ```
 
 ---
 
-# 13. Relação de `BATCH` com shapes dinâmicos
+# 13. Relationship between `BATCH` and dynamic shapes
 
-A função atual utilizada para calcular o número de elementos de um tensor possui compatibilidade herdada com dimensões negativas.
+The current function for calculating the number of elements in a tensor retains legacy support for negative dimensions.
 
-Conceitualmente:
+Conceptually:
 
 ```python
 if dimension < 0:
     dimension = batch
 ```
 
-Assim, para:
+Thus, for:
 
 ```text
 [-1, 128, 128, 3]
 ```
 
-com:
+with:
 
 ```python
 BATCH = 1
 ```
 
-o cálculo torna-se:
+the calculation becomes:
 
 ```text
 [1, 128, 128, 3]
 ```
 
-Entretanto, essa regra deve ser interpretada com cuidado.
+However, this rule should be interpreted carefully.
 
-Uma dimensão `-1` em um modelo não significa necessariamente que aquela dimensão seja o batch.
+A dimension of `-1` in a model does not necessarily mean that dimension is the batch.
 
-Por exemplo:
+For example:
 
 ```text
 [1, -1, 128, 3]
 ```
 
-poderia representar altura dinâmica.
+could represent a dynamic height.
 
-Nesse caso, substituir automaticamente:
+In that case, automatically replacing:
 
 ```text
 -1 → BATCH
 ```
 
-seria incorreto.
+would be incorrect.
 
-Para o modelo atualmente utilizado no projeto, espera-se que as dimensões relevantes estejam definidas estaticamente. A presença de dimensões negativas deve portanto ser tratada como um ponto de validação caso novos modelos sejam utilizados futuramente.
+For the model currently used in the project, the relevant dimensions are expected to be statically defined. Negative dimensions should therefore be treated as a validation point if new models are used in the future.
 
 ---
 
@@ -696,17 +698,17 @@ Para o modelo atualmente utilizado no projeto, espera-se que as dimensões relev
 ALIGN = 16
 ```
 
-## Função
+## Purpose
 
-Define o alinhamento, em bytes, utilizado para organizar diferentes regiões da memória linear.
+Defines the alignment, in bytes, used to organize different regions of linear memory.
 
-O valor atual é:
+The current value is:
 
 ```text
 16 bytes
 ```
 
-Diversas regiões são posicionadas usando:
+Several regions are positioned using:
 
 ```python
 align_up(
@@ -715,16 +717,16 @@ align_up(
 )
 ```
 
-Assim, cada nova região começa em um endereço múltiplo de 16.
+Thus, each new region starts at an address that is a multiple of 16.
 
-Exemplo:
+Example:
 
 ```text
-endereço atual = 1001
+current address = 1001
 ALIGN = 16
 ```
 
-Os múltiplos próximos são:
+Nearby multiples are:
 
 ```text
 992
@@ -733,7 +735,7 @@ Os múltiplos próximos são:
 ...
 ```
 
-Portanto:
+Therefore:
 
 ```text
 align_up(1001, 16)
@@ -742,76 +744,76 @@ align_up(1001, 16)
 
 ---
 
-# 15. Por que existe alinhamento?
+# 15. Why use alignment?
 
-Considere duas regiões:
+Consider two regions:
 
 ```text
 WEIGHTS
 BIAS
 ```
 
-Se os pesos terminarem no endereço:
+If the weights end at address:
 
 ```text
 386651
 ```
 
-a próxima região não precisa necessariamente começar imediatamente em:
+the next region does not necessarily need to start immediately at:
 
 ```text
 386651
 ```
 
-Com alinhamento de 16 bytes:
+With 16-byte alignment:
 
 ```text
 align_up(386651, 16)
 = 386656
 ```
 
-Assim:
+Thus:
 
 ```text
 WEIGHTS
 │
-├── dados
+├── data
 │
-└── fim = 386651
+└── end = 386651
         │
-        ├── 5 bytes de padding
+        ├── 5 bytes of padding
         │
         ▼
-BIAS começa em 386656
+BIAS starts at 386656
 ```
 
-Esses espaços entre regiões são chamados de padding de alinhamento.
+These gaps between regions are called alignment padding.
 
 ---
 
-# 16. Fórmula utilizada
+# 16. Formula used
 
-O projeto utiliza conceitualmente:
+The project conceptually uses:
 
 ```python
 (value + alignment - 1) & ~(alignment - 1)
 ```
 
-Para:
+For:
 
 ```text
 alignment = 16
 ```
 
-o cálculo é apropriado porque 16 é uma potência de dois:
+the calculation is appropriate because 16 is a power of two:
 
 ```text
 16 = 2⁴
 ```
 
-Essa implementação por operações bit a bit pressupõe um alinhamento que seja potência de dois.
+This bitwise implementation assumes that the alignment is a power of two.
 
-Portanto, valores naturais para essa implementação seriam:
+Therefore, natural values for this implementation would be:
 
 ```text
 1
@@ -824,7 +826,7 @@ Portanto, valores naturais para essa implementação seriam:
 ...
 ```
 
-e não valores arbitrários como:
+rather than arbitrary values such as:
 
 ```text
 10
@@ -832,21 +834,21 @@ e não valores arbitrários como:
 20
 ```
 
-No projeto atual:
+In the current project:
 
 ```python
 ALIGN = 16
 ```
 
-satisfaz essa condição.
+satisfies this condition.
 
 ---
 
-# 17. Onde `ALIGN` é utilizado
+# 17. Where `ALIGN` is used
 
-O alinhamento participa de várias decisões de memória.
+Alignment is involved in several memory decisions.
 
-Exemplo simplificado:
+Simplified example:
 
 ```text
 KERNEL_BASE_HINT
@@ -884,7 +886,7 @@ PARAMS_BASE
 SLOT0_BASE
 ```
 
-Portanto, `ALIGN` não é apenas uma propriedade dos pesos. Ele influencia o layout global da memória.
+Therefore, `ALIGN` is not only a property of the weights. It influences the global memory layout.
 
 ---
 
@@ -894,11 +896,11 @@ Portanto, `ALIGN` não é apenas uma propriedade dos pesos. Ele influencia o lay
 KERNEL_BASE_HINT = 2048
 ```
 
-## Função
+## Purpose
 
-Define o endereço inicial de referência a partir do qual o bloco de pesos poderá ser colocado na memória linear.
+Defines the reference starting address from which the weight block can be placed in linear memory.
 
-O valor ainda passa pela função de alinhamento:
+The value still passes through the alignment function:
 
 ```python
 kernel_base = align_up(
@@ -907,22 +909,22 @@ kernel_base = align_up(
 )
 ```
 
-No caso atual:
+In the current case:
 
 ```text
 KERNEL_BASE_HINT = 2048
 ALIGN = 16
 ```
 
-Como:
+Since:
 
 ```text
 2048 / 16 = 128
 ```
 
-o endereço já está alinhado.
+the address is already aligned.
 
-Portanto:
+Therefore:
 
 ```text
 kernel_base = 2048
@@ -930,11 +932,11 @@ kernel_base = 2048
 
 ---
 
-# 19. Por que o nome contém `HINT`?
+# 19. Why does the name contain `HINT`?
 
-O valor não é utilizado diretamente como uma verdade absoluta.
+The value is not used directly as an absolute truth.
 
-Ele funciona como ponto inicial solicitado para a região dos pesos:
+It serves as the requested starting point for the weight region:
 
 ```text
 KERNEL_BASE_HINT
@@ -943,62 +945,62 @@ KERNEL_BASE_HINT
     align_up()
         │
         ▼
-   KERNEL_BASE real
+   actual KERNEL_BASE
 ```
 
-Exemplo hipotético:
+Hypothetical example:
 
 ```python
 KERNEL_BASE_HINT = 2050
 ALIGN = 16
 ```
 
-produziria:
+would produce:
 
 ```text
 KERNEL_BASE = 2064
 ```
 
-Portanto:
+Therefore:
 
 ```text
-hint ≠ necessariamente base efetiva
+hint ≠ necessarily the effective base
 ```
 
-No valor atual, ambos coincidem porque `2048` já está alinhado.
+With the current value, both coincide because `2048` is already aligned.
 
 ---
 
-# 20. Região anterior aos pesos
+# 20. Region before the weights
 
-Como:
+Since:
 
 ```text
 KERNEL_BASE = 2048
 ```
 
-os endereços anteriores:
+the preceding addresses:
 
 ```text
 0 ... 2047
 ```
 
-não são utilizados pelo bloco de pesos.
+are not used by the weight block.
 
-Isso permite que essa região permaneça disponível para estruturas ou comunicação do runtime.
+This allows that region to remain available for runtime structures or communication.
 
-Por exemplo, o template WAT atualmente utiliza uma pequena região inicial para flags de comunicação com o host.
+For example, the WAT template currently uses a small initial region for flags that communicate with the host.
 
-O ponto importante para o extrator é que os pesos **não começam no endereço zero**.
+The key point for the extractor is that the weights **do not start at address zero**.
 
-Representação simplificada:
+Simplified representation:
 
 ```text
-memória linear WASM
+WASM linear memory
 
 0
 │
-│ região inicial/reservada
+│ initial/reserved region
 │
 │
 2048  ← KERNEL_BASE
@@ -1022,19 +1024,19 @@ memória linear WASM
 └── SLOT2
 ```
 
-O motivo histórico exato da escolha do valor `2048` deve ser documentado separadamente caso seja necessário demonstrar por que especificamente 2 KiB foram reservados, em vez de outro valor.
+The exact historical reason for choosing `2048` should be documented separately if it becomes necessary to explain why precisely 2 KiB was reserved rather than some other amount.
 
-Para o pipeline atual, o fato objetivo é:
+For the current pipeline, the objective fact is:
 
 ```text
-2048 é o ponto inicial configurado para o layout dos parâmetros.
+2048 is the configured starting point for the parameter layout.
 ```
 
 ---
 
-# 21. Relação entre `KERNEL_BASE_HINT` e o layout
+# 21. Relationship between `KERNEL_BASE_HINT` and the layout
 
-O planejamento posterior pode ser visualizado assim:
+Subsequent planning can be visualized as follows:
 
 ```text
 KERNEL_BASE_HINT = 2048
@@ -1045,9 +1047,9 @@ KERNEL_BASE_HINT = 2048
            ▼
     KERNEL_BASE = 2048
            │
-           │ + tamanho dos pesos
+           │ + weight size
            ▼
-     fim dos pesos
+     end of weights
            │
            ▼
        align_up
@@ -1055,7 +1057,7 @@ KERNEL_BASE_HINT = 2048
            ▼
        BIAS_BASE
            │
-           │ + tamanho dos bias
+           │ + bias size
            ▼
        align_up
            │
@@ -1081,19 +1083,19 @@ KERNEL_BASE_HINT = 2048
        SLOT2_BASE
 ```
 
-Assim, somente a primeira região possui uma base configurada inicialmente.
+Thus, only the first region has an initially configured base.
 
-As seguintes são derivadas matematicamente dos tamanhos das regiões anteriores.
+The following regions are derived mathematically from the sizes of the preceding regions.
 
 ---
 
-# 22. Separação entre configuração e valores extraídos
+# 22. Separating configuration from extracted values
 
-É importante distinguir duas categorias de informação no projeto.
+It is useful to distinguish two categories of information in the project.
 
-## Valores configurados manualmente
+## Manually configured values
 
-São definidos em `config.py`:
+These are defined in `config.py`:
 
 ```text
 MODEL_PATH
@@ -1107,9 +1109,9 @@ ALIGN
 KERNEL_BASE_HINT
 ```
 
-## Valores descobertos ou calculados automaticamente
+## Automatically discovered or calculated values
 
-São produzidos durante a extração:
+These are produced during extraction:
 
 ```text
 kernel_bytes
@@ -1136,45 +1138,45 @@ RESULT_BASE
 RESULT_COUNT
 ```
 
-Essa divisão é fundamental.
+This division is fundamental.
 
-Por exemplo, não devemos colocar no `config.py`:
+For example, we should not put this in `config.py`:
 
 ```python
 PARAMS_BASE = 499360
 ```
 
-porque `PARAMS_BASE` depende do conteúdo real do modelo.
+because `PARAMS_BASE` depends on the actual contents of the model.
 
-Da mesma maneira, não devemos colocar:
+Likewise, we should not put:
 
 ```python
 MEM_PAGES = 17
 ```
 
-porque a quantidade de páginas depende do layout final calculado.
+because the page count depends on the calculated final layout.
 
-Esses valores são resultados da extração, não configurações.
+These values are extraction results, not settings.
 
 ---
 
-# 23. Configuração versus resultado
+# 23. Configuration versus result
 
-Podemos resumir a relação como:
+We can summarize the relationship as:
 
 ```text
 config.py
    │
-   │ parâmetros de entrada
+   │ input parameters
    ▼
-extrator
+extractor
    │
-   │ cálculos
+   │ calculations
    ▼
-resultados
+results
 ```
 
-Por exemplo:
+For example:
 
 ```text
 ALIGN = 16
@@ -1192,7 +1194,7 @@ q6_base
 params_base
 ```
 
-E:
+And:
 
 ```text
 NUM_SLOTS = 3
@@ -1209,9 +1211,9 @@ slot_bases
 
 ---
 
-# 24. Dependências principais
+# 24. Main dependencies
 
-Uma visão simplificada das dependências atuais é:
+A simplified view of the current dependencies is:
 
 ```text
 MODEL_PATH
@@ -1266,9 +1268,9 @@ wat_generator.py
 
 ---
 
-# 25. Por que centralizar essas informações?
+# 25. Why centralize this information?
 
-Sem `config.py`, seria possível encontrar valores como:
+Without `config.py`, values such as:
 
 ```python
 3
@@ -1277,9 +1279,9 @@ Sem `config.py`, seria possível encontrar valores como:
 2048
 ```
 
-espalhados por diversos módulos.
+could be scattered across several modules.
 
-Por exemplo:
+For example:
 
 ```python
 allocate_slots(
@@ -1288,7 +1290,7 @@ allocate_slots(
 )
 ```
 
-e depois:
+and then:
 
 ```python
 align_up(
@@ -1297,15 +1299,15 @@ align_up(
 )
 ```
 
-e ainda:
+and also:
 
 ```python
 kernel_base = 2048
 ```
 
-Isso introduziria números mágicos.
+This would introduce magic numbers.
 
-Centralizando:
+By centralizing:
 
 ```python
 NUM_SLOTS = 3
@@ -1314,15 +1316,15 @@ ALIGN = 16
 KERNEL_BASE_HINT = 2048
 ```
 
-o significado desses números passa a ser explícito.
+the meaning of these numbers becomes explicit.
 
 ---
 
-# 26. O que acontece se cada configuração for alterada?
+# 26. What happens if each setting changes?
 
 ### `MODEL_PATH`
 
-Trocar:
+Changing it to:
 
 ```python
 MODEL_PATH = Path(
@@ -1330,17 +1332,17 @@ MODEL_PATH = Path(
 )
 ```
 
-faz com que o pipeline tente extrair outro modelo.
+makes the pipeline attempt to extract another model.
 
-Entretanto, isso não garante automaticamente que o novo modelo seja compatível com todos os operadores implementados no template WAT.
+However, this does not automatically guarantee that the new model is compatible with every operator implemented in the WAT template.
 
 ---
 
 ### `WAT_TEMPLATE_PATH`
 
-Trocar esse valor faz o gerador utilizar outro template WAT.
+Changing this value makes the generator use another WAT template.
 
-Isso permitiria futuramente possuir, por exemplo:
+In the future, this would make it possible to have, for example:
 
 ```text
 wat/
@@ -1349,15 +1351,15 @@ wat/
 └── model_template_simd.wat
 ```
 
-sem alterar a lógica do extrator.
+without changing the extractor logic.
 
 ---
 
 ### `OUT_WAT_PATH`
 
-Altera apenas o destino do WAT gerado.
+Changes only the destination of the generated WAT.
 
-Por exemplo:
+For example:
 
 ```python
 OUT_WAT_PATH = Path(
@@ -1369,45 +1371,45 @@ OUT_WAT_PATH = Path(
 
 ### `REPORTS_DIR`
 
-Altera o local onde os relatórios são gravados.
+Changes where reports are written.
 
-Não deve alterar os cálculos da inferência.
+It should not change inference calculations.
 
 ---
 
 ### `NUM_SLOTS`
 
-Tem impacto estrutural no planejamento das ativações e também no template WAT.
+Has a structural impact on activation planning and on the WAT template.
 
-No estado atual:
+In the current state:
 
 ```text
 NUM_SLOTS = 3
 ```
 
-deve permanecer sincronizado com o template que possui três bases de slot.
+must remain synchronized with the template, which has three slot bases.
 
 ---
 
 ### `BATCH`
 
-Afeta cálculos de tamanho quando uma dimensão dinâmica precisa ser resolvida pela regra atualmente utilizada pelo extrator.
+Affects size calculations when a dynamic dimension needs to be resolved by the rule currently used by the extractor.
 
-Para o modelo atual:
+For the current model:
 
 ```text
 BATCH = 1
 ```
 
-é coerente com inferência individual.
+is consistent with individual inference.
 
 ---
 
 ### `ALIGN`
 
-Afeta praticamente todo o layout de memória.
+Affects almost the entire memory layout.
 
-Alterá-lo pode modificar:
+Changing it can modify:
 
 ```text
 kernel_base
@@ -1425,22 +1427,22 @@ MEM_PAGES
 
 ### `KERNEL_BASE_HINT`
 
-Move o ponto inicial da região dos parâmetros.
+Moves the starting point of the parameter region.
 
-Por consequência, todas as regiões posteriores também podem ser deslocadas.
+As a consequence, all subsequent regions may also move.
 
 ---
 
-# 27. Exemplo de propagação de uma configuração
+# 27. Example of a setting propagating
 
-Considere:
+Consider:
 
 ```python
 KERNEL_BASE_HINT = 2048
 ALIGN = 16
 ```
 
-A primeira operação é:
+The first operation is:
 
 ```text
 kernel_base =
@@ -1449,22 +1451,22 @@ align_up(2048, 16)
 kernel_base = 2048
 ```
 
-Suponha, apenas como exemplo:
+Suppose, only as an example:
 
 ```text
 kernel_bytes = 384608
 ```
 
-então:
+then:
 
 ```text
-fim dos pesos =
+end of weights =
 2048 + 384608
 
 = 386656
 ```
 
-A próxima região:
+The next region:
 
 ```text
 bias_base =
@@ -1473,17 +1475,17 @@ align_up(386656, 16)
 = 386656
 ```
 
-Depois o mesmo processo é aplicado às demais regiões.
+The same process is then applied to the remaining regions.
 
-Portanto, uma única configuração inicial participa da formação de toda a cadeia de endereços.
+Thus, a single initial setting helps determine the entire chain of addresses.
 
 ---
 
-# 28. O que não deve ficar em `config.py`
+# 28. What should not go in `config.py`
 
-Este módulo não deve receber valores que pertencem ao modelo específico após a extração.
+This module should not contain values that belong to the specific model after extraction.
 
-Por exemplo, não é adequado colocar:
+For example, it is inappropriate to put:
 
 ```python
 NUM_LAYERS = 68
@@ -1499,37 +1501,37 @@ PARAMS_BASE = 499360
 MEM_PAGES = 17
 ```
 
-Mesmo que esses valores sejam verdadeiros para uma execução específica.
+even if these values are true for a particular run.
 
-Eles devem ser calculados.
+They should be calculated.
 
-Caso contrário, trocar o arquivo TFLite poderia produzir um WAT estruturalmente incorreto.
+Otherwise, changing the TFLite file could produce a structurally incorrect WAT.
 
-A regra adotada é:
+The adopted rule is:
 
 ```text
 config.py
     ↓
-define políticas e entradas
+defines policies and inputs
 
-extrator
+extractor
     ↓
-descobre propriedades do modelo
+discovers model properties
 
-relatórios
+reports
     ↓
-registram os resultados
+record results
 
 wat_generator
     ↓
-consome os resultados
+consumes results
 ```
 
 ---
 
-# 29. Estado atual do módulo
+# 29. Current module state
 
-O módulo é pequeno propositalmente.
+The module is deliberately small.
 
 ```python
 from pathlib import Path
@@ -1560,50 +1562,50 @@ ALIGN = 16
 KERNEL_BASE_HINT = 2048
 ```
 
-Não há necessidade de classes, funções ou estruturas mais complexas neste momento.
+There is no need for classes, functions, or more complex structures at this point.
 
-O módulo funciona como uma fonte centralizada de configuração para um pipeline executado localmente.
+The module serves as a centralized configuration source for a pipeline run locally.
 
 ---
 
-# 30. Resumo
+# 30. Summary
 
-O papel de cada variável pode ser resumido da seguinte forma:
+The role of each variable can be summarized as follows:
 
-| Configuração        | Função                                                          |
+| Setting | Purpose |
 | ------------------- | --------------------------------------------------------------- |
-| `MODEL_PATH`        | Caminho do modelo TFLite utilizado como entrada                 |
-| `WAT_TEMPLATE_PATH` | Caminho do código WAT estático usado como template              |
-| `OUT_WAT_PATH`      | Caminho do WAT gerado automaticamente                           |
-| `REPORTS_DIR`       | Diretório dos relatórios de extração                            |
-| `NUM_SLOTS`         | Quantidade de regiões reutilizáveis para tensors intermediários |
-| `BATCH`             | Batch utilizado no planejamento de shapes/tamanhos              |
-| `ALIGN`             | Alinhamento em bytes das regiões da memória                     |
-| `KERNEL_BASE_HINT`  | Endereço inicial de referência para o bloco de pesos            |
+| `MODEL_PATH` | Path to the TFLite model used as input |
+| `WAT_TEMPLATE_PATH` | Path to the static WAT code used as a template |
+| `OUT_WAT_PATH` | Path to the automatically generated WAT |
+| `REPORTS_DIR` | Directory for extraction reports |
+| `NUM_SLOTS` | Number of reusable regions for intermediate tensors |
+| `BATCH` | Batch used in shape/size planning |
+| `ALIGN` | Alignment of memory regions in bytes |
+| `KERNEL_BASE_HINT` | Reference starting address for the weight block |
 
-A principal ideia arquitetural é que `config.py` contém apenas **entradas e políticas de configuração**.
+The main architectural idea is that `config.py` contains only **inputs and configuration policies**.
 
-Informações dependentes do modelo devem ser obtidas pelo próprio extrator.
+Model-dependent information should be obtained by the extractor itself.
 
-Em outras palavras:
+In other words:
 
 ```text
-CONFIGURAÇÃO
+CONFIGURATION
      │
      ▼
-   EXTRAÇÃO
+   EXTRACTION
      │
      ▼
-   CÁLCULO
+   CALCULATION
      │
      ▼
-  VALIDAÇÃO
+  VALIDATION
      │
      ▼
- SERIALIZAÇÃO
+ SERIALIZATION
      │
      ▼
- GERAÇÃO DO WAT
+ WAT GENERATION
 ```
 
-Essa separação torna o pipeline mais reproduzível, rastreável e adequado para receber outros modelos no futuro sem exigir a alteração manual de endereços e parâmetros internos.
+This separation makes the pipeline more reproducible, traceable, and suitable for other models in the future without requiring manual changes to internal addresses and parameters.

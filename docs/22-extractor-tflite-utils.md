@@ -1,12 +1,14 @@
-# 22 — Utilitários de tensores e quantização TFLite
+[English](22-extractor-tflite-utils.md) | [Português (Brasil)](22-extractor-tflite-utils.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/tflite_utils.py](../extractor/tflite_utils.py)
+# 22 — TFLite tensor and quantization utilities
 
-## Responsabilidade e estruturas
+[Index](README.md) · Source: [extractor/tflite_utils.py](../extractor/tflite_utils.py)
 
-Este módulo normaliza consultas repetidas ao schema. É usado pelo grafo, pesos, quantização, memória, LayerParams e `tensor_info`. Não decide diretórios ou classes. `TENSOR_TYPE_MAP` relaciona códigos TFLite a nome/NumPy dtype; `BYTES_PER_TYPE` informa o armazenamento. A existência de um dtype nessa tabela não significa que os kernels o executem.
+## Responsibility and structures
 
-| Código | Nome | Bytes |
+This module normalizes repeated schema queries. It is used by graph, weights, quantization, memory, LayerParams, and `tensor_info`. It does not choose directories or classes. `TENSOR_TYPE_MAP` maps TFLite codes to names/NumPy dtypes; `BYTES_PER_TYPE` specifies storage size. A dtype's presence in this table does not mean kernels can execute it.
+
+| Code | Name | Bytes |
 |---:|---|---:|
 | 0 | float32 | 4 |
 | 1 | float16 | 2 |
@@ -17,91 +19,91 @@ Este módulo normaliza consultas repetidas ao schema. É usado pelo grafo, pesos
 | 7 | int16 | 2 |
 | 9 | int8 | 1 |
 
-## Funções, decisões e retornos
+## Functions, decisions, and return values
 
-`op_name(model,op)` consulta `OperatorCodes(op.OpcodeIndex()).BuiltinCode()` e procura o valor no `__dict__` de `tflite.BuiltinOperator`. Retorna o nome encontrado ou `CUSTOM`. Não interpreta `CustomCode` nem o versionamento do operador; dois operadores com o mesmo builtin e versões diferentes têm o mesmo nome aqui.
+`op_name(model,op)` queries `OperatorCodes(op.OpcodeIndex()).BuiltinCode()` and looks up the value in `tflite.BuiltinOperator.__dict__`. It returns the matching name or `CUSTOM`. It does not interpret `CustomCode` or operator versioning; two operators with the same builtin but different versions have the same name here.
 
-`is_constant_tensor(model,subgraph,tensor_id)` considera constante um tensor cujo buffer `DataAsNumpy()` tem comprimento maior que zero. Captura apenas `AttributeError` desse acesso e retorna False. Não consulta o atributo variable nem analisa escrita por operadores; é uma definição por presença de bytes, usada por alocação e mapeamento.
+`is_constant_tensor(model,subgraph,tensor_id)` treats a tensor as constant when its buffer's `DataAsNumpy()` has length greater than zero. It catches only `AttributeError` from this access and returns False. It does not inspect the variable attribute or analyze writes by operators; allocation and mapping use this definition based on the presence of bytes.
 
-`safe_bytes_from_tensor` obtém tensor/buffer e retorna `(tensor,array,raw)`. Ausência de dados, buffer vazio ou dtype desconhecido produz `(None,None,None)`. Converte com `np.frombuffer`, tenta reshape para o shape TFLite e ignora qualquer exceção do reshape, mantendo o vetor original. Por fim, achata e retorna bytes. Logo, o nome “safe” não significa validação completa de tamanho/shape; chamadas inválidas ao schema e `frombuffer` ainda podem falhar.
+`safe_bytes_from_tensor` obtains the tensor/buffer and returns `(tensor,array,raw)`. Missing data, an empty buffer, or an unknown dtype produces `(None,None,None)`. It converts with `np.frombuffer`, attempts to reshape to the TFLite shape, and ignores any reshape exception, retaining the original vector. Finally, it flattens and returns bytes. Thus, “safe” does not mean complete size/shape validation; invalid schema calls and `frombuffer` may still fail.
 
-`scale_scalar(tensor)` retorna o primeiro scale como float; sem quantização/scales, retorna 1. `zp_scalar` retorna o primeiro zero point como int, ou 0. Esses defaults evitam algumas ausências, mas podem mascarar dados insuficientes. Não calculam médias nem escolhem valores por canal.
+`scale_scalar(tensor)` returns the first scale as a float; without quantization/scales, it returns 1. `zp_scalar` returns the first zero point as an int, or 0. These defaults handle some missing values but may conceal insufficient data. They neither compute averages nor choose values per channel.
 
-`tensor_shape_list` converte `ShapeAsNumpy()` em lista de ints, ou `[]` se for None. Não resolve shape signature, valida dimensões nem materializa batch.
+`tensor_shape_list` converts `ShapeAsNumpy()` to a list of ints, or `[]` if it is None. It does not resolve shape signatures, validate dimensions, or materialize the batch dimension.
 
-`qparams_np` retorna `{scales: float64 array, zps: int64 array, qdim}` com arrays pelo menos unidimensionais. Sem quantização/scales, retorna None. Preserva múltiplas escalas para o extrator por canal. O binding pode representar ausência de array de formas diferentes; os helpers pressupõem as formas tratadas explicitamente no código.
+`qparams_np` returns `{scales: float64 array, zps: int64 array, qdim}` with arrays of at least one dimension. Without quantization/scales, it returns None. It preserves multiple scales for the per-channel extractor. The binding may represent absent arrays in different ways; the helpers assume the forms explicitly handled in the code.
 
 ```text
 tensor_id
    │
    ├──► Tensors(id) ──► Type / Shape / Quantization
    │                        │             │
-   │                        ▼             ├── scalar: primeiro valor
+   │                        ▼             ├── scalar: first value
    │                   dtype/shape        └── qparams_np: arrays
    ▼
 Buffers(tensor.Buffer())
-   │ dados não vazios?
-   ├── não ──► não constante / sem bytes extraíveis
-   └── sim ──► NumPy → reshape tentado → raw
+   │ nonempty data?
+   ├── no ──► not constant / no extractable bytes
+   └── yes ─► NumPy → attempted reshape → raw
 ```
 
-Entram IDs ou objetos do modelo. Os helpers extraem representações simples; saem nomes, arrays, escalares e bytes. Shapes/scales são específicos; convenções de dtype são compartilhadas. Os consumidores precisam distinguir None de dados válidos, pois ausência não é sempre exceção.
+Inputs are model IDs or objects. The helpers extract simple representations; outputs are names, arrays, scalars, and bytes. Shapes/scales are model-specific; dtype conventions are shared. Consumers must distinguish None from valid data, since absence does not always raise an exception.
 
-## Endianness e limites
+## Endianness and limitations
 
-Os dtypes NumPy básicos no mapa são nativos. Os bytes dos buffers vêm do TFLite; em um host little-endian como o ambiente observado, os tipos multibyte correspondem ao armazenamento esperado. O módulo não normaliza explicitamente todos os buffers para little-endian. Já os blobs de MUL/SHIFT/Q6 e LayerParam usam formatos little-endian explícitos em seus módulos. Não extrapole portabilidade para hosts big-endian sem verificar essa diferença.
+The basic NumPy dtypes in the map are native. Buffer bytes come from TFLite; on a little-endian host such as the observed environment, multibyte types match the expected storage. The module does not explicitly normalize all buffers to little-endian. In contrast, MUL/SHIFT/Q6 and LayerParam blobs use explicit little-endian formats in their modules. Do not assume portability to big-endian hosts without checking this difference.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 import tflite
 import numpy as np
 ```
 
-### `op_name` — assinatura
+### `op_name` — signature
 
 ```python
 def op_name(model, op)
 ```
 
-### `is_constant_tensor` — assinatura
+### `is_constant_tensor` — signature
 
 ```python
 def is_constant_tensor(model, subgraph, tensor_id)
 ```
 
-### `safe_bytes_from_tensor` — assinatura
+### `safe_bytes_from_tensor` — signature
 
 ```python
 def safe_bytes_from_tensor(model, subgraph, tensor_id)
 ```
 
-### `scale_scalar` — assinatura
+### `scale_scalar` — signature
 
 ```python
 def scale_scalar(tensor)
 ```
 
-### `zp_scalar` — assinatura
+### `zp_scalar` — signature
 
 ```python
 def zp_scalar(tensor)
 ```
 
-### `tensor_shape_list` — assinatura
+### `tensor_shape_list` — signature
 
 ```python
 def tensor_shape_list(tensor)
 ```
 
-### `qparams_np` — assinatura
+### `qparams_np` — signature
 
 ```python
 def qparams_np(tensor)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [03-utilitarios-tflite.md](historico/03-utilitarios-tflite.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [03-utilitarios-tflite.md](historico/03-utilitarios-tflite.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

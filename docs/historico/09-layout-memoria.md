@@ -1,12 +1,14 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](09-layout-memoria.md) | [Português (Brasil)](09-layout-memoria.pt-BR.md)
 
-# 09 — Planejamento da memória linear (`memory.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 09 — Planning linear memory (`memory.py`)
 
-O arquivo `extractor/memory.py` é responsável pelo planejamento da memória linear utilizada pelo módulo WebAssembly.
+## 1. Module purpose
 
-Até as etapas anteriores, o pipeline já conhece informações como:
+`extractor/memory.py` plans the linear memory used by the WebAssembly module.
+
+Previous pipeline stages have already supplied information such as:
 
 ```text
 weights_raw
@@ -16,79 +18,79 @@ mul_blob
 shift_blob
 q6_blob
 
-tensors intermediários
-quantidade de slots
+intermediate tensors
+number of slots
 ```
 
-Mas ainda falta responder:
+The following questions remain:
 
 ```text
-quanto cada slot deve ocupar?
+how much space should each slot occupy?
 
-onde começam os pesos?
+where do weights start?
 
-onde começa o bias?
+where does bias start?
 
-onde ficam MUL, SHIFT e Q6?
+where are MUL, SHIFT, and Q6 placed?
 
-onde começam as LayerParams?
+where do LayerParams start?
 
-onde começam os slots?
+where do slots start?
 
-qual é o último endereço utilizado?
+what is the final address used?
 
-quantas páginas WebAssembly são necessárias?
+how many WebAssembly pages are needed?
 ```
 
-Essas decisões são realizadas neste módulo.
+This module makes those decisions.
 
-A transformação geral é:
+The overall transformation is:
 
 ```text
-tamanhos dos dados
+data sizes
        │
        ▼
-planejamento das regiões
+region planning
        │
        ▼
-endereços absolutos
+absolute addresses
        │
        ▼
-tamanho final da memória
+final memory size
        │
        ▼
-quantidade de páginas WASM
+WASM page count
 ```
 
 ---
 
-# 2. Responsabilidades do arquivo
+# 2. File responsibilities
 
-O módulo possui cinco funções principais de cálculo:
+The module has five main calculation functions:
 
 ```text
 tensor_numel()
         ↓
-número de elementos
+number of elements
 
 align_up()
         ↓
-alinhamento de endereços
+address alignment
 
 calculate_slot_bytes()
         ↓
-tamanho físico de cada slot
+physical size of each slot
 
 calculate_parameter_layout()
         ↓
-bases de WEIGHTS/BIAS/MUL/SHIFT/Q6/PARAMS
+bases of WEIGHTS/BIAS/MUL/SHIFT/Q6/PARAMS
 
 calculate_final_memory_layout()
         ↓
-layout completo + MEM_END + MEM_PAGES
+complete layout + MEM_END + MEM_PAGES
 ```
 
-Também existem três funções destinadas exclusivamente aos relatórios:
+There are also three functions dedicated to reporting:
 
 ```text
 slot_memory_to_text()
@@ -100,9 +102,9 @@ final_memory_layout_to_text()
 
 ---
 
-# 3. Importações
+# 3. Imports
 
-O arquivo utiliza:
+The file uses:
 
 ```python
 from extractor.tflite_utils import (
@@ -113,25 +115,25 @@ from extractor.tflite_utils import (
 )
 ```
 
-Cada elemento possui função específica.
+Each element has a specific purpose.
 
 ---
 
 # 4. `BYTES_PER_TYPE`
 
-Permite transformar:
+It converts:
 
 ```text
-tipo do tensor
+tensor type
 ```
 
-em:
+into:
 
 ```text
-quantidade de bytes por elemento
+bytes per element
 ```
 
-Exemplo:
+Example:
 
 ```text
 int8
@@ -147,31 +149,31 @@ float32
 4 bytes
 ```
 
-Essa informação é necessária para calcular quanto um tensor intermediário ocupa.
+This information is needed to calculate how much space an intermediate tensor occupies.
 
 ---
 
 # 5. `TENSOR_TYPE_MAP`
 
-É utilizado principalmente no relatório para converter:
+It is mainly used in reports to convert:
 
 ```text
 9
 ```
 
-em:
+into:
 
 ```text
 int8
 ```
 
-ou:
+or:
 
 ```text
 2
 ```
 
-em:
+into:
 
 ```text
 int32
@@ -181,37 +183,37 @@ int32
 
 # 6. `is_constant_tensor()`
 
-Permite excluir da análise dos slots:
+It excludes the following from slot analysis:
 
 ```text
-pesos
-bias
-outros tensors constantes
+weights
+biases
+other constant tensors
 ```
 
-Esses dados não compartilham os buffers de ativações intermediárias.
+These data do not share intermediate activation buffers.
 
 ---
 
 # 7. `tensor_shape_list()`
 
-Converte o shape TFLite em uma lista Python.
+Converts the TFLite shape into a Python list.
 
-Exemplo:
+Example:
 
 ```text
 [1, 128, 128, 3]
 ```
 
-Esse shape será utilizado para calcular o número total de elementos.
+This shape determines the total element count.
 
 ---
 
-# 8. Três categorias de memória
+# 8. Three memory categories
 
-É útil dividir o planejamento deste módulo em três categorias.
+It is useful to divide this module's planning into three categories.
 
-## 8.1 Parâmetros constantes
+## 8.1 Constant parameters
 
 ```text
 WEIGHTS
@@ -221,21 +223,21 @@ SHIFT
 Q6
 ```
 
-Essas regiões permanecem válidas durante toda a inferência.
+These regions remain valid throughout inference.
 
 ---
 
-## 8.2 Descrição das operações
+## 8.2 Operation descriptions
 
 ```text
 PARAMS
 ```
 
-Contém o array serializado de `LayerParam`.
+Contains the serialized `LayerParam` array.
 
 ---
 
-## 8.3 Memória de trabalho
+## 8.3 Working memory
 
 ```text
 SLOT0
@@ -243,41 +245,41 @@ SLOT1
 SLOT2
 ```
 
-Essas regiões são reutilizadas por diferentes ativações durante a execução.
+These regions are reused by different activations during execution.
 
 ---
 
-# 9. Visão geral da memória
+# 9. Memory overview
 
-Conceitualmente:
+Conceptually:
 
 ```text
-endereço baixo
+low address
       │
       ▼
 
 ┌──────────────────────────┐
-│ região inicial reservada │
+│ initial reserved region  │
 ├──────────────────────────┤
 │ WEIGHTS                  │
 ├──────────────────────────┤
-│ padding/alinhamento      │
+│ padding/alignment        │
 ├──────────────────────────┤
 │ BIAS                     │
 ├──────────────────────────┤
-│ padding/alinhamento      │
+│ padding/alignment        │
 ├──────────────────────────┤
 │ MUL                      │
 ├──────────────────────────┤
-│ padding/alinhamento      │
+│ padding/alignment        │
 ├──────────────────────────┤
 │ SHIFT                    │
 ├──────────────────────────┤
-│ padding/alinhamento      │
+│ padding/alignment        │
 ├──────────────────────────┤
 │ Q6                       │
 ├──────────────────────────┤
-│ padding/alinhamento      │
+│ padding/alignment        │
 ├──────────────────────────┤
 │ PARAMS                   │
 ├──────────────────────────┤
@@ -295,9 +297,9 @@ endereço baixo
 
 ---
 
-# 10. Função `tensor_numel()`
+# 10. The `tensor_numel()` function
 
-A primeira função é:
+The first function is:
 
 ```python
 def tensor_numel(
@@ -306,53 +308,53 @@ def tensor_numel(
 ):
 ```
 
-Seu objetivo é calcular:
+Its purpose is to calculate:
 
 ```text
-quantidade total de elementos
+total element count
 ```
 
-de um tensor.
+of a tensor.
 
 ---
 
-# 11. Cálculo básico
+# 11. Basic calculation
 
-Para:
+For:
 
 ```text
 shape = [1, 128, 128, 3]
 ```
 
-o cálculo é:
+the calculation is:
 
 ```text
 1 × 128 × 128 × 3
 ```
 
-resultando em:
+resulting in:
 
 ```text
-49.152 elementos
+49,152 elements
 ```
 
 ---
 
-# 12. Implementação
+# 12. Implementation
 
-A função começa com:
+The function starts with:
 
 ```python
 num_elements = 1
 ```
 
-e percorre cada dimensão:
+and iterates over each dimension:
 
 ```python
 for dimension in shape:
 ```
 
-fazendo:
+performing:
 
 ```python
 num_elements *= dimension
@@ -360,11 +362,11 @@ num_elements *= dimension
 
 ---
 
-# 13. Por que começar com `1`?
+# 13. Why start with `1`?
 
-Porque `1` é o elemento neutro da multiplicação.
+Because `1` is the multiplicative identity.
 
-Por exemplo:
+For example:
 
 ```text
 1 × 128
@@ -382,9 +384,9 @@ Por exemplo:
 
 ---
 
-# 14. Conversão para `int`
+# 14. Conversion to `int`
 
-Cada dimensão é convertida:
+Each dimension is converted:
 
 ```python
 dimension = int(
@@ -392,46 +394,46 @@ dimension = int(
 )
 ```
 
-Isso normaliza tipos NumPy como:
+This normalizes NumPy types such as:
 
 ```text
 np.int32
 np.int64
 ```
 
-para um inteiro Python comum.
+into an ordinary Python integer.
 
 ---
 
-# 15. Dimensões negativas
+# 15. Negative dimensions
 
-O código contém:
+The code contains:
 
 ```python
 if dimension < 0:
     dimension = batch
 ```
 
-Essa regra preserva o comportamento da implementação original.
+This rule preserves the original implementation's behavior.
 
 ---
 
-# 16. Exemplo
+# 16. Example
 
-Para:
+For:
 
 ```text
 shape = [-1, 128, 128, 3]
 batch = 1
 ```
 
-a função interpreta:
+the function interprets:
 
 ```text
 -1 → 1
 ```
 
-e calcula:
+and calculates:
 
 ```text
 1 × 128 × 128 × 3
@@ -441,17 +443,17 @@ e calcula:
 
 ---
 
-# 17. Significado pretendido
+# 17. Intended meaning
 
-Normalmente uma dimensão:
+Normally a dimension:
 
 ```text
 -1
 ```
 
-pode representar uma dimensão dinâmica.
+may represent a dynamic dimension.
 
-No modelo utilizado pelo projeto, a regra adotada é tratá-la como:
+For the model used by this project, the rule treats it as:
 
 ```text
 batch
@@ -459,57 +461,57 @@ batch
 
 ---
 
-# 18. Limitação importante
+# 18. Important limitation
 
-Essa regra não é universal.
+This rule is not universal.
 
-Por exemplo:
+For example:
 
 ```text
 [1, -1, 128, 3]
 ```
 
-poderia representar:
+could represent:
 
 ```text
-altura dinâmica
+dynamic height
 ```
 
-e não batch.
+rather than batch.
 
-A implementação atual substituiria mesmo assim:
+The current implementation would still substitute:
 
 ```text
 -1 → batch
 ```
 
-Portanto, essa regra é adequada ao comportamento esperado do modelo atual, mas não deve ser considerada uma resolução genérica de qualquer shape dinâmico.
+This rule therefore suits the current model's expected behavior, but should not be considered a generic solution for any dynamic shape.
 
 ---
 
-# 19. Retorno
+# 19. Return value
 
-A função retorna:
+The function returns:
 
 ```python
 return num_elements
 ```
 
-Ou seja:
+In other words:
 
 ```text
 shape
   ↓
 tensor_numel()
   ↓
-quantidade de elementos
+number of elements
 ```
 
 ---
 
-# 20. Relação entre elementos e bytes
+# 20. Relationship between elements and bytes
 
-Depois teremos:
+Later we have:
 
 ```text
 num_bytes =
@@ -518,10 +520,10 @@ num_elements
 bytes_per_element
 ```
 
-Por exemplo:
+For example:
 
 ```text
-49152 elementos
+49152 elements
 ×
 1 byte
 =
@@ -530,9 +532,9 @@ Por exemplo:
 
 ---
 
-# 21. Função `align_up()`
+# 21. The `align_up()` function
 
-A segunda função é:
+The second function is:
 
 ```python
 def align_up(
@@ -541,20 +543,20 @@ def align_up(
 ):
 ```
 
-Seu objetivo é arredondar um endereço para cima até o próximo múltiplo do alinhamento.
+It rounds an address up to the next alignment multiple.
 
 ---
 
-# 22. Exemplo
+# 22. Example
 
-Considere:
+Consider:
 
 ```text
 value = 1001
 alignment = 16
 ```
 
-Os múltiplos próximos são:
+Nearby multiples are:
 
 ```text
 992
@@ -562,13 +564,13 @@ Os múltiplos próximos são:
 1024
 ```
 
-O primeiro valor válido maior ou igual a `1001` é:
+The first valid value greater than or equal to `1001` is:
 
 ```text
 1008
 ```
 
-Portanto:
+Therefore:
 
 ```text
 align_up(1001, 16)
@@ -578,22 +580,22 @@ align_up(1001, 16)
 
 ---
 
-# 23. Valor já alinhado
+# 23. Already aligned value
 
-Se:
+If:
 
 ```text
 value = 2048
 alignment = 16
 ```
 
-temos:
+we have:
 
 ```text
 2048 % 16 = 0
 ```
 
-Logo:
+Therefore:
 
 ```text
 align_up(2048, 16)
@@ -601,13 +603,13 @@ align_up(2048, 16)
 2048
 ```
 
-Nenhum padding é necessário.
+No padding is needed.
 
 ---
 
-# 24. Implementação bit a bit
+# 24. Bitwise implementation
 
-O código é:
+The code is:
 
 ```python
 return (
@@ -616,33 +618,33 @@ return (
 ) & ~(alignment - 1)
 ```
 
-Essa é uma forma eficiente de alinhamento quando:
+This is an efficient alignment method when:
 
 ```text
 alignment
 ```
 
-é potência de dois.
+is a power of two.
 
 ---
 
-# 25. Condição importante
+# 25. Important condition
 
-Com:
+With:
 
 ```text
 ALIGN = 16
 ```
 
-temos:
+we have:
 
 ```text
 16 = 2⁴
 ```
 
-portanto a fórmula é adequada.
+so the formula is appropriate.
 
-Outros alinhamentos compatíveis seriam:
+Other compatible alignments include:
 
 ```text
 1
@@ -657,9 +659,9 @@ Outros alinhamentos compatíveis seriam:
 
 ---
 
-# 26. Valores arbitrários
+# 26. Arbitrary values
 
-A mesma expressão não deve ser considerada genericamente correta para:
+The same expression should not be considered generally correct for:
 
 ```text
 10
@@ -667,53 +669,53 @@ A mesma expressão não deve ser considerada genericamente correta para:
 20
 ```
 
-porque não são potências de dois.
+because they are not powers of two.
 
-No projeto atual:
+In the current project:
 
 ```text
 ALIGN = 16
 ```
 
-satisfaz a condição necessária.
+satisfies the required condition.
 
 ---
 
-# 27. Por que alinhar a memória?
+# 27. Why align memory?
 
-O alinhamento cria fronteiras previsíveis entre os blocos.
+Alignment creates predictable block boundaries.
 
-Exemplo:
+Example:
 
 ```text
-fim dos pesos = 386651
+end of weights = 386651
 ```
 
-Com alinhamento 16:
+With alignment 16:
 
 ```text
 BIAS_BASE =
 386656
 ```
 
-Assim existem:
+There are therefore:
 
 ```text
 5 bytes
 ```
 
-não utilizados entre as regiões.
+unused between the regions.
 
 ---
 
-# 28. Padding de alinhamento
+# 28. Alignment padding
 
-Visualmente:
+Visually:
 
 ```text
 WEIGHTS
 │
-│ último byte útil
+│ last useful byte
 ▼
 386650
 
@@ -729,61 +731,61 @@ WEIGHTS
 BIAS_BASE
 ```
 
-O padding não contém um tensor.
+Padding contains no tensor.
 
-Ele existe apenas para posicionamento.
+It exists only for placement.
 
 ---
 
-# 29. Função `calculate_slot_bytes()`
+# 29. The `calculate_slot_bytes()` function
 
-Essa função responde:
+This function answers:
 
 ```text
-qual deve ser o tamanho de cada slot?
+how large should each slot be?
 ```
 
-O código procura o maior tensor não constante do subgrafo e reserva para cada slot espaço suficiente para armazená-lo.
+The code finds the largest nonconstant subgraph tensor and reserves enough space in every slot to hold it.
 
 ---
 
-# 30. Estratégia utilizada
+# 30. Adopted strategy
 
-A regra é:
+The rule is:
 
 ```text
 SLOT_BYTES
 =
-tamanho alinhado
-do maior tensor não constante
+aligned size
+of the largest nonconstant tensor
 ```
 
-Como qualquer slot pode receber diferentes ativações durante a execução, todos os slots possuem o mesmo tamanho.
+Because any slot may hold different activations during execution, all slots have the same size.
 
 ---
 
-# 31. Inicialização
+# 31. Initialization
 
-A função começa com:
+The function starts with:
 
 ```python
 max_bytes = 0
 max_tensor = None
 ```
 
-Também cria:
+It also creates:
 
 ```python
 tensor_records = []
 ```
 
-para relatório.
+for the report.
 
 ---
 
-# 32. Varredura dos tensors
+# 32. Scanning tensors
 
-São examinados todos os tensors:
+All tensors are examined:
 
 ```python
 for tensor_id in range(
@@ -793,9 +795,9 @@ for tensor_id in range(
 
 ---
 
-# 33. Recuperação
+# 33. Retrieval
 
-Para cada ID:
+For each ID:
 
 ```python
 tensor = subgraph.Tensors(
@@ -805,9 +807,9 @@ tensor = subgraph.Tensors(
 
 ---
 
-# 34. Exclusão de constantes
+# 34. Excluding constants
 
-O código executa:
+The code executes:
 
 ```python
 if is_constant_tensor(
@@ -818,47 +820,47 @@ if is_constant_tensor(
     continue
 ```
 
-Portanto:
+Therefore:
 
 ```text
-peso
-bias
-constantes auxiliares
+weight
+biases
+auxiliary constants
 ```
 
-não participam do cálculo do tamanho dos slots.
+do not participate in slot size calculation.
 
 ---
 
-# 35. Por que excluir constantes?
+# 35. Why exclude constants?
 
-Porque os slots representam:
+Because slots represent:
 
 ```text
-ativações intermediárias
+intermediate activations
 ```
 
-e não parâmetros permanentes.
+rather than permanent parameters.
 
-Pesos têm:
+Weights have:
 
 ```text
 WEIGHTS
 ```
 
-Bias têm:
+Biases have:
 
 ```text
 BIAS
 ```
 
-e não precisam caber nos slots.
+and do not need to fit in slots.
 
 ---
 
 # 36. Shape
 
-Depois:
+Then:
 
 ```python
 shape = tensor_shape_list(
@@ -866,7 +868,7 @@ shape = tensor_shape_list(
 )
 ```
 
-Se o shape estiver vazio:
+If the shape is empty:
 
 ```python
 if not shape:
@@ -875,9 +877,9 @@ if not shape:
 
 ---
 
-# 37. Tipo do tensor
+# 37. Tensor type
 
-É obtido:
+The following is obtained:
 
 ```python
 tensor_type = int(
@@ -887,9 +889,9 @@ tensor_type = int(
 
 ---
 
-# 38. Bytes por elemento
+# 38. Bytes per element
 
-O código consulta:
+The code looks up:
 
 ```python
 bytes_per_element = (
@@ -901,17 +903,17 @@ bytes_per_element = (
 
 ---
 
-# 39. Tipo não conhecido
+# 39. Unknown type
 
-Se:
+If:
 
 ```python
 bytes_per_element is None
 ```
 
-o tensor é ignorado.
+the tensor is skipped.
 
-Isso significa que o planejamento atual depende dos tipos reconhecidos por:
+This means current planning depends on types recognized by:
 
 ```text
 BYTES_PER_TYPE
@@ -919,9 +921,9 @@ BYTES_PER_TYPE
 
 ---
 
-# 40. Número de elementos
+# 40. Element count
 
-Depois:
+Then:
 
 ```python
 num_elements = tensor_numel(
@@ -932,9 +934,9 @@ num_elements = tensor_numel(
 
 ---
 
-# 41. Tamanho em bytes
+# 41. Size in bytes
 
-Então:
+Then:
 
 ```python
 num_bytes = (
@@ -945,7 +947,7 @@ num_bytes = (
 
 ---
 
-# 42. Exemplo `int8`
+# 42. `int8` example
 
 Shape:
 
@@ -953,25 +955,25 @@ Shape:
 [1, 128, 128, 3]
 ```
 
-Elementos:
+Elements:
 
 ```text
 49152
 ```
 
-Tipo:
+Type:
 
 ```text
 int8
 ```
 
-Bytes por elemento:
+Bytes per element:
 
 ```text
 1
 ```
 
-Resultado:
+Result:
 
 ```text
 49152 bytes
@@ -979,7 +981,7 @@ Resultado:
 
 ---
 
-# 43. Exemplo `int32`
+# 43. `int32` example
 
 Shape:
 
@@ -987,19 +989,19 @@ Shape:
 [1, 1000]
 ```
 
-Elementos:
+Elements:
 
 ```text
 1000
 ```
 
-Bytes por elemento:
+Bytes per element:
 
 ```text
 4
 ```
 
-Resultado:
+Result:
 
 ```text
 4000 bytes
@@ -1007,9 +1009,9 @@ Resultado:
 
 ---
 
-# 44. Nome do tensor
+# 44. Tensor name
 
-Para fins de relatório:
+For reporting purposes:
 
 ```python
 tensor_name = (
@@ -1024,15 +1026,15 @@ tensor_name = (
 
 ---
 
-# 45. Por que `decode()`?
+# 45. Why `decode()`?
 
-O binding TFLite normalmente fornece o nome como:
+The TFLite binding normally provides the name as:
 
 ```text
 bytes
 ```
 
-e o relatório precisa de:
+and the report needs:
 
 ```text
 str
@@ -1042,25 +1044,25 @@ str
 
 # 46. `"ignore"`
 
-A opção:
+The option:
 
 ```text
 ignore
 ```
 
-faz com que bytes inválidos para UTF-8 sejam descartados em vez de interromper a geração do relatório.
+discards invalid UTF-8 bytes instead of interrupting report generation.
 
 ---
 
-# 47. Nome do tipo
+# 47. Type name
 
-O código também converte:
+The code also converts:
 
 ```text
 tensor_type
 ```
 
-para algo legível:
+into something readable:
 
 ```python
 type_name = (
@@ -1073,13 +1075,13 @@ type_name = (
 
 ---
 
-# 48. Exemplo
+# 48. Example
 
 ```text
 tensor_type = 9
 ```
 
-gera:
+produces:
 
 ```text
 int8
@@ -1087,9 +1089,9 @@ int8
 
 ---
 
-# 49. Registro do tensor
+# 49. Recording the tensor
 
-Cada tensor não constante válido gera:
+Each valid nonconstant tensor generates:
 
 ```python
 {
@@ -1106,31 +1108,31 @@ Cada tensor não constante válido gera:
 
 ---
 
-# 50. Objetivo de `tensor_records`
+# 50. Purpose of `tensor_records`
 
-Essa lista não participa diretamente do cálculo posterior.
+This list does not directly participate in subsequent calculations.
 
-Ela serve para explicar:
+It explains:
 
 ```text
-quais tensors foram considerados?
+which tensors were considered?
 
-quanto cada um ocupa?
+how much space does each occupy?
 
-qual foi o maior?
+which was largest?
 ```
 
 ---
 
-# 51. Identificação do maior tensor
+# 51. Identifying the largest tensor
 
-O código compara:
+The code compares:
 
 ```python
 if num_bytes > max_bytes:
 ```
 
-e atualiza:
+and updates:
 
 ```python
 max_bytes = num_bytes
@@ -1139,35 +1141,35 @@ max_tensor = record
 
 ---
 
-# 52. Uso de `>`
+# 52. Using `>`
 
-Observe que a condição é:
+Notice that the condition is:
 
 ```text
 >
 ```
 
-e não:
+rather than:
 
 ```text
 >=
 ```
 
-Logo, se dois tensors possuírem exatamente o mesmo tamanho máximo, o primeiro encontrado permanecerá registrado como:
+If two tensors have exactly the same maximum size, the first one found remains recorded as:
 
 ```text
 max_tensor
 ```
 
-Isso não afeta `SLOT_BYTES`.
+This does not affect `SLOT_BYTES`.
 
-Apenas determina qual tensor será mostrado como representante do maior tamanho.
+It only determines which tensor is shown as the representative of the maximum size.
 
 ---
 
-# 53. Exemplo
+# 53. Example
 
-Suponha:
+Suppose:
 
 ```text
 tensor 10 = 120000 bytes
@@ -1177,13 +1179,13 @@ tensor 20 = 196608 bytes
 tensor 30 = 40000 bytes
 ```
 
-Ao final:
+At the end:
 
 ```text
 max_bytes = 196608
 ```
 
-e:
+and:
 
 ```text
 max_tensor = tensor 20
@@ -1191,9 +1193,9 @@ max_tensor = tensor 20
 
 ---
 
-# 54. Alinhamento do slot
+# 54. Slot alignment
 
-Depois:
+Then:
 
 ```python
 slot_bytes = align_up(
@@ -1204,16 +1206,16 @@ slot_bytes = align_up(
 
 ---
 
-# 55. Exemplo já alinhado
+# 55. Already aligned example
 
-Se:
+If:
 
 ```text
 max_bytes = 196608
 alignment = 16
 ```
 
-e `196608` já for múltiplo de 16:
+and `196608` is already a multiple of 16:
 
 ```text
 SLOT_BYTES = 196608
@@ -1221,21 +1223,21 @@ SLOT_BYTES = 196608
 
 ---
 
-# 56. Exemplo com padding
+# 56. Example with padding
 
-Se:
+If:
 
 ```text
 max_bytes = 196601
 ```
 
-o próximo múltiplo de 16 será:
+the next multiple of 16 will be:
 
 ```text
 196608
 ```
 
-Então:
+Then:
 
 ```text
 SLOT_BYTES = 196608
@@ -1243,49 +1245,49 @@ SLOT_BYTES = 196608
 
 ---
 
-# 57. Por que todos os slots usam o maior tamanho?
+# 57. Why do all slots use the maximum size?
 
-Como `slots.py` pode reutilizar qualquer slot para diferentes tensors ao longo da inferência:
+Because `slots.py` can reuse any slot for different tensors throughout inference:
 
 ```text
-SLOT0 hoje armazena tensor A
+SLOT0 currently stores tensor A
 
-depois armazena tensor D
+later it stores tensor D
 
-depois tensor H
+then tensor H
 ```
 
-é necessário garantir:
+we must ensure:
 
 ```text
-cada slot comporta qualquer tensor
-que possa ser associado a ele
+each slot fits any tensor
+that may be assigned to it
 ```
 
-A estratégia atual resolve isso de forma simples:
+The current strategy solves this simply:
 
 ```text
-todos os slots têm o tamanho
-do maior tensor não constante
+all slots have the size
+of the largest nonconstant tensor
 ```
 
 ---
 
-# 58. Consequência
+# 58. Consequence
 
-Se:
+If:
 
 ```text
 SLOT_BYTES = 196608
 ```
 
-e:
+and:
 
 ```text
 NUM_SLOTS = 3
 ```
 
-a memória reservada exclusivamente aos slots será:
+memory reserved exclusively for slots will be:
 
 ```text
 3 × 196608
@@ -1295,76 +1297,76 @@ a memória reservada exclusivamente aos slots será:
 
 ---
 
-# 59. Simplicidade versus otimização
+# 59. Simplicity versus optimization
 
-Essa estratégia pode reservar mais memória do que o mínimo teórico.
+This strategy may reserve more memory than the theoretical minimum.
 
-Por exemplo:
-
-```text
-SLOT0 nunca recebe tensor maior que 50 KiB
-
-SLOT1 precisa de 192 KiB
-
-SLOT2 nunca passa de 80 KiB
-```
-
-Mesmo assim:
+For example:
 
 ```text
-todos = 192 KiB
+SLOT0 never receives a tensor larger than 50 KiB
+
+SLOT1 needs 192 KiB
+
+SLOT2 never exceeds 80 KiB
 ```
 
-na implementação atual.
+Even so:
+
+```text
+all = 192 KiB
+```
+
+in the current implementation.
 
 ---
 
-# 60. Vantagem
+# 60. Advantage
 
-A vantagem é a simplicidade:
+The advantage is simplicity:
 
 ```text
-SLOT_BYTES único
+a single SLOT_BYTES value
 ```
 
-e:
+and:
 
 ```text
 slot_base =
-base inicial
+initial base
 +
 slot_index × SLOT_BYTES
 ```
 
-podem ser utilizados.
+can be used.
 
 ---
 
-# 61. Possível otimização futura
+# 61. Possible future optimization
 
-Uma versão mais sofisticada poderia calcular:
+A more sophisticated version could calculate:
 
 ```text
-tamanho máximo específico
-para cada slot
+a specific maximum size
+for each slot
 ```
 
-de acordo com a alocação real.
+according to the actual allocation.
 
-Mas isso aumentaria a complexidade do planejamento.
+This would increase planning complexity.
 
-A implementação atual privilegia:
+The current implementation favors:
 
 ```text
-simplicidade
-previsibilidade
+simplicity
+predictability
 ```
 
 ---
 
-# 62. Retorno de `calculate_slot_bytes()`
+# 62. Return value of `calculate_slot_bytes()`
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -1379,35 +1381,35 @@ A função retorna:
 
 ---
 
-# 63. Campo `max_bytes`
+# 63. The `max_bytes` field
 
-É o tamanho real do maior tensor antes do alinhamento.
-
----
-
-# 64. Campo `slot_bytes`
-
-É o tamanho final reservado para cada slot após alinhamento.
+The actual size of the largest tensor before alignment.
 
 ---
 
-# 65. Campo `max_tensor`
+# 64. The `slot_bytes` field
 
-Contém todos os metadados do tensor que determinou o maior tamanho.
+The final space reserved for each slot after alignment.
+
+---
+
+# 65. The `max_tensor` field
+
+Contains all metadata for the tensor that determined the maximum size.
 
 ---
 
 # 66. `tensor_records`
 
-Permite auditar todos os tensors considerados no cálculo.
+Allows auditing every tensor considered in the calculation.
 
 ---
 
-# 67. Função `calculate_parameter_layout()`
+# 67. The `calculate_parameter_layout()` function
 
-Depois de calcular os tamanhos dos parâmetros nos módulos anteriores, esta função posiciona cada bloco na memória.
+After parameter sizes have been calculated in previous modules, this function places each block in memory.
 
-Ela recebe:
+It receives:
 
 ```text
 kernel_base_hint
@@ -1424,27 +1426,27 @@ q6_blob
 
 ---
 
-# 68. Por que `kernel`?
+# 68. Why `kernel`?
 
-No projeto, a região de pesos é chamada em alguns pontos de:
+In this project, the weight region is sometimes called:
 
 ```text
 KERNEL
 ```
 
-e em outros de:
+and elsewhere:
 
 ```text
 WEIGHTS
 ```
 
-Assim:
+Thus:
 
 ```text
 kernel_base
 ```
 
-é a base do bloco:
+is the base of the block:
 
 ```text
 weights_raw
@@ -1452,9 +1454,9 @@ weights_raw
 
 ---
 
-# 69. Layout produzido
+# 69. Produced layout
 
-A sequência é:
+The sequence is:
 
 ```text
 KERNEL/WEIGHTS
@@ -1470,13 +1472,13 @@ Q6
 PARAMS
 ```
 
-Cada nova base é alinhada.
+Each new base is aligned.
 
 ---
 
-# 70. Base dos pesos
+# 70. Weight base
 
-Primeiro:
+First:
 
 ```python
 kernel_base = align_up(
@@ -1487,16 +1489,16 @@ kernel_base = align_up(
 
 ---
 
-# 71. Configuração atual
+# 71. Current configuration
 
-Com:
+With:
 
 ```text
 KERNEL_BASE_HINT = 2048
 ALIGN = 16
 ```
 
-como `2048` já é múltiplo de 16:
+because `2048` is already a multiple of 16:
 
 ```text
 kernel_base = 2048
@@ -1504,7 +1506,7 @@ kernel_base = 2048
 
 ---
 
-# 72. Tamanho dos pesos
+# 72. Weight size
 
 ```python
 kernel_bytes = len(
@@ -1512,53 +1514,53 @@ kernel_bytes = len(
 )
 ```
 
-Portanto não existe um tamanho manual hardcoded.
+There is therefore no manually hardcoded size.
 
-Ele vem diretamente do blob extraído.
+It comes directly from the extracted blob.
 
 ---
 
-# 73. Intervalo dos pesos
+# 73. Weight interval
 
-A região lógica é:
+The logical region is:
 
 ```text
 [kernel_base,
  kernel_base + kernel_bytes)
 ```
 
-A notação:
+The notation:
 
 ```text
 [a, b)
 ```
 
-significa:
+means:
 
 ```text
-inclui a
-não inclui b
+includes a
+excludes b
 ```
 
 ---
 
-# 74. Exemplo
+# 74. Example
 
-Se:
+If:
 
 ```text
 kernel_base = 2048
 kernel_bytes = 384608
 ```
 
-então:
+then:
 
 ```text
 WEIGHTS =
 [2048, 386656)
 ```
 
-O último byte utilizado é:
+The last used byte is:
 
 ```text
 386655
@@ -1566,9 +1568,9 @@ O último byte utilizado é:
 
 ---
 
-# 75. Base do bias
+# 75. Bias base
 
-O próximo bloco começa em:
+The next block starts at:
 
 ```python
 bias_base = align_up(
@@ -1579,9 +1581,9 @@ bias_base = align_up(
 
 ---
 
-# 76. Exemplo sem padding
+# 76. Example without padding
 
-Se:
+If:
 
 ```text
 kernel_base + kernel_bytes
@@ -1589,7 +1591,7 @@ kernel_base + kernel_bytes
 386656
 ```
 
-e esse valor já está alinhado:
+and this value is already aligned:
 
 ```text
 bias_base = 386656
@@ -1597,25 +1599,25 @@ bias_base = 386656
 
 ---
 
-# 77. Exemplo com padding
+# 77. Example with padding
 
-Se o fim dos pesos fosse:
+If the end of weights were:
 
 ```text
 386651
 ```
 
-teríamos:
+we would have:
 
 ```text
 bias_base = 386656
 ```
 
-Criando cinco bytes de padding.
+Creating five bytes of padding.
 
 ---
 
-# 78. Tamanho do bias
+# 78. Bias size
 
 ```python
 bias_bytes = len(
@@ -1625,9 +1627,9 @@ bias_bytes = len(
 
 ---
 
-# 79. Base dos multipliers
+# 79. Multiplier base
 
-Depois:
+Then:
 
 ```python
 mul_base = align_up(
@@ -1638,7 +1640,7 @@ mul_base = align_up(
 
 ---
 
-# 80. Tamanho de MUL
+# 80. MUL size
 
 ```python
 mul_bytes = len(
@@ -1648,7 +1650,7 @@ mul_bytes = len(
 
 ---
 
-# 81. Base de SHIFT
+# 81. SHIFT base
 
 ```python
 shift_base = align_up(
@@ -1659,7 +1661,7 @@ shift_base = align_up(
 
 ---
 
-# 82. Base de Q6
+# 82. Q6 base
 
 ```python
 q6_base = align_up(
@@ -1672,7 +1674,7 @@ q6_base = align_up(
 
 # 83. `params_base`
 
-Depois de Q6:
+After Q6:
 
 ```python
 params_base = align_up(
@@ -1681,37 +1683,37 @@ params_base = align_up(
 )
 ```
 
-Esse endereço representa:
+This address represents:
 
 ```text
-onde a futura região PARAMS poderá começar
+where the future PARAMS region can start
 ```
 
 ---
 
-# 84. Importante: `PARAMS` ainda não foi colocado
+# 84. Important: `PARAMS` has not been placed yet
 
-Nesta função, ainda não temos:
+In this function, we do not yet have:
 
 ```text
 params_blob
 ```
 
-Portanto:
+Therefore:
 
 ```text
 params_base
 ```
 
-é apenas a próxima área livre alinhada depois de Q6.
+is just the next aligned free area after Q6.
 
-O tamanho real das `LayerParams` será conhecido posteriormente.
+The actual `LayerParams` size will be known later.
 
 ---
 
-# 85. Por isso esta função para em `params_base`
+# 85. Why this function stops at `params_base`
 
-O layout parcial é:
+The partial layout is:
 
 ```text
 WEIGHTS
@@ -1722,10 +1724,10 @@ Q6
 
 PARAMS_BASE
     ↓
-próximo endereço disponível
+next available address
 ```
 
-Ainda faltam:
+What is still missing:
 
 ```text
 PARAMS bytes
@@ -1736,9 +1738,9 @@ SLOT2
 
 ---
 
-# 86. Retorno do layout parcial
+# 86. Partial layout return value
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -1766,9 +1768,9 @@ A função retorna:
 
 ---
 
-# 87. Bases versus tamanhos
+# 87. Bases versus sizes
 
-Cada região possui conceitualmente:
+Each region conceptually has:
 
 ```text
 BASE
@@ -1778,127 +1780,127 @@ BYTES
 END
 ```
 
-Por exemplo:
+For example:
 
 ```text
 BIAS_BASE
 +
 BIAS_BYTES
 =
-fim do bias
+end of bias
 ```
 
 ---
 
-# 88. Como evitar sobreposição
+# 88. Avoiding overlap
 
-A função utiliza sempre:
+The function always uses:
 
 ```text
-próxima_base =
+next_base =
 align_up(
-    base_anterior + tamanho_anterior
+    previous_base + previous_size
 )
 ```
 
-Logo a próxima região começa depois do final da anterior.
+The next region therefore starts after the preceding one ends.
 
 ---
 
-# 89. Exemplo encadeado
+# 89. Chained example
 
-Considere:
+Consider:
 
 ```text
 kernel_base = 2048
 kernel_bytes = 1000
 ```
 
-Fim:
+End:
 
 ```text
 3048
 ```
 
-Com alinhamento 16:
+With alignment 16:
 
 ```text
 bias_base = 3056
 ```
 
-Suponha:
+Suppose:
 
 ```text
 bias_bytes = 100
 ```
 
-Fim:
+End:
 
 ```text
 3156
 ```
 
-Próximo alinhamento:
+Next alignment:
 
 ```text
 mul_base = 3168
 ```
 
-E assim sucessivamente.
+And so on.
 
 ---
 
-# 90. O padding pertence à região anterior?
+# 90. Does padding belong to the preceding region?
 
-Não.
+No.
 
-Conceitualmente:
+Conceptually:
 
 ```text
-dados da região
+region data
        ↓
-fim lógico
+logical end
        ↓
 padding
        ↓
-próxima base
+next base
 ```
 
-O padding é espaço não utilizado entre regiões.
+Padding is unused space between regions.
 
 ---
 
 # 91. `slot_memory_to_text()`
 
-Essa função gera o relatório da primeira parte do planejamento.
+This function reports the first part of memory planning.
 
-Ela não modifica nenhuma informação.
+It does not modify any information.
 
 ---
 
-# 92. Primeira seção
+# 92. First section
 
-O relatório lista:
+The report lists:
 
 ```text
 TENSORES NÃO CONSTANTES
 ```
 
-mostrando, para cada tensor:
+showing, for each tensor:
 
 ```text
 tensor ID
-nome
+name
 shape
 dtype
-bytes por elemento
-número de elementos
-bytes totais
+bytes per element
+element count
+total bytes
 ```
 
 ---
 
-# 93. Exemplo
+# 93. Example
 
 ```text
 tensor=  12
@@ -1912,9 +1914,9 @@ bytes=98304
 
 ---
 
-# 94. Seção `MAIOR TENSOR`
+# 94. The `MAIOR TENSOR` (largest tensor) section
 
-Depois é exibido o tensor que determinou:
+Next it shows the tensor that determined:
 
 ```text
 max_bytes
@@ -1922,9 +1924,9 @@ max_bytes
 
 ---
 
-# 95. Informação registrada
+# 95. Recorded information
 
-O relatório mostra:
+The report shows:
 
 ```text
 tensor_id
@@ -1935,18 +1937,18 @@ shape
 
 dtype
 
-bytes por elemento
+bytes per element
 
-número de elementos
+element count
 
-bytes sem alinhamento
+bytes before alignment
 ```
 
 ---
 
-# 96. Cálculo final do slot
+# 96. Final slot calculation
 
-A última seção mostra:
+The last section shows:
 
 ```text
 max_bytes
@@ -1954,23 +1956,23 @@ alignment
 SLOT_BYTES
 ```
 
-Portanto é possível verificar:
+It is therefore possible to check:
 
 ```text
-tamanho real
+actual size
       ↓
-alinhamento
+alignment
       ↓
-tamanho reservado
+reserved size
 ```
 
 ---
 
 # 97. `parameter_layout_to_text()`
 
-Essa função produz o relatório do layout dos parâmetros constantes.
+This function reports the layout of constant parameters.
 
-Mostra:
+It shows:
 
 ```text
 alignment
@@ -1996,25 +1998,25 @@ PARAMS_BASE
 
 ---
 
-# 98. Utilidade
+# 98. Usefulness
 
-Esse relatório permite verificar diretamente:
+This report directly shows:
 
 ```text
-onde começa cada região?
+where does each region start?
 
-quanto ocupa?
+how much space does it occupy?
 
-qual será a próxima área livre?
+what will be the next free area?
 ```
 
-antes de construir os slots.
+before constructing the slots.
 
 ---
 
-# 99. Ponto intermediário do pipeline
+# 99. Intermediate pipeline point
 
-Até esse ponto temos:
+At this point we have:
 
 ```text
 WEIGHTS
@@ -2024,27 +2026,27 @@ SHIFT
 Q6
 ```
 
-com endereços absolutos.
+with absolute addresses.
 
-Mas ainda não temos o layout completo.
+We do not yet have the complete layout.
 
 ---
 
-# 100. Constante `WASM_PAGE_BYTES`
+# 100. The `WASM_PAGE_BYTES` constant
 
-O arquivo define:
+The file defines:
 
 ```python
 WASM_PAGE_BYTES = 65536
 ```
 
-Uma página de memória WebAssembly possui:
+A WebAssembly memory page has:
 
 ```text
 65536 bytes
 ```
 
-ou:
+or:
 
 ```text
 64 KiB
@@ -2052,9 +2054,9 @@ ou:
 
 ---
 
-# 101. Diferença entre KB e KiB
+# 101. Difference between KB and KiB
 
-Tecnicamente:
+Technically:
 
 ```text
 64 KiB
@@ -2064,59 +2066,59 @@ Tecnicamente:
 65536 bytes
 ```
 
-Essa é a unidade utilizada pelas páginas WebAssembly.
+This is the unit used by WebAssembly pages.
 
 ---
 
-# 102. Memória WebAssembly
+# 102. WebAssembly memory
 
-Quando o WAT declara:
+When WAT declares:
 
 ```wat
 (memory (export "memory") N)
 ```
 
-o número:
+the number:
 
 ```text
 N
 ```
 
-representa:
+represents:
 
 ```text
-quantidade inicial de páginas
+initial page count
 ```
 
-e não quantidade de bytes.
+rather than byte count.
 
 ---
 
-# 103. Exemplo
+# 103. Example
 
 ```wat
 (memory (export "memory") 17)
 ```
 
-significa:
+means:
 
 ```text
 17 × 65536 bytes
 ```
 
-resultando em:
+resulting in:
 
 ```text
-1.114.112 bytes
+1,114,112 bytes
 ```
 
-de memória linear inicialmente disponível.
+of initially available linear memory.
 
 ---
 
-# 104. Função `mem_pages_for()`
+# 104. The `mem_pages_for()` function
 
-A função:
+The function:
 
 ```python
 def mem_pages_for(
@@ -2124,11 +2126,11 @@ def mem_pages_for(
 ):
 ```
 
-calcula o número mínimo de páginas necessárias para cobrir um determinado endereço final.
+calculates the minimum pages needed to cover a given final address.
 
 ---
 
-# 105. Fórmula
+# 105. Formula
 
 ```python
 return (
@@ -2138,13 +2140,13 @@ return (
 ) // WASM_PAGE_BYTES
 ```
 
-É uma divisão inteira arredondada para cima.
+This is integer division rounded up.
 
 ---
 
-# 106. Forma matemática
+# 106. Mathematical form
 
-Podemos representar como:
+We can represent it as:
 
 ```text
 MEM_PAGES =
@@ -2155,15 +2157,15 @@ ceil(
 
 ---
 
-# 107. Exemplo exato
+# 107. Exact example
 
-Se:
+If:
 
 ```text
 MEM_END = 65536
 ```
 
-então:
+then:
 
 ```text
 MEM_PAGES = 1
@@ -2171,17 +2173,17 @@ MEM_PAGES = 1
 
 ---
 
-# 108. Um byte além
+# 108. One byte beyond
 
-Se:
+If:
 
 ```text
 MEM_END = 65537
 ```
 
-uma única página não é suficiente.
+a single page is insufficient.
 
-Então:
+Then:
 
 ```text
 MEM_PAGES = 2
@@ -2189,22 +2191,22 @@ MEM_PAGES = 2
 
 ---
 
-# 109. Exemplo maior
+# 109. Larger example
 
-Se:
+If:
 
 ```text
-MEM_END = 1.096.000
+MEM_END = 1,096,000
 ```
 
-teríamos aproximadamente:
+we would have approximately:
 
 ```text
 1.096.000 / 65.536
 ≈ 16,72
 ```
 
-portanto:
+therefore:
 
 ```text
 MEM_PAGES = 17
@@ -2212,17 +2214,17 @@ MEM_PAGES = 17
 
 ---
 
-# 110. Por que arredondar para cima?
+# 110. Why round up?
 
-O runtime não pode reservar:
+The runtime cannot reserve:
 
 ```text
-16,72 páginas
+16.72 pages
 ```
 
-Somente páginas inteiras.
+Only whole pages.
 
-Logo:
+Therefore:
 
 ```text
 16,01 → 17
@@ -2233,11 +2235,11 @@ Logo:
 
 ---
 
-# 111. Função `calculate_final_memory_layout()`
+# 111. The `calculate_final_memory_layout()` function
 
-Esta função fecha definitivamente o planejamento.
+This function completes memory planning.
 
-Ela recebe:
+It receives:
 
 ```text
 parameter_layout
@@ -2251,21 +2253,21 @@ slot_bytes
 
 ---
 
-# 112. Por que ela é posterior?
+# 112. Why does it come later?
 
-Agora já conhecemos:
+We now know:
 
 ```text
 params_blob
 ```
 
-e:
+and:
 
 ```text
 slot_bases
 ```
 
-que ainda não existiam em:
+which did not yet exist in:
 
 ```python
 calculate_parameter_layout()
@@ -2273,37 +2275,37 @@ calculate_parameter_layout()
 
 ---
 
-# 113. Responsabilidade
+# 113. Responsibility
 
-Ela responde:
+It answers:
 
 ```text
-qual é o intervalo de cada região?
+what is each region's interval?
 
-qual é o último endereço?
+what is the final address?
 
-quantas páginas WASM preciso?
+how many WASM pages do I need?
 
-quanto espaço sobra na última página?
+how much space remains in the last page?
 ```
 
 ---
 
-# 114. Lista `regions`
+# 114. The `regions` list
 
-A função começa com:
+The function starts with:
 
 ```python
 regions = []
 ```
 
-Cada bloco da memória será representado por um dicionário.
+Each memory block is represented by a dictionary.
 
 ---
 
-# 115. Região WEIGHTS
+# 115. WEIGHTS region
 
-É adicionada:
+The following is added:
 
 ```python
 {
@@ -2315,15 +2317,15 @@ Cada bloco da memória será representado por um dicionário.
 
 ---
 
-# 116. Região BIAS
+# 116. BIAS region
 
-Depois:
+Then:
 
 ```text
 BIAS
 ```
 
-com:
+with:
 
 ```text
 bias_base
@@ -2332,21 +2334,21 @@ bias_bytes
 
 ---
 
-# 117. Região MUL
+# 117. MUL region
 
-Em seguida:
+Next:
 
 ```text
 MUL
 ```
 
-com sua base e tamanho.
+with its base and size.
 
 ---
 
-# 118. Região SHIFT
+# 118. SHIFT region
 
-Da mesma maneira:
+Similarly:
 
 ```text
 SHIFT
@@ -2354,9 +2356,9 @@ SHIFT
 
 ---
 
-# 119. Região Q6
+# 119. Q6 region
 
-Depois:
+Then:
 
 ```text
 Q6
@@ -2364,9 +2366,9 @@ Q6
 
 ---
 
-# 120. Região PARAMS
+# 120. PARAMS region
 
-Agora finalmente conhecemos:
+Now we finally know:
 
 ```python
 len(
@@ -2374,7 +2376,7 @@ len(
 )
 ```
 
-Assim podemos registrar:
+We can therefore record:
 
 ```python
 {
@@ -2386,15 +2388,15 @@ Assim podemos registrar:
 
 ---
 
-# 121. Diferença para o layout parcial
+# 121. Difference from the partial layout
 
-Antes sabíamos somente:
+Previously we knew only:
 
 ```text
 PARAMS_BASE
 ```
 
-Agora sabemos:
+Now we know:
 
 ```text
 PARAMS_BASE
@@ -2402,7 +2404,7 @@ PARAMS_BASE
 PARAMS_BYTES
 ```
 
-e portanto também:
+and therefore also:
 
 ```text
 PARAMS_END
@@ -2410,9 +2412,9 @@ PARAMS_END
 
 ---
 
-# 122. Inclusão dos slots
+# 122. Including slots
 
-Depois:
+Then:
 
 ```python
 for slot_index, slot_base in enumerate(
@@ -2420,13 +2422,13 @@ for slot_index, slot_base in enumerate(
 ):
 ```
 
-cada slot é adicionado.
+each slot is added.
 
 ---
 
-# 123. Exemplo
+# 123. Example
 
-Se:
+If:
 
 ```python
 slot_bases = [
@@ -2436,13 +2438,13 @@ slot_bases = [
 ]
 ```
 
-e:
+and:
 
 ```text
 slot_bytes = 196608
 ```
 
-são criadas:
+the following are created:
 
 ```text
 SLOT0
@@ -2465,13 +2467,13 @@ base = 900464
 bytes = 196608
 ```
 
-Os números são apenas um exemplo do formato produzido.
+The numbers only illustrate the produced format.
 
 ---
 
-# 124. Cálculo de `end`
+# 124. Calculating `end`
 
-Depois cada região recebe:
+Each region then receives:
 
 ```python
 region["end"] = (
@@ -2482,34 +2484,34 @@ region["end"] = (
 
 ---
 
-# 125. Convenção de `end`
+# 125. The `end` convention
 
-Esse valor representa:
+This value represents:
 
 ```text
-primeiro endereço depois da região
+first address after the region
 ```
 
-e não o último byte válido.
+rather than the last valid byte.
 
 ---
 
-# 126. Exemplo
+# 126. Example
 
-Se:
+If:
 
 ```text
 base = 100
 bytes = 20
 ```
 
-a região ocupa:
+the region occupies:
 
 ```text
 100 ... 119
 ```
 
-e:
+and:
 
 ```text
 end = 120
@@ -2517,42 +2519,42 @@ end = 120
 
 ---
 
-# 127. Intervalo semiaberto
+# 127. Half-open interval
 
-Portanto:
+Therefore:
 
 ```text
 [base, end)
 ```
 
-é a representação correta.
+is the correct representation.
 
 ---
 
-# 128. Por que essa convenção é útil?
+# 128. Why is this convention useful?
 
-Porque:
+Because:
 
 ```text
 bytes =
 end - base
 ```
 
-diretamente.
+directly.
 
-Também permite colocar uma próxima região exatamente em:
+It also allows placing the next region exactly at:
 
 ```text
 end
 ```
 
-quando nenhum alinhamento adicional é necessário.
+when no additional alignment is required.
 
 ---
 
-# 129. Cálculo de `mem_end`
+# 129. Calculating `mem_end`
 
-O código faz:
+The code does:
 
 ```python
 mem_end = max(
@@ -2563,23 +2565,23 @@ mem_end = max(
 
 ---
 
-# 130. Por que usar `max()`?
+# 130. Why use `max()`?
 
-Em vez de assumir simplesmente:
+Instead of simply assuming:
 
 ```text
-último slot = última região
+last slot = last region
 ```
 
-o código calcula explicitamente qual região termina no maior endereço.
+the code explicitly calculates which region ends at the highest address.
 
-Isso torna o fechamento mais robusto à ordem da lista.
+This makes finalization more robust to list order.
 
 ---
 
-# 131. Exemplo
+# 131. Example
 
-Se os fins forem:
+If the end addresses are:
 
 ```text
 WEIGHTS → 386656
@@ -2595,7 +2597,7 @@ SLOT1 → 900464
 SLOT2 → 1097072
 ```
 
-então:
+then:
 
 ```text
 MEM_END = 1097072
@@ -2603,26 +2605,26 @@ MEM_END = 1097072
 
 ---
 
-# 132. Significado de `MEM_END`
+# 132. Meaning of `MEM_END`
 
-`MEM_END` representa:
+`MEM_END` represents:
 
 ```text
-o primeiro endereço após
-o último byte utilizado
+the first address after
+the last used byte
 ```
 
 ---
 
-# 133. Não confundir com índice do último byte
+# 133. Do not confuse it with the last byte index
 
-Se:
+If:
 
 ```text
 MEM_END = 1097072
 ```
 
-o último byte efetivamente utilizado é:
+the last byte actually used is:
 
 ```text
 1097071
@@ -2630,9 +2632,9 @@ o último byte efetivamente utilizado é:
 
 ---
 
-# 134. Cálculo de `MEM_PAGES`
+# 134. Calculating `MEM_PAGES`
 
-Depois:
+Then:
 
 ```python
 mem_pages = mem_pages_for(
@@ -2642,9 +2644,9 @@ mem_pages = mem_pages_for(
 
 ---
 
-# 135. Memória efetivamente reservada
+# 135. Memory actually reserved
 
-O total de bytes reservados será:
+The total reserved bytes will be:
 
 ```python
 allocated_memory_bytes = (
@@ -2655,15 +2657,15 @@ allocated_memory_bytes = (
 
 ---
 
-# 136. Exemplo
+# 136. Example
 
-Se:
+If:
 
 ```text
 MEM_PAGES = 17
 ```
 
-temos:
+we have:
 
 ```text
 17 × 65536
@@ -2673,9 +2675,9 @@ temos:
 
 ---
 
-# 137. Espaço não utilizado
+# 137. Unused space
 
-O código calcula:
+The code calculates:
 
 ```python
 unused_memory_bytes = (
@@ -2686,25 +2688,25 @@ unused_memory_bytes = (
 
 ---
 
-# 138. Significado
+# 138. Meaning
 
-É o espaço restante entre:
+This is the space remaining between:
 
 ```text
 MEM_END
 ```
 
-e:
+and:
 
 ```text
-fim da última página reservada
+the end of the last reserved page
 ```
 
 ---
 
-# 139. Exemplo
+# 139. Example
 
-Se:
+If:
 
 ```text
 mem_end = 1097072
@@ -2712,7 +2714,7 @@ mem_end = 1097072
 allocated_memory_bytes = 1114112
 ```
 
-então:
+then:
 
 ```text
 unused =
@@ -2721,25 +2723,25 @@ unused =
 
 ---
 
-# 140. Isso é desperdício?
+# 140. Is this waste?
 
-É um efeito natural da granularidade de memória WebAssembly.
+It is a natural effect of WebAssembly memory granularity.
 
-A memória não pode ser reservada byte a byte.
+Memory cannot be reserved byte by byte.
 
-Ela é reservada em páginas de:
+It is reserved in pages of:
 
 ```text
 64 KiB
 ```
 
-Logo sempre pode existir uma fração não utilizada da última página.
+There may therefore always be an unused fraction of the last page.
 
 ---
 
-# 141. Retorno final
+# 141. Final return value
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -2765,21 +2767,21 @@ A função retorna:
 
 # 142. `regions`
 
-É particularmente útil para:
+It is particularly useful for:
 
 ```text
-relatório
+report
 
-validação
+validation
 
-visualização futura
+future visualization
 ```
 
-porque contém todas as regiões em formato uniforme.
+because it contains every region in a uniform format.
 
 ---
 
-# 143. Exemplo de região
+# 143. Region example
 
 ```python
 {
@@ -2792,9 +2794,9 @@ porque contém todas as regiões em formato uniforme.
 
 ---
 
-# 144. Representação uniforme
+# 144. Uniform representation
 
-Isso permite tratar:
+This lets us handle:
 
 ```text
 WEIGHTS
@@ -2808,15 +2810,15 @@ SLOT1
 SLOT2
 ```
 
-da mesma maneira.
+in the same way.
 
 ---
 
 # 145. `final_memory_layout_to_text()`
 
-Essa função produz o relatório final.
+This function produces the final report.
 
-Ela começa com uma tabela:
+It starts with a table:
 
 ```text
 REGIAO              BASE       BYTES         END
@@ -2826,7 +2828,7 @@ REGIAO              BASE       BYTES         END
 
 ---
 
-# 146. Exemplo conceitual
+# 146. Conceptual example
 
 ```text
 REGIAO              BASE       BYTES         END
@@ -2842,31 +2844,31 @@ SLOT1             703856      196608      900464
 SLOT2             900464      196608     1097072
 ```
 
-Os valores acima servem apenas para ilustrar o formato.
+These values only illustrate the format.
 
 ---
 
-# 147. Por que essa tabela é tão útil?
+# 147. Why is this table useful?
 
-Com uma única visualização é possível verificar:
+A single view allows checking:
 
 ```text
-ordem das regiões
+region order
 
-tamanho de cada bloco
+each block's size
 
-possíveis lacunas
+possible gaps
 
-último endereço
+final address
 
-posição dos slots
+slot positions
 ```
 
 ---
 
-# 148. Seção `RESUMO`
+# 148. The `RESUMO` (summary) section
 
-Depois são exibidos:
+Next it displays:
 
 ```text
 MEM_END
@@ -2875,9 +2877,9 @@ WASM_PAGE_BYTES
 
 MEM_PAGES
 
-memória reservada
+reserved memory
 
-espaço restante
+remaining space
 
 SLOT_BYTES
 
@@ -2888,9 +2890,9 @@ SLOT2_BASE
 
 ---
 
-# 149. Relação com o template WAT
+# 149. Relationship with the WAT template
 
-O resultado:
+The result:
 
 ```python
 memory_layout[
@@ -2898,7 +2900,7 @@ memory_layout[
 ]
 ```
 
-é utilizado para preencher:
+is used to fill:
 
 ```wat
 (memory
@@ -2909,9 +2911,9 @@ memory_layout[
 
 ---
 
-# 150. Exemplo
+# 150. Example
 
-Se:
+If:
 
 ```python
 final_memory[
@@ -2919,7 +2921,7 @@ final_memory[
 ] = 17
 ```
 
-o WAT gerado conterá:
+the generated WAT will contain:
 
 ```wat
 (memory
@@ -2930,9 +2932,9 @@ o WAT gerado conterá:
 
 ---
 
-# 151. Bases dos slots
+# 151. Slot bases
 
-Os valores calculados anteriormente também aparecem no WAT:
+Previously calculated values also appear in WAT:
 
 ```wat
 (global $SLOT0_BASE
@@ -2953,16 +2955,16 @@ Os valores calculados anteriormente também aparecem no WAT:
 
 ---
 
-# 152. Relação com `weights.py`
+# 152. Relationship to `weights.py`
 
-`weights.py` produz:
+`weights.py` produces:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-`memory.py` transforma os tamanhos desses blobs em:
+`memory.py` converts these blob sizes into:
 
 ```text
 kernel_base
@@ -2971,9 +2973,9 @@ bias_base
 
 ---
 
-# 153. Relação com `quantization.py`
+# 153. Relationship with `quantization.py`
 
-`quantization.py` produz:
+`quantization.py` produces:
 
 ```text
 mul_blob
@@ -2981,7 +2983,7 @@ shift_blob
 q6_blob
 ```
 
-`memory.py` transforma seus tamanhos em:
+`memory.py` converts their sizes into:
 
 ```text
 mul_base
@@ -2991,15 +2993,15 @@ q6_base
 
 ---
 
-# 154. Relação com `params_blob.py`
+# 154. Relationship with `params_blob.py`
 
-`params_blob.py` produz:
+`params_blob.py` produces:
 
 ```text
 params_blob
 ```
 
-e esta etapa final registra:
+and this final stage records:
 
 ```text
 PARAMS_BASE
@@ -3009,27 +3011,27 @@ PARAMS_END
 
 ---
 
-# 155. Relação com `slots.py`
+# 155. Relationship with `slots.py`
 
-`slots.py` decidiu:
-
-```text
-qual camada usa SLOT0, SLOT1 ou SLOT2
-```
-
-Mas não sabia:
+`slots.py` decided:
 
 ```text
-onde esses slots ficam fisicamente
+which layer uses SLOT0, SLOT1, or SLOT2
 ```
 
-Essa decisão física acontece no planejamento de memória utilizado pelas etapas posteriores.
+But it did not know:
+
+```text
+where those slots are physically located
+```
+
+That physical decision occurs in the memory planning used by subsequent stages.
 
 ---
 
-# 156. Relação com `layer_params.py`
+# 156. Relationship to `layer_params.py`
 
-Uma `LayerParam` precisa de ponteiros como:
+A `LayerParam` needs pointers such as:
 
 ```text
 wptr
@@ -3042,11 +3044,11 @@ in_ptr
 out_ptr
 ```
 
-Esses ponteiros dependem das bases calculadas neste módulo.
+These pointers depend on the bases calculated in this module.
 
 ---
 
-# 157. Exemplo de peso
+# 157. Weight example
 
 `weights.py`:
 
@@ -3061,7 +3063,7 @@ offset = 5000
 WEIGHTS_BASE = 2048
 ```
 
-Resultado posterior:
+Subsequent result:
 
 ```text
 wptr =
@@ -3072,7 +3074,7 @@ wptr =
 
 ---
 
-# 158. Exemplo de multiplier
+# 158. Multiplier example
 
 `quantization.py`:
 
@@ -3086,7 +3088,7 @@ mul_offset = 128
 MUL_BASE = 414832
 ```
 
-Resultado:
+Result:
 
 ```text
 mul_ptr =
@@ -3097,7 +3099,7 @@ mul_ptr =
 
 ---
 
-# 159. Exemplo de ativação
+# 159. Activation example
 
 `tensor_mapping.py`:
 
@@ -3105,13 +3107,13 @@ mul_ptr =
 tensor → SLOT1
 ```
 
-Planejamento físico:
+Physical planning:
 
 ```text
 SLOT1_BASE = 703856
 ```
 
-Resultado:
+Result:
 
 ```text
 in_ptr = 703856
@@ -3119,86 +3121,86 @@ in_ptr = 703856
 
 ---
 
-# 160. Portanto este módulo é a ponte para endereços reais
+# 160. This module connects the data to real addresses
 
-Antes:
+Before:
 
 ```text
-offset relativo
-slot lógico
+relative offset
+logical slot
 ```
 
-Depois:
+Then:
 
 ```text
-base absoluta
+absolute base
 ```
 
-E finalmente:
+And finally:
 
 ```text
-ponteiro utilizado pelo WASM
+pointer used by WASM
 ```
 
 ---
 
 # 161. `kernel_base_hint` versus `kernel_base`
 
-Essa distinção é importante.
+This distinction matters.
 
-O primeiro:
+The first:
 
 ```text
 KERNEL_BASE_HINT
 ```
 
-é uma configuração.
+is configuration.
 
-O segundo:
+The second:
 
 ```text
 kernel_base
 ```
 
-é o endereço efetivo depois do alinhamento.
+is the actual address after alignment.
 
 ---
 
-# 162. Exemplo
+# 162. Example
 
-Se:
+If:
 
 ```text
 KERNEL_BASE_HINT = 2050
 ALIGN = 16
 ```
 
-então:
+then:
 
 ```text
 kernel_base =
 2064
 ```
 
-Portanto:
+Therefore:
 
 ```text
-hint ≠ necessariamente base
+hint ≠ necessarily the base
 ```
 
 ---
 
 # 163. `params_base` versus `PARAMS_END`
 
-Outra distinção importante:
+Another important distinction:
 
 ```text
 params_base
 ```
 
-indica o início.
+indicates the start.
 
-Já:
+Whereas:
 
 ```text
 params_base
@@ -3206,23 +3208,23 @@ params_base
 len(params_blob)
 ```
 
-indica o final.
+indicates the end.
 
 ---
 
-# 164. Fases do planejamento
+# 164. Planning phases
 
-O projeto realiza o planejamento em etapas porque alguns tamanhos só existem depois de outras transformações.
+The project plans in stages because some sizes are available only after other transformations.
 
-### Fase 1
+### Phase 1
 
 ```text
-weights/bias/quantização
+weights/bias/quantization
         ↓
 calculate_parameter_layout()
 ```
 
-Produz:
+Produces:
 
 ```text
 PARAMS_BASE
@@ -3230,71 +3232,71 @@ PARAMS_BASE
 
 ---
 
-### Fase 2
+### Phase 2
 
-`LayerParam` é construída.
+`LayerParam` is built.
 
-Então:
+Then:
 
 ```text
 params_blob
 ```
 
-passa a ter tamanho conhecido.
+now has a known size.
 
 ---
 
-### Fase 3
+### Phase 3
 
-São conhecidas também:
+The following are also known:
 
 ```text
 slot_bases
 ```
 
-Então:
+Then:
 
 ```text
 calculate_final_memory_layout()
 ```
 
-fecha a memória inteira.
+completes the whole memory layout.
 
 ---
 
-# 165. Por que não calcular tudo em uma única função?
+# 165. Why not calculate everything in one function?
 
-Porque isso criaria dependências circulares.
+Because this would create circular dependencies.
 
-Por exemplo:
+For example:
 
 ```text
 slot_bases
 ```
 
-dependem da posição final de `PARAMS`.
+depend on the final position of `PARAMS`.
 
-Mas:
+But:
 
 ```text
 params_blob
 ```
 
-só existe depois que as `LayerParams` foram construídas.
+exists only after `LayerParams` have been built.
 
-Logo faz sentido ter:
+It therefore makes sense to have:
 
 ```text
-layout parcial
+partial layout
       ↓
-construção das LayerParams
+LayerParams construction
       ↓
-layout final
+final layout
 ```
 
 ---
 
-# 166. Relação temporal
+# 166. Temporal relationship
 
 ```text
 weights.py
@@ -3321,79 +3323,79 @@ calculate_final_memory_layout()
 
 ---
 
-# 167. Um detalhe importante sobre `slot_bases`
+# 167. An important detail about `slot_bases`
 
-A função:
+The function:
 
 ```python
 calculate_final_memory_layout()
 ```
 
-não calcula os `slot_bases`.
+does not calculate `slot_bases`.
 
-Ela os recebe já calculados.
+It receives them already calculated.
 
-Seu papel é:
+Its role is to:
 
 ```text
-incorporá-los ao layout final
+include them in the final layout
 ```
 
-e não decidir novamente suas posições.
+rather than decide their positions again.
 
 ---
 
-# 168. Separação de responsabilidade
+# 168. Separation of responsibilities
 
-Assim:
+Thus:
 
 ```text
-cálculo das bases dos slots
+calculating slot bases
 ```
 
-acontece na fase em que o layout das `LayerParams` é definido.
+occurs when the `LayerParams` layout is defined.
 
-Já:
+Whereas:
 
 ```text
 memory.py
 ```
 
-fecha e valida conceitualmente o mapa global utilizando essas bases.
+completes and conceptually validates the global map using those bases.
 
 ---
 
-# 169. O arquivo não gera WAT
+# 169. The file does not generate WAT
 
-A docstring deixa isso explícito:
+The docstring makes this explicit (translated):
 
 ```text
-Não gera WAT.
-Apenas fecha o planejamento de memória.
+Does not generate WAT.
+Only completes memory planning.
 ```
 
-Essa separação é importante.
+This separation matters.
 
 ---
 
-# 170. Arquitetura correta
+# 170. Correct architecture
 
 ```text
 memory.py
    ↓
-dados estruturados
+structured data
 
 wat_generator.py
    ↓
-transforma esses dados
-em código WAT
+converts this data
+into WAT code
 ```
 
 ---
 
-# 171. Abordagem que foi evitada
+# 171. Avoided approach
 
-Não fazemos aqui:
+We do not do this here:
 
 ```python
 wat_lines.append(
@@ -3401,52 +3403,52 @@ wat_lines.append(
 )
 ```
 
-Isso misturaria:
+That would mix:
 
 ```text
-engenharia de memória
+memory engineering
 ```
 
-com:
+with:
 
 ```text
-geração de código
+code generation
 ```
 
 ---
 
-# 172. Benefício
+# 172. Benefit
 
-`memory.py` pode ser testado e analisado independentemente do WAT.
+`memory.py` can be tested and analyzed independently of WAT.
 
-Por exemplo:
+For example:
 
 ```text
-qual é MEM_END?
+what is MEM_END?
 
-há memória suficiente?
+is there enough memory?
 
-quanto cada slot ocupa?
+how much space does each slot occupy?
 
-quantas páginas seriam necessárias?
+how many pages would be needed?
 ```
 
-podem ser estudados sem gerar nenhum módulo WebAssembly.
+can be studied without generating a WebAssembly module.
 
 ---
 
-# 173. Invariante de não sobreposição
+# 173. Nonoverlap invariant
 
-O objetivo estrutural do layout é que duas regiões distintas não ocupem os mesmos bytes.
+The layout's structural objective is that distinct regions do not occupy the same bytes.
 
-Para duas regiões consecutivas:
+For two consecutive regions:
 
 ```text
 A
 B
 ```
 
-deveríamos ter:
+we should have:
 
 ```text
 A.end <= B.base
@@ -3454,9 +3456,9 @@ A.end <= B.base
 
 ---
 
-# 174. Nas regiões calculadas sequencialmente
+# 174. For sequentially calculated regions
 
-Isso é garantido pela construção:
+This is guaranteed by construction:
 
 ```text
 next_base =
@@ -3469,27 +3471,27 @@ align_up(
 
 ---
 
-# 175. Para `PARAMS` e slots
+# 175. For `PARAMS` and slots
 
-A correção depende das bases calculadas na etapa de `layer_params.py`.
+Correctness depends on the bases calculated in the `layer_params.py` stage.
 
-`calculate_final_memory_layout()` atualmente registra e resume essas regiões, mas não executa uma validação explícita de sobreposição entre todos os pares.
+`calculate_final_memory_layout()` currently records and summarizes these regions, but does not explicitly check every pair for overlap.
 
 ---
 
-# 176. Possível validação futura
+# 176. Possible future validation
 
-Poderia ser implementada:
+The following could be implemented:
 
 ```text
-ordenar regiões por base
+sort regions by base
 
-para cada par consecutivo:
+for each consecutive pair:
 
 previous.end <= current.base
 ```
 
-Caso contrário:
+Otherwise:
 
 ```text
 RuntimeError
@@ -3497,9 +3499,9 @@ RuntimeError
 
 ---
 
-# 177. Por que seria útil?
+# 177. Why would it be useful?
 
-Porque um erro em:
+Because an error in:
 
 ```text
 params_bytes
@@ -3507,31 +3509,31 @@ slot_bases
 slot_bytes
 ```
 
-poderia produzir sobreposição sem que:
+could create overlap without:
 
 ```text
 MEM_END
 ```
 
-sozinho revelasse o problema.
+alone revealing the problem.
 
 ---
 
-# 178. Estado atual
+# 178. Current state
 
-No fluxo atual, as bases são produzidas sequencialmente e o WAT compilou corretamente, mas uma validação explícita seria uma boa melhoria futura para robustez.
+In the current flow, bases are produced sequentially and WAT compiled successfully, but explicit validation would improve robustness in the future.
 
 ---
 
-# 179. Outro invariante
+# 179. Another invariant
 
-Toda região deve satisfazer:
+Every region must satisfy:
 
 ```text
 bytes >= 0
 ```
 
-e:
+and:
 
 ```text
 end =
@@ -3540,27 +3542,27 @@ base + bytes
 
 ---
 
-# 180. Região vazia
+# 180. Empty region
 
-Caso algum blob tenha:
+If a blob has:
 
 ```text
 0 bytes
 ```
 
-teríamos:
+we would have:
 
 ```text
 base == end
 ```
 
-Isso representa uma região vazia.
+This represents an empty region.
 
 ---
 
-# 181. Quantidade mínima de páginas
+# 181. Minimum page count
 
-`mem_pages_for()` retorna exatamente a quantidade mínima necessária para cobrir:
+`mem_pages_for()` returns exactly the minimum count needed to cover:
 
 ```text
 [0, MEM_END)
@@ -3568,34 +3570,34 @@ Isso representa uma região vazia.
 
 ---
 
-# 182. Se MEM_END estiver alinhado à página
+# 182. If MEM_END is page-aligned
 
-Se:
+If:
 
 ```text
 MEM_END = N × 65536
 ```
 
-então:
+then:
 
 ```text
 MEM_PAGES = N
 ```
 
-Não é necessária uma página extra.
+No extra page is needed.
 
 ---
 
-# 183. Se faltar apenas um byte
+# 183. If just one byte is missing
 
-Se:
+If:
 
 ```text
 MEM_END =
 N × 65536 + 1
 ```
 
-então:
+then:
 
 ```text
 MEM_PAGES = N + 1
@@ -3603,58 +3605,58 @@ MEM_PAGES = N + 1
 
 ---
 
-# 184. Relação com o ESP32
+# 184. Relationship with ESP32
 
-Embora o cálculo seja feito segundo a memória linear WebAssembly, o número final de páginas também influencia diretamente o consumo de memória necessário ao carregar o módulo no ambiente embarcado.
+Although this calculation follows WebAssembly linear memory rules, the final page count also directly affects the memory needed to load the module in the embedded environment.
 
-Quanto maior:
+The larger:
 
 ```text
 MEM_PAGES
 ```
 
-maior é a região linear que o runtime precisa disponibilizar.
+the larger the linear region the runtime must provide.
 
 ---
 
-# 185. O maior consumidor pode ser o conjunto de slots
+# 185. Slots may be the largest memory consumer
 
-Uma característica importante do layout é que:
+An important layout property is that:
 
 ```text
 weights
 ```
 
-não necessariamente são a maior categoria de memória.
+are not necessarily the largest memory category.
 
-Como existem vários slots:
+Because there are several slots:
 
 ```text
 NUM_SLOTS × SLOT_BYTES
 ```
 
-pode representar uma parcela significativa.
+may represent a significant share.
 
 ---
 
-# 186. Exemplo
+# 186. Example
 
-Se:
+If:
 
 ```text
 SLOT_BYTES = 196608
 NUM_SLOTS = 3
 ```
 
-temos:
+we have:
 
 ```text
 589824 bytes
 ```
 
-somente para ativações.
+for activations alone.
 
-Isso equivale a aproximadamente:
+This is approximately:
 
 ```text
 576 KiB
@@ -3662,72 +3664,72 @@ Isso equivale a aproximadamente:
 
 ---
 
-# 187. Vantagem da reutilização
+# 187. Benefit of reuse
 
-Sem slots reutilizáveis, seria necessário potencialmente reservar espaço para muitas ativações simultaneamente.
+Without reusable slots, space might need to be reserved for many activations simultaneously.
 
-O planejamento reduz isso para um número fixo de grandes regiões.
+Planning reduces this to a fixed number of large regions.
 
 ---
 
-# 188. Relação com liveness
+# 188. Relationship with liveness
 
-`memory.py` não calcula liveness.
+`memory.py` does not calculate liveness.
 
-Isso já foi feito conceitualmente por:
+This was already handled conceptually by:
 
 ```text
 graph.py
 slots.py
 ```
 
-Aqui assumimos que:
+Here we assume that:
 
 ```text
 3 slots
 ```
 
-são suficientes para a estratégia determinada anteriormente.
+are sufficient for the previously determined strategy.
 
 ---
 
-# 189. Separação novamente
+# 189. Separation revisited
 
 ```text
 slots.py
     ↓
-quando uma região pode ser reutilizada?
+when can a region be reused?
 ```
 
 ```text
 memory.py
     ↓
-quanto essa região ocupa e onde começa?
+how much space does this region occupy and where does it start?
 ```
 
 ---
 
-# 190. `SLOT_BYTES` não é tamanho de um tensor específico
+# 190. `SLOT_BYTES` is not a specific tensor's size
 
-Mesmo que seja determinado pelo maior tensor:
+Although determined by the largest tensor:
 
 ```text
 SLOT_BYTES
 ```
 
-é uma propriedade da região física.
+is a property of the physical region.
 
-Ao longo da execução ela recebe diversos tensors menores ou do mesmo tamanho.
+During execution, it holds different tensors of the same size or smaller.
 
 ---
 
-# 191. Exemplo
+# 191. Example
 
 ```text
 SLOT1 = 196608 bytes
 ```
 
-pode armazenar em momentos diferentes:
+can store, at different times:
 
 ```text
 tensor A = 49152 bytes
@@ -3737,33 +3739,33 @@ tensor B = 98304 bytes
 tensor C = 196608 bytes
 ```
 
-Todos cabem na mesma região.
+All fit within the same region.
 
 ---
 
-# 192. Espaço residual dentro de um slot
+# 192. Remaining space within a slot
 
-Se um tensor ocupa:
+If a tensor occupies:
 
 ```text
 49152 bytes
 ```
 
-dentro de um slot de:
+inside a slot of:
 
 ```text
 196608 bytes
 ```
 
-os bytes restantes não são utilizados por aquele tensor.
+the remaining bytes are unused by that tensor.
 
-Isso é esperado.
+This is expected.
 
 ---
 
-# 193. O slot não é particionado dinamicamente
+# 193. Slots are not dynamically partitioned
 
-A implementação atual não tenta colocar simultaneamente:
+The current implementation does not try to place simultaneously:
 
 ```text
 tensor A
@@ -3771,29 +3773,29 @@ tensor A
 tensor B
 ```
 
-dentro de partes diferentes do mesmo slot.
+in different parts of the same slot.
 
-Cada slot é tratado como um buffer único reutilizável.
+Each slot is treated as one reusable buffer.
 
 ---
 
-# 194. Consequência para simplicidade
+# 194. Consequence for simplicity
 
-Isso facilita muito o runtime.
+This greatly simplifies the runtime.
 
-Uma operação recebe:
+An operation receives:
 
 ```text
 in_ptr = SLOTn_BASE
 ```
 
-sem precisar calcular offsets internos variáveis de ativação.
+without needing to calculate variable internal activation offsets.
 
 ---
 
-# 195. Tamanho dos blobs de quantização
+# 195. Quantization blob sizes
 
-Como:
+Since:
 
 ```text
 MUL
@@ -3801,114 +3803,114 @@ SHIFT
 Q6
 ```
 
-são arrays de `int32`, seus tamanhos normalmente são múltiplos de:
+are `int32` arrays, their sizes are normally multiples of:
 
 ```text
 4
 ```
 
-Mas mesmo assim a próxima região é alinhada para:
+Even so, the next region is aligned to:
 
 ```text
 16 bytes
 ```
 
-pela política global.
+by the global policy.
 
 ---
 
-# 196. Dois alinhamentos diferentes conceitualmente
+# 196. Two conceptually different alignments
 
-Temos:
+We have:
 
 ```text
-estrutura interna do blob
+internal blob structure
     ↓
 int32 = 4 bytes
 ```
 
-e:
+and:
 
 ```text
-início das grandes regiões
+start of major regions
     ↓
 ALIGN = 16 bytes
 ```
 
-Não são a mesma coisa.
+They are not the same thing.
 
 ---
 
-# 197. Exemplo
+# 197. Example
 
-Um `mul_blob` pode possuir:
+A `mul_blob` may have:
 
 ```text
-28.180 bytes
+28,180 bytes
 ```
 
-que não é múltiplo de 16.
+which is not a multiple of 16.
 
-Então:
+Then:
 
 ```text
 SHIFT_BASE
 ```
 
-será arredondado para o próximo múltiplo de 16.
+will be rounded up to the next multiple of 16.
 
 ---
 
-# 198. Por que não alinhar cada multiplier a 16 bytes?
+# 198. Why not align every multiplier to 16 bytes?
 
-Isso seria extremamente desperdicioso.
+That would be extremely wasteful.
 
-Cada valor ocupa naturalmente:
+Each value naturally occupies:
 
 ```text
 4 bytes
 ```
 
-A região como um todo é alinhada; os elementos permanecem contíguos dentro dela.
+The region as a whole is aligned; elements remain contiguous within it.
 
 ---
 
-# 199. Mesma lógica para pesos
+# 199. Same logic for weights
 
-Pesos `int8` continuam:
-
-```text
-1 byte por valor
-```
-
-contíguos no blob.
-
-O alinhamento de 16 é aplicado à:
+`int8` weights remain:
 
 ```text
-base da região
+1 byte per value
 ```
 
-e não a cada peso.
+contiguous in the blob.
+
+Alignment to 16 applies to the:
+
+```text
+region base
+```
+
+rather than every weight.
 
 ---
 
-# 200. Hierarquia de endereçamento
+# 200. Addressing hierarchy
 
-Podemos visualizar:
+We can visualize:
 
 ```text
-memória WASM
+WASM memory
    │
-   ├── região
+   ├── region
    │      │
-   │      └── offset interno
+   │      └── internal offset
    │
    ▼
-endereço
+address
 ```
 
-Exemplo:
+Example:
 
 ```text
 MUL_BASE
@@ -3920,25 +3922,25 @@ channel × 4
 
 ---
 
-# 201. Três níveis
+# 201. Three levels
 
-Para um multiplier:
+For a multiplier:
 
 ```text
-nível 1:
+level 1:
 MUL_BASE
 
-nível 2:
-mul_offset da operação
+level 2:
+operation's mul_offset
 
-nível 3:
+level 3:
 channel × 4
 ```
 
-Então:
+Then:
 
 ```text
-endereço =
+address =
 MUL_BASE
 +
 mul_offset
@@ -3948,65 +3950,65 @@ channel × 4
 
 ---
 
-# 202. Para pesos
+# 202. For weights
 
-Da mesma forma:
+Similarly:
 
 ```text
 WEIGHTS_BASE
 +
 weight_tensor_off
 +
-offset interno do kernel
+internal kernel offset
 ```
 
 ---
 
-# 203. Para slots
+# 203. For slots
 
-Já as ativações normalmente começam diretamente em:
+Activations normally start directly at:
 
 ```text
 SLOTn_BASE
 ```
 
-e o kernel calcula internamente os offsets de:
+and the kernel internally calculates offsets for:
 
 ```text
 pixel
-canal
-linha
-coluna
+channel
+row
+column
 ```
 
 ---
 
-# 204. Resumo das funções de cálculo
+# 204. Calculation function summary
 
-| Função                            | Resultado                         |
+| Function | Result |
 | --------------------------------- | --------------------------------- |
-| `tensor_numel()`                  | Número de elementos do tensor     |
-| `align_up()`                      | Próximo endereço alinhado         |
-| `calculate_slot_bytes()`          | Tamanho de cada slot              |
-| `calculate_parameter_layout()`    | Bases dos parâmetros constantes   |
-| `mem_pages_for()`                 | Quantidade mínima de páginas WASM |
-| `calculate_final_memory_layout()` | Mapa completo da memória          |
+| `tensor_numel()` | Tensor element count |
+| `align_up()` | Next aligned address |
+| `calculate_slot_bytes()` | Size of each slot |
+| `calculate_parameter_layout()` | Constant parameter bases |
+| `mem_pages_for()` | Minimum WASM page count |
+| `calculate_final_memory_layout()` | Complete memory map |
 
 ---
 
-# 205. Resumo das funções de relatório
+# 205. Report function summary
 
-| Função                          | Relatório                            |
+| Function | Report |
 | ------------------------------- | ------------------------------------ |
-| `slot_memory_to_text()`         | Tensors e cálculo do tamanho do slot |
-| `parameter_layout_to_text()`    | Bases e tamanhos dos parâmetros      |
-| `final_memory_layout_to_text()` | Layout completo e páginas WASM       |
+| `slot_memory_to_text()` | Tensors and slot size calculation |
+| `parameter_layout_to_text()` | Parameter bases and sizes |
+| `final_memory_layout_to_text()` | Complete layout and WASM pages |
 
 ---
 
-# 206. Dados que entram neste módulo
+# 206. Data entering this module
 
-Vindos de `config.py`:
+From `config.py`:
 
 ```text
 BATCH
@@ -4014,14 +4016,14 @@ ALIGN
 KERNEL_BASE_HINT
 ```
 
-Vindos de `weights.py`:
+From `weights.py`:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-Vindos de `quantization.py`:
+From `quantization.py`:
 
 ```text
 mul_blob
@@ -4029,7 +4031,7 @@ shift_blob
 q6_blob
 ```
 
-Mais tarde:
+Later:
 
 ```text
 params_blob
@@ -4038,9 +4040,9 @@ slot_bases
 
 ---
 
-# 207. Dados que saem
+# 207. Output data
 
-Entre outros:
+Among others:
 
 ```text
 SLOT_BYTES
@@ -4058,91 +4060,91 @@ MEM_PAGES
 
 ---
 
-# 208. Configuração versus cálculo
+# 208. Configuration versus calculation
 
-É importante reforçar:
+To emphasize:
 
 ```text
 ALIGN = 16
 ```
 
-é uma política de configuração.
+is a configuration policy.
 
-Já:
+Whereas:
 
 ```text
 BIAS_BASE
 ```
 
-é um resultado calculado.
+is a calculated result.
 
 ---
 
-# 209. Da mesma maneira
+# 209. Similarly
 
 ```text
 KERNEL_BASE_HINT = 2048
 ```
 
-é configuração.
+is configuration.
 
-Mas:
+But:
 
 ```text
 kernel_base
 ```
 
-é resultado do alinhamento.
+is the result of alignment.
 
 ---
 
-# 210. E
+# 210. And
 
 ```text
 NUM_SLOTS = 3
 ```
 
-é configuração.
+is configuration.
 
-Enquanto:
+While:
 
 ```text
 SLOT_BYTES
 ```
 
-é derivado do modelo.
+is derived from the model.
 
 ---
 
-# 211. Nenhum endereço dependente do modelo deve ser hardcoded
+# 211. Model-dependent addresses should not be hardcoded
 
-O princípio arquitetural é:
+The architectural principle is:
 
 ```text
-modelo muda
+model changes
    ↓
-tamanhos podem mudar
+sizes may change
    ↓
-bases são recalculadas
+bases are recalculated
    ↓
-WAT recebe novos valores
+WAT receives new values
 ```
 
-Não:
+Not:
 
 ```text
-modelo muda
+model changes
    ↓
-editar endereços manualmente
+edit addresses manually
 ```
 
 ---
 
-# 212. Relação com o template WAT
+# 212. Relationship with the WAT template
 
-O WAT passa a ser apenas consumidor desses resultados.
+WAT simply consumes these results.
 
-Exemplo:
+Example:
 
 ```wat
 (global $WEIGHTS_BASE
@@ -4151,17 +4153,17 @@ Exemplo:
 )
 ```
 
-O extrator substitui:
+The extractor replaces:
 
 ```text
 @@WEIGHTS_BASE@@
 ```
 
-pelo valor produzido pelo planejamento.
+with the value produced by memory planning.
 
 ---
 
-# 213. Mesmo princípio para a memória
+# 213. Same principle for memory
 
 ```wat
 (memory
@@ -4170,57 +4172,57 @@ pelo valor produzido pelo planejamento.
 )
 ```
 
-O template não precisa saber previamente quantas páginas o modelo requer.
+The template does not need to know in advance how many pages the model requires.
 
 ---
 
-# 214. Benefício para novos modelos
+# 214. Benefit for new models
 
-Ao trocar:
+When replacing:
 
 ```text
 model_int8_esp32.tflite
 ```
 
-por outro modelo compatível, podem mudar:
+with another compatible model, the following may change:
 
 ```text
-quantidade de pesos
-bias
+weight count
+biases
 multipliers
 shifts
 Q6
 LayerParams
-tamanho máximo das ativações
+maximum activation size
 ```
 
-e, consequentemente:
+and consequently:
 
 ```text
-todas as bases
+all bases
 MEM_END
 MEM_PAGES
 ```
 
-O pipeline recalcula esses valores.
+The pipeline recalculates these values.
 
 ---
 
-# 215. Responsabilidade central
+# 215. Central responsibility
 
-Podemos resumir `memory.py` com a pergunta:
+We can summarize `memory.py` with the question:
 
 ```text
-como transformar tamanhos
-e offsets lógicos
+how can sizes
+and logical offsets be converted
 
-em um mapa físico coerente
-da memória linear WebAssembly?
+into a consistent physical map
+of WebAssembly linear memory?
 ```
 
 ---
 
-# 216. Fluxo completo do módulo
+# 216. Complete module flow
 
 ```text
                 MODEL + BLOBS
@@ -4249,13 +4251,13 @@ calculate_parameter_layout()
       └── PARAMS_BASE
               │
               ▼
-       LayerParams geradas
+       LayerParams generated
               │
               ▼
          params_blob
               │
               ▼
-      bases dos slots
+      slot bases
               │
               ▼
 calculate_final_memory_layout()
@@ -4263,12 +4265,12 @@ calculate_final_memory_layout()
               ├── regions
               ├── MEM_END
               ├── MEM_PAGES
-              └── memória reservada
+              └── reserved memory
 ```
 
 ---
 
-# 217. Papel no pipeline completo
+# 217. Role in the complete pipeline
 
 ```text
 ┌─────────────────────────────┐
@@ -4292,7 +4294,7 @@ calculate_final_memory_layout()
 │         memory.py           │
 │                             │
 │ bases                       │
-│ tamanhos                    │
+│ sizes                       │
 │ SLOT_BYTES                  │
 │ PARAMS_BASE                 │
 └──────────────┬──────────────┘
@@ -4316,7 +4318,7 @@ calculate_final_memory_layout()
 ┌─────────────────────────────┐
 │         memory.py           │
 │                             │
-│ fechamento final            │
+│ finalization                │
 │ MEM_END                     │
 │ MEM_PAGES                   │
 └──────────────┬──────────────┘
@@ -4325,29 +4327,29 @@ calculate_final_memory_layout()
 ┌─────────────────────────────┐
 │      wat_generator.py       │
 │                             │
-│ injeta os valores no WAT    │
+│ injects values into WAT     │
 └─────────────────────────────┘
 ```
 
 ---
 
-# 218. Síntese
+# 218. Summary
 
-`memory.py` transforma as estruturas produzidas pelas etapas anteriores em um mapa físico da memória linear WebAssembly.
+`memory.py` converts structures produced by previous stages into a physical map of WebAssembly linear memory.
 
-A primeira responsabilidade é encontrar o maior tensor não constante:
+Its first responsibility is to find the largest nonconstant tensor:
 
 ```text
-maior tensor
+largest tensor
      ↓
 align_up()
      ↓
 SLOT_BYTES
 ```
 
-Isso garante que qualquer ativação intermediária compatível com o modelo possa ser armazenada em qualquer um dos slots reutilizáveis.
+This ensures that any intermediate activation compatible with the model fits in any reusable slot.
 
-A segunda responsabilidade é organizar os parâmetros constantes:
+Its second responsibility is to organize constant parameters:
 
 ```text
 KERNEL/WEIGHTS
@@ -4363,13 +4365,13 @@ Q6
 PARAMS_BASE
 ```
 
-Cada base é calculada a partir do final da região anterior e alinhada segundo:
+Each base is calculated from the preceding region's end and aligned according to:
 
 ```text
 ALIGN = 16
 ```
 
-A terceira responsabilidade ocorre depois que as `LayerParams` e os slots já foram posicionados. Nesse momento, todas as regiões são reunidas:
+Its third responsibility comes after `LayerParams` and slots have been placed. All regions are then collected:
 
 ```text
 WEIGHTS
@@ -4383,7 +4385,7 @@ SLOT1
 SLOT2
 ```
 
-e cada uma recebe:
+and each receives:
 
 ```text
 base
@@ -4391,13 +4393,13 @@ bytes
 end
 ```
 
-O maior `end` determina:
+The largest `end` determines:
 
 ```text
 MEM_END
 ```
 
-e então:
+and then:
 
 ```text
 MEM_PAGES =
@@ -4406,24 +4408,24 @@ ceil(
 )
 ```
 
-determina a quantidade mínima de páginas de 64 KiB que o módulo WebAssembly precisa declarar.
+determines the minimum number of 64 KiB pages the WebAssembly module must declare.
 
-Assim, este módulo é responsável por transformar:
+This module therefore converts:
 
 ```text
-tamanhos abstratos
+abstract sizes
 offsets
-e slots lógicos
+and logical slots
 ```
 
-em:
+into:
 
 ```text
-endereços absolutos
-e capacidade concreta
-da memória linear WASM
+absolute addresses
+and concrete capacity
+of WASM linear memory
 ```
 
-sem gerar código WebAssembly diretamente.
+without directly generating WebAssembly code.
 
-Essa separação permite que `wat_generator.py` funcione apenas como etapa de materialização: ele recebe um layout já calculado e validado conceitualmente e simplesmente injeta esses valores no template.
+This separation lets `wat_generator.py` serve only as the final generation stage: it receives a calculated, conceptually validated layout and injects those values into the template.

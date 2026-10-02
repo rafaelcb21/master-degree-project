@@ -1,12 +1,14 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](08-quantizacao.md) | [Português (Brasil)](08-quantizacao.pt-BR.md)
 
-# 08 — Extração e preparação dos parâmetros de quantização (`quantization.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 08 — Extracting and preparing quantization parameters (`quantization.py`)
 
-O arquivo `extractor/quantization.py` transforma os metadados de quantização armazenados no modelo TFLite em parâmetros inteiros que poderão ser utilizados diretamente pelos kernels implementados em WebAssembly.
+## 1. Module purpose
 
-Até esta etapa, o modelo fornece informações como:
+The `extractor/quantization.py` file transforms quantization metadata stored in the TFLite model into integer parameters that can be used directly by kernels implemented in WebAssembly.
+
+Up to this stage, the model provides information such as:
 
 ```text
 scale
@@ -14,9 +16,9 @@ zero_point
 quantized_dimension
 ```
 
-Porém, o runtime não realiza diretamente operações em ponto flutuante para converter cada acumulador de uma camada.
+However, the runtime does not directly perform floating-point operations to convert each layer accumulator.
 
-Em vez disso, o extrator prepara estruturas como:
+Instead, the extractor prepares structures such as:
 
 ```text
 multiplier
@@ -24,16 +26,16 @@ shift
 Q6
 ```
 
-que serão utilizadas posteriormente pelos kernels quantizados.
+which will later be used by quantized kernels.
 
-O fluxo conceitual é:
+The conceptual flow is:
 
 ```text
 TFLite
 
-scale de entrada
-scale dos pesos
-scale de saída
+input scale
+weight scale
+output scale
 zero point
         │
         ▼
@@ -48,53 +50,53 @@ quantization.py
         └── Q6
         │
         ▼
-tabelas int32
+int32 tables
         │
         ├── mul_blob
         ├── shift_blob
         └── q6_blob
         │
         ▼
-memória WASM
+WASM memory
 ```
 
 ---
 
-# 2. Código e responsabilidades principais
+# 2. Code and main responsibilities
 
-O módulo possui quatro grandes responsabilidades:
+The module has four main responsibilities:
 
 ```text
 quantize_multiplier()
         ↓
-converter multiplicador real
-para representação inteira
+convert real multiplier
+to integer representation
 
 extract_quantization_parameters()
         ↓
-extrair parâmetros das operações
+extract operation parameters
 
 compute_add_quantization_params()
         ↓
-calcular parâmetros específicos do ADD
+calculate ADD-specific parameters
 
 quantization_to_text()
         ↓
-gerar relatório
+generate report
 ```
 
 ---
 
-# 3. Importações
+# 3. Imports
 
-O arquivo começa com:
+The file starts with:
 
 ```python
 import math
 import numpy as np
 ```
 
-e:
+and:
 
 ```python
 from extractor.tflite_utils import (
@@ -106,13 +108,13 @@ from extractor.tflite_utils import (
 )
 ```
 
-Cada helper possui uma função específica.
+Each helper has a specific role.
 
 ---
 
 # 4. `op_name()`
 
-É utilizado para descobrir se o operador atual é:
+Used to determine whether the current operator is:
 
 ```text
 SOFTMAX
@@ -121,13 +123,13 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-ou outro tipo que não deve ser tratado por esta rotina.
+or another type that should not be handled by this routine.
 
 ---
 
 # 5. `qparams_np()`
 
-Retorna a quantização completa de um tensor:
+Returns the complete quantization of a tensor:
 
 ```python
 {
@@ -137,44 +139,44 @@ Retorna a quantização completa de um tensor:
 }
 ```
 
-Isso é particularmente importante para pesos quantizados por canal.
+This is particularly important for weights quantized per channel.
 
 ---
 
 # 6. `scale_scalar()`
 
-Obtém uma única escala.
+Obtains a single scale.
 
-É utilizado, por exemplo, no tratamento específico do `SOFTMAX`.
+Used, for example, in the specific handling of `SOFTMAX`.
 
 ---
 
 # 7. `zp_scalar()`
 
-Obtém um único zero point.
+Obtains a single zero point.
 
-É utilizado principalmente para calcular o valor quantizado correspondente ao limite superior do `ReLU6`.
+Used mainly to calculate the quantized value corresponding to the upper limit of `ReLU6`.
 
 ---
 
 # 8. `tensor_shape_list()`
 
-Transforma o shape do tensor em uma lista Python.
+Converts the tensor shape into a Python list.
 
-Neste módulo é utilizado para descobrir quantos canais ou features precisam de parâmetros de requantização.
+In this module, it is used to determine how many channels or features need requantization parameters.
 
 ---
 
-# 9. Limites `INT32`
+# 9. `INT32` limits
 
-O módulo define:
+The module defines:
 
 ```python
 INT32_MIN = -(1 << 31)
 INT32_MAX = (1 << 31) - 1
 ```
 
-O que corresponde a:
+Which corresponds to:
 
 ```text
 INT32_MIN = -2147483648
@@ -182,27 +184,27 @@ INT32_MIN = -2147483648
 INT32_MAX =  2147483647
 ```
 
-Esses são os limites de um inteiro assinado de 32 bits.
+These are the limits of a signed 32-bit integer.
 
 ---
 
-# 10. Por que esses limites aparecem aqui?
+# 10. Why do these limits appear here?
 
-O multiplicador quantizado é armazenado em uma representação inteira de 32 bits.
+The quantized multiplier is stored in a 32-bit integer representation.
 
-Portanto, depois de calculado, o valor precisa permanecer no intervalo:
+Therefore, after calculation, the value must remain within:
 
 ```text
 -2³¹
-até
+to
 2³¹ - 1
 ```
 
 ---
 
-# 11. Operadores com pesos quantizados
+# 11. Operators with quantized weights
 
-O conjunto:
+The set:
 
 ```python
 QUANTIZED_WEIGHT_OPERATORS = {
@@ -212,35 +214,35 @@ QUANTIZED_WEIGHT_OPERATORS = {
 }
 ```
 
-identifica as operações cuja requantização depende simultaneamente de:
+identifies operations whose requantization depends simultaneously on:
 
 ```text
-scale da entrada
-scale dos pesos
-scale da saída
+input scale
+weight scale
+output scale
 ```
 
 ---
 
-# 12. Relação básica da requantização
+# 12. Basic requantization relationship
 
-Uma operação quantizada normalmente calcula um acumulador inteiro.
+A quantized operation normally calculates an integer accumulator.
 
-De forma simplificada:
+In simplified form:
 
 ```text
-input quantizado
+quantized input
       ×
-peso quantizado
+quantized weight
       ↓
-acumulador int32
+int32 accumulator
 ```
 
-Mas esse acumulador está associado a uma escala diferente da escala desejada para a saída.
+But this accumulator is associated with a scale different from the desired output scale.
 
-Por isso é necessário um fator de conversão.
+A conversion factor is therefore needed.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 real_multiplier =
@@ -249,41 +251,41 @@ input_scale × weight_scale
        output_scale
 ```
 
-Esse fator aparece diretamente no código das operações com pesos.
+This factor appears directly in the code for operations with weights.
 
 ---
 
-# 13. Por que não usar `float` diretamente no kernel?
+# 13. Why not use `float` directly in the kernel?
 
-Seria possível conceitualmente fazer:
+Conceptually, it would be possible to calculate:
 
 ```text
 accumulator × real_multiplier
 ```
 
-utilizando ponto flutuante.
+using floating point.
 
-Mas o runtime desenvolvido trabalha com requantização inteira.
+But the implemented runtime uses integer requantization.
 
-Assim:
+Thus:
 
 ```text
 real_multiplier
 ```
 
-é convertido em:
+is converted into:
 
 ```text
-multiplier inteiro
+integer multiplier
 +
 shift
 ```
 
 ---
 
-# 14. Função `quantize_multiplier()`
+# 14. The `quantize_multiplier()` function
 
-A função central é:
+The central function is:
 
 ```python
 def quantize_multiplier(
@@ -291,7 +293,7 @@ def quantize_multiplier(
 ):
 ```
 
-Ela recebe um número real e retorna:
+It receives a real number and returns:
 
 ```python
 (
@@ -300,7 +302,7 @@ Ela recebe um número real e retorna:
 )
 ```
 
-que no restante do projeto são interpretados como:
+which the rest of the project interprets as:
 
 ```text
 multiplier
@@ -309,9 +311,9 @@ shift
 
 ---
 
-# 15. Entrada da função
+# 15. Function input
 
-Primeiro:
+First:
 
 ```python
 rm = float(
@@ -319,33 +321,33 @@ rm = float(
 )
 ```
 
-A entrada é explicitamente convertida para `float`.
+The input is explicitly converted to `float`.
 
-Isso evita carregar tipos NumPy específicos para o restante da função.
+This avoids carrying specific NumPy types through the rest of the function.
 
 ---
 
-# 16. Caso zero
+# 16. Zero case
 
-Se:
+If:
 
 ```python
 rm == 0.0
 ```
 
-o retorno é:
+the return value is:
 
 ```python
 return 0, 0
 ```
 
-Porque:
+Because:
 
 ```text
-multiplicador real = 0
+real multiplier = 0
 ```
 
-pode ser representado diretamente por:
+can be represented directly by:
 
 ```text
 multiplier = 0
@@ -354,9 +356,9 @@ shift = 0
 
 ---
 
-# 17. Decomposição com `frexp()`
+# 17. Decomposition with `frexp()`
 
-Para valores diferentes de zero:
+For nonzero values:
 
 ```python
 q, exponent = math.frexp(
@@ -364,7 +366,7 @@ q, exponent = math.frexp(
 )
 ```
 
-A função `frexp()` decompõe o número aproximadamente na forma:
+The `frexp()` function decomposes the number approximately as:
 
 ```text
 rm = q × 2^exponent
@@ -372,40 +374,40 @@ rm = q × 2^exponent
 
 ---
 
-# 18. Propriedade de `q`
+# 18. Property of `q`
 
-Para números positivos normais, `q` fica normalmente no intervalo:
+For normal positive numbers, `q` usually falls within:
 
 ```text
 0,5 ≤ q < 1
 ```
 
-Assim, o valor real é separado em:
+Thus, the real value is separated into:
 
 ```text
-parte fracionária normalizada
+normalized fractional part
 +
-potência de dois
+power of two
 ```
 
 ---
 
-# 19. Exemplo com `0.75`
+# 19. Example with `0.75`
 
-Para:
+For:
 
 ```text
 real_multiplier = 0.75
 ```
 
-podemos ter:
+we may have:
 
 ```text
 q = 0.75
 exponent = 0
 ```
 
-porque:
+because:
 
 ```text
 0.75 =
@@ -414,22 +416,22 @@ porque:
 
 ---
 
-# 20. Exemplo com `0.375`
+# 20. Example with `0.375`
 
-Para:
+For:
 
 ```text
 real_multiplier = 0.375
 ```
 
-podemos representar:
+we can represent:
 
 ```text
 0.375 =
 0.75 × 2⁻¹
 ```
 
-Então:
+Then:
 
 ```text
 q = 0.75
@@ -438,16 +440,16 @@ exponent = -1
 
 ---
 
-# 21. Exemplo com `1.5`
+# 21. Example with `1.5`
 
-Da mesma forma:
+Similarly:
 
 ```text
 1.5 =
 0.75 × 2¹
 ```
 
-Então:
+Then:
 
 ```text
 q = 0.75
@@ -456,9 +458,9 @@ exponent = 1
 
 ---
 
-# 22. Conversão para Q31
+# 22. Conversion to Q31
 
-Depois:
+Then:
 
 ```python
 q31 = int(
@@ -468,50 +470,50 @@ q31 = int(
 )
 ```
 
-O valor:
+The value:
 
 ```text
 1 << 31
 ```
 
-corresponde a:
+corresponds to:
 
 ```text
 2³¹
 ```
 
-Assim, `q` é representado em uma escala inteira de aproximadamente 31 bits fracionários.
+Thus, `q` is represented on an integer scale of approximately 31 fractional bits.
 
 ---
 
-# 23. Exemplo
+# 23. Example
 
-Para:
+For:
 
 ```text
 q = 0.75
 ```
 
-temos:
+we have:
 
 ```text
 q31 ≈
 0.75 × 2147483648
 ```
 
-resultando em:
+resulting in:
 
 ```text
 1610612736
 ```
 
-Portanto:
+Therefore:
 
 ```text
 0.75
 ```
 
-pode ser representado aproximadamente por:
+can be represented approximately by:
 
 ```text
 multiplier = 1610612736
@@ -520,9 +522,9 @@ shift = 0
 
 ---
 
-# 24. Mesmo multiplier, shifts diferentes
+# 24. Same multiplier, different shifts
 
-Os exemplos:
+The examples:
 
 ```text
 0.375
@@ -530,13 +532,13 @@ Os exemplos:
 1.5
 ```
 
-podem compartilhar o mesmo `q31`:
+can share the same `q31`:
 
 ```text
 1610612736
 ```
 
-mas usar shifts diferentes:
+but use different shifts:
 
 ```text
 0.375 → shift -1
@@ -544,19 +546,19 @@ mas usar shifts diferentes:
 1.5   → shift +1
 ```
 
-É o par:
+It is the pair:
 
 ```text
 (multiplier, shift)
 ```
 
-que representa o fator completo.
+that represents the complete factor.
 
 ---
 
-# 25. Convenção de shift do projeto
+# 25. The project's shift convention
 
-No runtime atual:
+In the current runtime:
 
 ```text
 shift > 0
@@ -568,13 +570,13 @@ shift < 0
 right shift
 ```
 
-Assim, o expoente retornado por `frexp()` é preservado como parte da representação da requantização.
+Thus, the exponent returned by `frexp()` is retained as part of the requantization representation.
 
 ---
 
-# 26. Caso limite de arredondamento
+# 26. Rounding boundary case
 
-Depois do arredondamento existe:
+After rounding, the code contains:
 
 ```python
 if q31 == (1 << 31):
@@ -582,63 +584,63 @@ if q31 == (1 << 31):
     exponent += 1
 ```
 
-Isso trata o caso em que o arredondamento produz exatamente:
+This handles the case where rounding produces exactly:
 
 ```text
 2³¹
 ```
 
-que ultrapassaria o maior `int32` positivo.
+which would exceed the largest positive `int32`.
 
 ---
 
-# 27. Por que dividir por dois?
+# 27. Why divide by two?
 
-Se:
+If:
 
 ```text
 q31
 ```
 
-é reduzido pela metade, podemos compensar aumentando o expoente em 1.
+is halved, we can compensate by increasing the exponent by 1.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 q × 2^e
 
-é equivalente a
+is equivalent to
 
 (q/2) × 2^(e+1)
 ```
 
-Assim o valor representado permanece equivalente.
+Thus, the represented value remains equivalent.
 
 ---
 
-# 28. Saturação de segurança
+# 28. Safety saturation
 
-Depois:
+Then:
 
 ```python
 if q31 > INT32_MAX:
     q31 = INT32_MAX
 ```
 
-e:
+and:
 
 ```python
 if q31 < INT32_MIN:
     q31 = INT32_MIN
 ```
 
-garantem que o resultado permaneça representável em 32 bits.
+ensure that the result remains representable in 32 bits.
 
 ---
 
-# 29. Retorno
+# 29. Return value
 
-Finalmente:
+Finally:
 
 ```python
 return (
@@ -647,7 +649,7 @@ return (
 )
 ```
 
-Ou seja:
+In other words:
 
 ```text
 real_multiplier
@@ -661,9 +663,9 @@ shift
 
 ---
 
-# 30. Função `extract_quantization_parameters()`
+# 30. The `extract_quantization_parameters()` function
 
-A função principal da etapa é:
+The main function of this stage is:
 
 ```python
 def extract_quantization_parameters(
@@ -672,7 +674,7 @@ def extract_quantization_parameters(
 ):
 ```
 
-Ela percorre os operadores do modelo e constrói três tabelas:
+It visits model operators and builds three tables:
 
 ```text
 MUL
@@ -682,9 +684,9 @@ Q6
 
 ---
 
-# 31. Estruturas inicialmente vazias
+# 31. Initially empty structures
 
-São criadas:
+The following are created:
 
 ```python
 mul_vals = []
@@ -692,36 +694,36 @@ shift_vals = []
 q6_vals = []
 ```
 
-Essas listas armazenam valores inteiros.
+These lists store integer values.
 
-Depois serão convertidas em blobs binários.
+They will later be converted into binary blobs.
 
 ---
 
-# 32. Mapeamento de offsets
+# 32. Offset mapping
 
-Também é criado:
+The following is also created:
 
 ```python
 mul_q6_off = {}
 ```
 
-Ele associa:
+It associates:
 
 ```text
 op_index
     ↓
-offset da tabela MUL
-offset da tabela SHIFT
-offset da tabela Q6
-quantidade de features
+MUL table offset
+SHIFT table offset
+Q6 table offset
+number of features
 ```
 
 ---
 
-# 33. Formato de `mul_q6_off`
+# 33. `mul_q6_off` format
 
-Para uma operação poderemos ter:
+For an operation, we may have:
 
 ```python
 mul_q6_off[15] = (
@@ -732,7 +734,7 @@ mul_q6_off[15] = (
 )
 ```
 
-representando:
+representing:
 
 ```text
 op 15
@@ -745,17 +747,17 @@ nfeat        = 32
 
 ---
 
-# 34. Offsets em bytes
+# 34. Offsets in bytes
 
-Esses offsets são medidos em bytes.
+These offsets are measured in bytes.
 
-Isso ocorre porque cada valor será serializado como:
+This is because each value is serialized as:
 
 ```text
 int32
 ```
 
-portanto:
+therefore:
 
 ```text
 4 bytes
@@ -763,9 +765,9 @@ portanto:
 
 ---
 
-# 35. Cálculo do offset
+# 35. Calculating the offset
 
-O código utiliza:
+The code uses:
 
 ```python
 mul_offset = (
@@ -773,13 +775,13 @@ mul_offset = (
 )
 ```
 
-Se já existem:
+If there are already:
 
 ```text
 10 multipliers
 ```
 
-então:
+then:
 
 ```text
 offset =
@@ -790,7 +792,7 @@ offset =
 
 ---
 
-# 36. Mesma lógica para SHIFT e Q6
+# 36. Same logic for SHIFT and Q6
 
 ```python
 shift_offset = (
@@ -798,7 +800,7 @@ shift_offset = (
 )
 ```
 
-e:
+and:
 
 ```python
 q6_offset = (
@@ -810,31 +812,31 @@ q6_offset = (
 
 # 37. `records`
 
-Também é criada:
+The following is also created:
 
 ```python
 records = []
 ```
 
-Ela contém informações detalhadas para relatório.
+It contains detailed report information.
 
-Assim como em `weights.py`, existe uma separação entre:
+As in `weights.py`, there is a separation between:
 
 ```text
-dados usados pelo runtime
+data used by the runtime
 ```
 
-e:
+and:
 
 ```text
-metadados usados para análise
+metadata used for analysis
 ```
 
 ---
 
-# 38. Varredura dos operadores
+# 38. Scanning operators
 
-O módulo percorre:
+The module iterates:
 
 ```python
 for op_idx in range(
@@ -842,7 +844,7 @@ for op_idx in range(
 ):
 ```
 
-e identifica:
+and identifies:
 
 ```python
 op_type = op_name(
@@ -853,17 +855,17 @@ op_type = op_name(
 
 ---
 
-# 39. Dois caminhos principais
+# 39. Two main paths
 
-Depois disso existem dois tratamentos.
+There are then two processing paths.
 
 ```text
 SOFTMAX
 ```
 
-possui lógica própria.
+has its own logic.
 
-Já:
+Whereas:
 
 ```text
 CONV_2D
@@ -871,33 +873,33 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-compartilham a lógica principal de quantização por peso.
+share the main weight quantization logic.
 
 ---
 
-# 40. Tratamento do `SOFTMAX`
+# 40. Handling `SOFTMAX`
 
-O primeiro caso especial é:
+The first special case is:
 
 ```python
 if op_type == "SOFTMAX":
 ```
 
-O `SOFTMAX` não possui um tensor de pesos como uma convolução.
+`SOFTMAX` does not have a weight tensor like a convolution.
 
-Logo não faz sentido utilizar:
+Therefore, it does not make sense to use:
 
 ```text
 input_scale × weight_scale / output_scale
 ```
 
-A preparação é diferente.
+Preparation is different.
 
 ---
 
-# 41. Inputs do `SOFTMAX`
+# 41. `SOFTMAX` inputs
 
-São coletados:
+The following are collected:
 
 ```python
 input_ids = [
@@ -908,13 +910,13 @@ input_ids = [
 ]
 ```
 
-É necessário pelo menos:
+At least the following is required:
 
 ```text
 1 input
 ```
 
-Caso contrário:
+Otherwise:
 
 ```python
 continue
@@ -922,9 +924,9 @@ continue
 
 ---
 
-# 42. Tensor de entrada
+# 42. Input tensor
 
-A entrada principal é:
+The main input is:
 
 ```python
 input_tensor = (
@@ -936,9 +938,9 @@ input_tensor = (
 
 ---
 
-# 43. Scale da entrada
+# 43. Input scale
 
-Depois:
+Then:
 
 ```python
 input_scale = scale_scalar(
@@ -946,31 +948,31 @@ input_scale = scale_scalar(
 )
 ```
 
-Assim o `SOFTMAX` conhece a escala dos valores quantizados recebidos.
+This gives `SOFTMAX` the scale of the incoming quantized values.
 
 ---
 
 # 44. `beta`
 
-O código atual define:
+The current code defines:
 
 ```python
 beta = 1.0
 ```
 
-Esse é o valor utilizado pelo runtime implementado.
+This is the value used by the implemented runtime.
 
 ---
 
 # 45. `integer_bits`
 
-Também é definido:
+The following is also defined:
 
 ```python
 integer_bits = 5
 ```
 
-Esse valor participa do cálculo de:
+This value contributes to the calculation of:
 
 ```text
 input_left_shift
@@ -980,7 +982,7 @@ input_left_shift
 
 # 46. `input_left_shift`
 
-O cálculo é:
+The calculation is:
 
 ```python
 input_left_shift = max(
@@ -998,11 +1000,11 @@ input_left_shift = max(
 
 ---
 
-# 47. Papel do `input_left_shift`
+# 47. Role of `input_left_shift`
 
-Esse valor determina quanto o `diff` utilizado internamente pelo `SOFTMAX` poderá ser deslocado à esquerda antes da multiplicação.
+This value determines how far the `diff` used internally by `SOFTMAX` can be shifted left before multiplication.
 
-No runtime atual esse valor é preservado separadamente dos parâmetros:
+In the current runtime, this value is retained separately from the parameters:
 
 ```text
 input_beta_mul
@@ -1011,27 +1013,27 @@ input_beta_left_shift
 
 ---
 
-# 48. O termo `127 × input_scale`
+# 48. The `127 × input_scale` term
 
-Para um tensor `int8`, a magnitude positiva aproximadamente máxima é:
+For an `int8` tensor, the approximate maximum positive magnitude is:
 
 ```text
 127
 ```
 
-Multiplicar por:
+Multiplying by:
 
 ```text
 input_scale
 ```
 
-produz uma estimativa da magnitude real máxima representável.
+produces an estimate of the maximum representable real magnitude.
 
 ---
 
-# 49. Uso de `log2`
+# 49. Using `log2`
 
-O código utiliza:
+The code uses:
 
 ```python
 math.log2(
@@ -1040,31 +1042,31 @@ math.log2(
 )
 ```
 
-para estimar quantos bits são necessários para representar essa magnitude.
+to estimate how many bits are needed to represent this magnitude.
 
 ---
 
-# 50. Papel de `1e-9`
+# 50. Role of `1e-9`
 
-O pequeno valor:
+The small value:
 
 ```text
 0.000000001
 ```
 
-evita problemas numéricos com:
+avoids numerical problems with:
 
 ```text
 log2(0)
 ```
 
-ou valores extremamente próximos de zero.
+or values extremely close to zero.
 
 ---
 
-# 51. Limite inferior zero
+# 51. Zero lower bound
 
-O uso de:
+Using:
 
 ```python
 max(
@@ -1073,19 +1075,19 @@ max(
 )
 ```
 
-garante que:
+ensures that:
 
 ```text
 input_left_shift
 ```
 
-não seja negativo.
+is nonnegative.
 
 ---
 
-# 52. `real_multiplier` do SOFTMAX
+# 52. SOFTMAX `real_multiplier`
 
-Depois:
+Then:
 
 ```python
 real_multiplier = (
@@ -1093,13 +1095,13 @@ real_multiplier = (
 )
 ```
 
-Com:
+With:
 
 ```text
 beta = 1
 ```
 
-isso se reduz a:
+this reduces to:
 
 ```text
 real_multiplier =
@@ -1108,9 +1110,9 @@ input_scale
 
 ---
 
-# 53. Conversão para inteiro
+# 53. Conversion to integer
 
-Esse fator é passado para:
+This factor is passed to:
 
 ```python
 quantize_multiplier(
@@ -1118,7 +1120,7 @@ quantize_multiplier(
 )
 ```
 
-produzindo:
+producing:
 
 ```text
 multiplier
@@ -1127,29 +1129,29 @@ shift
 
 ---
 
-# 54. Importante sobre o `SOFTMAX`
+# 54. Important detail about `SOFTMAX`
 
-O módulo preserva duas informações relacionadas a deslocamento:
+The module retains two pieces of shift-related information:
 
 ```text
 input_left_shift
 ```
 
-e:
+and:
 
 ```text
 shift
 ```
 
-retornado por `quantize_multiplier()`.
+returned by `quantize_multiplier()`.
 
-Eles não são a mesma variável.
+They are not the same variable.
 
 ---
 
-# 55. Mapeamento posterior
+# 55. Subsequent mapping
 
-No `LayerParam` utilizado pelo runtime, a implementação atual armazena:
+In the runtime's `LayerParam`, the current implementation stores:
 
 ```text
 kh       = multiplier
@@ -1158,49 +1160,49 @@ stride_h = diff_min
 stride_w = input_left_shift
 ```
 
-Portanto:
+Therefore:
 
 ```text
 kw
 ```
 
-e:
+and:
 
 ```text
 stride_w
 ```
 
-representam informações diferentes no `SOFTMAX`.
+represent different information in `SOFTMAX`.
 
 ---
 
-# 56. Registro nas tabelas
+# 56. Recording in the tables
 
-O `SOFTMAX` adiciona apenas um valor em:
+`SOFTMAX` adds only one value to:
 
 ```python
 mul_vals
 ```
 
-e:
+and:
 
 ```python
 shift_vals
 ```
 
-porque:
+because:
 
 ```text
 nfeat = 1
 ```
 
-para esse registro de parâmetros.
+for this parameter record.
 
 ---
 
-# 57. Offsets do SOFTMAX
+# 57. SOFTMAX offsets
 
-Antes da inserção:
+Before insertion:
 
 ```python
 mul_offset = (
@@ -1208,7 +1210,7 @@ mul_offset = (
 )
 ```
 
-e:
+and:
 
 ```python
 shift_offset = (
@@ -1216,9 +1218,9 @@ shift_offset = (
 )
 ```
 
-são calculados.
+are calculated.
 
-Depois:
+Then:
 
 ```python
 mul_vals.append(
@@ -1226,7 +1228,7 @@ mul_vals.append(
 )
 ```
 
-e:
+and:
 
 ```python
 shift_vals.append(
@@ -1236,9 +1238,9 @@ shift_vals.append(
 
 ---
 
-# 58. Entrada em `mul_q6_off`
+# 58. Entry in `mul_q6_off`
 
-O código registra:
+The code records:
 
 ```python
 mul_q6_off[
@@ -1251,7 +1253,7 @@ mul_q6_off[
 )
 ```
 
-Ou seja:
+In other words:
 
 ```text
 mul offset
@@ -1260,13 +1262,13 @@ q6 offset = 0
 nfeat = 1
 ```
 
-O `SOFTMAX` não gera uma tabela Q6.
+`SOFTMAX` does not generate a Q6 table.
 
 ---
 
-# 59. Registro do SOFTMAX
+# 59. SOFTMAX record
 
-O relatório preserva:
+The report preserves:
 
 ```text
 input_tensor_id
@@ -1280,25 +1282,25 @@ shift
 offsets
 ```
 
-Isso permite reconstruir exatamente os valores usados.
+This allows the exact values used to be reconstructed.
 
 ---
 
-# 60. Fim do caso SOFTMAX
+# 60. End of the SOFTMAX case
 
-Depois:
+Then:
 
 ```python
 continue
 ```
 
-impede que o operador caia no tratamento destinado a convoluções e fully connected.
+prevents the operator from falling through to handling intended for convolutions and fully connected layers.
 
 ---
 
-# 61. Filtragem das operações com pesos
+# 61. Filtering operations with weights
 
-Depois do caso `SOFTMAX`:
+After the `SOFTMAX` case:
 
 ```python
 if (
@@ -1308,7 +1310,7 @@ if (
     continue
 ```
 
-Assim, apenas:
+Thus, only:
 
 ```text
 CONV_2D
@@ -1316,38 +1318,38 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-continuam.
+continue.
 
 ---
 
-# 62. Inputs e outputs
+# 62. Inputs and outputs
 
-São coletados:
+The following are collected:
 
 ```python
 input_ids
 ```
 
-e:
+and:
 
 ```python
 output_ids
 ```
 
-filtrando IDs negativos.
+filtering negative IDs.
 
 ---
 
-# 63. Estrutura mínima
+# 63. Minimum structure
 
-A operação precisa possuir:
+The operation must have:
 
 ```text
-pelo menos 2 inputs
-pelo menos 1 output
+at least 2 inputs
+at least 1 output
 ```
 
-Caso contrário:
+Otherwise:
 
 ```python
 continue
@@ -1355,33 +1357,33 @@ continue
 
 ---
 
-# 64. Tensors principais
+# 64. Main tensors
 
-O código identifica:
+The code identifies:
 
 ```text
 input_ids[0]
     ↓
-ativação de entrada
+input activation
 ```
 
 ```text
 input_ids[1]
     ↓
-pesos
+weights
 ```
 
 ```text
 output_ids[0]
     ↓
-ativação de saída
+output activation
 ```
 
 ---
 
-# 65. Objetos TFLite
+# 65. TFLite objects
 
-São recuperados:
+The following are retrieved:
 
 ```python
 input_tensor
@@ -1389,13 +1391,13 @@ weight_tensor
 output_tensor
 ```
 
-Esses três tensors fornecem as escalas necessárias para calcular a requantização.
+These three tensors provide the scales needed to calculate requantization.
 
 ---
 
-# 66. Shape dos pesos
+# 66. Weight shape
 
-O código obtém:
+The code obtains:
 
 ```python
 weight_shape = tensor_shape_list(
@@ -1403,7 +1405,7 @@ weight_shape = tensor_shape_list(
 )
 ```
 
-Esse shape é utilizado para determinar:
+This shape is used to determine:
 
 ```text
 nfeat
@@ -1411,9 +1413,9 @@ nfeat
 
 ---
 
-# 67. O que é `nfeat`?
+# 67. What is `nfeat`?
 
-Neste módulo, `nfeat` representa quantos conjuntos de:
+In this module, `nfeat` represents how many sets of:
 
 ```text
 multiplier
@@ -1421,87 +1423,87 @@ shift
 Q6
 ```
 
-devem existir para aquela operação.
+must exist for that operation.
 
-Normalmente corresponde ao número de canais/features de saída.
+It usually corresponds to the number of output channels/features.
 
 ---
 
-# 68. `nfeat` em `CONV_2D`
+# 68. `nfeat` in `CONV_2D`
 
-Para:
+For:
 
 ```text
 CONV_2D
 ```
 
-é utilizado:
+the following is used:
 
 ```python
 weight_shape[0]
 ```
 
-Logo:
+Therefore:
 
 ```text
-shape dos pesos
+weight shape
 [O, H, W, I]
 ```
 
-produz:
+produces:
 
 ```text
 nfeat = O
 ```
 
-onde `O` é o número de canais de saída.
+where `O` is the number of output channels.
 
 ---
 
-# 69. Exemplo
+# 69. Example
 
-Pesos:
+Weights:
 
 ```text
 [32, 3, 3, 3]
 ```
 
-Então:
+Then:
 
 ```text
 nfeat = 32
 ```
 
-Serão preparados:
+The following will be prepared:
 
 ```text
 32 multipliers
 32 shifts
-32 valores Q6
+32 Q6 values
 ```
 
 ---
 
-# 70. `nfeat` em `DEPTHWISE_CONV_2D`
+# 70. `nfeat` in `DEPTHWISE_CONV_2D`
 
-Para depthwise:
+For depthwise:
 
 ```python
 weight_shape[3]
 ```
 
-é utilizado.
+is used.
 
-Assim, para o layout esperado pelo modelo:
+Thus, for the layout expected by the model:
 
 ```text
 nfeat =
-última dimensão dos pesos
+last weight dimension
 ```
 
 ---
 
-# 71. Exemplo
+# 71. Example
 
 Shape:
 
@@ -1509,7 +1511,7 @@ Shape:
 [1, 3, 3, 32]
 ```
 
-resulta em:
+results in:
 
 ```text
 nfeat = 32
@@ -1517,23 +1519,23 @@ nfeat = 32
 
 ---
 
-# 72. `nfeat` em `FULLY_CONNECTED`
+# 72. `nfeat` in `FULLY_CONNECTED`
 
-No terceiro caso:
+In the third case:
 
 ```python
 weight_shape[0]
 ```
 
-é utilizado novamente.
+is used again.
 
-Para uma matriz:
+For a matrix:
 
 ```text
 [1000, 1280]
 ```
 
-teríamos:
+we would have:
 
 ```text
 nfeat = 1000
@@ -1541,15 +1543,15 @@ nfeat = 1000
 
 ---
 
-# 73. Shape inválido
+# 73. Invalid shape
 
-Se não for possível determinar:
+If it is not possible to determine:
 
 ```text
 nfeat
 ```
 
-a função executa:
+the function executes:
 
 ```python
 continue
@@ -1557,9 +1559,9 @@ continue
 
 ---
 
-# 74. Leitura completa da quantização
+# 74. Reading complete quantization
 
-Depois:
+Then:
 
 ```python
 q_input = qparams_np(
@@ -1581,23 +1583,23 @@ q_output = qparams_np(
 
 ---
 
-# 75. Requisito de quantização
+# 75. Quantization requirement
 
-Se qualquer uma retornar:
+If any returns:
 
 ```text
 None
 ```
 
-a operação é ignorada nesta etapa.
+the operation is skipped at this stage.
 
-O mesmo ocorre se algum vetor de scales estiver vazio.
+The same happens if any scale vector is empty.
 
 ---
 
 # 76. `input_scale`
 
-Para a entrada:
+For the input:
 
 ```python
 input_scale = float(
@@ -1605,13 +1607,13 @@ input_scale = float(
 )
 ```
 
-O código utiliza uma única escala de entrada.
+The code uses a single input scale.
 
 ---
 
 # 77. `weight_scales`
 
-Já os pesos são mantidos como vetor:
+Weights, in contrast, are retained as a vector:
 
 ```python
 weight_scales = (
@@ -1620,13 +1622,13 @@ weight_scales = (
 )
 ```
 
-Isso permite suportar:
+This supports:
 
 ```text
 per-tensor
 ```
 
-ou:
+or:
 
 ```text
 per-channel
@@ -1636,7 +1638,7 @@ per-channel
 
 # 78. `output_scales`
 
-A saída também é preservada inicialmente como vetor:
+Output is also initially retained as a vector:
 
 ```python
 output_scales = (
@@ -1649,7 +1651,7 @@ output_scales = (
 
 # 79. `output_scale`
 
-Para o cálculo principal dos multipliers:
+For the main multiplier calculation:
 
 ```python
 output_scale = float(
@@ -1657,13 +1659,13 @@ output_scale = float(
 )
 ```
 
-Portanto, o denominador utilizado no cálculo principal é a primeira escala da saída.
+Therefore, the denominator used in the main calculation is the first output scale.
 
 ---
 
-# 80. Início dos offsets
+# 80. Starting offsets
 
-Antes de inserir os valores da operação:
+Before inserting operation values:
 
 ```text
 mul_offset
@@ -1671,15 +1673,15 @@ shift_offset
 q6_offset
 ```
 
-são calculados com base no comprimento atual das tabelas.
+are calculated from the current table lengths.
 
-Isso registra onde os dados daquela operação começarão.
+This records where that operation's data will start.
 
 ---
 
-# 81. Listas locais da operação
+# 81. Operation-local lists
 
-São criadas:
+The following are created:
 
 ```python
 operation_multipliers = []
@@ -1687,27 +1689,27 @@ operation_shifts = []
 real_multipliers = []
 ```
 
-Essas listas contêm apenas os dados da operação atual.
+These lists contain only the current operation's data.
 
-Depois serão adicionadas às tabelas globais.
+They will later be added to the global tables.
 
 ---
 
-# 82. Caso de uma única `weight_scale`
+# 82. Case with a single `weight_scale`
 
-Se:
+If:
 
 ```python
 weight_scales.size == 1
 ```
 
-a quantização dos pesos é tratada como per-tensor.
+weight quantization is treated as per-tensor.
 
 ---
 
-# 83. Fórmula do multiplicador real
+# 83. Real multiplier formula
 
-É calculado:
+The following is calculated:
 
 ```text
 real_multiplier =
@@ -1719,7 +1721,7 @@ input_scale
 output_scale
 ```
 
-No código:
+In the code:
 
 ```python
 real_multiplier = (
@@ -1731,47 +1733,47 @@ real_multiplier = (
 
 ---
 
-# 84. Origem matemática
+# 84. Mathematical origin
 
-A entrada quantizada representa aproximadamente:
+The quantized input approximately represents:
 
 ```text
 real_x =
 Sx × (qx - Zx)
 ```
 
-O peso:
+The weight:
 
 ```text
 real_w =
 Sw × (qw - Zw)
 ```
 
-O produto possui escala:
+The product has scale:
 
 ```text
 Sx × Sw
 ```
 
-Mas a saída deve possuir escala:
+But the output must have scale:
 
 ```text
 Sy
 ```
 
-Portanto é necessário converter:
+It is therefore necessary to convert:
 
 ```text
 Sx × Sw
 ```
 
-para:
+to:
 
 ```text
 Sy
 ```
 
-utilizando:
+using:
 
 ```text
 Sx × Sw
@@ -1781,9 +1783,9 @@ Sx × Sw
 
 ---
 
-# 85. Conversão em multiplier + shift
+# 85. Conversion to multiplier + shift
 
-Esse valor é passado para:
+This value is passed to:
 
 ```python
 quantize_multiplier(
@@ -1791,7 +1793,7 @@ quantize_multiplier(
 )
 ```
 
-produzindo:
+producing:
 
 ```text
 multiplier
@@ -1800,9 +1802,9 @@ shift
 
 ---
 
-# 86. Replicação por feature
+# 86. Replication per feature
 
-Como existe apenas uma escala de peso:
+Since there is only one weight scale:
 
 ```python
 operation_multipliers = [
@@ -1810,7 +1812,7 @@ operation_multipliers = [
 ] * nfeat
 ```
 
-e:
+and:
 
 ```python
 operation_shifts = [
@@ -1820,73 +1822,73 @@ operation_shifts = [
 
 ---
 
-# 87. Exemplo
+# 87. Example
 
-Se:
+If:
 
 ```text
 nfeat = 32
 ```
 
-e:
+and:
 
 ```text
 multiplier = 1234567890
 shift = -2
 ```
 
-serão armazenados:
+the following will be stored:
 
 ```text
-32 cópias do multiplier
-32 cópias do shift
+32 copies of the multiplier
+32 copies of the shift
 ```
 
 ---
 
-# 88. Por que replicar?
+# 88. Why replicate?
 
-O runtime pode acessar os parâmetros utilizando o índice do canal.
+The runtime can access parameters using the channel index.
 
-Manter:
+Keeping:
 
 ```text
-um valor por feature
+one value per feature
 ```
 
-simplifica o kernel, mesmo quando todos os canais compartilham o mesmo valor.
+simplifies the kernel, even when every channel shares the same value.
 
 ---
 
 # 89. `real_multipliers`
 
-A mesma replicação é feita para:
+The same replication is performed for:
 
 ```python
 real_multipliers
 ```
 
-mas esses valores são utilizados principalmente no relatório.
+but these values are mainly used in the report.
 
-Eles não formam um blob usado pelo runtime.
+They do not form a blob used by the runtime.
 
 ---
 
-# 90. Caso per-channel
+# 90. Per-channel case
 
-Se:
+If:
 
 ```python
 weight_scales.size > 1
 ```
 
-cada canal pode possuir uma escala diferente.
+each channel may have a different scale.
 
 ---
 
-# 91. Número de escalas utilizadas
+# 91. Number of scales used
 
-O código calcula:
+The code calculates:
 
 ```python
 use = min(
@@ -1895,13 +1897,13 @@ use = min(
 )
 ```
 
-Isso impede acessar posições inexistentes.
+This prevents access to nonexistent positions.
 
 ---
 
-# 92. Multiplicadores reais vetoriais
+# 92. Vector real multipliers
 
-São calculados:
+The following are calculated:
 
 ```python
 rm_values = (
@@ -1911,17 +1913,17 @@ rm_values = (
 )
 ```
 
-Agora cada canal pode possuir um:
+Now each channel may have a:
 
 ```text
-real_multiplier diferente
+different real_multiplier
 ```
 
 ---
 
-# 93. Exemplo
+# 93. Example
 
-Suponha:
+Suppose:
 
 ```text
 input_scale = 0.02
@@ -1935,33 +1937,33 @@ weight_scales =
 ]
 ```
 
-Então:
+Then:
 
 ```text
-canal 0:
+channel 0:
 0.10 × 0.02 / 0.04
 = 0.05
 
-canal 1:
+channel 1:
 0.20 × 0.02 / 0.04
 = 0.10
 
-canal 2:
+channel 2:
 0.30 × 0.02 / 0.04
 = 0.15
 ```
 
 ---
 
-# 94. Conversão canal por canal
+# 94. Channel-by-channel conversion
 
-O loop:
+The loop:
 
 ```python
 for rm in rm_values:
 ```
 
-executa:
+executes:
 
 ```python
 quantize_multiplier(
@@ -1969,13 +1971,13 @@ quantize_multiplier(
 )
 ```
 
-individualmente.
+individually.
 
 ---
 
-# 95. Resultado
+# 95. Result
 
-Serão formadas listas como:
+Lists such as these will be formed:
 
 ```text
 multipliers:
@@ -1987,15 +1989,15 @@ shifts:
 
 ---
 
-# 96. Padding quando faltam escalas
+# 96. Padding when scales are missing
 
-Se:
+If:
 
 ```python
 nfeat > use
 ```
 
-o código calcula:
+the code calculates:
 
 ```python
 missing = (
@@ -2003,31 +2005,31 @@ missing = (
 )
 ```
 
-e replica o último parâmetro calculado.
+and replicates the last calculated parameter.
 
 ---
 
-# 97. Exemplo
+# 97. Example
 
-Se:
+If:
 
 ```text
 nfeat = 32
 ```
 
-mas foram encontradas:
+but only the following were found:
 
 ```text
 30 weight_scales
 ```
 
-o código utiliza:
+the code uses:
 
 ```text
-canal 29
+channel 29
 ```
 
-como referência para preencher os dois últimos.
+as a reference to fill the last two.
 
 ---
 
@@ -2045,7 +2047,7 @@ operation_multipliers.extend(
 
 # 99. Shifts
 
-O mesmo é feito para:
+The same is done for:
 
 ```python
 operation_shifts
@@ -2053,31 +2055,31 @@ operation_shifts
 
 ---
 
-# 100. Multiplicadores reais
+# 100. Real multipliers
 
-E também para:
+And also for:
 
 ```python
 real_multipliers
 ```
 
-para manter as listas com o mesmo tamanho.
+to keep lists the same size.
 
 ---
 
-# 101. Observação sobre o legado
+# 101. Note on the legacy code
 
-O próprio código registra que o arquivo antigo possuía esse bloco de preenchimento duplicado.
+The code itself notes that the old file contained this filling block twice.
 
-Na versão modularizada ele existe apenas uma vez.
+The modularized version contains it only once.
 
-Assim preservamos a intenção do código sem repetir desnecessariamente a mesma operação.
+This preserves the code's intent without unnecessarily repeating the same operation.
 
 ---
 
-# 102. Inserção nas tabelas globais
+# 102. Insertion into global tables
 
-Depois de calculados:
+Once calculated:
 
 ```python
 mul_vals.extend(
@@ -2085,7 +2087,7 @@ mul_vals.extend(
 )
 ```
 
-e:
+and:
 
 ```python
 shift_vals.extend(
@@ -2095,9 +2097,9 @@ shift_vals.extend(
 
 ---
 
-# 103. Estrutura da tabela MUL
+# 103. MUL table structure
 
-Depois de várias operações:
+After several operations:
 
 ```text
 MUL
@@ -2112,13 +2114,13 @@ op 2:
 [M0 M1 M2 ...]
 ```
 
-Todos ficam concatenados em uma única tabela.
+They are all concatenated into a single table.
 
 ---
 
-# 104. Estrutura da tabela SHIFT
+# 104. SHIFT table structure
 
-Da mesma maneira:
+Similarly:
 
 ```text
 SHIFT
@@ -2133,13 +2135,13 @@ op 2:
 [S0 S1 S2 ...]
 ```
 
-Os offsets indicam onde começa cada grupo.
+Offsets indicate where each group starts.
 
 ---
 
-# 105. Cálculo de Q6
+# 105. Calculating Q6
 
-Depois dos multiplicadores vem o cálculo:
+After the multipliers comes the calculation of:
 
 ```text
 Q6
@@ -2147,17 +2149,17 @@ Q6
 
 ---
 
-# 106. O que representa Q6?
+# 106. What does Q6 represent?
 
-`Q6` representa a forma quantizada do valor real:
+`Q6` represents the quantized form of the real value:
 
 ```text
 6.0
 ```
 
-na escala da saída da operação.
+in the operation's output scale.
 
-Esse valor é utilizado para implementar a saturação correspondente a:
+This value is used to implement saturation corresponding to:
 
 ```text
 ReLU6
@@ -2165,9 +2167,9 @@ ReLU6
 
 ---
 
-# 107. Quantização de um valor real
+# 107. Quantizing a real value
 
-A relação básica é:
+The basic relationship is:
 
 ```text
 q =
@@ -2178,13 +2180,13 @@ round(
 zero_point
 ```
 
-Para:
+For:
 
 ```text
 real = 6
 ```
 
-obtemos:
+we obtain:
 
 ```text
 q6 =
@@ -2195,13 +2197,13 @@ round(
 output_zero_point
 ```
 
-Essa é exatamente a fórmula utilizada pelo código.
+This is exactly the formula used by the code.
 
 ---
 
-# 108. Zero point da saída
+# 108. Output zero point
 
-Primeiro:
+First:
 
 ```python
 output_zero_point = zp_scalar(
@@ -2211,15 +2213,15 @@ output_zero_point = zp_scalar(
 
 ---
 
-# 109. Output com uma única escala
+# 109. Output with a single scale
 
-Se:
+If:
 
 ```python
 output_scales.size == 1
 ```
 
-é calculado:
+the following is calculated:
 
 ```python
 q6 = (
@@ -2233,16 +2235,16 @@ q6 = (
 
 ---
 
-# 110. Exemplo
+# 110. Example
 
-Suponha:
+Suppose:
 
 ```text
 output_scale = 0.05
 output_zero_point = -128
 ```
 
-Então:
+Then:
 
 ```text
 6 / 0.05
@@ -2250,7 +2252,7 @@ Então:
 120
 ```
 
-Logo:
+Therefore:
 
 ```text
 q6 =
@@ -2259,31 +2261,31 @@ q6 =
 -8
 ```
 
-Portanto:
+Therefore:
 
 ```text
-valor quantizado -8
+quantized value -8
 ```
 
-representa aproximadamente o valor real:
+approximately represents the real value:
 
 ```text
 6
 ```
 
-para aquela quantização.
+for that quantization.
 
 ---
 
-# 111. Replicação do Q6
+# 111. Replicating Q6
 
-Se a operação possui:
+If the operation has:
 
 ```text
 nfeat = 32
 ```
 
-então:
+then:
 
 ```python
 operation_q6 = [
@@ -2293,31 +2295,31 @@ operation_q6 = [
 
 ---
 
-# 112. Por que uma tabela por feature?
+# 112. Why a table per feature?
 
-Novamente, o runtime pode indexar diretamente:
+Again, the runtime can directly index:
 
 ```text
 q6[channel]
 ```
 
-independentemente de a escala ser realmente única ou por canal.
+regardless of whether the scale is actually shared or per-channel.
 
 ---
 
-# 113. Output com múltiplas escalas
+# 113. Output with multiple scales
 
-Se:
+If:
 
 ```python
 output_scales.size > 1
 ```
 
-o código calcula um Q6 para cada escala disponível.
+the code calculates one Q6 for each available scale.
 
 ---
 
-# 114. Quantização vetorizada
+# 114. Vectorized quantization
 
 ```python
 q6_values = (
@@ -2332,9 +2334,9 @@ q6_values = (
 
 ---
 
-# 115. Conversão para inteiros Python
+# 115. Conversion to Python integers
 
-Os valores são adicionados com:
+Values are appended with:
 
 ```python
 operation_q6.extend(
@@ -2346,17 +2348,17 @@ operation_q6.extend(
 
 ---
 
-# 116. Padding de Q6
+# 116. Q6 padding
 
-Se houver menos escalas que `nfeat`, o último valor é repetido.
+If there are fewer scales than `nfeat`, the last value is repeated.
 
-Assim:
+Thus:
 
 ```text
 len(operation_q6)
 ```
 
-termina igual a:
+ends up equal to:
 
 ```text
 nfeat
@@ -2364,9 +2366,9 @@ nfeat
 
 ---
 
-# 117. Inserção na tabela global
+# 117. Insertion into the global table
 
-Depois:
+Then:
 
 ```python
 q6_vals.extend(
@@ -2376,9 +2378,9 @@ q6_vals.extend(
 
 ---
 
-# 118. Organização conjunta das três tabelas
+# 118. Combined organization of the three tables
 
-Para uma determinada operação, idealmente existem:
+For a given operation, ideally there are:
 
 ```text
 nfeat multipliers
@@ -2386,7 +2388,7 @@ nfeat shifts
 nfeat Q6
 ```
 
-Então, para canal `c`:
+Then, for channel `c`:
 
 ```text
 multiplier[c]
@@ -2394,13 +2396,13 @@ shift[c]
 q6[c]
 ```
 
-formam o conjunto utilizado naquele canal de saída.
+form the set used for that output channel.
 
 ---
 
-# 119. Registro dos offsets
+# 119. Recording offsets
 
-Depois:
+Then:
 
 ```python
 mul_q6_off[
@@ -2413,13 +2415,13 @@ mul_q6_off[
 )
 ```
 
-Esse é um dos resultados mais importantes da função.
+This is one of the function's most important results.
 
 ---
 
-# 120. Exemplo
+# 120. Example
 
-Suponha:
+Suppose:
 
 ```python
 mul_q6_off[12] = (
@@ -2430,31 +2432,31 @@ mul_q6_off[12] = (
 )
 ```
 
-Então a operação 12 possui:
+Then operation 12 has:
 
 ```text
-multipliers começando em MUL + 256
+multipliers starting at MUL + 256
 
-shifts começando em SHIFT + 256
+shifts starting at SHIFT + 256
 
-Q6 começando em Q6_BASE + 256
+Q6 starting at Q6_BASE + 256
 
 32 features
 ```
 
 ---
 
-# 121. Offset novamente não é endereço absoluto
+# 121. An offset is still not an absolute address
 
-Assim como em `weights.py`:
+As in `weights.py`:
 
 ```text
 256
 ```
 
-não é o endereço final na memória WASM.
+is not the final address in WASM memory.
 
-Posteriormente:
+Later:
 
 ```text
 mul_ptr =
@@ -2463,16 +2465,16 @@ MUL_BASE + mul_offset
 
 ---
 
-# 122. Exemplo
+# 122. Example
 
-Se:
+If:
 
 ```text
 MUL_BASE = 414832
 mul_offset = 256
 ```
 
-então:
+then:
 
 ```text
 mul_ptr =
@@ -2481,7 +2483,7 @@ mul_ptr =
 
 ---
 
-# 123. Mesmo princípio para SHIFT
+# 123. Same principle for SHIFT
 
 ```text
 shift_ptr =
@@ -2492,7 +2494,7 @@ shift_offset
 
 ---
 
-# 124. E para Q6
+# 124. And for Q6
 
 ```text
 q6_ptr =
@@ -2501,13 +2503,13 @@ Q6_BASE
 q6_offset
 ```
 
-quando a operação efetivamente utilizar ReLU6.
+when the operation actually uses ReLU6.
 
 ---
 
-# 125. Registros para relatório
+# 125. Report records
 
-Para cada operação é armazenado um dicionário contendo:
+A dictionary is stored for each operation, containing:
 
 ```text
 op_index
@@ -2533,59 +2535,59 @@ quantized_dimension
 
 ---
 
-# 126. Por que armazenar `real_multipliers`?
+# 126. Why store `real_multipliers`?
 
-Eles permitem comparar:
-
-```text
-valor matemático desejado
-```
-
-contra:
+They allow comparison of:
 
 ```text
-representação inteira gerada
+desired mathematical value
 ```
 
-Isso é muito útil para depuração da requantização.
+against:
+
+```text
+generated integer representation
+```
+
+This is very useful for debugging requantization.
 
 ---
 
 # 127. `weight_quantized_dimension`
 
-O relatório também registra:
+The report also records:
 
 ```python
 q_weights["qdim"]
 ```
 
-Isso informa qual dimensão do tensor de pesos está associada à quantização por canal.
+This indicates which weight tensor dimension is associated with per-channel quantization.
 
 ---
 
 # 128. `output_quantized_dimension`
 
-Da mesma forma:
+Similarly:
 
 ```python
 q_output["qdim"]
 ```
 
-é preservado.
+is preserved.
 
-Mesmo que o cálculo atual utilize principalmente:
+Even though the current calculation mainly uses:
 
 ```text
 output_scales[0]
 ```
 
-essa informação continua disponível para análise.
+this information remains available for analysis.
 
 ---
 
-# 129. Final da varredura
+# 129. End of the scan
 
-Depois que todos os operadores foram processados, temos três listas Python:
+After all operators have been processed, there are three Python lists:
 
 ```text
 mul_vals
@@ -2593,13 +2595,13 @@ shift_vals
 q6_vals
 ```
 
-Mas o runtime precisa de bytes.
+But the runtime needs bytes.
 
 ---
 
-# 130. Serialização de `mul_blob`
+# 130. Serializing `mul_blob`
 
-O código usa:
+The code uses:
 
 ```python
 mul_blob = np.array(
@@ -2610,33 +2612,33 @@ mul_blob = np.array(
 
 ---
 
-# 131. Significado de `<i4`
+# 131. Meaning of `<i4`
 
-A especificação:
+The specification:
 
 ```text
 <
 ```
 
-significa:
+means:
 
 ```text
 little-endian
 ```
 
-e:
+and:
 
 ```text
 i4
 ```
 
-significa:
+means:
 
 ```text
-inteiro assinado de 4 bytes
+4-byte signed integer
 ```
 
-ou seja:
+in other words:
 
 ```text
 int32
@@ -2644,21 +2646,21 @@ int32
 
 ---
 
-# 132. Portanto
+# 132. Therefore
 
-Cada multiplier ocupa exatamente:
+Each multiplier occupies exactly:
 
 ```text
 4 bytes
 ```
 
-no blob.
+in the blob.
 
 ---
 
 # 133. `shift_blob`
 
-É construído da mesma forma:
+It is built in the same way:
 
 ```python
 shift_blob = np.array(
@@ -2671,7 +2673,7 @@ shift_blob = np.array(
 
 # 134. `q6_blob`
 
-E:
+And:
 
 ```python
 q6_blob = np.array(
@@ -2682,35 +2684,35 @@ q6_blob = np.array(
 
 ---
 
-# 135. Por que serializar como `int32`?
+# 135. Why serialize as `int32`?
 
-O runtime WebAssembly utiliza operações inteiras e lê esses parâmetros como valores de 32 bits.
+The WebAssembly runtime uses integer operations and reads these parameters as 32-bit values.
 
-Além disso, os offsets foram calculados assumindo:
+Furthermore, offsets were calculated assuming:
 
 ```text
-4 bytes por entrada
+4 bytes per entry
 ```
 
-Logo existe uma relação direta:
+There is therefore a direct relationship:
 
 ```text
-len(lista) × 4
+len(list) × 4
 =
 len(blob)
 ```
 
 ---
 
-# 136. Exemplo
+# 136. Example
 
-Se:
+If:
 
 ```text
-mul_vals possui 7044 valores
+mul_vals has 7044 values
 ```
 
-então:
+then:
 
 ```text
 mul_blob =
@@ -2721,9 +2723,9 @@ mul_blob =
 
 ---
 
-# 137. Estrutura binária
+# 137. Binary structure
 
-Conceitualmente:
+Conceptually:
 
 ```text
 mul_blob
@@ -2734,13 +2736,13 @@ mul_blob
 ...
 ```
 
-O mesmo vale para `shift_blob` e `q6_blob`.
+The same applies to `shift_blob` and `q6_blob`.
 
 ---
 
-# 138. Retorno da extração
+# 138. Extraction return value
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -2760,69 +2762,69 @@ A função retorna:
 
 ---
 
-# 139. Valores versus blobs
+# 139. Values versus blobs
 
-Existe uma duplicação deliberada de representação.
+There is deliberate duplication of representation.
 
 ```text
 mul_vals
 ```
 
-é conveniente para:
+is convenient for:
 
 ```text
-cálculo
+calculation
 debug
-relatório
+report
 ```
 
-Enquanto:
+While:
 
 ```text
 mul_blob
 ```
 
-é conveniente para:
+is convenient for:
 
 ```text
-serialização
+serialization
 WAT
-memória WASM
+WASM memory
 ```
 
 ---
 
-# 140. O mesmo vale para SHIFT e Q6
+# 140. The same applies to SHIFT and Q6
 
 ```text
 shift_vals
     ↓
-forma estruturada
+structured form
 
 shift_blob
     ↓
-forma binária
+binary form
 ```
 
-e:
+and:
 
 ```text
 q6_vals
     ↓
-forma estruturada
+structured form
 
 q6_blob
     ↓
-forma binária
+binary form
 ```
 
 ---
 
-# 141. Função `compute_add_quantization_params()`
+# 141. The `compute_add_quantization_params()` function
 
-O `ADD` não é tratado dentro das tabelas principais da mesma maneira que uma convolução.
+`ADD` is not handled in the main tables in the same way as a convolution.
 
-Ele possui uma função própria:
+It has its own function:
 
 ```python
 def compute_add_quantization_params(
@@ -2834,9 +2836,9 @@ def compute_add_quantization_params(
 
 ---
 
-# 142. Por que o `ADD` é diferente?
+# 142. Why is `ADD` different?
 
-O `ADD` combina duas ativações possivelmente com escalas diferentes:
+`ADD` combines two activations that may have different scales:
 
 ```text
 A
@@ -2844,25 +2846,25 @@ A
 B
 ```
 
-Se:
+If:
 
 ```text
-A usa scale_a
+A uses scale_a
 ```
 
-e:
+and:
 
 ```text
-B usa scale_b
+B uses scale_b
 ```
 
-os dois valores precisam ser colocados em uma escala compatível antes da soma.
+the two values must be placed on a compatible scale before addition.
 
 ---
 
-# 143. Entradas
+# 143. Inputs
 
-A função recebe:
+The function receives:
 
 ```text
 scale_a
@@ -2870,21 +2872,21 @@ scale_b
 scale_y
 ```
 
-onde:
+where:
 
 ```text
-scale_a = escala da primeira entrada
+scale_a = first input scale
 
-scale_b = escala da segunda entrada
+scale_b = second input scale
 
-scale_y = escala da saída
+scale_y = output scale
 ```
 
 ---
 
-# 144. Escala comum
+# 144. Common scale
 
-Primeiro:
+First:
 
 ```python
 scale_common = max(
@@ -2893,13 +2895,13 @@ scale_common = max(
 ) * 2.0
 ```
 
-Assim é criada uma escala intermediária comum.
+This creates a common intermediate scale.
 
 ---
 
-# 145. Exemplo
+# 145. Example
 
-Se:
+If:
 
 ```text
 scale_a = 0.02
@@ -2907,13 +2909,13 @@ scale_a = 0.02
 scale_b = 0.03
 ```
 
-então:
+then:
 
 ```text
 max = 0.03
 ```
 
-e:
+and:
 
 ```text
 scale_common =
@@ -2924,49 +2926,49 @@ scale_common =
 
 ---
 
-# 146. Casos degenerados
+# 146. Degenerate cases
 
-A função verifica vários casos com escala zero.
+The function checks several zero-scale cases.
 
-Se:
+If:
 
 ```text
 scale_a == 0
-e
+and
 scale_b == 0
 ```
 
-retorna multiplicadores e shifts zero.
+returns zero multipliers and shifts.
 
 ---
 
-# 147. Saída com escala zero
+# 147. Output with zero scale
 
-Da mesma maneira:
+Similarly:
 
 ```python
 if scale_y == 0.0:
 ```
 
-retorna zeros.
+returns zeros.
 
 ---
 
-# 148. Escala comum zero
+# 148. Zero common scale
 
-Existe também:
+There is also:
 
 ```python
 if scale_common == 0.0:
 ```
 
-como proteção.
+as protection.
 
 ---
 
-# 149. Razão da entrada A
+# 149. Ratio for input A
 
-Em um caso normal:
+In a normal case:
 
 ```python
 ratio_a = (
@@ -2977,9 +2979,9 @@ ratio_a = (
 
 ---
 
-# 150. Conversão da entrada A
+# 150. Converting input A
 
-Depois:
+Then:
 
 ```python
 mul_a, shift_a = (
@@ -2991,16 +2993,16 @@ mul_a, shift_a = (
 
 ---
 
-# 151. Entrada B
+# 151. Input B
 
-Da mesma forma:
+Similarly:
 
 ```text
 ratio_b =
 scale_b / scale_common
 ```
 
-e:
+and:
 
 ```text
 mul_b
@@ -3009,15 +3011,15 @@ shift_b
 
 ---
 
-# 152. Conversão da soma para a saída
+# 152. Converting the sum to the output
 
-Depois que A e B são representados na escala comum, a saída precisa ser convertida para:
+Once A and B are represented on the common scale, output must be converted to:
 
 ```text
 scale_y
 ```
 
-Por isso:
+Therefore:
 
 ```python
 output_ratio = (
@@ -3028,7 +3030,7 @@ output_ratio = (
 
 ---
 
-# 153. Parâmetros da saída
+# 153. Output parameters
 
 ```python
 output_mul,
@@ -3041,9 +3043,9 @@ quantize_multiplier(
 
 ---
 
-# 154. Retorno do ADD
+# 154. ADD return value
 
-A função retorna sete valores:
+The function returns seven values:
 
 ```text
 mul_a
@@ -3060,10 +3062,10 @@ scale_common
 
 ---
 
-# 155. Fluxo conceitual do ADD
+# 155. Conceptual ADD flow
 
 ```text
-A quantizado
+quantized A
    │
    └─ scale_a
         │
@@ -3071,7 +3073,7 @@ A quantizado
   mul_a / shift_a
         │
         ▼
-    escala comum
+    common scale
         │
         │
         ├────────┐
@@ -3080,7 +3082,7 @@ A quantizado
        A'   +   B'
             │
             ▼
-          soma
+          sum
             │
             ▼
 output_mul / output_shift
@@ -3091,11 +3093,11 @@ output_mul / output_shift
 
 ---
 
-# 156. Onde os parâmetros do ADD são armazenados?
+# 156. Where are ADD parameters stored?
 
-Diferentemente das convoluções, os parâmetros do ADD são posteriormente colocados diretamente em campos reutilizados da `LayerParam`.
+Unlike convolutions, ADD parameters are later placed directly in reused `LayerParam` fields.
 
-No runtime atual:
+In the current runtime:
 
 ```text
 kh       = mul0
@@ -3108,20 +3110,20 @@ dil_h    = out_mul
 dil_w    = out_shift
 ```
 
-Portanto o ADD não precisa necessariamente criar entradas nas tabelas globais MUL/SHIFT desta função.
+Therefore, ADD does not necessarily need entries in this function's global MUL/SHIFT tables.
 
 ---
 
-# 157. Por que isso é possível?
+# 157. Why is this possible?
 
-A quantidade de parâmetros do ADD é fixa:
+ADD has a fixed parameter count:
 
 ```text
 3 multipliers
 3 shifts
 ```
 
-Já uma convolução pode possuir:
+A convolution, however, may have:
 
 ```text
 32
@@ -3131,15 +3133,15 @@ Já uma convolução pode possuir:
 ...
 ```
 
-multipliers por canal.
+per-channel multipliers.
 
-Por isso a convolução utiliza tabelas externas enquanto o ADD pode armazenar seus parâmetros diretamente na estrutura da camada.
+Therefore, convolution uses external tables, whereas ADD can store its parameters directly in the layer structure.
 
 ---
 
-# 158. Relação com `layer_params.py`
+# 158. Relationship to `layer_params.py`
 
-Posteriormente:
+Later:
 
 ```text
 quantization.py
@@ -3152,7 +3154,7 @@ quantization.py
 layer_params.py
 ```
 
-O primeiro é utilizado por:
+The first is used by:
 
 ```text
 CONV
@@ -3161,7 +3163,7 @@ FC
 SOFTMAX
 ```
 
-enquanto a função específica é utilizada pelo:
+while the specific function is used by:
 
 ```text
 ADD
@@ -3169,29 +3171,29 @@ ADD
 
 ---
 
-# 159. Função `quantization_to_text()`
+# 159. The `quantization_to_text()` function
 
-A última função transforma:
+The final function transforms:
 
 ```python
 extraction
 ```
 
-em relatório detalhado.
+into a detailed report.
 
-Ela não participa dos cálculos.
+It does not participate in calculations.
 
 ---
 
-# 160. Relatório por operação
+# 160. Per-operation report
 
-Para cada entrada em:
+For each entry in:
 
 ```python
 extraction["records"]
 ```
 
-o relatório começa com:
+the report starts with:
 
 ```text
 ================================================================================
@@ -3204,25 +3206,25 @@ NFEAT: ...
 
 # 161. `INPUT_SCALE`
 
-Todas as operações registram:
+All operations record:
 
 ```text
 INPUT_SCALE
 ```
 
-porque esse valor participa diretamente da requantização.
+because this value directly contributes to requantization.
 
 ---
 
-# 162. Relatório do `SOFTMAX`
+# 162. `SOFTMAX` report
 
-Quando:
+When:
 
 ```text
 TIPO = SOFTMAX
 ```
 
-também são mostrados:
+the following are also shown:
 
 ```text
 BETA
@@ -3233,9 +3235,9 @@ REAL_MULTIPLIER
 
 ---
 
-# 163. Relatório das operações com peso
+# 163. Report for operations with weights
 
-Para:
+For:
 
 ```text
 CONV_2D
@@ -3243,7 +3245,7 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-são mostrados:
+the following are shown:
 
 ```text
 WEIGHT_SCALES
@@ -3254,9 +3256,9 @@ REAL_MULTIPLIERS
 
 ---
 
-# 164. Parâmetros inteiros
+# 164. Integer parameters
 
-Depois, independentemente do tipo registrado, o relatório mostra:
+Then, regardless of the recorded type, the report shows:
 
 ```text
 MULTIPLIERS
@@ -3268,7 +3270,7 @@ Q6
 
 # 165. Offsets
 
-Também são apresentados:
+The following are also shown:
 
 ```text
 MUL
@@ -3276,11 +3278,11 @@ SHIFT
 Q6
 ```
 
-como offsets em bytes.
+as byte offsets.
 
 ---
 
-# 166. Exemplo conceitual
+# 166. Conceptual example
 
 ```text
 OP_INDEX: 12
@@ -3317,31 +3319,31 @@ OFFSETS:
 
 ---
 
-# 167. Resumo final
+# 167. Final summary
 
-O relatório termina com:
+The report ends with:
 
 ```text
-Quantidade de multipliers
-Quantidade de shifts
-Quantidade de Q6
+Number of multipliers
+Number of shifts
+Number of Q6 values
 
-mul_blob em bytes
-shift_blob em bytes
-q6_blob em bytes
+mul_blob in bytes
+shift_blob in bytes
+q6_blob in bytes
 ```
 
 ---
 
-# 168. Relação entre quantidade e tamanho
+# 168. Relationship between count and size
 
-Como cada valor possui:
+Since each value occupies:
 
 ```text
 4 bytes
 ```
 
-deve existir:
+the following must hold:
 
 ```text
 len(mul_blob)
@@ -3349,7 +3351,7 @@ len(mul_blob)
 len(mul_vals) × 4
 ```
 
-Da mesma maneira:
+Similarly:
 
 ```text
 len(shift_blob)
@@ -3357,7 +3359,7 @@ len(shift_blob)
 len(shift_vals) × 4
 ```
 
-e:
+and:
 
 ```text
 len(q6_blob)
@@ -3367,34 +3369,34 @@ len(q6_vals) × 4
 
 ---
 
-# 169. Essa é uma propriedade útil para validação
+# 169. A useful validation property
 
-Por exemplo:
+For example:
 
 ```text
 multipliers = 7000
 ```
 
-deve resultar em:
+must result in:
 
 ```text
 28000 bytes
 ```
 
-Se isso não ocorrer, há uma inconsistência de serialização.
+Otherwise, there is a serialization inconsistency.
 
 ---
 
-# 170. Relação com `weights.py`
+# 170. Relationship to `weights.py`
 
-`weights.py` produz:
+`weights.py` produces:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-Já `quantization.py` produz:
+Whereas `quantization.py` produces:
 
 ```text
 mul_blob
@@ -3402,41 +3404,41 @@ shift_blob
 q6_blob
 ```
 
-Todos serão colocados posteriormente na mesma memória linear, mas em regiões diferentes.
+All will later be placed in the same linear memory, but in different regions.
 
 ---
 
-# 171. Comparação
+# 171. Comparison
 
 ```text
 weights_raw
     ↓
-parâmetros treinados
+trained parameters
 
 bias_raw
     ↓
-bias treinado
+trained bias
 
 mul_blob
     ↓
-parâmetros derivados de requantização
+derived requantization parameters
 
 shift_blob
     ↓
-parâmetros derivados de requantização
+derived requantization parameters
 
 q6_blob
     ↓
-limites derivados da quantização da saída
+limits derived from output quantization
 ```
 
 ---
 
-# 172. Dados extraídos versus derivados
+# 172. Extracted versus derived data
 
-Essa distinção é importante.
+This distinction matters.
 
-Os pesos vêm diretamente do modelo:
+Weights come directly from the model:
 
 ```text
 TFLite buffer
@@ -3444,7 +3446,7 @@ TFLite buffer
 weights_raw
 ```
 
-Já:
+Whereas:
 
 ```text
 multiplier
@@ -3452,13 +3454,13 @@ shift
 Q6
 ```
 
-são calculados pelo extrator a partir dos metadados do modelo.
+are calculated by the extractor from model metadata.
 
 ---
 
-# 173. Fluxo completo de uma `CONV_2D`
+# 173. Complete `CONV_2D` flow
 
-Considere:
+Consider:
 
 ```text
 input_scale = Sx
@@ -3468,7 +3470,7 @@ weight_scale[c] = Sw[c]
 output_scale = Sy
 ```
 
-Para cada canal:
+For each channel:
 
 ```text
 real_multiplier[c]
@@ -3476,7 +3478,7 @@ real_multiplier[c]
 Sx × Sw[c] / Sy
 ```
 
-Depois:
+Then:
 
 ```text
 real_multiplier[c]
@@ -3487,21 +3489,21 @@ multiplier[c]
 shift[c]
 ```
 
-Em paralelo:
+In parallel:
 
 ```text
 6.0
  ↓
-quantização da saída
+output quantization
  ↓
 Q6[c]
 ```
 
 ---
 
-# 174. Resultado por canal
+# 174. Per-channel result
 
-Para um canal `c`:
+For a channel `c`:
 
 ```text
 multiplier[c]
@@ -3509,11 +3511,11 @@ shift[c]
 Q6[c]
 ```
 
-serão utilizados pelo kernel na requantização da saída acumulada.
+will be used by the kernel to requantize the accumulated output.
 
 ---
 
-# 175. Caminho até o WAT
+# 175. Path to WAT
 
 ```text
 quantization.py
@@ -3545,9 +3547,9 @@ WAT
 
 ---
 
-# 176. Exemplo de endereço final
+# 176. Final address example
 
-Suponha:
+Suppose:
 
 ```text
 MUL_BASE = 414832
@@ -3555,7 +3557,7 @@ MUL_BASE = 414832
 mul_offset = 128
 ```
 
-Então:
+Then:
 
 ```text
 mul_ptr =
@@ -3564,11 +3566,11 @@ mul_ptr =
 414960
 ```
 
-Esse endereço será inserido na `LayerParam`.
+This address will be inserted into `LayerParam`.
 
 ---
 
-# 177. O mesmo para SHIFT
+# 177. The same for SHIFT
 
 ```text
 SHIFT_BASE = 443008
@@ -3581,7 +3583,7 @@ shift_ptr =
 
 ---
 
-# 178. E Q6
+# 178. And Q6
 
 ```text
 Q6_BASE = 471184
@@ -3592,42 +3594,42 @@ q6_ptr =
 471312
 ```
 
-Os números são apenas exemplos.
+These numbers are only examples.
 
 ---
 
-# 179. Q6 e ativação
+# 179. Q6 and activation
 
-O blob Q6 pode ser preparado para todas as features das operações quantizadas, mas o ponteiro correspondente é utilizado posteriormente de acordo com a ativação da camada.
+The Q6 blob can be prepared for every feature of quantized operations, but its pointer is later used according to layer activation.
 
-Para uma operação com:
+For an operation with:
 
 ```text
 ReLU6
 ```
 
-o limite superior é necessário.
+the upper limit is required.
 
-Para uma camada sem essa ativação, o runtime pode não utilizar `q6_ptr`.
-
----
-
-# 180. Por que Q6 é `int32`?
-
-Mesmo que a saída final da operação seja `int8`, armazenar o limite em `int32` mantém uma representação uniforme nas tabelas auxiliares e simplifica o acesso no runtime.
+For a layer without this activation, the runtime may not use `q6_ptr`.
 
 ---
 
-# 181. Relação com zero points
+# 180. Why is Q6 `int32`?
 
-A requantização completa não depende apenas de:
+Even when the operation's final output is `int8`, storing the limit as `int32` maintains a uniform representation in auxiliary tables and simplifies runtime access.
+
+---
+
+# 181. Relationship to zero points
+
+Complete requantization does not depend only on:
 
 ```text
 multiplier
 shift
 ```
 
-Também existem:
+There are also:
 
 ```text
 zx
@@ -3635,27 +3637,27 @@ zw
 zy
 ```
 
-que representam zero points de:
+which represent zero points for:
 
 ```text
-entrada
-peso
-saída
+input
+weight
+output
 ```
 
-Esses valores são armazenados posteriormente na `LayerParam`.
+These values are later stored in `LayerParam`.
 
 ---
 
-# 182. Divisão de responsabilidades
+# 182. Division of responsibilities
 
-Portanto:
+Therefore:
 
 ```text
 quantization.py
 ```
 
-produz principalmente:
+mainly produces:
 
 ```text
 multiplier
@@ -3663,46 +3665,46 @@ shift
 Q6
 ```
 
-Enquanto:
+While:
 
 ```text
 layer_params.py
 ```
 
-reúne:
+brings together:
 
 ```text
 multiplier pointers
 zero points
-geometria da camada
-endereços
+layer geometry
+addresses
 flags
 ```
 
 ---
 
-# 183. Por que não colocar tudo neste módulo?
+# 183. Why not put everything in this module?
 
-Porque este arquivo deve responder:
-
-```text
-quais parâmetros numéricos de quantização
-preciso para executar a operação?
-```
-
-e não:
+Because this file should answer:
 
 ```text
-onde eles ficarão na memória?
+which numerical quantization parameters
+do I need to execute the operation?
 ```
 
-Essa segunda pergunta pertence a `memory.py` e `layer_params.py`.
+rather than:
+
+```text
+where will they be stored in memory?
+```
+
+That second question belongs to `memory.py` and `layer_params.py`.
 
 ---
 
-# 184. Offset relativo versus ponteiro
+# 184. Relative offset versus pointer
 
-Assim como em `weights.py`:
+As in `weights.py`:
 
 ```text
 mul_offset
@@ -3710,23 +3712,23 @@ shift_offset
 q6_offset
 ```
 
-são relativos.
+are relative.
 
-Posteriormente:
+Later:
 
 ```text
 base + offset
 ```
 
-gera o ponteiro final.
+generates the final pointer.
 
 ---
 
-# 185. Tabelas independentes
+# 185. Independent tables
 
-Os offsets são independentes porque existem três blobs separados.
+Offsets are independent because there are three separate blobs.
 
-Assim:
+Thus:
 
 ```text
 mul_offset = 100
@@ -3734,9 +3736,9 @@ shift_offset = 100
 q6_offset = 100
 ```
 
-não significa que os três dados ocupem a mesma memória.
+does not mean all three data items occupy the same memory.
 
-Eles pertencem respectivamente a:
+They belong respectively to:
 
 ```text
 MUL_BASE + 100
@@ -3748,28 +3750,28 @@ Q6_BASE + 100
 
 ---
 
-# 186. Quantização per-tensor
+# 186. Per-tensor quantization
 
-Quando os pesos possuem uma única escala:
+When weights have a single scale:
 
 ```text
 Sw
 ```
 
-o mesmo:
+the same:
 
 ```text
 multiplier
 shift
 ```
 
-é replicado por todos os canais.
+is replicated across all channels.
 
 ---
 
-# 187. Quantização per-channel
+# 187. Per-channel quantization
 
-Quando existem:
+When there are:
 
 ```text
 Sw[0]
@@ -3778,7 +3780,7 @@ Sw[2]
 ...
 ```
 
-cada canal recebe seus próprios:
+each channel receives its own:
 
 ```text
 multiplier[c]
@@ -3787,219 +3789,219 @@ shift[c]
 
 ---
 
-# 188. Por que isso é importante para MobileNetV2?
+# 188. Why does this matter for MobileNetV2?
 
-As convoluções quantizadas podem utilizar escalas específicas por canal nos pesos.
+Quantized convolutions may use channel-specific weight scales.
 
-Então uma única constante global de requantização seria insuficiente.
+A single global requantization constant would therefore be insufficient.
 
-O runtime precisa acessar o parâmetro correspondente ao canal de saída que está calculando.
+The runtime must access the parameter corresponding to the output channel being calculated.
 
 ---
 
-# 189. Exemplo conceitual no kernel
+# 189. Conceptual kernel example
 
-Para canal:
+For channel:
 
 ```text
 c
 ```
 
-o runtime pode efetivamente consultar:
+the runtime may actually query:
 
 ```text
 mul_ptr + c × 4
 ```
 
-e:
+and:
 
 ```text
 shift_ptr + c × 4
 ```
 
-para carregar os parâmetros daquele canal.
+to load that channel's parameters.
 
 ---
 
-# 190. Relação direta com `nfeat`
+# 190. Direct relationship to `nfeat`
 
-É justamente por isso que:
+This is precisely why:
 
 ```text
 nfeat
 ```
 
-precisa corresponder ao número de conjuntos de parâmetros disponíveis para aquela operação.
+must match the number of parameter sets available for that operation.
 
 ---
 
-# 191. O que o módulo deliberadamente não faz
+# 191. What the module deliberately does not do
 
-`quantization.py` não:
+`quantization.py` does not:
 
 ```text
-extrai bytes dos pesos
+extract weight bytes
 
-organiza weights_raw
+organize weights_raw
 
-calcula bases absolutas
+calculate absolute bases
 
-aloca slots
+allocate slots
 
-calcula padding espacial
+calculate spatial padding
 
-gera LayerParam
+generate LayerParam
 
-gera WAT
+generate WAT
 ```
 
 ---
 
-# 192. Sua responsabilidade exata
+# 192. Its exact responsibility
 
-Ele responde:
+It answers:
 
 ```text
-como converter os fatores de escala
-do modelo quantizado
+how can scale factors
+from the quantized model
 
-em parâmetros inteiros
-utilizáveis pelo runtime?
+be converted into integer parameters
+usable by the runtime?
 ```
 
 ---
 
-# 193. Validações atuais
+# 193. Current validations
 
-O módulo verifica, entre outras condições:
+The module checks, among other conditions:
 
 ```text
-inputs e outputs suficientes
+sufficient inputs and outputs
 
-quantização existente
+existing quantization
 
-vetores de scales não vazios
+nonempty scale vectors
 
-shape suficiente para determinar nfeat
+sufficient shape to determine nfeat
 ```
 
-Quando uma dessas condições falha:
+When one of these conditions fails:
 
 ```python
 continue
 ```
 
-é utilizado.
+is used.
 
 ---
 
-# 194. Consequência de usar `continue`
+# 194. Consequence of using `continue`
 
-Uma operação com metadados inesperados pode simplesmente não receber uma entrada em:
+An operation with unexpected metadata may simply receive no entry in:
 
 ```python
 mul_q6_off
 ```
 
-Por isso as etapas posteriores precisam pressupor que as operações suportadas do modelo atual possuem quantização válida.
+Later stages must therefore assume that supported operations in the current model have valid quantization.
 
 ---
 
-# 195. Possível evolução futura
+# 195. Possible future development
 
-Em uma ferramenta mais genérica, pode ser interessante substituir determinados:
+In a more generic tool, it may be useful to replace certain:
 
 ```python
 continue
 ```
 
-por exceções explícitas como:
+with explicit exceptions such as:
 
 ```text
-operação quantizada sem scale
+quantized operation without scale
 
-shape incompatível
+incompatible shape
 
-quantized dimension inesperada
+unexpected quantized dimension
 ```
 
-Isso tornaria falhas em modelos externos mais fáceis de diagnosticar.
+This would make failures in external models easier to diagnose.
 
 ---
 
-# 196. Preservação do comportamento atual
+# 196. Preserving current behavior
 
-Na modularização atual, a prioridade foi:
+In the current modularization, the priority was:
 
 ```text
-preservar o comportamento
-do extrator validado
+preserve the behavior
+of the validated extractor
 ```
 
-antes de endurecer todas as verificações.
+before tightening all checks.
 
-Esse princípio também explica o preenchimento pelo último valor quando existe diferença entre:
+This principle also explains filling with the last value when there is a difference between:
 
 ```text
 nfeat
 ```
 
-e:
+and:
 
 ```text
-quantidade de scales disponíveis
+number of available scales
 ```
 
 ---
 
-# 197. Relação com a fidelidade numérica
+# 197. Relationship to numerical fidelity
 
-Esse módulo é um dos pontos mais sensíveis para a fidelidade entre:
+This module is one of the most sensitive points for fidelity between:
 
 ```text
 TFLite
 ```
 
-e:
+and:
 
 ```text
-implementação WASM
+WASM implementation
 ```
 
-Porque uma diferença pequena em:
+Because a small difference in:
 
 ```text
 multiplier
 shift
 zero point
-saturação
+saturation
 ```
 
-pode alterar a saída quantizada de uma camada.
+can change a layer's quantized output.
 
 ---
 
-# 198. Cadeia de propagação
+# 198. Propagation chain
 
-Uma diferença em um multiplier pode produzir:
+A multiplier difference may produce:
 
 ```text
-valor de ativação diferente
+different activation value
        ↓
-entrada diferente da próxima camada
+different input to the next layer
        ↓
-novo acumulador diferente
+different new accumulator
        ↓
-diferença propagada pela rede
+difference propagated through the network
 ```
 
-Por isso esse módulo merece relatórios detalhados.
+This is why the module deserves detailed reports.
 
 ---
 
-# 199. Papel do relatório na depuração
+# 199. The report's role in debugging
 
-Quando a saída de uma camada diverge, é possível verificar:
+When a layer output diverges, it is possible to check:
 
 ```text
 input_scale
@@ -4017,69 +4019,69 @@ shift
 Q6
 ```
 
-antes de investigar o kernel WebAssembly.
+before investigating the WebAssembly kernel.
 
 ---
 
-# 200. Exemplo de investigação
+# 200. Investigation example
 
-Se TFLite e WASM divergem em uma convolução:
+If TFLite and WASM diverge in a convolution:
 
 ```text
-1. verificar scales
-2. verificar real_multiplier
-3. verificar quantize_multiplier()
-4. verificar multiplier serializado
-5. verificar shift serializado
-6. verificar ponteiros
-7. verificar algoritmo de requantização no WAT
+1. check scales
+2. check real_multiplier
+3. check quantize_multiplier()
+4. check serialized multiplier
+5. check serialized shift
+6. check pointers
+7. check the requantization algorithm in WAT
 ```
 
-Assim o problema pode ser isolado.
+This allows the problem to be isolated.
 
 ---
 
-# 201. Separação entre fórmula e armazenamento
+# 201. Separating formula and storage
 
-O módulo possui duas fases conceituais:
+The module has two conceptual phases:
 
 ```text
-CÁLCULO
+CALCULATION
    ↓
 multipliers
 shifts
 Q6
 
-SERIALIZAÇÃO
+SERIALIZATION
    ↓
 mul_blob
 shift_blob
 q6_blob
 ```
 
-Isso é melhor do que misturar diretamente cálculo com geração de WAT.
+This is better than directly mixing calculation with WAT generation.
 
 ---
 
-# 202. Benefício arquitetural
+# 202. Architectural benefit
 
-O resultado poderia, em princípio, ser consumido por outro backend que não fosse WAT.
+In principle, the result could be consumed by a backend other than WAT.
 
-Por exemplo:
+For example:
 
 ```text
 quantization.py
        │
        ├──→ WAT generator
-       ├──→ gerador C
-       └──→ ferramenta de análise
+       ├──→ C generator
+       └──→ analysis tool
 ```
 
-porque sua saída não é uma string específica de WebAssembly.
+because its output is not a WebAssembly-specific string.
 
 ---
 
-# 203. Visão completa do módulo
+# 203. Complete module view
 
 ```text
                     TFLite
@@ -4118,11 +4120,11 @@ porque sua saída não é uma string específica de WebAssembly.
 
 ---
 
-# 204. Síntese
+# 204. Summary
 
-`quantization.py` converte a representação matemática de quantização do TFLite em uma representação adequada à execução inteira do runtime WebAssembly.
+`quantization.py` converts TFLite's mathematical quantization representation into one suitable for integer execution in the WebAssembly runtime.
 
-Para operações como:
+For operations such as:
 
 ```text
 CONV_2D
@@ -4130,7 +4132,7 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-o ponto central é:
+the central point is:
 
 ```text
 real_multiplier[c]
@@ -4142,7 +4144,7 @@ weight_scale[c]
 output_scale
 ```
 
-Esse valor é convertido em:
+This value is converted into:
 
 ```text
 multiplier[c]
@@ -4150,27 +4152,27 @@ multiplier[c]
 shift[c]
 ```
 
-por:
+by:
 
 ```python
 quantize_multiplier()
 ```
 
-Também é calculada a representação quantizada de:
+The quantized representation of the following is also calculated:
 
 ```text
 6.0
 ```
 
-produzindo:
+producing:
 
 ```text
 Q6[c]
 ```
 
-para uso com `ReLU6`.
+for use with `ReLU6`.
 
-Os parâmetros são organizados em três tabelas contínuas:
+Parameters are organized into three contiguous tables:
 
 ```text
 MUL
@@ -4178,9 +4180,9 @@ SHIFT
 Q6
 ```
 
-e cada operação recebe offsets que indicam onde seus valores começam.
+and each operation receives offsets indicating where its values start.
 
-Para `SOFTMAX`, o módulo utiliza uma preparação própria envolvendo:
+For `SOFTMAX`, the module uses its own preparation involving:
 
 ```text
 input_scale
@@ -4191,7 +4193,7 @@ multiplier
 shift
 ```
 
-enquanto o `ADD` utiliza uma função independente que transforma as escalas das duas entradas e da saída em:
+while `ADD` uses an independent function that transforms the two input scales and output scale into:
 
 ```text
 mul_a / shift_a
@@ -4199,4 +4201,4 @@ mul_b / shift_b
 output_mul / output_shift
 ```
 
-Assim, ao final desta etapa, o pipeline deixou de possuir apenas metadados abstratos de quantização e passou a possuir **tabelas inteiras serializáveis**, diretamente apropriadas para serem colocadas na memória linear do WebAssembly e utilizadas pelos kernels de inferência.
+Thus, by the end of this stage, the pipeline no longer has only abstract quantization metadata: it has **serializable integer tables**, directly suited to placement in WebAssembly linear memory and use by inference kernels.

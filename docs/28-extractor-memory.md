@@ -1,44 +1,46 @@
-# 28 — Planejamento físico da memória
+[English](28-extractor-memory.md) | [Português (Brasil)](28-extractor-memory.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/memory.py](../extractor/memory.py)
+# 28 — Physical memory planning
 
-## Separação de responsabilidades
+[Index](README.md) · Source: [extractor/memory.py](../extractor/memory.py)
 
-Este módulo dimensiona slots, posiciona blobs e calcula páginas; não aloca memória Wasmtime nem escreve WAT. Recebe arrays/bytes e metadados do TFLite. O trecho que reserva LayerParams e posiciona os slots está em `calculate_layer_memory_layout`, em `layer_params.py`; ambos são necessários para entender o layout final.
+## Separation of responsibilities
 
-## Contagem e alinhamento
+This module sizes slots, positions blobs, and calculates pages; it does not allocate Wasmtime memory or write WAT. It receives arrays/bytes and TFLite metadata. The code reserving LayerParams and positioning slots is in `calculate_layer_memory_layout`, in `layer_params.py`; both are needed to understand the final layout.
 
-`tensor_numel(shape,batch=1)` multiplica dimensões, substituindo cada dimensão negativa por batch. Shape vazio produz produto 1, embora `calculate_slot_bytes` pule shapes vazios. Dimensão zero produz zero. Isso não resolve semântica de shapes dinâmicos; é uma política local de estimativa.
+## Counting and alignment
 
-`align_up(value,alignment=16)` implementa `(value + alignment - 1) & ~(alignment - 1)`. Requer potência de dois positiva, sem validar. Exemplo: 414824 alinhado a 16 resulta em 414832, criando oito bytes de intervalo. Não confunda padding de memória com padding espacial de convolução.
+`tensor_numel(shape,batch=1)` multiplies dimensions, replacing each negative dimension with batch. An empty shape produces a product of 1, although `calculate_slot_bytes` skips empty shapes. A zero dimension produces zero. This does not resolve dynamic-shape semantics; it is a local estimation policy.
+
+`align_up(value,alignment=16)` implements `(value + alignment - 1) & ~(alignment - 1)`. It requires a positive power of two without validating it. Example: 414824 aligned to 16 becomes 414832, creating an eight-byte gap. Do not confuse memory padding with spatial convolution padding.
 
 ## calculate_slot_bytes
 
-Percorre todos os tensores do subgrafo, pula constantes, shapes vazios e tipos sem `BYTES_PER_TYPE`. Calcula `num_elements × bytes_per_element`, registra ID, nome, shape, tipo, bytes/elemento, elementos e bytes. Mantém o primeiro máximo estrito encontrado. Retorna `max_bytes,slot_bytes,alignment,batch,max_tensor,tensor_records`, com `slot_bytes=align_up(max_bytes,alignment)`.
+Visits all subgraph tensors, skipping constants, empty shapes, and types absent from `BYTES_PER_TYPE`. Calculates `num_elements × bytes_per_element`, recording ID, name, shape, type, bytes/element, elements, and bytes. Retains the first strict maximum found. Returns `max_bytes,slot_bytes,alignment,batch,max_tensor,tensor_records`, with `slot_bytes=align_up(max_bytes,alignment)`.
 
-O tamanho usa todos os tensores não constantes reconhecidos, não somente os vivos de uma etapa. Os três slots têm a mesma capacidade. Não inclui workspace adicional de kernels externos, não conta constantes nessa capacidade e não implementa tamanhos diferentes por slot. O buffer RGB565 host é menor que RGB888 e ainda é verificado pelo runner contra o slot.
+Sizing uses all recognized nonconstant tensors, not just those live at one stage. All three slots have equal capacity. It does not include extra workspace for external kernels, count constants toward this capacity, or implement different sizes per slot. The host RGB565 buffer is smaller than RGB888 and is still checked against the slot by the runner.
 
 ## calculate_parameter_layout
 
-Recebe hint, alinhamento e cinco blobs de dados: pesos, bias e três arrays de quantização (PARAMS é reservado posteriormente). Define WEIGHTS em `align_up(hint)`, BIAS depois dos pesos alinhado, MUL depois do bias, SHIFT depois de MUL, Q6 depois de SHIFT e PARAMS depois de Q6. Retorna bases e comprimentos das cinco regiões anteriores a PARAMS, `params_base`, alignment e hint. Não recebe o tamanho dos LayerParams nessa fase.
+Receives a hint, alignment, and five data blobs: weights, bias, and three quantization arrays (PARAMS is reserved later). Sets WEIGHTS at `align_up(hint)`, aligned BIAS after weights, MUL after bias, SHIFT after MUL, Q6 after SHIFT, and PARAMS after Q6. Returns bases and lengths of the five regions preceding PARAMS, `params_base`, alignment, and hint. It does not receive the LayerParams size at this stage.
 
 ```text
-endereço baixo
+low address
       ▼
 ┌────────────────────────────────┐
-│ reservado [0,2048)             │ formato em 0; busy flag em 4
+│ reserved [0,2048)              │ format at 0; busy flag at 4
 ├────────────────────────────────┤
-│ WEIGHTS                        │ bytes originais de pesos
+│ WEIGHTS                        │ original weight bytes
 ├────────────────────────────────┤
-│ BIAS                           │ bias dos operadores
+│ BIAS                           │ operator bias
 ├────────────────────────────────┤
-│ MUL                            │ int32 por canal
+│ MUL                            │ int32 per channel
 ├────────────────────────────────┤
-│ SHIFT                          │ int32 por canal
+│ SHIFT                          │ int32 per channel
 ├────────────────────────────────┤
-│ Q6                             │ limites quantizados
+│ Q6                             │ quantized limits
 ├────────────────────────────────┤
-│ PARAMS                         │ N×116 + padding final
+│ PARAMS                         │ N×116 + final padding
 ├────────────────────────────────┤
 │ SLOT0                          │ slot_bytes
 ├────────────────────────────────┤
@@ -46,55 +48,55 @@ endereço baixo
 ├────────────────────────────────┤
 │ SLOT2                          │ slot_bytes
 └────────────────────────────────┘
-      ▼ MEM_END (exclusivo)
-espaço até o final da última página
+      ▼ MEM_END (exclusive)
+space to the end of the last page
       ▼
-endereço alto
+high address
 ```
 
-Entram comprimentos específicos do modelo. `memory.py` e `layer_params.py` calculam bases e padding; saem regiões para o gerador. O layout e a página de 65536 bytes são convenções do runtime. Linhas da caixa não significam ausência de gaps: cada base pode ter alinhamento entre regiões. Os slots não recebem data segments; começam zerados pela memória WASM e são sobrescritos durante execução.
+Inputs are model-specific lengths. `memory.py` and `layer_params.py` calculate bases and padding; outputs are regions for the generator. The layout and 65536-byte page are runtime conventions. Box boundaries do not imply an absence of gaps: each base may include alignment between regions. Slots receive no data segments; WASM memory initializes them to zero, and execution overwrites them.
 
-## Finalização
+## Finalization
 
-`mem_pages_for(end_addr)` calcula `ceil(end_addr/65536)` por divisão inteira. `calculate_final_memory_layout` monta `regions` para WEIGHTS, BIAS, MUL, SHIFT, Q6, PARAMS (comprimento real do blob com padding) e todos os slots recebidos. Acrescenta `end=base+bytes`, usa o maior fim como `mem_end`, calcula páginas, bytes alocados e espaço residual. Retorna também slots e tamanho de página. Não há teste explícito de sobreposição ou ordem das regiões, nem limite máximo de páginas.
+`mem_pages_for(end_addr)` calculates `ceil(end_addr/65536)` using integer division. `calculate_final_memory_layout` builds `regions` for WEIGHTS, BIAS, MUL, SHIFT, Q6, PARAMS (actual padded blob length), and all supplied slots. It adds `end=base+bytes`, takes the largest end as `mem_end`, and calculates pages, allocated bytes, and remaining space. It also returns slots and page size. There is no explicit test for region overlap or order, nor a maximum page limit.
 
-Exemplo drowsiness: PARAMS começa em 499360; 68×116=7888, já múltiplo de 16. SLOT0 começa em 507248, seguido por três áreas de 196608. Fim 1097072; 17 páginas reservam 1114112, com 17040 bytes restantes. ImageNet: 67×116=7772, arredondado para 7776; fim 3606880 e 56 páginas, com 63136 bytes restantes.
+Drowsiness example: PARAMS starts at 499360; 68×116=7888, already a multiple of 16. SLOT0 starts at 507248, followed by three 196608-byte areas. End 1097072; 17 pages reserve 1114112, leaving 17040 bytes. ImageNet: 67×116=7772, rounded to 7776; end 3606880 and 56 pages, leaving 63136 bytes.
 
-## Formatação e falhas
+## Formatting and failures
 
-`slot_memory_to_text` lista tensores, maior tensor e conta de alinhamento para 07. `parameter_layout_to_text` imprime bases e tamanhos para 08. `final_memory_layout_to_text` lista regiões, finais e resumo para 11. Todos retornam strings sem escrever arquivos. Entrada estrutural incompleta causa KeyError; parâmetros numéricos inválidos podem gerar layouts sem sentido sem erro imediato. Ausência de tipo reconhecido pode produzir slot de zero bytes; a função não rejeita esse caso.
+`slot_memory_to_text` lists tensors, the largest tensor, and alignment arithmetic for 07. `parameter_layout_to_text` prints bases and sizes for 08. `final_memory_layout_to_text` lists regions, ends, and a summary for 11. All return strings without writing files. Incomplete structural input causes KeyError; invalid numeric parameters may produce meaningless layouts without immediate errors. An absence of recognized types may produce a zero-byte slot; the function does not reject this case.
 
-## Relação com fonte e artefato
+## Relationship to source and artifact
 
-O tamanho do arquivo WASM não é `mem_pages×65536`: slots são memória reservada sem conteúdo embutido. O tamanho do WAT também é diferente por causa do escape textual dos blobs. O layout atual é estático por modelo; não há alocador de tensores durante a inferência.
+WASM file size is not `mem_pages×65536`: slots are reserved memory without embedded contents. WAT size also differs because blobs are textually escaped. The current layout is static per model; there is no tensor allocator during inference.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 from extractor.tflite_utils import BYTES_PER_TYPE, TENSOR_TYPE_MAP, is_constant_tensor, tensor_shape_list
 ```
 
-### `tensor_numel` — assinatura
+### `tensor_numel` — signature
 
 ```python
 def tensor_numel(shape, batch=1)
 ```
 
-### `align_up` — assinatura
+### `align_up` — signature
 
 ```python
 def align_up(value, alignment=16)
 ```
 
-### `calculate_slot_bytes` — assinatura
+### `calculate_slot_bytes` — signature
 
 ```python
 def calculate_slot_bytes(model, subgraph, *, batch, alignment)
 ```
 
-### `calculate_parameter_layout` — assinatura
+### `calculate_parameter_layout` — signature
 
 ```python
 def calculate_parameter_layout(
@@ -109,36 +111,36 @@ def calculate_parameter_layout(
 )
 ```
 
-### `slot_memory_to_text` — assinatura
+### `slot_memory_to_text` — signature
 
 ```python
 def slot_memory_to_text(memory_info)
 ```
 
-### `parameter_layout_to_text` — assinatura
+### `parameter_layout_to_text` — signature
 
 ```python
 def parameter_layout_to_text(layout)
 ```
 
-### `mem_pages_for` — assinatura
+### `mem_pages_for` — signature
 
 ```python
 def mem_pages_for(end_addr)
 ```
 
-### `calculate_final_memory_layout` — assinatura
+### `calculate_final_memory_layout` — signature
 
 ```python
 def calculate_final_memory_layout(*, parameter_layout, params_blob, slot_bases, slot_bytes)
 ```
 
-### `final_memory_layout_to_text` — assinatura
+### `final_memory_layout_to_text` — signature
 
 ```python
 def final_memory_layout_to_text(memory_layout)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [09-layout-memoria.md](historico/09-layout-memoria.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [09-layout-memoria.md](historico/09-layout-memoria.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

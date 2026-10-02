@@ -1,12 +1,14 @@
-# 10 — Tutorial: cadastrar um terceiro modelo
+[English](10-como-adicionar-modelo.md) | [Português (Brasil)](10-como-adicionar-modelo.pt-BR.md)
 
-[Índice](README.md) · [Manifesto completo](03-model-config-manifesto.md) · [Contrato](08-contrato-layerparam-v1.md)
+# 10 — Tutorial: register a third model
 
-## Antes de copiar arquivos
+[Index](README.md) · [Manifest reference](03-model-config-manifesto.md) · [Contract](08-contrato-layerparam-v1.md)
 
-Verifique o TFLite real: uma entrada, uma saída, entrada NHWC `[1,H,W,3]`, I/O UINT8 ou INT8, escalas válidas e operadores implementados pelo runtime. Conferir apenas a extensão ou o nome MobileNet não basta. O construtor pode pular operadores desconhecidos; por isso a auditoria de opcodes é uma condição para confiar no resultado.
+## Before copying files
 
-Um comando de inspeção reproduzível, executado após criar o manifest:
+Inspect the actual TFLite: one input/output, NHWC input [1,H,W,3], UINT8 or INT8 I/O, valid scales and runtime-supported operators. A filename or MobileNet name is insufficient. The builder can skip unknown operators, so opcode auditing is necessary before trusting results.
+
+Run this inspection after creating the manifest:
 
 ```python
 from pipeline.model_package import ModelPackage
@@ -24,21 +26,21 @@ print([op_name(model, subgraph.Operators(i))
        for i in range(subgraph.OperatorsLength())])
 ```
 
-Esse código inspeciona, não compila nem atesta equivalência de kernels. Shapes dinâmicos, layouts alternativos e normalizações incompatíveis exigem análise adicional.
+This inspects the model; it does not compile or prove kernel equivalence. Dynamic shapes, alternative layouts and incompatible normalization require further analysis.
 
-## Passo a passo
+## Steps
 
-1. Crie `models/novo_modelo/`. O nome da pasta é o valor de `--model`; não é necessário editar a CLI.
-2. Coloque o TFLite original nessa pasta. O nome pode ser `model.tflite` ou outro informado em `model.tflite`. O pipeline não o converte nem renomeia.
-3. Escolha o template ativo `../../wat/templates/mobilenet_int8_v1.wat`, ou copie-o para `wat/model_template.wat` e aponte o manifest. Evite o template legado `wat/templates/model_template.wat` da raiz.
-4. Declare `contract="layerparam-v1"` e `num_slots=3`. Um contrato novo exige implementação Python/WAT nova; não basta renomeá-lo.
-5. Determine o formato dos bytes host. RGB565 requer 2×H×W bytes; RGB/BGR888 requer 3×H×W. Não há cabeçalho nem conversão automática de PNG.
-6. Para RGB565, use `synthetic_layer="rgb565_to_rgb888"` e entrada TFLite UINT8. Para RGB/BGR888, use `"none"`.
-7. Selecione um adapter compatível. Binário usa RGB565 e exatamente duas classes; ImageNet usa labels por índice e RGB/BGR. Outros domínios exigem Strategy própria.
-8. Crie pastas de teste não vazias. Discovery acontece antes da geração; não é possível usar a CLI atual para compilar um pacote sem testes válidos.
-9. Configure labels/classes com a ordem real do tensor de saída. Para ImageNet, cada entrada JSON deve ter `[wnid, class_name]` e cobrir os índices. Para binário, configure datasets com labels presentes em `classes`.
-10. Execute os comandos abaixo e confira o código de saída.
-11. Inspecione relatórios intermediários e compare os resultados com uma referência numérica apropriada antes de generalizar o uso.
+1. Create models/novo_modelo/. The directory name is the --model value; CLI edits are unnecessary.
+2. Put the original TFLite there. Its name can be model.tflite or another path specified in model.tflite. The pipeline neither converts nor renames it.
+3. Choose the active ../../wat/templates/mobilenet_int8_v1.wat template, or copy it into wat/model_template.wat and update the manifest. Avoid the root legacy wat/templates/model_template.wat.
+4. Declare contract="layerparam-v1" and num_slots=3. A new contract requires Python/WAT implementation, not just a new name.
+5. Determine host byte format. RGB565 requires 2×H×W bytes; RGB/BGR888 requires 3×H×W. There are no headers or automatic PNG conversion.
+6. RGB565 requires synthetic_layer="rgb565_to_rgb888" and UINT8 TFLite input. RGB/BGR888 uses "none".
+7. Select a compatible adapter. Binary uses RGB565 and exactly two classes; ImageNet uses indexed labels and RGB/BGR. Other domains need their own Strategy.
+8. Create nonempty test directories. Discovery precedes generation; the current CLI cannot compile a package without valid tests.
+9. Match labels/classes to actual output tensor order. ImageNet JSON entries must contain [wnid, class_name] and cover output indices. Binary datasets need labels included in classes.
+10. Run the following commands and inspect the exit code.
+11. Inspect intermediate reports and compare against an appropriate numerical reference before broader use.
 
 ```powershell
 python main.py --list-models
@@ -46,53 +48,43 @@ python main.py --model novo_modelo
 python -m unittest discover -s tests -v
 ```
 
-## Árvore a criar
+## Package tree
 
 ```text
 models/novo_modelo/
-├── model.toml                  nomeia fontes, formato e adapter
-├── model.tflite                fonte original
-├── test/                       RAWs no formato documentado
-├── labels/                     se o adapter exigir
-├── wat/                        opcional: template local
-├── generated/                  criado pelos escritores
+├── model.toml                  sources, format, adapter
+├── model.tflite                original source
+├── test/                       RAWs in the documented format
+├── labels/                     if required by the adapter
+├── wat/                        optional local template
+├── generated/                  created by writers
 │   ├── model.wat
 │   └── model.wasm
-└── reports/                    criado nas etapas de extração/teste
+└── reports/                    created during extraction/testing
 ```
 
-Entra um conjunto de fontes montado pelo autor do pacote. `ModelPackage` resolve caminhos e os escritores criam os destinos. Saem artefatos, sem alterar o TFLite. O conteúdo das fontes é específico; os nomes dos artefatos são fixos para todos os pacotes. `generated/` e `reports/` não precisam existir antes de executar.
+The author supplies sources, ModelPackage resolves paths, and writers create output directories without changing TFLite. Sources are model-specific; artifact names are fixed. generated/ and reports/ need not exist beforehand.
 
-## Decisão de compatibilidade
+## Compatibility decision
 
 ```text
-                  novo TFLite
-                       │
-                       ▼
-      I/O, operadores e normalização compatíveis?
-                       │
-          ┌────────────┴────────────┐
-          ▼                         ▼
-         sim                       não
-          │                         │
-manifest + testes             identificar a fronteira
-          │                         ├── adapter: formato/semântica
-          ▼                         ├── extractor: operador/metadata
-     executar                       ├── ABI: campos/exports
-          │                         └── WAT: kernel/matemática
-          ▼                         │
-inspecionar reports           implementar e validar antes
-          │                   de declarar suporte
-          ▼
-comparar com referência
+new TFLite → compatible I/O, operators and normalization?
+               ├─ yes → manifest + tests → run → inspect reports → compare reference
+               └─ no → identify the boundary
+                         ├─ adapter: format/semantics
+                         ├─ extractor: operator/metadata
+                         ├─ ABI: fields/exports
+                         └─ WAT: kernel/mathematics
+                       implement and validate before claiming support
 ```
 
-Entram modelo e requisitos. A compatibilidade determina se cadastro basta ou se é necessário código. Sai um pacote executável ou uma lista concreta de extensões. `ModelPipeline` compartilha o fluxo, mas não torna genéricos kernels que ainda assumem INT8, depth multiplier 1, média espacial e softmax específico.
+Compatibility determines whether registration suffices or code changes are needed. ModelPipeline shares orchestration, but does not generalize kernels that still assume INT8, depth multiplier 1, spatial mean and specific softmax behavior.
 
-## Quando cadastro não basta
+## When registration is insufficient
 
-Novos opcodes, FLOAT32, múltiplas entradas/saídas, áudio, batch maior, mais de três slots, normalização INT8 diferente, ADD com broadcasting e MEAN em eixos arbitrários são exemplos que não estão cobertos pela configuração atual. Saída softmax com outra escala também exige atenção ao WAT, que usa constantes fixas. O contrato e os testes precisam acompanhar qualquer alteração numérica.
+New opcodes, FLOAT32, multiple inputs/outputs, audio, larger batches, more than three slots, other INT8 normalization, broadcasting ADD and arbitrary-axis MEAN exceed current configuration support. A different softmax output scale also requires attention to fixed WAT constants. Numerical changes must update the contract and tests.
 
-## Interpretar o primeiro resultado
+## Reading the first result
 
-02 revela dependências; 03 e 04 revelam armazenamento lógico; 05–06 mostram parâmetros extraídos; 07–08 dimensionam regiões; 09 detalha os kernels; 10 mostra ponteiros serializados; 11 fecha a memória; 12 apresenta casos e erros. Uma inferência sem trap não prova que a rede foi traduzida corretamente. Para depurar diferenças, compare intermediários por camada com um interpretador de referência; essa comparação ainda não é automatizada no projeto.
+02 reveals dependencies; 03/04 logical storage; 05/06 extracted parameters; 07/08 region sizes; 09 kernel fields; 10 serialized pointers; 11 complete memory layout; 12 cases/errors. Trap-free inference does not prove correct translation. Compare per-layer intermediates against a reference interpreter to investigate differences; this is not yet automated.
+

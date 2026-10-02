@@ -1,21 +1,23 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](11-layer-params.md) | [Português (Brasil)](11-layer-params.pt-BR.md)
 
-# 11 — Construção das LayerParams (`layer_params.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 11 — Building LayerParams (`layer_params.py`)
 
-O arquivo `extractor/layer_params.py` é responsável por transformar todas as informações extraídas e calculadas nas etapas anteriores em uma representação uniforme das operações que serão executadas pelo runtime WebAssembly.
+## 1. Module purpose
 
-Até este ponto, as informações estão distribuídas entre vários módulos:
+`extractor/layer_params.py` converts all previously extracted and calculated information into a uniform representation of operations executed by the WebAssembly runtime.
+
+At this point, information is distributed across several modules:
 
 ```text
 graph.py
     ↓
-estrutura do grafo
+graph structure
 
 slots.py
     ↓
-alocação lógica de slots
+logical slot allocation
 
 tensor_mapping.py
     ↓
@@ -23,48 +25,48 @@ tensor → slot
 
 weights.py
     ↓
-offsets de pesos e bias
+weight and bias offsets
 
 quantization.py
     ↓
-multipliers, shifts e Q6
+multipliers, shifts, and Q6
 
 memory.py
     ↓
-endereços físicos das regiões
+physical region addresses
 
 operator_options.py
     ↓
 stride, dilation, padding,
-ativação e depth multiplier
+activation and depth multiplier
 ```
 
-`layer_params.py` reúne tudo isso.
+`layer_params.py` brings all of this together.
 
-O resultado é uma lista:
+The result is a list:
 
 ```text
 layer_params
 ```
 
-na qual cada elemento descreve uma operação do runtime.
+in which each element describes one runtime operation.
 
-Conceitualmente:
+Conceptually:
 
 ```text
-TFLite + extração + planejamento
+TFLite + extraction + planning
               │
               ▼
         layer_params.py
               │
               ▼
-       LayerParam lógico
+       logical LayerParam
               │
               ▼
         params_blob.py
               │
               ▼
-       LayerParam[] binário
+       binary LayerParam[]
               │
               ▼
              WASM
@@ -72,36 +74,36 @@ TFLite + extração + planejamento
 
 ---
 
-# 2. Papel arquitetural
+# 2. Architectural role
 
-Este módulo é a fronteira entre:
+This module is the boundary between:
 
 ```text
-modelo TFLite
+TFLite model
 +
-estruturas do extrator
+extractor structures
 ```
 
-e:
+and:
 
 ```text
-formato esperado pelo runtime
+the format expected by the runtime
 ```
 
-Antes dele, os dados ainda possuem significados específicos:
+Before it, data still have specific meanings:
 
 ```text
 tensor_id
 op_index
 weight_offset
 mul_offset
-slot lógico
-padding SAME
+logical slot
+SAME padding
 scale
 zero point
 ```
 
-Depois dele, essas informações passam a ocupar campos padronizados:
+After it, this information occupies standardized fields:
 
 ```text
 op_type
@@ -145,24 +147,24 @@ out_h
 out_w
 ```
 
-Esses campos serão posteriormente serializados em uma estrutura binária fixa.
+These fields will later be serialized into a fixed binary structure.
 
 ---
 
-# 3. Importações
+# 3. Imports
 
-O módulo começa com:
+The module starts with:
 
 ```python
 import math
 import struct
 ```
 
-`math` é utilizado principalmente nos cálculos específicos do `SOFTMAX`.
+`math` is mainly used for `SOFTMAX`-specific calculations.
 
-`struct` é utilizado para determinar o tamanho da estrutura binária `LayerParam`.
+`struct` determines the size of the binary `LayerParam` structure.
 
-Também são importados helpers TFLite:
+TFLite helpers are also imported:
 
 ```python
 from extractor.tflite_utils import (
@@ -173,23 +175,23 @@ from extractor.tflite_utils import (
 )
 ```
 
-Esses helpers fornecem:
+These helpers provide:
 
 ```text
 op_name()
-    → nome da operação
+    → operation name
 
 scale_scalar()
-    → scale do tensor
+    → tensor scale
 
 zp_scalar()
-    → zero point do tensor
+    → tensor zero point
 
 tensor_shape_list()
-    → shape Python
+    → Python shape
 ```
 
-O módulo também recebe cálculos de quantização:
+The module also receives quantization calculations:
 
 ```python
 from extractor.quantization import (
@@ -198,7 +200,7 @@ from extractor.quantization import (
 )
 ```
 
-e opções dos operadores:
+and operator options:
 
 ```python
 from extractor.operator_options import (
@@ -212,32 +214,32 @@ from extractor.operator_options import (
 )
 ```
 
-Essa composição demonstra que `layer_params.py` não deve refazer os cálculos que já pertencem aos módulos especializados.
+This composition shows that `layer_params.py` should not repeat calculations belonging to specialized modules.
 
 ---
 
 # 4. `LP_FMT`
 
-A estrutura binária futura é definida por:
+The future binary structure is defined by:
 
 ```python
 LP_FMT = "<" + "i" * 29
 ```
 
-Isso significa:
+This means:
 
 ```text
 <
     little-endian
 
 i
-    inteiro assinado de 32 bits
+    signed 32-bit integer
 
 29
-    quantidade de campos
+    field count
 ```
 
-Portanto a estrutura possui:
+The structure therefore has:
 
 ```text
 29 × 4 bytes
@@ -249,7 +251,7 @@ Portanto a estrutura possui:
 
 # 5. `LP_SIZE`
 
-O tamanho é calculado automaticamente:
+The size is calculated automatically:
 
 ```python
 LP_SIZE = struct.calcsize(
@@ -257,39 +259,39 @@ LP_SIZE = struct.calcsize(
 )
 ```
 
-Resultando em:
+Resulting in:
 
 ```text
 LP_SIZE = 116
 ```
 
-Esse valor não é escrito manualmente.
+This value is not written manually.
 
-Assim, se o formato mudar futuramente, `struct.calcsize()` continua sendo a fonte de verdade para seu tamanho.
+If the format changes, `struct.calcsize()` remains the source of truth for its size.
 
 ---
 
-# 6. Por que estrutura fixa?
+# 6. Why a fixed structure?
 
-O runtime precisa iterar rapidamente pelas camadas.
+The runtime must iterate quickly over layers.
 
-Uma estrutura de tamanho constante permite calcular:
+A constant-sized structure allows calculating:
 
 ```text
-endereço da camada i
+address of layer i
 =
 PARAMS_BASE
 +
 i × LP_SIZE
 ```
 
-Com:
+With:
 
 ```text
 LP_SIZE = 116
 ```
 
-temos:
+we have:
 
 ```text
 layer 0 → PARAMS_BASE
@@ -304,9 +306,9 @@ layer 3 → PARAMS_BASE + 348
 
 ---
 
-# 7. Tipos internos de operação
+# 7. Internal operation types
 
-O módulo define:
+The module defines:
 
 ```python
 OP_CONV = 1
@@ -319,37 +321,37 @@ OP_QUANTIZE = 7
 OP_RGB565_TO_RGB888 = 8
 ```
 
-Esses códigos formam o protocolo entre:
+These codes form the protocol between:
 
 ```text
-extrator
+extractor
 ```
 
-e:
+and:
 
 ```text
-runtime WAT
+WAT runtime
 ```
 
-O runtime não precisa manipular strings como:
+The runtime does not need to manipulate strings such as:
 
 ```text
 "CONV_2D"
 ```
 
-Ele recebe:
+It receives:
 
 ```text
 1
 ```
 
-e executa o kernel correspondente.
+and executes the corresponding kernel.
 
 ---
 
-# 8. Mapeamento das operações
+# 8. Operation mapping
 
-| Código | Operação            |
+| Code | Operation |
 | -----: | ------------------- |
 |    `1` | `CONV_2D`           |
 |    `2` | `DEPTHWISE_CONV_2D` |
@@ -360,22 +362,22 @@ e executa o kernel correspondente.
 |    `7` | `QUANTIZE`          |
 |    `8` | `RGB565_TO_RGB888`  |
 
-A oitava operação não vem originalmente do modelo TFLite.
+The eighth operation does not originate in the TFLite model.
 
-Ela é criada pelo próprio extrator.
+It is created by the extractor itself.
 
 ---
 
 # 9. Flags
 
-São definidos:
+The following are defined:
 
 ```python
 FLAG_PADDING_SAME = 1 << 0
 FLAG_HAS_Q6 = 1 << 1
 ```
 
-Logo:
+Therefore:
 
 ```text
 FLAG_PADDING_SAME = 1
@@ -383,39 +385,39 @@ FLAG_PADDING_SAME = 1
 FLAG_HAS_Q6 = 2
 ```
 
-Em representação binária:
+In binary representation:
 
 ```text
-bit 0 → padding SAME
+bit 0 → SAME padding
 
-bit 1 → presença/uso de Q6
+bit 1 → Q6 presence/use
 ```
 
 ---
 
-# 10. Exemplo de combinação
+# 10. Combination example
 
-Uma convolução com:
+A convolution with:
 
 ```text
-padding SAME
+SAME padding
 +
 ReLU6
 ```
 
-pode possuir:
+may have:
 
 ```text
 flags = 1 | 2
 ```
 
-resultando em:
+resulting in:
 
 ```text
 flags = 3
 ```
 
-Binariamente:
+In binary:
 
 ```text
 00000011
@@ -423,9 +425,9 @@ Binariamente:
 
 ---
 
-# 11. Reutilização do bit 0 para `QUANTIZE`
+# 11. Reusing bit 0 for `QUANTIZE`
 
-Existe uma decisão importante:
+There is an important decision:
 
 ```python
 FLAG_QUANTIZE_INPUT_INT8 = (
@@ -433,55 +435,55 @@ FLAG_QUANTIZE_INPUT_INT8 = (
 )
 ```
 
-Ou seja:
+In other words:
 
 ```text
 FLAG_QUANTIZE_INPUT_INT8 = 1
 ```
 
-e:
+and:
 
 ```text
 FLAG_PADDING_SAME = 1
 ```
 
-possuem exatamente o mesmo bit.
+use exactly the same bit.
 
 ---
 
-# 12. Isso não significa a mesma semântica
+# 12. This does not imply the same semantics
 
-O significado depende de:
+The meaning depends on:
 
 ```text
 op_type
 ```
 
-Para uma convolução:
+For a convolution:
 
 ```text
 bit 0 = 1
     ↓
-padding SAME
+SAME padding
 ```
 
-Para `QUANTIZE`:
+For `QUANTIZE`:
 
 ```text
 bit 0 = 1
     ↓
-input é int8
+input is int8
 ```
 
-Portanto:
+Therefore:
 
 ```text
 flags
 ```
 
-não deve ser interpretado isoladamente.
+must not be interpreted in isolation.
 
-A interpretação correta é:
+The correct interpretation is:
 
 ```text
 (op_type, flags)
@@ -489,51 +491,51 @@ A interpretação correta é:
 
 ---
 
-# 13. Tipos TFLite utilizados
+# 13. TFLite types used
 
-O módulo define:
+The module defines:
 
 ```python
 TFLITE_UINT8 = 3
 TFLITE_INT8 = 9
 ```
 
-Esses códigos são usados para decidir o significado do input do `QUANTIZE`.
+These codes determine the meaning of the `QUANTIZE` input.
 
 ---
 
-# 14. Constantes da camada RGB
+# 14. RGB layer constants
 
-Também existem:
+There are also:
 
 ```python
 FORMAT_FLAG_ADDR = 0
 FORMAT_RGB565 = 65
 ```
 
-e:
+and:
 
 ```python
 INPUT_FORMAT_SLOT = 0
 RGB888_SLOT = 1
 ```
 
-Esses valores pertencem à camada sintética de entrada.
+These values belong to the synthetic input layer.
 
 ---
 
-# 15. Função `tensor_hwc()`
+# 15. The `tensor_hwc()` function
 
-A primeira função auxiliar é:
+The first helper function is:
 
 ```python
 def tensor_hwc(tensor):
 ```
 
-Ela transforma o shape de um tensor em:
+It converts a tensor's shape into:
 
 ```text
-shape completo
+complete shape
 height
 width
 channels
@@ -541,9 +543,9 @@ channels
 
 ---
 
-# 16. Shape original
+# 16. Original shape
 
-Primeiro:
+First:
 
 ```python
 shape = tensor_shape_list(
@@ -551,7 +553,7 @@ shape = tensor_shape_list(
 )
 ```
 
-Exemplo:
+Example:
 
 ```text
 [1, 128, 128, 3]
@@ -559,17 +561,17 @@ Exemplo:
 
 ---
 
-# 17. Altura
+# 17. Height
 
-O código usa:
+The code uses:
 
 ```text
 shape[1]
 ```
 
-quando existem pelo menos três dimensões.
+when there are at least three dimensions.
 
-Assim:
+Thus:
 
 ```text
 [1, 128, 128, 3]
@@ -577,7 +579,7 @@ Assim:
     height
 ```
 
-produz:
+produces:
 
 ```text
 height = 128
@@ -585,15 +587,15 @@ height = 128
 
 ---
 
-# 18. Largura
+# 18. Width
 
-Quando possível:
+When possible:
 
 ```text
 width = shape[2]
 ```
 
-Exemplo:
+Example:
 
 ```text
 [1, 128, 128, 3]
@@ -603,9 +605,9 @@ Exemplo:
 
 ---
 
-# 19. Canais
+# 19. Channels
 
-Para tensores 4D:
+For 4D tensors:
 
 ```text
 channels = shape[3]
@@ -613,22 +615,22 @@ channels = shape[3]
 
 ---
 
-# 20. Tensores 2D
+# 20. 2D tensors
 
-Existe um tratamento especial:
+There is special handling:
 
 ```python
 shape[1]
 if len(shape) == 2
 ```
 
-Assim um tensor como:
+Thus, a tensor such as:
 
 ```text
 [1, 1000]
 ```
 
-resulta em:
+results in:
 
 ```text
 height = 1
@@ -636,13 +638,13 @@ width = 1
 channels = 1000
 ```
 
-Essa representação é útil para `FULLY_CONNECTED`.
+This representation is useful for `FULLY_CONNECTED`.
 
 ---
 
 # 21. Fallback
 
-Quando não existe uma dimensão apropriada:
+When an appropriate dimension is absent:
 
 ```text
 height = 1
@@ -652,48 +654,48 @@ width = 1
 channels = 1
 ```
 
-A função normaliza diferentes shapes para uma representação HWC comum.
+The function normalizes different shapes into a common HWC representation.
 
 ---
 
-# 22. Primeiro problema especial: slots do runtime
+# 22. First special issue: runtime slots
 
-Até `tensor_mapping.py`, o input do modelo estava associado logicamente a:
+Up to `tensor_mapping.py`, the model input was logically associated with:
 
 ```text
 SLOT0
 ```
 
-Porém, o runtime agora introduz uma nova etapa antes do primeiro operador TFLite:
+The runtime now introduces a new stage before the first TFLite operator:
 
 ```text
 RGB565_TO_RGB888
 ```
 
-Isso exige reorganizar os slots.
+This requires reorganizing slots.
 
 ---
 
-# 23. Antes da camada sintética
+# 23. Before the synthetic layer
 
-Conceitualmente:
+Conceptually:
 
 ```text
-input TFLite
+TFLite input
     ↓
 SLOT0
     ↓
-QUANTIZE / primeira operação
+QUANTIZE / first operation
 ```
 
 ---
 
-# 24. Depois da camada sintética
+# 24. After the synthetic layer
 
-O runtime passa a utilizar:
+The runtime now uses:
 
 ```text
-dados recebidos
+received data
     ↓
 SLOT0
     ↓
@@ -701,16 +703,16 @@ RGB565_TO_RGB888
     ↓
 SLOT1
     ↓
-modelo TFLite
+TFLite model
 ```
 
-Portanto a antiga saída lógica de SLOT0 precisa deslocar-se.
+The former logical SLOT0 output must therefore shift.
 
 ---
 
 # 25. `build_runtime_tensor_mapping()`
 
-Essa transformação é feita por:
+This transformation is performed by:
 
 ```python
 def build_runtime_tensor_mapping(
@@ -724,25 +726,25 @@ def build_runtime_tensor_mapping(
 ):
 ```
 
-A função cria um novo:
+The function creates a new:
 
 ```text
 tensor → slot
 ```
 
-específico para o runtime.
+specific to the runtime.
 
 ---
 
-# 26. Input original do grafo
+# 26. Original graph input
 
-Para cada:
+For each:
 
 ```python
 tensor_id in graph_inputs
 ```
 
-o código faz:
+the code does:
 
 ```python
 tensor_to_slot[
@@ -750,45 +752,45 @@ tensor_to_slot[
 ] = slot_shift
 ```
 
-Com o deslocamento atual:
+With the current shift:
 
 ```text
 slot_shift = 1
 ```
 
-isso significa:
+this means:
 
 ```text
-input TFLite
+TFLite input
     ↓
 runtime SLOT1
 ```
 
 ---
 
-# 27. Por que SLOT1?
+# 27. Why SLOT1?
 
-Porque:
+Because:
 
 ```text
 SLOT0
 ```
 
-passa a representar a região de entrada usada pela camada sintética.
+now represents the input region used by the synthetic layer.
 
-Depois da conversão:
+After conversion:
 
 ```text
 SLOT1
 ```
 
-contém os dados RGB888 esperados pelo restante da rede.
+contains the RGB888 data expected by the rest of the network.
 
 ---
 
-# 28. Remapeamento das saídas reais
+# 28. Remapping actual outputs
 
-Para cada alocação original:
+For each original allocation:
 
 ```python
 original_slot = (
@@ -796,7 +798,7 @@ original_slot = (
 )
 ```
 
-é calculado:
+the following is calculated:
 
 ```python
 runtime_slot = (
@@ -807,16 +809,16 @@ runtime_slot = (
 
 ---
 
-# 29. Exemplo com três slots
+# 29. Example with three slots
 
-Com:
+With:
 
 ```text
 num_slots = 3
 slot_shift = 1
 ```
 
-temos:
+we have:
 
 ```text
 original SLOT0
@@ -834,9 +836,9 @@ runtime SLOT0
 
 ---
 
-# 30. Rotação circular
+# 30. Circular rotation
 
-Portanto:
+Therefore:
 
 ```text
 0 → 1
@@ -846,39 +848,39 @@ Portanto:
 2 → 0
 ```
 
-Não estamos adicionando um quarto slot.
+We are not adding a fourth slot.
 
-Estamos realizando uma rotação dos três slots existentes.
+We are rotating the three existing slots.
 
 ---
 
-# 31. Por que usar módulo `%`?
+# 31. Why use modulo `%`?
 
-Para:
+For:
 
 ```text
 original_slot = 2
 ```
 
-teríamos:
+we would have:
 
 ```text
 2 + 1 = 3
 ```
 
-Mas:
+But:
 
 ```text
 3 % 3 = 0
 ```
 
-faz a rotação retornar ao início.
+returns the rotation to its starting point.
 
 ---
 
-# 32. Registro da conversão
+# 32. Recording the conversion
 
-Cada output recebe:
+Each output receives:
 
 ```python
 {
@@ -889,7 +891,7 @@ Cada output recebe:
 }
 ```
 
-Isso permite gerar um relatório como:
+This allows generating a report such as:
 
 ```text
 tensor=42
@@ -900,9 +902,9 @@ slot_runtime=0
 
 ---
 
-# 33. Resultado do runtime mapping
+# 33. Runtime mapping result
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -912,33 +914,33 @@ A função retorna:
 }
 ```
 
-A partir daqui, `layer_params.py` deve usar:
+From this point onward, `layer_params.py` must use:
 
 ```text
 runtime_tensor_to_slot
 ```
 
-e não mais o mapeamento lógico anterior.
+rather than the previous logical mapping.
 
-A rotação é feita explicitamente para acomodar a conversão sintética de entrada.
+Rotation explicitly accommodates the synthetic input conversion.
 
 ---
 
-# 34. Planejamento da região `LayerParam[]`
+# 34. Planning the `LayerParam[]` region
 
-A função:
+The function:
 
 ```python
 calculate_layer_memory_layout()
 ```
 
-calcula quanto espaço as estruturas das camadas ocupam e onde começam os slots.
+calculates the space occupied by layer structures and where slots start.
 
 ---
 
-# 35. Quantidade total de camadas
+# 35. Total layer count
 
-É calculado:
+The following is calculated:
 
 ```python
 num_layers = (
@@ -949,21 +951,21 @@ num_layers = (
 
 ---
 
-# 36. Exemplo
+# 36. Example
 
-Se o modelo possui:
-
-```text
-67 operações reais utilizadas
-```
-
-e adicionamos:
+If the model has:
 
 ```text
-1 camada sintética
+67 actual operations in use
 ```
 
-teremos:
+and we add:
+
+```text
+1 synthetic layer
+```
+
+we get:
 
 ```text
 num_layers = 68
@@ -971,15 +973,15 @@ num_layers = 68
 
 ---
 
-# 37. Tamanho bruto de `PARAMS`
+# 37. Raw `PARAMS` size
 
-Com:
+With:
 
 ```text
 LP_SIZE = 116
 ```
 
-o tamanho bruto seria:
+the raw size would be:
 
 ```text
 68 × 116
@@ -989,9 +991,9 @@ o tamanho bruto seria:
 
 ---
 
-# 38. Alinhamento de `params_bytes`
+# 38. Aligning `params_bytes`
 
-O código utiliza:
+The code uses:
 
 ```text
 ceil(
@@ -1001,25 +1003,25 @@ ceil(
 × alignment
 ```
 
-produzindo um tamanho alinhado.
+producing an aligned size.
 
 ---
 
-# 39. Por que alinhar o bloco inteiro?
+# 39. Why align the entire block?
 
-A próxima região:
+The next region:
 
 ```text
 SLOT0
 ```
 
-deve começar em uma fronteira coerente com a política de memória.
+must start at a boundary consistent with the memory policy.
 
 ---
 
-# 40. Base do primeiro slot
+# 40. First slot base
 
-Depois:
+Then:
 
 ```text
 SLOT0_BASE
@@ -1031,13 +1033,13 @@ align_up(
 )
 ```
 
-A implementação faz a fórmula diretamente, em vez de chamar `align_up()`.
+The implementation applies the formula directly instead of calling `align_up()`.
 
 ---
 
-# 41. Slots seguintes
+# 41. Subsequent slots
 
-Para cada slot seguinte:
+For each subsequent slot:
 
 ```text
 next_base
@@ -1047,7 +1049,7 @@ previous_slot_base
 slot_bytes
 ```
 
-e depois:
+and then:
 
 ```text
 next_base
@@ -1057,9 +1059,9 @@ align_up(next_base)
 
 ---
 
-# 42. Resultado
+# 42. Result
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -1069,7 +1071,7 @@ A função retorna:
 }
 ```
 
-Assim, o layout nessa fase fica:
+The layout at this stage is therefore:
 
 ```text
 PARAMS_BASE
@@ -1080,10 +1082,10 @@ PARAMS_BASE
     ├── ...
     │
     ▼
-fim de PARAMS
+end of PARAMS
     │
     ▼
-alinhamento
+alignment
     │
     ▼
 SLOT0
@@ -1097,49 +1099,49 @@ SLOT2
 
 ---
 
-# 43. Camada sintética `RGB565_TO_RGB888`
+# 43. Synthetic `RGB565_TO_RGB888` layer
 
-Antes das operações reais é criada:
+Before actual operations, it creates:
 
 ```python
 build_rgb565_layer()
 ```
 
-Essa camada não existe no TFLite.
+This layer does not exist in TFLite.
 
 ---
 
-# 44. Objetivo
+# 44. Purpose
 
-Ela cria uma operação do runtime:
+It creates a runtime operation:
 
 ```text
 RGB565_TO_RGB888
 ```
 
-antes da rede.
+before the network.
 
-A camada é identificada por:
+The layer is identified by:
 
 ```python
 "op_index": -1
 ```
 
-indicando que:
+indicating that:
 
 ```text
-não existe operador TFLite correspondente
+there is no corresponding TFLite operator
 ```
 
 ---
 
-# 45. Tipo interno
+# 45. Internal type
 
 ```python
 "op_type": OP_RGB565_TO_RGB888
 ```
 
-ou:
+or:
 
 ```text
 op_type = 8
@@ -1149,20 +1151,20 @@ op_type = 8
 
 # 46. Slots
 
-A camada usa:
+The layer uses:
 
 ```text
 input = SLOT0
 output = SLOT1
 ```
 
-por meio de:
+through:
 
 ```python
 "in_slot": INPUT_FORMAT_SLOT
 ```
 
-e:
+and:
 
 ```python
 "out_slot": RGB888_SLOT
@@ -1170,9 +1172,9 @@ e:
 
 ---
 
-# 47. Geometria
+# 47. Geometry
 
-A altura, largura e canais vêm do tensor de entrada original do modelo:
+Height, width, and channels come from the original model input tensor:
 
 ```text
 in_h
@@ -1182,17 +1184,17 @@ input_channels
 
 ---
 
-# 48. Shape da saída
+# 48. Output shape
 
-A conversão não altera:
+Conversion does not change:
 
 ```text
-altura
-largura
-número de canais
+height
+width
+channel count
 ```
 
-Assim:
+Thus:
 
 ```text
 out_h = in_h
@@ -1204,35 +1206,35 @@ cout = cin
 
 ---
 
-# 49. Campo `kh`
+# 49. The `kh` field
 
-A camada usa:
+The layer uses:
 
 ```python
 "kh": FORMAT_RGB565
 ```
 
-com:
+with:
 
 ```text
 FORMAT_RGB565 = 65
 ```
 
-Portanto:
+Therefore:
 
 ```text
 kh = 65
 ```
 
-é um valor especial nesta operação.
+is a special value for this operation.
 
-Não representa altura de kernel.
+It does not represent kernel height.
 
 ---
 
-# 50. Ausência de pesos
+# 50. No weights
 
-A camada possui:
+The layer has:
 
 ```text
 w_off = 0
@@ -1242,33 +1244,33 @@ has_bias = False
 has_mulq6 = False
 ```
 
-porque se trata de uma conversão de formato implementada diretamente pelo runtime.
+because this is a format conversion implemented directly by the runtime.
 
 ---
 
-# 51. Ponteiro de entrada
+# 51. Input pointer
 
-O campo auxiliar:
+The helper field:
 
 ```python
 "input_ptrs"
 ```
 
-contém:
+contains:
 
 ```text
 slot_bases[0]
 ```
 
-ou seja, o endereço físico do SLOT0.
+that is, SLOT0's physical address.
 
-A camada sintética é inserida explicitamente antes de qualquer operador real do modelo.
+The synthetic layer is explicitly inserted before any actual model operator.
 
 ---
 
-# 52. Builders especializados
+# 52. Specialized builders
 
-Depois da camada sintética, cada tipo de operação possui um builder apropriado.
+After the synthetic layer, each operation type has an appropriate builder.
 
 ```text
 QUANTIZE
@@ -1292,13 +1294,13 @@ CONV / DW / FC
 _build_weighted_params()
 ```
 
-Essa divisão evita uma única função gigantesca cheia de condicionais.
+This avoids one enormous function full of conditionals.
 
 ---
 
 # 53. `_build_quantize_params()`
 
-Essa função constrói a representação da operação:
+This function builds the representation of:
 
 ```text
 QUANTIZE
@@ -1306,23 +1308,23 @@ QUANTIZE
 
 ---
 
-# 54. Validação da entrada
+# 54. Input validation
 
-A operação precisa de ao menos um input.
+The operation requires at least one input.
 
-Se não houver:
+If none exists:
 
 ```text
 RuntimeError
 ```
 
-é lançado.
+is raised.
 
 ---
 
-# 55. Quantização de entrada e saída
+# 55. Input and output quantization
 
-São obtidos:
+The following are obtained:
 
 ```text
 scale_in
@@ -1334,9 +1336,9 @@ zp_out
 
 ---
 
-# 56. Relação entre escalas
+# 56. Scale relationship
 
-A requantização utiliza:
+Requantization uses:
 
 ```text
 ratio =
@@ -1347,9 +1349,9 @@ scale_out
 
 ---
 
-# 57. Multiplicador inteiro
+# 57. Integer multiplier
 
-Depois:
+Then:
 
 ```text
 ratio
@@ -1362,35 +1364,35 @@ shift
 
 ---
 
-# 58. Validação de `scale_out`
+# 58. Validating `scale_out`
 
-Se:
+If:
 
 ```text
 scale_out = 0
 ```
 
-a função interrompe a construção.
+the function stops construction.
 
-Isso evita uma divisão por zero.
+This prevents division by zero.
 
 ---
 
-# 59. Slot da entrada
+# 59. Input slot
 
-A função exige que:
+The function requires:
 
 ```text
 input_tensor_id
 ```
 
-esteja presente em:
+to be present in:
 
 ```text
 tensor_to_slot
 ```
 
-Caso contrário, lança:
+Otherwise, it raises:
 
 ```text
 RuntimeError
@@ -1398,30 +1400,30 @@ RuntimeError
 
 ---
 
-# 60. Ponteiro
+# 60. Pointer
 
-Depois:
+Then:
 
 ```text
 input_ptr =
 slot_bases[in_slot]
 ```
 
-Assim:
+Thus:
 
 ```text
 tensor
  ↓
 runtime slot
  ↓
-base física do slot
+physical slot base
 ```
 
 ---
 
-# 61. Tipo do input
+# 61. Input type
 
-O código inspeciona:
+The code inspects:
 
 ```python
 input_tensor.Type()
@@ -1429,22 +1431,22 @@ input_tensor.Type()
 
 ---
 
-# 62. Input INT8
+# 62. INT8 input
 
-Se:
+If:
 
 ```text
 input_dtype = TFLITE_INT8
 ```
 
-é definido:
+the following is set:
 
 ```text
 flags =
 FLAG_QUANTIZE_INPUT_INT8
 ```
 
-ou:
+or:
 
 ```text
 flags = 1
@@ -1452,15 +1454,15 @@ flags = 1
 
 ---
 
-# 63. Input UINT8
+# 63. UINT8 input
 
-Se:
+If:
 
 ```text
 input_dtype = TFLITE_UINT8
 ```
 
-temos:
+we have:
 
 ```text
 flags = 0
@@ -1468,55 +1470,55 @@ flags = 0
 
 ---
 
-# 64. Outros tipos
+# 64. Other types
 
-Tipos desconhecidos também recebem:
+Unknown types also receive:
 
 ```text
 flags = 0
 ```
 
-mas são registrados no dicionário:
+but are recorded in the dictionary:
 
 ```text
 quant_params
 ```
 
-como:
+such as:
 
 ```text
-unknown(código)
+unknown(code)
 ```
 
 ---
 
-# 65. `QUANTIZE` é in-place
+# 65. `QUANTIZE` runs in place
 
-A função explicitamente redefine:
+The function explicitly resets:
 
 ```python
 out_slot = in_slot
 ```
 
-Portanto:
+Therefore:
 
 ```text
-entrada
+input
     ↓
 SLOTn
     ↓
 QUANTIZE
     ↓
-mesmo SLOTn
+same SLOTn
 ```
 
-Isso preserva a decisão já existente em `slots.py`.
+This preserves the decision already present in `slots.py`.
 
 ---
 
-# 66. Reuso de campos no `QUANTIZE`
+# 66. Reusing fields in `QUANTIZE`
 
-Para essa operação:
+For this operation:
 
 ```text
 kh = multiplier
@@ -1525,22 +1527,22 @@ kw = shift
 
 pad_t = input_ptr
 
-zx = zero point de entrada
+zx = input zero point
 
-zy = zero point de saída
+zy = output zero point
 ```
 
-Os campos deixam de possuir seus significados geométricos tradicionais.
+The fields no longer have their traditional geometric meanings.
 
 ---
 
-# 67. Estrutura especial do QUANTIZE
+# 67. Special QUANTIZE structure
 
 ```text
 LayerParam
 ┌────────────────────────┐
 │ op_type = 7            │
-│ flags = tipo do input  │
+│ flags = input type     │
 │                        │
 │ kh = multiplier        │
 │ kw = shift             │
@@ -1552,19 +1554,19 @@ LayerParam
 └────────────────────────┘
 ```
 
-A função mantém também um dicionário detalhado `quant_params` para relatório e diagnóstico.
+The function also retains a detailed `quant_params` dictionary for reporting and diagnostics.
 
 ---
 
 # 68. `_build_add_params()`
 
-`ADD` é mais complexo porque possui duas entradas dinâmicas.
+`ADD` is more complex because it has two dynamic inputs.
 
 ---
 
-# 69. Entradas
+# 69. Inputs
 
-São carregados:
+The following are loaded:
 
 ```text
 input_tensor_a
@@ -1576,23 +1578,23 @@ output_tensor
 
 ---
 
-# 70. Quantização
+# 70. Quantization
 
-Para A:
+For A:
 
 ```text
 scale_a
 zp_a
 ```
 
-Para B:
+For B:
 
 ```text
 scale_b
 zp_b
 ```
 
-Para a saída:
+For the output:
 
 ```text
 scale_y
@@ -1601,9 +1603,9 @@ zp_y
 
 ---
 
-# 71. Parâmetros do ADD
+# 71. ADD parameters
 
-A função chama:
+The function calls:
 
 ```python
 compute_add_quantization_params(
@@ -1613,7 +1615,7 @@ compute_add_quantization_params(
 )
 ```
 
-recebendo:
+receiving:
 
 ```text
 mul_a
@@ -1630,9 +1632,9 @@ scale_common
 
 ---
 
-# 72. Ativação fundida
+# 72. Fused activation
 
-É obtida por:
+It is obtained through:
 
 ```python
 parse_add_options(
@@ -1640,7 +1642,7 @@ parse_add_options(
 )
 ```
 
-Assim um ADD pode carregar:
+An ADD can therefore carry:
 
 ```text
 NONE
@@ -1648,13 +1650,13 @@ RELU
 RELU6
 ```
 
-conforme suportado pelo parser.
+as supported by the parser.
 
 ---
 
-# 73. Dois slots de entrada
+# 73. Two input slots
 
-O módulo exige que ambos os tensors estejam mapeados:
+The module requires both tensors to be mapped:
 
 ```text
 tensor A → slot A
@@ -1662,7 +1664,7 @@ tensor A → slot A
 tensor B → slot B
 ```
 
-Depois:
+Then:
 
 ```text
 input_ptr_a =
@@ -1674,9 +1676,9 @@ slot_bases[slot_b]
 
 ---
 
-# 74. Reuso dos campos no ADD
+# 74. Reusing fields in ADD
 
-O `ADD` usa:
+`ADD` uses:
 
 ```text
 kh       = multiplier A
@@ -1687,28 +1689,28 @@ stride_h = multiplier B
 
 stride_w = shift B
 
-dil_h    = multiplier da saída
+dil_h    = output multiplier
 
-dil_w    = shift da saída
+dil_w    = output shift
 ```
 
 ---
 
-# 75. Ponteiros do ADD
+# 75. ADD pointers
 
-Os campos de padding são reutilizados:
+Padding fields are reused:
 
 ```text
-pad_t = ponteiro da entrada A
+pad_t = input A pointer
 
-pad_b = ponteiro da entrada B
+pad_b = input B pointer
 ```
 
 ---
 
-# 76. Zero points do ADD
+# 76. ADD zero points
 
-Também:
+Also:
 
 ```text
 pad_l = zero point A
@@ -1716,7 +1718,7 @@ pad_l = zero point A
 pad_r = zero point B
 ```
 
-Além disso:
+Also:
 
 ```text
 zx = zp_a
@@ -1728,11 +1730,11 @@ zy = zp_y
 
 ---
 
-# 77. Por que duplicar os zero points?
+# 77. Why duplicate zero points?
 
-`pad_l` e `pad_r` fazem parte do protocolo especial utilizado pelo kernel ADD.
+`pad_l` and `pad_r` belong to the special protocol used by the ADD kernel.
 
-Já:
+Whereas:
 
 ```text
 zx
@@ -1740,11 +1742,11 @@ zw
 zy
 ```
 
-mantêm a representação padronizada dos zero points da operação.
+retain the standardized representation of the operation's zero points.
 
 ---
 
-# 78. Diagrama do ADD
+# 78. ADD diagram
 
 ```text
 tensor A
@@ -1764,11 +1766,11 @@ SLOT B ────────────────┘
                   output SLOT
 ```
 
-A `LayerParam` precisa, portanto, transportar dois ponteiros reais de entrada.
+`LayerParam` must therefore carry two actual input pointers.
 
 ---
 
-# 79. Campos especiais do ADD
+# 79. Special ADD fields
 
 ```text
 kh       → mul0
@@ -1787,25 +1789,25 @@ pad_l    → zero point A
 pad_r    → zero point B
 ```
 
-Esse mapeamento aparece tanto no builder quanto no relatório gerado pelo módulo.
+This mapping appears in both the builder and the report generated by the module.
 
 ---
 
 # 80. `_build_mean_params()`
 
-A operação:
+The operation:
 
 ```text
 MEAN
 ```
 
-também recebe uma representação especializada.
+also receives a specialized representation.
 
 ---
 
-# 81. Quantização
+# 81. Quantization
 
-A função obtém:
+The function obtains:
 
 ```text
 scale_x
@@ -1817,16 +1819,16 @@ zp_y
 
 ---
 
-# 82. Relação
+# 82. Relationship
 
-É calculado:
+The following is calculated:
 
 ```text
 ratio =
 scale_x / scale_y
 ```
 
-e depois:
+and then:
 
 ```text
 multiplier
@@ -1837,7 +1839,7 @@ shift
 
 # 83. `spatial_size`
 
-A função calcula:
+The function calculates:
 
 ```python
 spatial_size = (
@@ -1848,16 +1850,16 @@ spatial_size = (
 
 ---
 
-# 84. Exemplo
+# 84. Example
 
-Para:
+For:
 
 ```text
 input =
 7 × 7 × 1280
 ```
 
-temos:
+we have:
 
 ```text
 spatial_size =
@@ -1866,13 +1868,13 @@ spatial_size =
 49
 ```
 
-O MEAN precisa usar esse valor para efetuar a média espacial.
+MEAN needs this value to compute the spatial average.
 
 ---
 
-# 85. Campos especiais
+# 85. Special fields
 
-O mapeamento é:
+The mapping is:
 
 ```text
 kh = multiplier
@@ -1886,21 +1888,21 @@ pad_t = input_ptr
 
 ---
 
-# 86. Demais parâmetros
+# 86. Other parameters
 
-Não existem:
+There are no:
 
 ```text
-pesos
-bias
-MUL externo
-SHIFT externo
-Q6 externo
+weights
+biases
+external MUL
+external SHIFT
+external Q6
 ```
 
-para essa representação.
+for this representation.
 
-Portanto:
+Therefore:
 
 ```text
 has_bias = False
@@ -1912,7 +1914,7 @@ has_mulq6 = False
 
 # 87. Zero points
 
-São registrados:
+The following are recorded:
 
 ```text
 zx = zp_x
@@ -1922,7 +1924,7 @@ zy = zp_y
 
 ---
 
-# 88. Representação
+# 88. Representation
 
 ```text
 LayerParam MEAN
@@ -1940,13 +1942,13 @@ zy        → output zero point
 
 # 89. `_build_softmax_params()`
 
-O `SOFTMAX` possui uma preparação ainda mais específica.
+`SOFTMAX` has even more specific preparation.
 
 ---
 
-# 90. Dados da entrada e saída
+# 90. Input and output data
 
-São obtidos:
+The following are obtained:
 
 ```text
 scale_x
@@ -1958,9 +1960,9 @@ zp_y
 
 ---
 
-# 91. Constantes utilizadas
+# 91. Constants used
 
-A implementação define:
+The implementation defines:
 
 ```text
 beta = 1.0
@@ -1972,7 +1974,7 @@ integer_bits = 5
 
 # 92. `input_left_shift`
 
-É calculado a partir de:
+It is calculated from:
 
 ```text
 integer_bits
@@ -1980,33 +1982,33 @@ integer_bits
 127 × scale_x
 ```
 
-utilizando:
+using:
 
 ```text
 log2
 floor
 ```
 
-e limitado inferiormente a zero.
+and bounded below by zero.
 
 ---
 
 # 93. `internal_scale`
 
-Também é calculado:
+The following is also calculated:
 
 ```text
 internal_scale =
 1 / 2^integer_bits
 ```
 
-Com:
+With:
 
 ```text
 integer_bits = 5
 ```
 
-temos:
+we have:
 
 ```text
 internal_scale =
@@ -2015,26 +2017,26 @@ internal_scale =
 0.03125
 ```
 
-Esse valor é preservado em:
+This value is retained in:
 
 ```text
 quant_params
 ```
 
-para relatório.
+for the report.
 
 ---
 
-# 94. Multiplicador beta
+# 94. Beta multiplier
 
-O cálculo usa:
+The calculation uses:
 
 ```text
 real_multiplier =
 beta × scale_x
 ```
 
-Depois:
+Then:
 
 ```text
 real_multiplier
@@ -2049,7 +2051,7 @@ input_beta_left_shift
 
 # 95. `diff_min`
 
-A implementação fixa:
+The implementation fixes:
 
 ```text
 diff_min = -128
@@ -2057,9 +2059,9 @@ diff_min = -128
 
 ---
 
-# 96. Slot e ponteiro
+# 96. Slot and pointer
 
-Assim como nas demais operações:
+As with other operations:
 
 ```text
 input_tensor
@@ -2075,24 +2077,24 @@ input_ptr
 
 ---
 
-# 97. Relação com `mul_q6_off`
+# 97. Relationship with `mul_q6_off`
 
-O `SOFTMAX` verifica:
+`SOFTMAX` checks:
 
 ```python
 op_idx in mul_q6_off
 ```
 
-Se houver registro:
+If a record exists:
 
 ```text
 mul_off
 shift_off
 ```
 
-são preservados.
+are retained.
 
-O `q6_off` permanece:
+`q6_off` remains:
 
 ```text
 0
@@ -2100,9 +2102,9 @@ O `q6_off` permanece:
 
 ---
 
-# 98. Mapeamento correto do SOFTMAX
+# 98. Correct SOFTMAX mapping
 
-Na implementação atual:
+In the current implementation:
 
 ```text
 kh
@@ -2134,17 +2136,17 @@ pad_t
 input_ptr
 ```
 
-Esse detalhe é especialmente importante: **`stride_w` armazena `input_left_shift`**.
+This detail is especially important: **`stride_w` stores `input_left_shift`**.
 
-Ele não armazena `integer_bits`.
+It does not store `integer_bits`.
 
-O próprio código atual registra explicitamente esse comportamento.
+The current code explicitly documents this behavior.
 
 ---
 
-# 99. Por que isso merece destaque?
+# 99. Why emphasize this?
 
-Os nomes:
+The names:
 
 ```text
 kh
@@ -2153,17 +2155,17 @@ stride_h
 stride_w
 ```
 
-não representam geometria para o `SOFTMAX`.
+do not represent geometry for `SOFTMAX`.
 
-Eles são reutilizados para transportar parâmetros específicos do kernel.
+They are reused to carry kernel-specific parameters.
 
-Portanto não se deve interpretar:
+Thus, one should not interpret:
 
 ```text
 stride_w
 ```
 
-como stride horizontal quando:
+as horizontal stride when:
 
 ```text
 op_type = OP_SOFTMAX
@@ -2171,9 +2173,9 @@ op_type = OP_SOFTMAX
 
 ---
 
-# 100. Zero points do SOFTMAX
+# 100. SOFTMAX zero points
 
-São mantidos:
+The following are retained:
 
 ```text
 zx = zp_x
@@ -2181,19 +2183,19 @@ zx = zp_x
 zy = zp_y
 ```
 
-e:
+and:
 
 ```text
 zw = 0
 ```
 
-porque não existe tensor de pesos.
+because there is no weight tensor.
 
 ---
 
-# 101. Metadados de quantização
+# 101. Quantization metadata
 
-O `quant_params` do SOFTMAX registra:
+SOFTMAX's `quant_params` records:
 
 ```text
 sX
@@ -2219,13 +2221,13 @@ input_left_shift
 diff_min
 ```
 
-Isso fornece rastreabilidade completa da preparação matemática da operação.
+This provides full traceability of the operation's mathematical preparation.
 
 ---
 
 # 102. `_build_weighted_params()`
 
-Essa função reúne três operações estruturalmente relacionadas:
+This function groups three structurally related operations:
 
 ```text
 CONV_2D
@@ -2235,47 +2237,47 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-Todas possuem:
+All have:
 
 ```text
-input de ativação
-pesos
-bias opcional
+activation input
+weights
+optional bias
 ```
 
-e utilizam tabelas externas de requantização.
+and use external requantization tables.
 
 ---
 
-# 103. Estrutura mínima
+# 103. Minimum structure
 
-A operação precisa possuir:
+The operation must have:
 
 ```text
 input[0]
-    → ativação
+    → activation
 
 input[1]
-    → pesos
+    → weights
 ```
 
-Se houver:
+If there is:
 
 ```text
 input[2]
 ```
 
-ele é tratado como:
+it is treated as:
 
 ```text
-bias
+biases
 ```
 
 ---
 
-# 104. Dados comuns
+# 104. Common data
 
-Primeiro são recuperados:
+First, the following are retrieved:
 
 ```text
 input_tensor
@@ -2287,7 +2289,7 @@ output_tensor
 bias_id
 ```
 
-Além de:
+Along with:
 
 ```text
 input HWC
@@ -2299,9 +2301,9 @@ weight shape
 
 ---
 
-# 105. Defaults iniciais
+# 105. Initial defaults
 
-A função começa com:
+The function starts with:
 
 ```text
 stride = 1
@@ -2317,19 +2319,19 @@ flags = 0
 depth_mult = 1
 ```
 
-Depois cada tipo de operador modifica somente o necessário.
+Each operator type then changes only what is needed.
 
 ---
 
-# 106. Caminho `CONV_2D`
+# 106. `CONV_2D` path
 
-Para:
+For:
 
 ```text
 CONV_2D
 ```
 
-é definido:
+the following is set:
 
 ```text
 op_type = OP_CONV
@@ -2337,9 +2339,9 @@ op_type = OP_CONV
 
 ---
 
-# 107. `cout` da CONV
+# 107. CONV `cout`
 
-Preferencialmente:
+Preferably:
 
 ```text
 cout =
@@ -2348,9 +2350,9 @@ weight_shape[0]
 
 ---
 
-# 108. Kernel da CONV
+# 108. CONV kernel
 
-A estrutura esperada fornece:
+The expected structure provides:
 
 ```text
 kernel_h =
@@ -2362,9 +2364,9 @@ weight_shape[2]
 
 ---
 
-# 109. Opções da CONV
+# 109. CONV options
 
-Depois:
+Then:
 
 ```python
 parse_conv2d_options(
@@ -2372,7 +2374,7 @@ parse_conv2d_options(
 )
 ```
 
-fornece:
+provides:
 
 ```text
 stride_h
@@ -2388,15 +2390,15 @@ activation
 
 ---
 
-# 110. Flag `SAME`
+# 110. `SAME` flag
 
-Se:
+If:
 
 ```text
 padding_kind == 0
 ```
 
-é executado:
+the following executes:
 
 ```text
 flags |= FLAG_PADDING_SAME
@@ -2404,9 +2406,9 @@ flags |= FLAG_PADDING_SAME
 
 ---
 
-# 111. Caminho `DEPTHWISE_CONV_2D`
+# 111. `DEPTHWISE_CONV_2D` path
 
-Para depthwise:
+For depthwise:
 
 ```text
 op_type = OP_DW
@@ -2414,16 +2416,16 @@ op_type = OP_DW
 
 ---
 
-# 112. Kernel depthwise
+# 112. Depthwise kernel
 
-Também são usados:
+The following are also used:
 
 ```text
 weight_shape[1]
 weight_shape[2]
 ```
 
-como:
+such as:
 
 ```text
 kernel_h
@@ -2434,38 +2436,38 @@ kernel_w
 
 # 113. `cout`
 
-Para depthwise:
+For depthwise:
 
 ```text
 cout =
 weight_shape[3]
 ```
 
-quando disponível.
+when available.
 
 ---
 
-# 114. Opções específicas
+# 114. Specific options
 
-`parse_dwconv2d_options()` também fornece:
+`parse_dwconv2d_options()` also provides:
 
 ```text
 depth_mult
 ```
 
-além de stride, dilation, padding e activation.
+in addition to stride, dilation, padding, and activation.
 
 ---
 
-# 115. Caminho `FULLY_CONNECTED`
+# 115. `FULLY_CONNECTED` path
 
-Para:
+For:
 
 ```text
 FULLY_CONNECTED
 ```
 
-é utilizado:
+the following is used:
 
 ```text
 op_type = OP_FC
@@ -2473,9 +2475,9 @@ op_type = OP_FC
 
 ---
 
-# 116. Número de saídas
+# 116. Output count
 
-Preferencialmente:
+Preferably:
 
 ```text
 cout =
@@ -2484,9 +2486,9 @@ weight_shape[0]
 
 ---
 
-# 117. Kernel lógico do FC
+# 117. Logical FC kernel
 
-O código define:
+The code sets:
 
 ```text
 kernel_h = 1
@@ -2494,21 +2496,21 @@ kernel_h = 1
 kernel_w = 1
 ```
 
-Esses campos não descrevem uma convolução real nesse caso.
+These fields do not describe an actual convolution here.
 
-Eles são apenas valores coerentes para a estrutura uniforme.
+They are simply consistent values for the uniform structure.
 
 ---
 
-# 118. Opções do FC
+# 118. FC options
 
-A única opção necessária aqui é:
+The only option needed here is:
 
 ```text
 activation
 ```
 
-obtida por:
+obtained through:
 
 ```python
 parse_fc_options(
@@ -2518,60 +2520,60 @@ parse_fc_options(
 
 ---
 
-# 119. Operação inesperada
+# 119. Unexpected operation
 
-Se `_build_weighted_params()` receber um tipo diferente desses três:
+If `_build_weighted_params()` receives a type other than these three:
 
 ```text
 RuntimeError
 ```
 
-é lançado.
+is raised.
 
-Essa é uma validação importante porque impede usar o builder genérico para uma operação incompatível.
+This check prevents using the generic builder for an incompatible operation.
 
 ---
 
-# 120. Flag de ReLU6
+# 120. ReLU6 flag
 
-Depois da identificação da operação:
+After identifying the operation:
 
 ```python
 if activation == ACT_RELU6:
     flags |= FLAG_HAS_Q6
 ```
 
-Assim:
+Thus:
 
 ```text
 ReLU6
     ↓
-bit HAS_Q6
+HAS_Q6 bit
 ```
 
 ---
 
-# 121. Cálculo de SAME
+# 121. Calculating SAME
 
-Se:
+If:
 
 ```text
 flags & FLAG_PADDING_SAME
 ```
 
-estiver ativo:
+is active:
 
 ```python
 same_padding(...)
 ```
 
-é chamado.
+is called.
 
 ---
 
-# 122. Valores produzidos
+# 122. Produced values
 
-São calculados:
+The following are calculated:
 
 ```text
 pad_t
@@ -2587,30 +2589,30 @@ out_w
 
 # 123. Zero points
 
-Depois são extraídos:
+Next, it extracts:
 
 ```text
 zp_x
-    → entrada
+    → input
 
 zp_w
-    → pesos
+    → weights
 
 zp_y
-    → saída
+    → output
 ```
 
 ---
 
-# 124. Offsets dos pesos
+# 124. Weight offsets
 
-O tensor de peso é:
+The weight tensor is:
 
 ```text
 input_ids[1]
 ```
 
-e:
+and:
 
 ```python
 weight_tensor_off.get(
@@ -2619,80 +2621,80 @@ weight_tensor_off.get(
 )
 ```
 
-fornece o offset relativo no blob de pesos.
+provides the relative offset within the weight blob.
 
 ---
 
-# 125. Importante sobre o fallback
+# 125. Important note about the fallback
 
-Se não existir entrada em:
+If there is no entry in:
 
 ```text
 weight_tensor_off
 ```
 
-o valor será:
+the value will be:
 
 ```text
 0
 ```
 
-Não existe aqui um booleano:
+There is no boolean here:
 
 ```text
 has_weight
 ```
 
-equivalente ao `has_bias`.
+equivalent to `has_bias`.
 
-Portanto, a etapa anterior precisa ter extraído corretamente os pesos das operações suportadas.
+The previous stage must therefore have correctly extracted weights for supported operations.
 
 ---
 
 # 126. Bias
 
-O código calcula:
+The code calculates:
 
 ```text
 has_bias =
 bias_id >= 0
-e
-bias_id existe em bias_tensor_off
+and
+bias_id exists in bias_tensor_off
 ```
 
 ---
 
-# 127. Offset do bias
+# 127. Bias offset
 
-Mesmo quando não há bias:
+Even when there is no bias:
 
 ```text
 bias_offset = 0
 ```
 
-Mas:
+But:
 
 ```text
 has_bias = False
 ```
 
-permite à etapa de serialização distinguir:
+allows serialization to distinguish:
 
 ```text
-offset zero válido
+valid zero offset
 ```
 
-de:
+from:
 
 ```text
-bias inexistente
+no bias
 ```
 
 ---
 
-# 128. MUL, SHIFT e Q6
+# 128. MUL, SHIFT, and Q6
 
-A função verifica:
+The function checks:
 
 ```text
 op_idx in mul_q6_off
@@ -2700,9 +2702,9 @@ op_idx in mul_q6_off
 
 ---
 
-# 129. Se existir
+# 129. If present
 
-São recuperados:
+The following are retrieved:
 
 ```text
 mul_offset
@@ -2714,15 +2716,15 @@ q6_offset
 
 ---
 
-# 130. Se não existir
+# 130. If absent
 
-Todos ficam:
+All are set to:
 
 ```text
 0
 ```
 
-e:
+and:
 
 ```text
 has_mulq6 = False
@@ -2730,51 +2732,51 @@ has_mulq6 = False
 
 ---
 
-# 131. Slot de entrada
+# 131. Input slot
 
-O tensor de ativação:
+The activation tensor:
 
 ```text
 input_ids[0]
 ```
 
-precisa existir em:
+must exist in:
 
 ```text
 runtime_tensor_to_slot
 ```
 
-Caso contrário o extrator falha imediatamente.
+Otherwise the extractor fails immediately.
 
 ---
 
-# 132. Ponteiro
+# 132. Pointer
 
-Depois:
+Then:
 
 ```text
 input_ptr =
 slot_bases[in_slot]
 ```
 
-Esse ponteiro ainda é mantido apenas como metadado auxiliar em:
+This pointer is still retained only as helper metadata in:
 
 ```text
 input_ptrs
 ```
 
-A serialização final calculará os ponteiros necessários conforme a convenção da estrutura.
+Final serialization calculates the required pointers according to the structure's convention.
 
 ---
 
-# 133. Estrutura resultante da CONV/DW/FC
+# 133. Resulting CONV/DW/FC structure
 
-O builder retorna campos com seus significados naturais:
+The builder returns fields with their natural meanings:
 
 ```text
 kh
 kw
-    → dimensões do kernel
+    → kernel dimensions
 
 stride_h
 stride_w
@@ -2791,15 +2793,15 @@ pad_r
     → padding
 
 w_off
-    → offset dos pesos
+    → weight offset
 
 b_off
-    → offset do bias
+    → bias offset
 
 mul_off
 shift_off
 q6_off
-    → offsets das tabelas de quantização
+    → quantization table offsets
 
 zx
 zw
@@ -2807,21 +2809,21 @@ zy
     → zero points
 ```
 
-Nesse grupo de operações, ao contrário dos builders especiais, os campos permanecem majoritariamente alinhados aos seus nomes originais.
+In this operation group, unlike the special builders, fields mostly retain meanings consistent with their original names.
 
 ---
 
 # 134. `depth_mult`
 
-Somente:
+Only:
 
 ```text
 DEPTHWISE_CONV_2D
 ```
 
-mantém o `depth_mult` lido do TFLite.
+retains the `depth_mult` read from TFLite.
 
-Nas demais:
+For the others:
 
 ```text
 depth_mult = 1
@@ -2829,53 +2831,53 @@ depth_mult = 1
 
 ---
 
-# 135. Estrutura uniforme e polimorfismo por `op_type`
+# 135. Uniform structure and polymorphism through `op_type`
 
-A principal decisão de projeto da `LayerParam` é utilizar uma estrutura fixa para operações muito diferentes.
+The main `LayerParam` design decision is to use a fixed structure for very different operations.
 
-Assim:
+Thus:
 
 ```text
 op_type
 ```
 
-define como interpretar os demais campos.
+defines how to interpret the other fields.
 
 ---
 
-# 136. Exemplo
+# 136. Example
 
-Para:
+For:
 
 ```text
 op_type = OP_CONV
 ```
 
-temos:
+we have:
 
 ```text
 kh = kernel height
 ```
 
-Mas para:
+But for:
 
 ```text
 op_type = OP_ADD
 ```
 
-temos:
+we have:
 
 ```text
-kh = multiplier da entrada A
+kh = input A multiplier
 ```
 
-E para:
+And for:
 
 ```text
 op_type = OP_SOFTMAX
 ```
 
-temos:
+we have:
 
 ```text
 kh = input_beta_mul
@@ -2883,32 +2885,32 @@ kh = input_beta_mul
 
 ---
 
-# 137. Portanto
+# 137. Therefore
 
-O significado correto de um campo é:
+The correct meaning of a field is:
 
 ```text
-significado =
-função(
+meaning =
+function(
     op_type,
-    campo
+    field
 )
 ```
 
-e não apenas:
+rather than merely:
 
 ```text
-significado =
-nome do campo
+meaning =
+field name
 ```
 
-Essa é uma das características fundamentais do protocolo.
+This is a fundamental property of the protocol.
 
 ---
 
-# 138. Tabela dos principais campos sobrecarregados
+# 138. Main overloaded fields
 
-| Campo      | CONV/DW/FC     | ADD          | MEAN         | SOFTMAX          | QUANTIZE   |
+| Field | CONV/DW/FC | ADD | MEAN | SOFTMAX | QUANTIZE |
 | ---------- | -------------- | ------------ | ------------ | ---------------- | ---------- |
 | `kh`       | kernel H       | mul A        | multiplier   | beta mul         | multiplier |
 | `kw`       | kernel W       | shift A      | shift        | beta shift       | shift      |
@@ -2921,13 +2923,13 @@ Essa é uma das características fundamentais do protocolo.
 | `pad_l`    | left padding   | zp A         | 0            | 0                | 0          |
 | `pad_r`    | right padding  | zp B         | 0            | 0                | 0          |
 
-Essa tabela é essencial para interpretar um dump de `LayerParam`.
+This table is essential for interpreting a `LayerParam` dump.
 
 ---
 
 # 139. `build_layer_params()`
 
-Depois dos builders individuais vem a função que coordena a construção completa:
+After the individual builders comes the function coordinating complete construction:
 
 ```python
 def build_layer_params(
@@ -2945,15 +2947,15 @@ def build_layer_params(
 
 ---
 
-# 140. Primeiro elemento
+# 140. First element
 
-A função começa com:
+The function starts with:
 
 ```python
 layer_params = []
 ```
 
-e imediatamente cria:
+and immediately creates:
 
 ```text
 RGB565_TO_RGB888
@@ -2961,25 +2963,25 @@ RGB565_TO_RGB888
 
 ---
 
-# 141. Consequência
+# 141. Consequence
 
-A posição:
+The position:
 
 ```text
 layer_params[0]
 ```
 
-não corresponde à primeira operação TFLite.
+does not correspond to the first TFLite operation.
 
-Ela corresponde à camada sintética.
+It corresponds to the synthetic layer.
 
 ---
 
-# 142. Operações reais
+# 142. Actual operations
 
-Somente depois são adicionadas as operações do modelo.
+Only afterward are model operations added.
 
-Os tipos aceitos são:
+Accepted types are:
 
 ```text
 CONV_2D
@@ -2993,9 +2995,9 @@ QUANTIZE
 
 ---
 
-# 143. Filtro pelo grafo útil
+# 143. Filtering by the useful graph
 
-O loop percorre todos os operadores TFLite, mas executa:
+The loop traverses all TFLite operators, but executes:
 
 ```python
 if (
@@ -3005,84 +3007,84 @@ if (
     continue
 ```
 
-Portanto somente operações pertencentes ao grafo considerado pelo extrator geram `LayerParam`.
+Only operations belonging to the graph considered by the extractor generate a `LayerParam`.
 
 ---
 
-# 144. Segundo filtro
+# 144. Second filter
 
-Mesmo entre essas operações:
+Even among these operations:
 
 ```text
 op_type_name
 ```
 
-precisa estar em:
+must be in:
 
 ```text
 supported_operations
 ```
 
-Caso contrário, a operação é ignorada nesta etapa.
+Otherwise, the operation is skipped at this stage.
 
 ---
 
-# 145. Inputs e outputs
+# 145. Inputs and outputs
 
-São coletados:
+The following are collected:
 
 ```text
 input_ids
 output_ids
 ```
 
-eliminando IDs negativos.
+removing negative IDs.
 
 ---
 
-# 146. Operação sem output
+# 146. Operation without output
 
-Se:
+If:
 
 ```text
 output_ids = []
 ```
 
-a operação é ignorada.
+the operation is skipped.
 
 ---
 
-# 147. Output precisa de runtime slot
+# 147. Output needs a runtime slot
 
-O primeiro output deve estar em:
+The first output must be in:
 
 ```text
 runtime_tensor_to_slot
 ```
 
-Caso contrário:
+Otherwise:
 
 ```text
 RuntimeError
 ```
 
-é lançado.
+is raised.
 
 ---
 
-# 148. Por que validar aqui?
+# 148. Why validate here?
 
-Porque toda operação precisa saber:
+Because every operation needs to know:
 
 ```text
-onde escrever seu resultado
+where to write its result
 ```
 
-antes da construção da sua `LayerParam`.
+before its `LayerParam` is constructed.
 
 ---
 
-# 149. Descoberta do `out_slot`
+# 149. Finding `out_slot`
 
 ```text
 output tensor
@@ -3094,9 +3096,9 @@ out_slot
 
 ---
 
-# 150. Dispatch por tipo
+# 150. Dispatch by type
 
-Depois:
+Then:
 
 ```text
 QUANTIZE
@@ -3115,24 +3117,24 @@ SOFTMAX
     ↓
 _build_softmax_params()
 
-outros suportados
+other supported types
     ↓
 _build_weighted_params()
 ```
 
 ---
 
-# 151. Por que o `else` é seguro?
+# 151. Why is the `else` safe?
 
-Antes do dispatch existe:
+Before dispatch there is:
 
 ```text
 supported_operations
 ```
 
-e os quatro tipos especiais já foram tratados.
+and the four special types have already been handled.
 
-Portanto o `else` restante contém apenas:
+The remaining `else` therefore contains only:
 
 ```text
 CONV_2D
@@ -3142,15 +3144,15 @@ FULLY_CONNECTED
 
 ---
 
-# 152. Resultado
+# 152. Result
 
-Cada builder retorna um dicionário:
+Each builder returns a dictionary:
 
 ```python
 params
 ```
 
-que é adicionado por:
+which is added through:
 
 ```python
 layer_params.append(
@@ -3160,30 +3162,30 @@ layer_params.append(
 
 ---
 
-# 153. Ordem final
+# 153. Final order
 
-A lista possui:
+The list has:
 
 ```text
-posição 0
+position 0
     RGB565_TO_RGB888
 
-posição 1
-    primeira operação real considerada
+position 1
+    first actual operation considered
 
-posição 2
-    segunda operação real
+position 2
+    second actual operation
 
 ...
 ```
 
-A função realiza explicitamente essa composição.
+The function explicitly assembles this sequence.
 
 ---
 
-# 154. Importante sobre ordem
+# 154. Important note about order
 
-`build_layer_params()` percorre:
+`build_layer_params()` iterates over:
 
 ```python
 range(
@@ -3191,70 +3193,70 @@ range(
 )
 ```
 
-ou seja, a ordem dos operadores no subgrafo TFLite.
+that is, operator order in the TFLite subgraph.
 
-Ela não percorre explicitamente:
+It does not explicitly iterate over:
 
 ```text
 graph["order"]
 ```
 
-A presença no grafo é determinada por:
+Graph membership is determined by:
 
 ```text
 old_idx_to_label
 ```
 
-mas a ordem de inserção segue o `op_idx` original.
+but insertion order follows the original `op_idx`.
 
-Para o modelo atual isso é compatível com a execução utilizada.
+For the current model, this is compatible with the execution used.
 
 ---
 
 # 155. `layer_params_to_text()`
 
-A última grande função produz o relatório de todas as estruturas criadas.
+The last major function reports all created structures.
 
-Sua docstring deixa explícito que esse relatório substitui os antigos comentários de debug que eram escritos diretamente dentro do WAT.
+Its docstring states that this report replaces the old debug comments written directly into WAT.
 
 ---
 
-# 156. Por que isso é uma melhoria arquitetural?
+# 156. Why is this an architectural improvement?
 
-Antes poderíamos ter:
+Previously we might have:
 
 ```text
 WAT
  │
- ├── código executável
- ├── comentários de debug
- ├── dump das camadas
- ├── parâmetros
- └── explicações
+ ├── executable code
+ ├── debug comments
+ ├── layer dump
+ ├── parameters
+ └── explanations
 ```
 
-Agora:
+Now:
 
 ```text
 WAT
     ↓
-somente código necessário
+only required code
 
 reports/
     ↓
-informações de diagnóstico
+diagnostic information
 ```
 
 ---
 
-# 157. Resumo inicial do relatório
+# 157. Initial report summary
 
-O relatório mostra:
+The report shows:
 
 ```text
 LayerParam size
 
-número de layers
+layer count
 
 params bytes
 
@@ -3265,9 +3267,9 @@ runtime slot shift
 
 ---
 
-# 158. Convenção de shift
+# 158. Shift convention
 
-Também registra explicitamente:
+It also explicitly records:
 
 ```text
 shift > 0
@@ -3277,13 +3279,13 @@ shift < 0
     → RIGHT SHIFT
 ```
 
-Isso é essencial para interpretar os parâmetros de requantização.
+This is essential for interpreting requantization parameters.
 
 ---
 
-# 159. Mapeamento dos campos especiais
+# 159. Special field mapping
 
-O relatório documenta diretamente:
+The report directly documents:
 
 ```text
 ADD
@@ -3293,13 +3295,13 @@ QUANTIZE
 RGB565_TO_RGB888
 ```
 
-e como cada um reutiliza os campos da estrutura.
+and how each reuses structure fields.
 
 ---
 
-# 160. ADD no relatório
+# 160. ADD in the report
 
-É documentado:
+It documents:
 
 ```text
 kh       = mul0
@@ -3325,7 +3327,7 @@ pad_r    = zero point input B
 
 ---
 
-# 161. MEAN no relatório
+# 161. MEAN in the report
 
 ```text
 kh       = multiplier
@@ -3339,9 +3341,9 @@ pad_t    = input_ptr
 
 ---
 
-# 162. SOFTMAX no relatório
+# 162. SOFTMAX in the report
 
-O relatório atual documenta corretamente:
+The current report correctly documents:
 
 ```text
 kh       = input_beta_mul
@@ -3357,16 +3359,16 @@ pad_t    = input_ptr
 
 ---
 
-# 163. QUANTIZE no relatório
+# 163. QUANTIZE in the report
 
 ```text
 flags =
-0 para uint8
+0 for uint8
 
-1 para int8
+1 for int8
 ```
 
-e:
+and:
 
 ```text
 kh = multiplier
@@ -3375,16 +3377,16 @@ kw = shift
 
 pad_t = input_ptr
 
-zx = zero point de entrada
+zx = input zero point
 
-zy = zero point de saída
+zy = output zero point
 ```
 
 ---
 
-# 164. RGB565 no relatório
+# 164. RGB565 in the report
 
-A camada sintética é explicada como:
+The synthetic layer is explained as:
 
 ```text
 input slot = SLOT0
@@ -3396,9 +3398,9 @@ kh = 65
 
 ---
 
-# 165. Mapeamento de runtime
+# 165. Runtime mapping
 
-O relatório também mostra a transformação:
+The report also shows the transformation:
 
 ```text
 slot_original
@@ -3406,9 +3408,9 @@ slot_original
 slot_runtime
 ```
 
-para cada tensor produzido.
+for each produced tensor.
 
-Exemplo:
+Example:
 
 ```text
 tensor=45
@@ -3421,9 +3423,9 @@ slot_runtime=0
 
 # 166. Full layer dump
 
-Depois é produzido um dump de todas as camadas.
+A dump of every layer is then produced.
 
-Para cada uma são exibidos:
+For each layer it displays:
 
 ```text
 op_index
@@ -3477,15 +3479,15 @@ depth multiplier
 
 # 167. `quant_params`
 
-Quando uma operação possui:
+When an operation has:
 
 ```python
 quant_params
 ```
 
-o relatório imprime também cada parâmetro calculado.
+the report also prints every calculated parameter.
 
-Isso ocorre, por exemplo, em:
+This occurs, for example, in:
 
 ```text
 QUANTIZE
@@ -3496,9 +3498,9 @@ SOFTMAX
 
 ---
 
-# 168. Exemplo de QUANTIZE
+# 168. QUANTIZE example
 
-Podem aparecer:
+The following may appear:
 
 ```text
 scale_in
@@ -3517,7 +3519,7 @@ input_dtype
 
 ---
 
-# 169. Exemplo de ADD
+# 169. ADD example
 
 ```text
 sA
@@ -3542,7 +3544,7 @@ s_common
 
 ---
 
-# 170. Exemplo de SOFTMAX
+# 170. SOFTMAX example
 
 ```text
 sX
@@ -3570,11 +3572,11 @@ diff_min
 
 ---
 
-# 171. Estruturas que são runtime e estruturas que são debug
+# 171. Runtime structures versus debug structures
 
-Nem tudo no dicionário retornado será serializado.
+Not everything in the returned dictionary is serialized.
 
-Campos como:
+Fields such as:
 
 ```text
 label
@@ -3594,19 +3596,19 @@ input_ptrs
 quant_params
 ```
 
-são principalmente metadados do extrator.
+are mainly extractor metadata.
 
 ---
 
-# 172. Campos serializados
+# 172. Serialized fields
 
-Já os campos numéricos correspondentes à estrutura de 29 `int32` serão consumidos por:
+The numeric fields corresponding to the 29-`int32` structure are consumed by:
 
 ```text
 params_blob.py
 ```
 
-Exemplos:
+Examples:
 
 ```text
 op_type
@@ -3640,30 +3642,30 @@ out_w
 
 ---
 
-# 173. Separação importante
+# 173. Important separation
 
-`layer_params.py` constrói:
-
-```text
-representação lógica estruturada
-```
-
-Mas ainda não produz:
+`layer_params.py` builds:
 
 ```text
-116 bytes por camada
+structured logical representation
 ```
 
-Essa responsabilidade é do próximo módulo.
+It does not yet produce:
+
+```text
+116 bytes per layer
+```
+
+That is the next module's responsibility.
 
 ---
 
-# 174. Portanto
+# 174. Therefore
 
 ```text
 layer_params.py
        ↓
-dict Python
+Python dict
 
 params_blob.py
        ↓
@@ -3676,9 +3678,9 @@ data segment
 
 ---
 
-# 175. Offsets versus ponteiros
+# 175. Offsets versus pointers
 
-Outro ponto importante é que este módulo ainda mantém:
+Another important point is that this module still retains:
 
 ```text
 w_off
@@ -3692,27 +3694,27 @@ shift_off
 q6_off
 ```
 
-como offsets relativos.
+as relative offsets.
 
-Por exemplo:
+For example:
 
 ```text
 w_off = 5000
 ```
 
-significa:
+means:
 
 ```text
-5000 bytes dentro de WEIGHTS
+5000 bytes within WEIGHTS
 ```
 
-e não endereço absoluto.
+rather than an absolute address.
 
 ---
 
-# 176. Conversão posterior
+# 176. Subsequent conversion
 
-`params_blob.py` fará:
+`params_blob.py` will perform:
 
 ```text
 wptr =
@@ -3721,7 +3723,7 @@ WEIGHTS_BASE
 w_off
 ```
 
-Da mesma forma:
+Similarly:
 
 ```text
 bias_ptr =
@@ -3753,39 +3755,39 @@ q6_off
 
 ---
 
-# 177. Por que não calcular tudo aqui?
+# 177. Why not calculate everything here?
 
-Porque separar:
-
-```text
-offset relativo
-```
-
-de:
+Because separating:
 
 ```text
-ponteiro absoluto serializado
+relative offset
 ```
 
-mantém a responsabilidade de cada módulo mais clara.
+from:
+
+```text
+serialized absolute pointer
+```
+
+keeps each module's responsibility clearer.
 
 ---
 
-# 178. Slots são diferentes
+# 178. Slots are different
 
-Para ativações, por outro lado, o endereço físico já é conhecido através de:
+For activations, the physical address is already known through:
 
 ```text
 slot_bases
 ```
 
-Por isso builders especiais podem armazenar em seus metadados:
+Special builders can therefore store in their metadata:
 
 ```text
 input_ptrs
 ```
 
-e reutilizar endereços em campos especiais como:
+and reuse addresses in special fields such as:
 
 ```text
 pad_t
@@ -3793,9 +3795,9 @@ pad_t
 
 ---
 
-# 179. Dois sistemas de endereçamento coexistem
+# 179. Two addressing systems coexist
 
-### Parâmetros constantes
+### Constant parameters
 
 ```text
 tensor
@@ -3804,10 +3806,10 @@ offset
  ↓
 base + offset
  ↓
-ponteiro
+pointer
 ```
 
-### Ativações
+### Activations
 
 ```text
 tensor
@@ -3816,37 +3818,37 @@ runtime slot
  ↓
 slot_bases[slot]
  ↓
-ponteiro
+pointer
 ```
 
 ---
 
-# 180. `layer_params.py` é onde eles se encontram
+# 180. `layer_params.py` is where they meet
 
-Uma convolução precisa simultaneamente de:
+A convolution simultaneously needs:
 
 ```text
-ativação
+activation
     → slot
 
-peso
+weight
     → offset
 
-bias
+biases
     → offset
 
 multiplier
     → offset
 
 zero points
-    → valores inteiros
+    → integer values
 ```
 
-Essa combinação acontece neste módulo.
+This combination occurs in this module.
 
 ---
 
-# 181. Visão de uma CONV completa
+# 181. Complete CONV view
 
 ```text
 input tensor
@@ -3906,7 +3908,7 @@ tensor quantization
 
 ---
 
-# 182. Visão do ADD
+# 182. ADD view
 
 ```text
 input tensor A ──→ SLOT A ──→ pointer A ──┐
@@ -3930,7 +3932,7 @@ ADD quantization
 
 ---
 
-# 183. Visão do SOFTMAX
+# 183. SOFTMAX view
 
 ```text
 input tensor
@@ -3958,181 +3960,181 @@ softmax preparation
 
 ---
 
-# 184. Camada sintética e portabilidade
+# 184. Synthetic layer and portability
 
-A inserção de:
+Inserting:
 
 ```text
 RGB565_TO_RGB888
 ```
 
-é uma característica da integração entre o modelo e a aplicação hospedeira.
+is a feature of the integration between model and host application.
 
-O TFLite continua descrevendo apenas sua rede.
+TFLite continues to describe only its network.
 
-O extrator acrescenta uma etapa de runtime necessária à forma como os dados chegam ao módulo.
+The extractor adds a runtime stage required by the way data reaches the module.
 
 ---
 
-# 185. Separação conceitual
+# 185. Conceptual separation
 
 ```text
-modelo neural
+neural model
     ↓
-operações TFLite
+TFLite operations
 ```
 
-não é exatamente igual a:
+is not exactly the same as:
 
 ```text
-pipeline completo do firmware
+complete firmware pipeline
 ```
 
-O segundo inclui uma etapa adicional de pré-processamento/formatação.
+The latter includes an additional preprocessing/formatting stage.
 
 ---
 
-# 186. Consequência no número de layers
+# 186. Effect on layer count
 
-Por isso:
+Therefore:
 
 ```text
-NUM_LAYERS runtime
+runtime NUM_LAYERS
 =
-número de operações reais utilizadas
+number of actual operations used
 +
-1 camada sintética
+1 synthetic layer
 ```
 
 ---
 
-# 187. Consequência nos slots
+# 187. Effect on slots
 
-Também por isso existe:
+This is also why there is:
 
 ```text
 slot_shift
 ```
 
-A camada sintética muda o ponto em que o fluxo lógico original começa dentro do conjunto físico de slots.
+The synthetic layer changes where the original logical flow starts within the physical set of slots.
 
 ---
 
-# 188. Validações explícitas deste módulo
+# 188. Explicit validations in this module
 
-O código falha quando encontra situações como:
+The code fails in situations such as:
 
 ```text
-QUANTIZE sem input
+QUANTIZE without input
 
-QUANTIZE com scale_out = 0
+QUANTIZE with scale_out = 0
 
-input sem runtime slot
+input without a runtime slot
 
-ADD com menos de duas entradas
+ADD with fewer than two inputs
 
-ADD com input A ou B sem slot
+ADD with input A or B without a slot
 
-MEAN sem input
+MEAN without input
 
-MEAN com scale_y = 0
+MEAN with scale_y = 0
 
-SOFTMAX sem input
+SOFTMAX without input
 
-weighted op com menos de dois inputs
+weighted op with fewer than two inputs
 
-operação indevida enviada ao weighted builder
+unsupported operation sent to the weighted builder
 
-output sem runtime slot
+output without a runtime slot
 ```
 
 ---
 
-# 189. Por que essas validações são importantes?
+# 189. Why are these validations important?
 
-Porque a partir daqui estamos construindo diretamente o contrato do runtime.
+Because we are now directly building the runtime contract.
 
-É melhor falhar no extrator:
+It is better to fail in the extractor:
 
 ```text
-input tensor sem slot
+input tensor without a slot
 ```
 
-do que gerar:
+than to generate:
 
 ```text
-LayerParam inválida
+invalid LayerParam
         ↓
-WAT válido sintaticamente
+syntactically valid WAT
         ↓
-WASM compila
+WASM compiles
         ↓
-runtime lê endereço incorreto
+runtime reads an incorrect address
 ```
 
 ---
 
-# 190. Limitações atuais
+# 190. Current limitations
 
-Algumas situações ainda possuem fallback em vez de erro.
+Some situations still use a fallback instead of an error.
 
-Por exemplo:
+For example:
 
 ```text
 weight_tensor_off.get(..., 0)
 ```
 
-pode resultar em:
+may result in:
 
 ```text
 w_off = 0
 ```
 
-se o peso não estiver no mapa.
+if the weight is absent from the map.
 
-Isso pressupõe que `weights.py` tenha funcionado corretamente para todas as operações suportadas.
+This assumes `weights.py` has worked correctly for all supported operations.
 
 ---
 
-# 191. Outra característica
+# 191. Another feature
 
-`build_layer_params()` ignora silenciosamente operações úteis cujo:
+`build_layer_params()` silently skips useful operations whose:
 
 ```text
 op_type_name
 ```
 
-não esteja em:
+is not in:
 
 ```text
 supported_operations
 ```
 
-Isso preserva o comportamento atual, mas em uma ferramenta genérica futura talvez seja melhor falhar explicitamente para evitar omissão silenciosa.
+This preserves current behavior, but a future generic tool might preferably fail explicitly to prevent silent omission.
 
 ---
 
-# 192. `input_ptrs` não substitui `in_slot`
+# 192. `input_ptrs` does not replace `in_slot`
 
-O módulo guarda ambos:
+The module stores both:
 
 ```text
 in_slot
 ```
 
-e:
+and:
 
 ```text
 input_ptrs
 ```
 
-O primeiro preserva a identidade lógica da região.
+The first preserves the region's logical identity.
 
-O segundo permite auditar o endereço físico que foi associado.
+The second allows auditing the assigned physical address.
 
 ---
 
-# 193. Exemplo
+# 193. Example
 
 ```text
 in_slot = 2
@@ -4140,7 +4142,7 @@ in_slot = 2
 slot_bases[2] = 900464
 ```
 
-Então:
+Then:
 
 ```text
 input_ptrs = [900464]
@@ -4148,9 +4150,9 @@ input_ptrs = [900464]
 
 ---
 
-# 194. No ADD
+# 194. In ADD
 
-Há dois elementos:
+There are two elements:
 
 ```text
 input_slots =
@@ -4160,7 +4162,7 @@ input_slots =
 ]
 ```
 
-e:
+and:
 
 ```text
 input_ptrs =
@@ -4170,54 +4172,54 @@ input_ptrs =
 ]
 ```
 
-Isso torna a operação de duas entradas completamente rastreável.
+This makes the two-input operation fully traceable.
 
 ---
 
-# 195. `label` versus índice da lista
+# 195. `label` versus list index
 
-Outro detalhe importante:
+Another important detail:
 
 ```text
 label = Lx
 ```
 
-vem do grafo original.
+comes from the original graph.
 
-Mas:
+But:
 
 ```text
 layer_index
 ```
 
-do relatório começa na camada sintética.
+in the report starts at the synthetic layer.
 
-Assim:
+Thus:
 
 ```text
 FULL LAYER DUMP
 L0
 ```
 
-no relatório não significa necessariamente:
+in the report does not necessarily mean:
 
 ```text
 graph label L0
 ```
 
-A primeira entrada do dump é:
+The first dump entry is:
 
 ```text
 RGB565_TO_RGB888
 ```
 
-e seu:
+and its:
 
 ```text
 label
 ```
 
-aparece como:
+appears as:
 
 ```text
 -
@@ -4225,25 +4227,25 @@ aparece como:
 
 ---
 
-# 196. Distinção importante
+# 196. Important distinction
 
-Existem portanto:
-
-```text
-label do grafo
-```
-
-e:
+There are therefore:
 
 ```text
-posição dentro de layer_params
+graph label
 ```
 
-São identidades diferentes.
+and:
+
+```text
+position within layer_params
+```
+
+These are different identities.
 
 ---
 
-# 197. Exemplo
+# 197. Example
 
 ```text
 layer_params[0]
@@ -4256,13 +4258,13 @@ layer_params[2]
     → label L1
 ```
 
-em um modelo simples.
+in a simple model.
 
 ---
 
-# 198. Relação com `LP_SIZE`
+# 198. Relationship with `LP_SIZE`
 
-Depois da serialização:
+After serialization:
 
 ```text
 layer_params[0]
@@ -4278,65 +4280,65 @@ layer_params[2]
 PARAMS_BASE + 2 × 116
 ```
 
-Portanto a posição nessa lista é operacionalmente importante.
+Position in this list is therefore operationally important.
 
 ---
 
-# 199. Responsabilidade do módulo
+# 199. Module responsibility
 
-`layer_params.py` não gera:
+`layer_params.py` does not generate:
 
 ```text
 WAT
 ```
 
-e também ainda não gera:
+and does not yet generate:
 
 ```text
 params_blob
 ```
 
-Ele produz a descrição estruturada intermediária que será consumida pela etapa seguinte.
+It produces the intermediate structured description consumed by the next stage.
 
 ---
 
-# 200. O que ele deliberadamente não faz
+# 200. What it deliberately does not do
 
-O módulo não:
+The module does not:
 
 ```text
-concatena bytes dos pesos
+concatenate weight bytes
 
-gera segmentos (data ...)
+generate (data ...) segments
 
-escreve arquivos .wat
+write .wat files
 
-executa inferência
+execute inference
 
-implementa kernels
+implement kernels
 
-compila WASM
+compile WASM
 ```
 
 ---
 
-# 201. O que ele faz
+# 201. What it does
 
-Ele responde:
+It answers:
 
 ```text
-para cada operação do runtime,
-quais parâmetros inteiros,
-endereços lógicos,
+for each runtime operation,
+which integer parameters,
+logical addresses,
 offsets,
 flags,
-dimensões e informações
-o kernel precisará?
+dimensions, and information
+will the kernel need?
 ```
 
 ---
 
-# 202. Fluxo completo até aqui
+# 202. Complete flow so far
 
 ```text
                     TFLite
@@ -4363,7 +4365,7 @@ o kernel precisará?
 
 ---
 
-# 203. Depois deste módulo
+# 203. After this module
 
 ```text
 layer_params
@@ -4373,42 +4375,42 @@ params_blob.py
       │
       ▼
 29 × int32
-por camada
+per layer
       │
       ▼
-data segment do WAT
+WAT data segment
 ```
 
 ---
 
-# 204. Síntese arquitetural
+# 204. Architectural synthesis
 
-O `layer_params.py` funciona como o **adaptador final entre o modelo e o runtime**.
+`layer_params.py` acts as the **final adapter between model and runtime**.
 
-Ele recebe:
-
-```text
-estrutura do modelo
-+
-planejamento de slots
-+
-endereços de memória
-+
-offsets dos parâmetros
-+
-quantização
-+
-opções das operações
-```
-
-e produz:
+It receives:
 
 ```text
-uma representação uniforme
-para cada camada executável
+model structure
++
+slot planning
++
+memory addresses
++
+parameter offsets
++
+quantization
++
+operation options
 ```
 
-A grande ideia é que todas as operações utilizem a mesma estrutura de tamanho fixo:
+and produces:
+
+```text
+a uniform representation
+for each executable layer
+```
+
+The main idea is that all operations use the same fixed-size structure:
 
 ```text
 29 × int32
@@ -4416,9 +4418,9 @@ A grande ideia é que todas as operações utilizem a mesma estrutura de tamanho
 116 bytes
 ```
 
-mesmo quando suas necessidades são muito diferentes.
+even when their needs differ greatly.
 
-Para operações tradicionais como:
+For traditional operations such as:
 
 ```text
 CONV_2D
@@ -4426,7 +4428,7 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-os campos mantêm significados próximos de seus nomes:
+fields retain meanings close to their names:
 
 ```text
 kh/kw
@@ -4435,7 +4437,7 @@ dilation
 padding
 ```
 
-Para operações especiais:
+For special operations:
 
 ```text
 ADD
@@ -4445,19 +4447,19 @@ QUANTIZE
 RGB565_TO_RGB888
 ```
 
-esses mesmos campos são deliberadamente reutilizados para transportar outros parâmetros.
+those same fields are deliberately reused to carry other parameters.
 
-Assim:
+Thus:
 
 ```text
 op_type
 ```
 
-é a chave que determina como cada campo deve ser interpretado pelo runtime.
+is the key determining how the runtime should interpret each field.
 
 ---
 
-# 205. Mapa final das operações especiais
+# 205. Final map of special operations
 
 ```text
 ADD
@@ -4508,11 +4510,11 @@ out_slot → SLOT1
 kh       → 65
 ```
 
-Esse mapa é, na prática, parte do protocolo binário entre o extrator e os kernels implementados no WAT.
+This map is, in practice, part of the binary protocol between the extractor and the kernels implemented in WAT.
 
 ---
 
-# 206. Visão final do pipeline
+# 206. Final pipeline view
 
 ```text
 TFLITE MODEL
@@ -4560,4 +4562,4 @@ operator_options.py
              WASM
 ```
 
-`layer_params.py` é, portanto, a etapa em que todas as decisões independentes tomadas anteriormente deixam de ser fragmentadas e passam a constituir o contrato completo de execução de cada operação.
+`layer_params.py` is therefore the stage where previously independent decisions come together to form each operation's complete execution contract.

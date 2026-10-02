@@ -1,12 +1,14 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](05-alocacao-slots.md) | [Português (Brasil)](05-alocacao-slots.pt-BR.md)
 
-# 05 — Alocação de slots lógicos (`slots.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 05 — Logical slot allocation (`slots.py`)
 
-O arquivo `extractor/slots.py` é responsável por decidir em qual slot lógico cada saída intermediária da rede será armazenada.
+## 1. Module purpose
 
-O código atual é:
+The `extractor/slots.py` file decides which logical slot stores each intermediate network output.
+
+The code described here is:
 
 ```python
 # extractor/slots.py
@@ -217,15 +219,15 @@ def slot_allocation_to_text(allocation):
 
 ---
 
-# 2. Papel arquitetural
+# 2. Architectural role
 
-Até `graph.py`, o projeto conhece apenas dependências lógicas:
+Up to `graph.py`, the project knows only logical dependencies:
 
 ```text
 L0 → L1 → L2
 ```
 
-ou:
+or:
 
 ```text
 L1 ─────────────┐
@@ -238,25 +240,25 @@ L3              │
                L4 ADD
 ```
 
-Mas o runtime precisa armazenar fisicamente as saídas de cada camada.
+The runtime must physically store each layer's output.
 
-Como o ESP32 possui memória restrita, não é desejável reservar uma área exclusiva para cada tensor intermediário.
+Because ESP32 memory is limited, reserving a dedicated region for every intermediate tensor is undesirable.
 
-A estratégia adotada é reutilizar algumas regiões de memória.
+The adopted strategy reuses a few memory regions.
 
-Essas regiões são chamadas de:
+These regions are called:
 
 ```text
 slots
 ```
 
-No projeto atual:
+In the current project:
 
 ```python
 NUM_SLOTS = 3
 ```
 
-Logo existem inicialmente:
+Initially, there are therefore:
 
 ```text
 slot 0
@@ -266,11 +268,11 @@ slot 2
 
 ---
 
-# 3. Slot lógico versus endereço físico
+# 3. Logical slots versus physical addresses
 
-Neste módulo, um slot é apenas um número.
+In this module, a slot is just a number.
 
-Por exemplo:
+For example:
 
 ```text
 slot 0
@@ -278,7 +280,7 @@ slot 1
 slot 2
 ```
 
-Ainda não significa:
+It does not yet mean:
 
 ```text
 507248
@@ -286,43 +288,43 @@ Ainda não significa:
 900464
 ```
 
-Esses endereços serão calculados posteriormente.
+These addresses will be calculated later.
 
-Portanto existem dois níveis:
+There are therefore two levels:
 
 ```text
 slots.py
     ↓
-slot lógico
+logical slot
 
 memory.py / layer_params.py
     ↓
-endereço físico do slot
+physical slot address
 ```
 
-Exemplo:
+Example:
 
 ```text
-slot lógico 1
+logical slot 1
       ↓
 SLOT1_BASE
       ↓
 703856
 ```
 
-O objetivo de `slots.py` é decidir **quem usa qual slot**, não onde esse slot começa na memória linear.
+The purpose of `slots.py` is to decide **who uses which slot**, rather than where that slot starts in linear memory.
 
 ---
 
-# 4. Por que reutilizar memória?
+# 4. Why reuse memory?
 
-Considere uma rede linear:
+Consider a linear network:
 
 ```text
 L0 → L1 → L2 → L3
 ```
 
-Se cada camada tivesse uma região exclusiva:
+If each layer had a dedicated region:
 
 ```text
 L0 output → buffer 0
@@ -331,11 +333,11 @@ L2 output → buffer 2
 L3 output → buffer 3
 ```
 
-seriam necessárias quatro áreas de ativação.
+four activation regions would be required.
 
-Mas depois que L1 consumiu completamente o resultado de L0, aquela memória pode eventualmente ser reutilizada.
+Once L1 has completely consumed L0's result, that memory may eventually be reused.
 
-Então podemos ter algo como:
+We can then have something like:
 
 ```text
 L0 output → SLOT1
@@ -344,27 +346,27 @@ L2 output → SLOT1
 L3 output → SLOT2
 ```
 
-Representação temporal:
+Timeline:
 
 ```text
-tempo ───────────────────────────────────►
+time ────────────────────────────────────►
 
 SLOT1   [L0 output]          [L2 output]
 
 SLOT2          [L1 output]          [L3 output]
 ```
 
-Assim a memória é reutilizada.
+Memory is thus reused.
 
 ---
 
-# 5. Por que não basta alternar slots?
+# 5. Why is alternating slots insufficient?
 
-Uma rede neural não é necessariamente uma cadeia linear.
+A neural network is not necessarily a linear chain.
 
-Em MobileNetV2 existem conexões residuais.
+MobileNetV2 has residual connections.
 
-Por exemplo:
+For example:
 
 ```text
         ┌────────────────────────┐
@@ -373,9 +375,9 @@ Por exemplo:
 L5 → L6 → L7 → L8 ───────────── ADD
 ```
 
-A saída de L5 precisa continuar existindo enquanto L6, L7 e L8 são executadas.
+L5's output must remain available while L6, L7, and L8 execute.
 
-Se reutilizarmos imediatamente o slot de L5:
+If we immediately reuse L5's slot:
 
 ```text
 L5 output → SLOT1
@@ -383,27 +385,27 @@ L6 output → SLOT2
 L7 output → SLOT1
 ```
 
-o conteúdo de L5 seria destruído antes de chegar ao `ADD`.
+L5's contents would be destroyed before reaching `ADD`.
 
-Por isso a alocação depende do grafo.
+This is why allocation depends on the graph.
 
 ---
 
-# 6. Relação com `graph.py`
+# 6. Relationship with `graph.py`
 
-O módulo recebe:
+The module receives:
 
 ```python
 layers
 ```
 
-produzido por:
+produced by:
 
 ```text
 graph.py
 ```
 
-Cada camada possui:
+Each layer has:
 
 ```python
 {
@@ -415,22 +417,22 @@ Cada camada possui:
 }
 ```
 
-Os campos mais importantes aqui são:
+The most important fields here are:
 
 ```text
 above
 below
 ```
 
-`above` informa quem produz as entradas.
+`above` identifies the producers of the inputs.
 
-`below` informa quantas operações ainda usarão a saída atual.
+`below` indicates how many operations will still use the current output.
 
 ---
 
-# 7. Entrada principal
+# 7. Main input
 
-A função é:
+The function is:
 
 ```python
 def allocate_slots(
@@ -439,17 +441,17 @@ def allocate_slots(
 ):
 ```
 
-Recebe:
+Receives:
 
 ### `layers`
 
-A representação estruturada do grafo.
+The structured representation of the graph.
 
 ### `num_slots`
 
-Quantidade máxima de slots lógicos disponíveis.
+Maximum number of available logical slots.
 
-No uso atual:
+In current usage:
 
 ```python
 num_slots = 3
@@ -457,9 +459,9 @@ num_slots = 3
 
 ---
 
-# 8. Saídas da função
+# 8. Function outputs
 
-A função retorna:
+The function returns:
 
 ```python
 return (
@@ -468,21 +470,21 @@ return (
 )
 ```
 
-São duas representações complementares.
+These are two complementary representations.
 
 ---
 
 # 9. `allocation`
 
-A lista:
+The list:
 
 ```python
 allocation
 ```
 
-guarda a alocação completa de cada camada.
+stores the complete allocation for each layer.
 
-Exemplo:
+Example:
 
 ```python
 [
@@ -504,29 +506,29 @@ Exemplo:
 ]
 ```
 
-Ela registra tanto:
+It records both:
 
 ```text
-de onde a camada lê
+where the layer reads from
 ```
 
-quanto:
+and:
 
 ```text
-onde a camada escreve
+where the layer writes
 ```
 
 ---
 
 # 10. `layer_output_slot`
 
-O segundo resultado é um mapa mais simples:
+The second result is a simpler map:
 
 ```python
 layer_output_slot
 ```
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -536,31 +538,31 @@ Exemplo:
 }
 ```
 
-Ele responde diretamente:
+It directly answers:
 
 ```text
-em qual slot está a saída de Lx?
+which slot holds Lx's output?
 ```
 
-Isso é útil quando uma camada posterior possui:
+This is useful when a later layer has:
 
 ```python
 "above": ["L1"]
 ```
 
-Nesse caso:
+In this case:
 
 ```python
 layer_output_slot["L1"]
 ```
 
-fornece o slot de entrada.
+provides the input slot.
 
 ---
 
-# 11. Estado interno inicial
+# 11. Initial internal state
 
-No início:
+Initially:
 
 ```python
 layer_output_slot = {}
@@ -578,33 +580,33 @@ allocation = []
 next_slot = 1
 ```
 
-Cada estrutura possui uma finalidade diferente.
+Each structure has a different purpose.
 
 ---
 
 # 12. `layer_output_slot`
 
-Começa vazio porque nenhuma camada foi processada.
+It starts empty because no layer has been processed.
 
-À medida que a rede é percorrida:
+As the network is traversed:
 
 ```python
 layer_output_slot[layer_name] = output_slot
 ```
 
-vai preenchendo o estado.
+fills in the state.
 
-Exemplo:
+Example:
 
 ```text
-depois de L0:
+after L0:
 L0 → 0
 
-depois de L1:
+after L1:
 L0 → 0
 L1 → 1
 
-depois de L2:
+after L2:
 L0 → 0
 L1 → 1
 L2 → 2
@@ -614,17 +616,17 @@ L2 → 2
 
 # 13. `slot_readers_count`
 
-Essa é a estrutura central do algoritmo.
+This is the algorithm's central structure.
 
-Ela representa:
+It represents:
 
 ```text
 slot
  ↓
-quantos consumidores ainda precisam ler seu conteúdo
+how many consumers still need to read its contents
 ```
 
-Exemplo:
+Example:
 
 ```python
 slot_readers_count = {
@@ -632,26 +634,26 @@ slot_readers_count = {
 }
 ```
 
-significa:
+means:
 
 ```text
-o conteúdo armazenado no SLOT1
-ainda será utilizado por duas operações
+the contents stored in SLOT1
+will still be used by two operations
 ```
 
-Enquanto:
+While:
 
 ```text
 count > 0
 ```
 
-o slot não deve ser sobrescrito.
+the slot must not be overwritten.
 
 ---
 
-# 14. Conceito de leitor
+# 14. Reader concept
 
-Suponha:
+Suppose:
 
 ```text
 L1
@@ -659,13 +661,13 @@ L1
  └──→ L4
 ```
 
-A saída de L1 possui:
+L1's output has:
 
 ```text
 2 consumidores
 ```
 
-Então:
+Then:
 
 ```python
 slot_readers_count[
@@ -673,74 +675,74 @@ slot_readers_count[
 ] = 2
 ```
 
-Quando L2 usar esse dado:
+When L2 uses this data:
 
 ```text
 2 → 1
 ```
 
-Quando L4 usar:
+When L4 uses it:
 
 ```text
 1 → 0
 ```
 
-A partir desse momento, o slot pode ser reutilizado.
+From that point onward, the slot can be reused.
 
 ---
 
 # 15. `allocation`
 
-A lista:
+The list:
 
 ```python
 allocation = []
 ```
 
-registra cada decisão tomada pelo algoritmo.
+records each decision made by the algorithm.
 
-É diferente de `slot_readers_count`.
+It differs from `slot_readers_count`.
 
-`slot_readers_count` é estado temporário utilizado durante o cálculo.
+`slot_readers_count` is temporary state used during the calculation.
 
-`allocation` é o resultado permanente.
+`allocation` is the permanent result.
 
 ---
 
 # 16. `next_slot`
 
-Inicialmente:
+Initially:
 
 ```python
 next_slot = 1
 ```
 
-Isso indica a preferência inicial de escrita.
+This indicates the initial write preference.
 
-O slot 0 recebe um tratamento especial porque normalmente contém a entrada inicial do grafo.
+Slot 0 is handled specially because it normally contains the graph's initial input.
 
-Assim, para uma primeira camada não in-place:
+Thus, for an initial layer that does not run in place:
 
 ```text
-entrada → slot 0
-saída   → preferencialmente slot 1
+input  → slot 0
+output → preferably slot 1
 ```
 
 ---
 
-# 17. Iteração sobre as camadas
+# 17. Iterating over layers
 
-A função percorre:
+The function iterates over:
 
 ```python
 for layer in layers:
 ```
 
-A ordem de `layers` vem de `graph.py`, que constrói a lista em ordem topológica.
+The order of `layers` comes from `graph.py`, which builds the list in topological order.
 
-Portanto, quando uma camada é analisada, espera-se que seus produtores já tenham sido processados.
+When a layer is analyzed, its producers are therefore expected to have been processed already.
 
-Essa propriedade é essencial para:
+This property is essential for:
 
 ```python
 layer_output_slot[
@@ -748,13 +750,13 @@ layer_output_slot[
 ]
 ```
 
-funcionar.
+to work.
 
 ---
 
-# 18. Informações extraídas de cada camada
+# 18. Information extracted from each layer
 
-Para cada camada:
+For each layer:
 
 ```python
 layer_name = layer["name"]
@@ -772,7 +774,7 @@ layers_above = layer["above"]
 layers_below = layer["below"]
 ```
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -788,7 +790,7 @@ Exemplo:
 }
 ```
 
-resulta em:
+results in:
 
 ```text
 layer_name = L10
@@ -799,78 +801,78 @@ layers_below = [L11]
 
 ---
 
-# 19. Caso especial: `QUANTIZE`
+# 19. Special case: `QUANTIZE`
 
-O primeiro tratamento especial é:
+The first special case is:
 
 ```python
 if layer_type == "QUANTIZE":
 ```
 
-No runtime atual, essa operação é tratada como:
+In the current runtime, this operation is handled as:
 
 ```text
 in-place
 ```
 
-ou seja:
+in other words:
 
 ```text
-slot de entrada = slot de saída
+input slot = output slot
 ```
 
 ---
 
-# 20. O que significa execução in-place?
+# 20. What does in-place execution mean?
 
-Normalmente temos:
+Normally we have:
 
 ```text
 input buffer
     ↓
-operação
+operation
     ↓
-output buffer diferente
+a different output buffer
 ```
 
-Por exemplo:
+For example:
 
 ```text
 SLOT0 → CONV → SLOT1
 ```
 
-Em uma operação in-place:
+In an in-place operation:
 
 ```text
 SLOT0 → QUANTIZE → SLOT0
 ```
 
-A operação lê e escreve na mesma região lógica.
+The operation reads and writes the same logical region.
 
 ---
 
-# 21. Primeiro `QUANTIZE` da rede
+# 21. First `QUANTIZE` in the network
 
-Se:
+If:
 
 ```python
 not layers_above
 ```
 
-é verdadeiro, significa que a camada não possui uma operação útil anterior.
+is true, the layer has no preceding useful operation.
 
-Nesse caso:
+In this case:
 
 ```python
 input_slot = 0
 ```
 
-Isso representa a entrada externa do modelo.
+This represents the model's external input.
 
-Fluxo:
+Flow:
 
 ```text
-entrada externa
+external input
      ↓
    SLOT0
      ↓
@@ -881,9 +883,9 @@ entrada externa
 
 ---
 
-# 22. `QUANTIZE` depois de outra camada
+# 22. `QUANTIZE` after another layer
 
-Se existe uma camada anterior:
+If a preceding layer exists:
 
 ```python
 input_slot = (
@@ -893,19 +895,19 @@ input_slot = (
 )
 ```
 
-Exemplo:
+Example:
 
 ```text
 L5 output → SLOT2
 ```
 
-Então:
+Then:
 
 ```text
 L5 → QUANTIZE
 ```
 
-faz:
+performs:
 
 ```text
 input_slot = 2
@@ -914,9 +916,9 @@ output_slot = 2
 
 ---
 
-# 23. Registro da saída do `QUANTIZE`
+# 23. Recording the `QUANTIZE` output
 
-Depois:
+Then:
 
 ```python
 layer_output_slot[
@@ -924,23 +926,23 @@ layer_output_slot[
 ] = input_slot
 ```
 
-Se:
+If:
 
 ```text
-L4 lê SLOT1
+L4 reads SLOT1
 ```
 
-então:
+then:
 
 ```text
-L4 também passa a ter output em SLOT1
+L4 also has its output in SLOT1
 ```
 
 ---
 
-# 24. Registro completo do `QUANTIZE`
+# 24. Complete `QUANTIZE` record
 
-É inserido:
+The following is inserted:
 
 ```python
 {
@@ -954,7 +956,7 @@ L4 também passa a ter output em SLOT1
 }
 ```
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -970,83 +972,83 @@ Exemplo:
 
 # 25. `continue`
 
-Depois:
+Then:
 
 ```python
 continue
 ```
 
-Isso significa que `QUANTIZE` não percorre o restante da lógica normal de alocação.
+This means `QUANTIZE` skips the rest of the normal allocation logic.
 
-Ou seja, não:
+In other words, it does not:
 
 ```text
-procura slot livre
-escolhe next_slot
-registra novo output_slot
+search for a free slot
+choose next_slot
+record a new output_slot
 ```
 
-porque sua saída obrigatoriamente reutiliza a entrada.
+because its output must reuse the input.
 
 ---
 
-# 26. Observação importante sobre `QUANTIZE`
+# 26. Important note about `QUANTIZE`
 
-O comportamento in-place não é uma propriedade universal de qualquer `QUANTIZE` TFLite.
+In-place behavior is not a universal property of every TFLite `QUANTIZE` operation.
 
-É uma decisão da implementação atual deste runtime.
+It is a decision of this runtime's current implementation.
 
-Portanto a regra correta é:
+Therefore the correct rule is:
 
 ```text
-neste projeto:
-QUANTIZE é executado in-place
+in this project:
+QUANTIZE executes in place
 ```
 
-e não:
+rather than:
 
 ```text
-QUANTIZE sempre deve ser in-place
+QUANTIZE must always execute in place
 ```
 
 ---
 
-# 27. Camada normal: determinação das entradas
+# 27. Normal layer: determining inputs
 
-Se a operação não é `QUANTIZE`, começa a lógica geral.
+If the operation is not `QUANTIZE`, the general logic begins.
 
-O primeiro passo é determinar os slots de entrada.
+The first step is to determine the input slots.
 
 ---
 
-# 28. Camada sem predecessora
+# 28. Layer without a predecessor
 
-Se:
+If:
 
 ```python
 if not layers_above:
 ```
 
-então:
+then:
 
 ```python
 input_slots = [0]
 ```
 
-e:
+and:
 
 ```python
 next_slot = 1
 ```
 
-Isso representa uma operação cuja entrada vem diretamente do input externo.
+This represents an operation whose input comes directly from external input.
 
 ---
 
-# 29. Exemplo da primeira convolução
+# 29. First convolution example
 
 ```text
-imagem
+image
   ↓
 SLOT0
   ↓
@@ -1055,13 +1057,13 @@ CONV_2D
 SLOT1
 ```
 
-Para essa operação:
+For this operation:
 
 ```python
 input_slots = [0]
 ```
 
-e a preferência é escrever em:
+and the preferred write destination is:
 
 ```python
 next_slot = 1
@@ -1069,15 +1071,15 @@ next_slot = 1
 
 ---
 
-# 30. Camada com predecessores
+# 30. Layer with predecessors
 
-Se:
+If:
 
 ```python
 layers_above
 ```
 
-não está vazio:
+is not empty:
 
 ```python
 input_slots = [
@@ -1088,9 +1090,9 @@ input_slots = [
 
 ---
 
-# 31. Exemplo com uma entrada
+# 31. Single-input example
 
-Se:
+If:
 
 ```python
 layers_above = [
@@ -1098,7 +1100,7 @@ layers_above = [
 ]
 ```
 
-e:
+and:
 
 ```python
 layer_output_slot[
@@ -1106,7 +1108,7 @@ layer_output_slot[
 ] = 2
 ```
 
-então:
+then:
 
 ```python
 input_slots = [
@@ -1116,9 +1118,9 @@ input_slots = [
 
 ---
 
-# 32. Exemplo com duas entradas
+# 32. Two-input example
 
-Para um `ADD`:
+For an `ADD`:
 
 ```python
 layers_above = [
@@ -1127,7 +1129,7 @@ layers_above = [
 ]
 ```
 
-e:
+and:
 
 ```python
 layer_output_slot = {
@@ -1136,7 +1138,7 @@ layer_output_slot = {
 }
 ```
 
-o resultado será:
+the result will be:
 
 ```python
 input_slots = [
@@ -1145,7 +1147,7 @@ input_slots = [
 ]
 ```
 
-Representação:
+Representation:
 
 ```text
 SLOT1 ─┐
@@ -1155,9 +1157,9 @@ SLOT2 ─┘
 
 ---
 
-# 33. Descoberta dos slots disponíveis
+# 33. Finding available slots
 
-A função começa assumindo:
+The function starts by assuming:
 
 ```python
 available_slots = list(
@@ -1165,13 +1167,13 @@ available_slots = list(
 )
 ```
 
-Para:
+For:
 
 ```python
 num_slots = 3
 ```
 
-isso resulta em:
+this results in:
 
 ```python
 [
@@ -1183,9 +1185,9 @@ isso resulta em:
 
 ---
 
-# 34. Filtragem dos slots ocupados
+# 34. Filtering occupied slots
 
-Depois:
+Then:
 
 ```python
 for slot in list(
@@ -1193,7 +1195,7 @@ for slot in list(
 ):
 ```
 
-é verificado:
+the following is checked:
 
 ```python
 if (
@@ -1204,7 +1206,7 @@ if (
 ):
 ```
 
-Se ainda existem consumidores pendentes:
+If there are still pending consumers:
 
 ```python
 available_slots.remove(
@@ -1214,9 +1216,9 @@ available_slots.remove(
 
 ---
 
-# 35. Exemplo
+# 35. Example
 
-Suponha:
+Suppose:
 
 ```python
 slot_readers_count = {
@@ -1225,7 +1227,7 @@ slot_readers_count = {
 }
 ```
 
-Começamos com:
+We start with:
 
 ```python
 available_slots = [
@@ -1235,7 +1237,7 @@ available_slots = [
 ]
 ```
 
-Após a filtragem:
+After filtering:
 
 ```python
 available_slots = [
@@ -1243,45 +1245,45 @@ available_slots = [
 ]
 ```
 
-Porque:
+Because:
 
 ```text
-SLOT1 ainda tem 2 leitores
-SLOT2 ainda tem 1 leitor
-SLOT0 não possui leitores pendentes
+SLOT1 still has 2 readers
+SLOT2 still has 1 reader
+SLOT0 has no pending readers
 ```
 
 ---
 
-# 36. Significado de slot livre
+# 36. Meaning of a free slot
 
-Neste algoritmo, um slot é considerado disponível quando:
+In this algorithm, a slot is considered available when it:
 
 ```text
-não existe em slot_readers_count
+does not exist in slot_readers_count
 ```
 
-ou quando não possui leitores pendentes.
+or has no pending readers.
 
-Como entradas com contagem zero são removidas do dicionário, normalmente:
+Because zero-count entries are removed from the dictionary, normally:
 
 ```text
-slot livre
+free slot
     ↓
-slot não está em slot_readers_count
+slot is absent from slot_readers_count
 ```
 
 ---
 
-# 37. Nenhum slot disponível
+# 37. No slot available
 
-Se:
+If:
 
 ```python
 not available_slots
 ```
 
-a função lança:
+the function raises:
 
 ```python
 raise RuntimeError(
@@ -1289,40 +1291,40 @@ raise RuntimeError(
 )
 ```
 
-Esse erro significa que, para o estado atual do grafo e quantidade configurada de slots, todas as regiões ainda contêm valores que o algoritmo considera vivos.
+This error means that, for the graph's current state and the configured slot count, all regions still hold values the algorithm considers live.
 
 ---
 
-# 38. Exemplo
+# 38. Example
 
-Com três slots:
-
-```text
-SLOT0 → ainda necessário
-SLOT1 → ainda necessário
-SLOT2 → ainda necessário
-```
-
-e uma nova camada precisa produzir outra saída:
+With three slots:
 
 ```text
-não há espaço lógico disponível
+SLOT0 → still needed
+SLOT1 → still needed
+SLOT2 → still needed
 ```
 
-Nesse caso, a execução do extrator é interrompida.
+and a new layer needs to produce another output:
+
+```text
+no logical space is available
+```
+
+In this case, extractor execution stops.
 
 ---
 
-# 39. Escolha do slot de saída
+# 39. Choosing the output slot
 
-Se existem slots livres:
+If there are free slots:
 
 ```python
 if next_slot in available_slots:
     output_slot = next_slot
 ```
 
-Caso contrário:
+Otherwise:
 
 ```python
 output_slot = (
@@ -1332,38 +1334,38 @@ output_slot = (
 
 ---
 
-# 40. Papel de `next_slot`
+# 40. Role of `next_slot`
 
-`next_slot` não é obrigatório.
+`next_slot` is not mandatory.
 
-Ele funciona como:
+It acts as the:
 
 ```text
-slot preferencial
+preferred slot
 ```
 
-O algoritmo tenta manter uma rotação simples.
+The algorithm attempts to maintain a simple rotation.
 
-Para três slots:
+For three slots:
 
 ```text
 0 → 1 → 2 → 0 → 1 → ...
 ```
 
-Mas apenas se o próximo slot estiver realmente livre.
+But only if the next slot is actually free.
 
 ---
 
-# 41. Exemplo
+# 41. Example
 
-Suponha:
+Suppose:
 
 ```text
 next_slot = 2
 available_slots = [0, 2]
 ```
 
-Então:
+Then:
 
 ```text
 output_slot = 2
@@ -1371,22 +1373,22 @@ output_slot = 2
 
 ---
 
-# 42. Exemplo com slot preferencial ocupado
+# 42. Example with an occupied preferred slot
 
-Se:
+If:
 
 ```text
 next_slot = 2
 available_slots = [0, 1]
 ```
 
-então:
+then:
 
 ```text
-2 não está disponível
+2 is unavailable
 ```
 
-Logo:
+Therefore:
 
 ```python
 output_slot = (
@@ -1394,7 +1396,7 @@ output_slot = (
 )
 ```
 
-resultado:
+Result:
 
 ```text
 output_slot = 0
@@ -1402,45 +1404,45 @@ output_slot = 0
 
 ---
 
-# 43. Por que existe uma preferência?
+# 43. Why have a preference?
 
-Sem isso, o algoritmo poderia sempre escolher:
+Without this, the algorithm could always choose:
 
 ```python
 available_slots[0]
 ```
 
-A preferência circular ajuda a distribuir naturalmente as ativações entre os slots.
+The circular preference helps distribute activations naturally among the slots.
 
-Mas a correção depende primeiro da disponibilidade.
+Correctness depends first on availability.
 
-A prioridade é:
+The priority is:
 
 ```text
-1. slot precisa estar livre
-2. se next_slot estiver livre, prefira-o
-3. senão use o primeiro livre
+1. the slot must be free
+2. if next_slot is free, prefer it
+3. otherwise, use the first free slot
 ```
 
 ---
 
-# 44. Consumo das entradas
+# 44. Consuming inputs
 
-Depois que o slot de saída foi escolhido, a função registra que a operação atual consumiu suas entradas.
+After choosing the output slot, the function records that the current operation consumed its inputs.
 
-O código é:
+The code is:
 
 ```python
 for input_slot in input_slots:
 ```
 
-Para cada uma:
+For each one:
 
 ```python
 if input_slot in slot_readers_count:
 ```
 
-a contagem é decrementada:
+the count is decremented:
 
 ```python
 slot_readers_count[
@@ -1450,21 +1452,21 @@ slot_readers_count[
 
 ---
 
-# 45. Significado do decremento
+# 45. Meaning of the decrement
 
-Considere:
-
-```text
-L2 output está em SLOT1
-```
-
-e:
+Consider:
 
 ```text
-ainda existem 2 consumidores
+L2 output is in SLOT1
 ```
 
-Estado:
+and:
+
+```text
+there are still 2 consumers
+```
+
+State:
 
 ```python
 slot_readers_count = {
@@ -1472,19 +1474,19 @@ slot_readers_count = {
 }
 ```
 
-Ao processar um deles:
+When processing one of them:
 
 ```text
 2 → 1
 ```
 
-A saída ainda precisa ser preservada.
+The output must still be preserved.
 
 ---
 
-# 46. Último consumidor
+# 46. Last consumer
 
-Quando:
+When:
 
 ```python
 slot_readers_count[
@@ -1492,7 +1494,7 @@ slot_readers_count[
 ] == 0
 ```
 
-é executado:
+the following executes:
 
 ```python
 del slot_readers_count[
@@ -1500,29 +1502,29 @@ del slot_readers_count[
 ]
 ```
 
-Isso significa:
+This means:
 
 ```text
-não existe mais nenhum consumidor conhecido
-para o valor armazenado nesse slot
+there are no more known consumers
+for the value stored in this slot
 ```
 
-Logo ele poderá ser reutilizado posteriormente.
+It can therefore be reused later.
 
 ---
 
-# 47. Exemplo de vida útil
+# 47. Lifetime example
 
-Considere:
+Consider:
 
 ```text
 L1 output → SLOT1
 
-L2 usa L1
-L5 usa L1
+L2 uses L1
+L5 uses L1
 ```
 
-Ao produzir L1:
+When producing L1:
 
 ```python
 slot_readers_count = {
@@ -1530,7 +1532,7 @@ slot_readers_count = {
 }
 ```
 
-Depois de L2:
+After L2:
 
 ```python
 slot_readers_count = {
@@ -1538,25 +1540,25 @@ slot_readers_count = {
 }
 ```
 
-Depois de L5:
+After L5:
 
 ```python
 slot_readers_count = {}
 ```
 
-Agora SLOT1 está liberado.
+SLOT1 is now released.
 
 ---
 
-# 48. Registro dos leitores da nova saída
+# 48. Recording readers of the new output
 
-Depois de consumir as entradas, a função registra quantas operações futuras consumirão a nova saída:
+After consuming the inputs, the function records how many future operations will consume the new output:
 
 ```python
 if layers_below:
 ```
 
-Então:
+Then:
 
 ```python
 slot_readers_count[
@@ -1568,9 +1570,9 @@ slot_readers_count[
 
 ---
 
-# 49. Exemplo simples
+# 49. Simple example
 
-Se:
+If:
 
 ```python
 layers_below = [
@@ -1578,7 +1580,7 @@ layers_below = [
 ]
 ```
 
-então:
+then:
 
 ```python
 slot_readers_count[
@@ -1588,9 +1590,9 @@ slot_readers_count[
 
 ---
 
-# 50. Exemplo de ramificação
+# 50. Branching example
 
-Se:
+If:
 
 ```python
 layers_below = [
@@ -1599,7 +1601,7 @@ layers_below = [
 ]
 ```
 
-então:
+then:
 
 ```python
 slot_readers_count[
@@ -1607,33 +1609,33 @@ slot_readers_count[
 ] = 2
 ```
 
-O valor não poderá ser sobrescrito até ambas as operações terem sido processadas.
+The value cannot be overwritten until both operations have been processed.
 
 ---
 
-# 51. Camada sem consumidores
+# 51. Layer without consumers
 
-Se:
+If:
 
 ```python
 layers_below == []
 ```
 
-nenhuma entrada é criada em:
+no entry is created in:
 
 ```python
 slot_readers_count
 ```
 
-Isso normalmente ocorre na saída final.
+This normally occurs at the final output.
 
-A saída continua existindo fisicamente no slot, mas o algoritmo não precisa protegê-la para outra camada da rede.
+The output still physically exists in the slot, but the algorithm does not need to protect it for another network layer.
 
 ---
 
-# 52. Registro camada → slot
+# 52. Recording layer → slot
 
-Depois:
+Then:
 
 ```python
 layer_output_slot[
@@ -1641,9 +1643,9 @@ layer_output_slot[
 ] = output_slot
 ```
 
-Essa informação será usada por camadas futuras.
+This information will be used by future layers.
 
-Exemplo:
+Example:
 
 ```python
 layer_output_slot[
@@ -1651,13 +1653,13 @@ layer_output_slot[
 ] = 2
 ```
 
-Quando L9 possuir:
+When L9 has:
 
 ```python
 "above": ["L8"]
 ```
 
-ela descobrirá que sua entrada está em:
+it will discover that its input is in:
 
 ```text
 SLOT2
@@ -1665,9 +1667,9 @@ SLOT2
 
 ---
 
-# 53. Registro detalhado em `allocation`
+# 53. Detailed record in `allocation`
 
-A função adiciona:
+The function adds:
 
 ```python
 {
@@ -1679,13 +1681,13 @@ A função adiciona:
 }
 ```
 
-Esse registro contém tudo que as etapas seguintes precisam saber sobre a movimentação lógica das ativações.
+This record contains everything subsequent stages need to know about the logical movement of activations.
 
 ---
 
-# 54. Exemplo
+# 54. Example
 
-Uma convolução poderia gerar:
+A convolution could produce:
 
 ```python
 {
@@ -1697,7 +1699,7 @@ Uma convolução poderia gerar:
 }
 ```
 
-Representando:
+Representing:
 
 ```text
 SLOT1
@@ -1709,9 +1711,9 @@ SLOT2
 
 ---
 
-# 55. Exemplo de `ADD`
+# 55. `ADD` example
 
-Um `ADD` poderia gerar:
+An `ADD` could produce:
 
 ```python
 {
@@ -1726,7 +1728,7 @@ Um `ADD` poderia gerar:
 }
 ```
 
-Representando:
+Representing:
 
 ```text
 SLOT1 ──┐
@@ -1736,9 +1738,9 @@ SLOT2 ──┘
 
 ---
 
-# 56. Atualização do slot preferencial
+# 56. Updating the preferred slot
 
-No fim da iteração:
+At the end of the iteration:
 
 ```python
 next_slot = (
@@ -1748,15 +1750,15 @@ next_slot = (
 
 ---
 
-# 57. Operador `%`
+# 57. The `%` operator
 
-Com:
+With:
 
 ```python
 num_slots = 3
 ```
 
-temos:
+we have:
 
 ```text
 output_slot 0
@@ -1782,7 +1784,7 @@ output_slot 2
 0
 ```
 
-Portanto existe uma rotação:
+There is therefore a rotation:
 
 ```text
 0 → 1 → 2 → 0 → 1 → 2 ...
@@ -1790,9 +1792,9 @@ Portanto existe uma rotação:
 
 ---
 
-# 58. Retorno final
+# 58. Final return value
 
-Ao final:
+At the end:
 
 ```python
 return (
@@ -1801,7 +1803,7 @@ return (
 )
 ```
 
-Exemplo:
+Example:
 
 ```python
 allocation = [
@@ -1809,7 +1811,7 @@ allocation = [
 ]
 ```
 
-e:
+and:
 
 ```python
 layer_output_slot = {
@@ -1822,9 +1824,9 @@ layer_output_slot = {
 
 ---
 
-# 59. Exemplo completo de uma cadeia linear
+# 59. Complete linear chain example
 
-Considere:
+Consider:
 
 ```text
 L0 QUANTIZE
@@ -1836,22 +1838,22 @@ L2 DW
 L3 CONV
 ```
 
-Com três slots.
+With three slots.
 
 ---
 
 # 60. L0 — QUANTIZE
 
-Não possui camada anterior.
+It has no preceding layer.
 
-Logo:
+Therefore:
 
 ```text
 input_slot = 0
 output_slot = 0
 ```
 
-Resultado:
+Result:
 
 ```text
 SLOT0 → QUANTIZE → SLOT0
@@ -1861,25 +1863,25 @@ SLOT0 → QUANTIZE → SLOT0
 
 # 61. L1 — CONV
 
-Entrada:
+Input:
 
 ```text
 SLOT0
 ```
 
-Preferência:
+Preference:
 
 ```text
 next_slot = 1
 ```
 
-Saída:
+Output:
 
 ```text
 SLOT1
 ```
 
-Resultado:
+Result:
 
 ```text
 SLOT0 → CONV → SLOT1
@@ -1889,19 +1891,19 @@ SLOT0 → CONV → SLOT1
 
 # 62. L2 — DEPTHWISE
 
-Entrada:
+Input:
 
 ```text
 SLOT1
 ```
 
-Se SLOT2 estiver livre:
+If SLOT2 is free:
 
 ```text
 output = SLOT2
 ```
 
-Resultado:
+Result:
 
 ```text
 SLOT1 → DW → SLOT2
@@ -1911,19 +1913,19 @@ SLOT1 → DW → SLOT2
 
 # 63. L3 — CONV
 
-Entrada:
+Input:
 
 ```text
 SLOT2
 ```
 
-Se SLOT0 já estiver liberado:
+If SLOT0 has already been released:
 
 ```text
 output = SLOT0
 ```
 
-Resultado:
+Result:
 
 ```text
 SLOT2 → CONV → SLOT0
@@ -1931,10 +1933,10 @@ SLOT2 → CONV → SLOT0
 
 ---
 
-# 64. Resultado da cadeia
+# 64. Chain result
 
 ```text
-             entrada
+             input
                 │
                 ▼
              SLOT0
@@ -1960,13 +1962,13 @@ SLOT2 → CONV → SLOT0
              SLOT0
 ```
 
-A memória é reutilizada em ciclo.
+Memory is reused cyclically.
 
 ---
 
-# 65. Exemplo com residual
+# 65. Residual example
 
-Considere:
+Consider:
 
 ```text
 L1
@@ -1982,20 +1984,20 @@ L4                             │
                     L5 ADD
 ```
 
-Suponha:
+Suppose:
 
 ```text
 L1 output = SLOT1
 ```
 
-Como L1 possui dois consumidores:
+Because L1 has two consumers:
 
 ```text
 L2
 L5
 ```
 
-o estado é:
+the state is:
 
 ```python
 slot_readers_count = {
@@ -2005,70 +2007,70 @@ slot_readers_count = {
 
 ---
 
-# 66. L2 consome SLOT1
+# 66. L2 consumes SLOT1
 
-Após L2:
+After L2:
 
 ```text
 SLOT1 readers:
 2 → 1
 ```
 
-A memória continua protegida.
+Memory remains protected.
 
 ---
 
-# 67. Camadas intermediárias
+# 67. Intermediate layers
 
-L3 e L4 podem utilizar outros slots.
+L3 and L4 can use other slots.
 
-SLOT1 continua indisponível porque:
+SLOT1 remains unavailable because:
 
 ```text
-L5 ainda precisa dele
+L5 still needs it
 ```
 
 ---
 
 # 68. L5 ADD
 
-L5 recebe:
+L5 receives:
 
 ```text
 SLOT1
 +
-slot da saída de L4
+slot holding L4's output
 ```
 
-Depois que L5 consome SLOT1:
+After L5 consumes SLOT1:
 
 ```text
 1 → 0
 ```
 
-Agora o slot pode ser reutilizado.
+The slot can now be reused.
 
-Esse é o mecanismo que preserva skip connections.
+This is the mechanism that preserves skip connections.
 
 ---
 
-# 69. Relação entre `above` e `input_slots`
+# 69. Relationship between `above` and `input_slots`
 
-O código não consulta diretamente tensors nesta fase.
+The code does not consult tensors directly at this stage.
 
-Ele utiliza:
+It uses:
 
 ```text
 layer["above"]
 ```
 
-e:
+and:
 
 ```text
 layer_output_slot
 ```
 
-A transformação é:
+The transformation is:
 
 ```text
 L6
@@ -2078,7 +2080,7 @@ layer_output_slot["L6"]
 slot 1
 ```
 
-Então:
+Then:
 
 ```text
 above
@@ -2088,21 +2090,21 @@ input_slots
 
 ---
 
-# 70. Relação entre `below` e liveness
+# 70. Relationship between `below` and liveness
 
-Da mesma forma:
+Similarly:
 
 ```text
 layer["below"]
 ```
 
-define:
+defines:
 
 ```text
-quantos leitores futuros existem
+how many future readers exist
 ```
 
-Ou seja:
+In other words:
 
 ```text
 len(layers_below)
@@ -2110,90 +2112,90 @@ len(layers_below)
 slot_readers_count
 ```
 
-Isso implementa uma forma simples de análise de vida útil.
+This implements a simple form of lifetime analysis.
 
 ---
 
-# 71. Conceito de liveness
+# 71. Liveness concept
 
-Em compiladores e planejamento de memória, um valor está "vivo" enquanto ainda poderá ser utilizado no futuro.
+In compilers and memory planning, a value is "live" while it may still be used in the future.
 
-Neste módulo:
+In this module:
 
 ```text
 slot_readers_count[slot] > 0
 ```
 
-representa:
+represents:
 
 ```text
-o valor armazenado no slot ainda está vivo
+the value stored in the slot is still live
 ```
 
-Quando:
+When:
 
 ```text
 slot_readers_count
-não contém mais o slot
+no longer contains the slot
 ```
 
-o valor é considerado morto para o restante do grafo.
+the value is considered dead for the rest of the graph.
 
 ---
 
-# 72. Não é uma alocação de memória em bytes
+# 72. This is not memory allocation in bytes
 
-É importante não confundir:
+It is important not to confuse:
 
 ```text
 allocate_slots()
 ```
 
-com:
+with:
 
 ```text
 malloc()
 ```
 
-ou cálculo de endereços.
+or address calculation.
 
-Aqui o resultado é:
+Here the result is:
 
 ```text
 L10 → slot 2
 ```
 
-não:
+not:
 
 ```text
-L10 → endereço 900464
+L10 → address 900464
 ```
 
-A conversão física ocorre depois.
+Physical conversion occurs later.
 
 ---
 
-# 73. Relação com `memory.py`
+# 73. Relationship with `memory.py`
 
-Posteriormente:
+Later:
 
 ```text
 memory.py
 ```
 
-calcula:
+calculates:
 
 ```text
 SLOT_BYTES
 ```
 
-e depois:
+and then:
 
 ```text
 slot_bases
 ```
 
-Por exemplo:
+For example:
 
 ```text
 SLOT0_BASE = 507248
@@ -2201,13 +2203,13 @@ SLOT1_BASE = 703856
 SLOT2_BASE = 900464
 ```
 
-Assim:
+Thus:
 
 ```text
 output_slot = 2
 ```
 
-pode virar:
+can become:
 
 ```text
 out_ptr = slot_bases[2]
@@ -2216,23 +2218,23 @@ out_ptr = slot_bases[2]
 
 ---
 
-# 74. Relação com `tensor_mapping.py`
+# 74. Relationship with tensor_mapping.py
 
-`allocate_slots()` trabalha por camada.
+`allocate_slots()` works per layer.
 
-Mas outras partes do pipeline precisam responder:
+Other parts of the pipeline need to answer:
 
 ```text
-em qual slot está o tensor TFLite 173?
+which slot holds TFLite tensor 173?
 ```
 
-Essa responsabilidade pertence a:
+This responsibility belongs to:
 
 ```text
 tensor_mapping.py
 ```
 
-Fluxo:
+Flow:
 
 ```text
 layer
@@ -2248,18 +2250,18 @@ tensor → slot
 
 ---
 
-# 75. Relação com `layer_params.py`
+# 75. Relationship to `layer_params.py`
 
-Depois:
+Then:
 
 ```text
 input_slots
 output_slot
 ```
 
-são transformados em ponteiros reais.
+are converted into real pointers.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 input_slot = 1
@@ -2269,7 +2271,7 @@ slot_bases[1]
 in_ptr
 ```
 
-e:
+and:
 
 ```text
 output_slot = 2
@@ -2279,16 +2281,16 @@ slot_bases[2]
 out_ptr
 ```
 
-Esses ponteiros entram nas `LayerParams`.
+These pointers go into `LayerParams`.
 
 ---
 
-# 76. Fluxo completo
+# 76. Complete flow
 
 ```text
 graph.py
   │
-  │ acima / abaixo
+  │ above / below
   ▼
 slots.py
   │
@@ -2316,7 +2318,7 @@ WAT
 
 # 77. `slot_allocation_to_text()`
 
-A segunda função do módulo é:
+The module's second function is:
 
 ```python
 def slot_allocation_to_text(
@@ -2324,59 +2326,59 @@ def slot_allocation_to_text(
 ):
 ```
 
-Ela não influencia o cálculo.
+It does not affect the calculation.
 
-Seu objetivo é apenas transformar:
+Its only purpose is to convert:
 
 ```python
 allocation
 ```
 
-em texto legível.
+into readable text.
 
 ---
 
-# 78. Separação importante
+# 78. Important separation
 
-A fonte de verdade é:
+The source of truth is:
 
 ```python
 allocation
 ```
 
-O relatório é derivado dela.
+The report is derived from it.
 
-Portanto:
+Therefore:
 
 ```text
 allocation
-   ├──→ próximos módulos
+   ├──→ subsequent modules
    └──→ slot_allocation_to_text()
                ↓
-            relatório
+            report
 ```
 
-Nunca o contrário.
+Never the reverse.
 
 ---
 
-# 79. Inicialização do relatório
+# 79. Initializing the report
 
 ```python
 lines = []
 ```
 
-Cada decisão será convertida em uma linha textual.
+Each decision is converted into a text line.
 
 ---
 
-# 80. Percorrendo registros
+# 80. Iterating over records
 
 ```python
 for alloc in allocation:
 ```
 
-Cada elemento contém:
+Each element contains:
 
 ```text
 layer
@@ -2388,7 +2390,7 @@ in_place
 
 ---
 
-# 81. Recuperando entradas e saída
+# 81. Retrieving inputs and output
 
 ```python
 input_slots = (
@@ -2404,15 +2406,15 @@ output_slot = (
 
 ---
 
-# 82. Uma entrada
+# 82. Single input
 
-Se:
+If:
 
 ```python
 len(input_slots) == 1
 ```
 
-o texto é:
+the text is:
 
 ```python
 inputs = str(
@@ -2420,7 +2422,7 @@ inputs = str(
 )
 ```
 
-Exemplo:
+Example:
 
 ```text
 [1 -> 2]
@@ -2428,9 +2430,9 @@ Exemplo:
 
 ---
 
-# 83. Múltiplas entradas
+# 83. Multiple inputs
 
-Caso contrário:
+Otherwise:
 
 ```python
 inputs = " e ".join(
@@ -2438,19 +2440,19 @@ inputs = " e ".join(
 )
 ```
 
-Para:
+For:
 
 ```python
 [1, 2]
 ```
 
-produz:
+produces:
 
 ```text
 1 e 2
 ```
 
-Então:
+Then:
 
 ```text
 [1 e 2 -> 0]
@@ -2458,9 +2460,9 @@ Então:
 
 ---
 
-# 84. Montagem da linha
+# 84. Assembling the line
 
-A linha usa:
+The line uses:
 
 ```python
 line = (
@@ -2470,20 +2472,20 @@ line = (
 )
 ```
 
-Os especificadores:
+The format specifiers:
 
 ```text
 :25
 :5
 ```
 
-servem apenas para alinhar visualmente as colunas.
+serve only to align columns visually.
 
-Não alteram os dados.
+They do not change the data.
 
 ---
 
-# 85. Exemplo de relatório
+# 85. Report example
 
 ```text
 QUANTIZE                  L0    [0 -> 0] (in-place)
@@ -2495,27 +2497,27 @@ ADD                       L4    [0 e 1 -> 2]
 
 ---
 
-# 86. Marcador in-place
+# 86. In-place marker
 
-Se:
+If:
 
 ```python
 alloc["in_place"]
 ```
 
-for verdadeiro:
+is true:
 
 ```python
 line += " (in-place)"
 ```
 
-Assim o relatório deixa explícito que entrada e saída compartilham a mesma região lógica.
+The report thus explicitly shows that input and output share the same logical region.
 
 ---
 
-# 87. Retorno textual
+# 87. Text return value
 
-Por fim:
+Finally:
 
 ```python
 return "\n".join(
@@ -2523,32 +2525,32 @@ return "\n".join(
 )
 ```
 
-transforma a lista em um único texto.
+turns the list into a single text string.
 
 ---
 
-# 88. Estado temporário versus resultado permanente
+# 88. Temporary state versus permanent result
 
-É importante distinguir:
+It is important to distinguish:
 
 ```text
 slot_readers_count
 ```
 
-de:
+from:
 
 ```text
 allocation
 ```
 
-`slot_readers_count` só existe durante a execução do algoritmo.
+`slot_readers_count` exists only during algorithm execution.
 
-`allocation` é o resultado final.
+`allocation` is the final result.
 
-Exemplo:
+Example:
 
 ```text
-durante L10:
+during L10:
 
 slot_readers_count = {
     0: 1,
@@ -2556,9 +2558,9 @@ slot_readers_count = {
 }
 ```
 
-Esse estado não precisa ser preservado depois.
+This state does not need to be retained afterward.
 
-Já:
+Whereas:
 
 ```python
 {
@@ -2568,101 +2570,101 @@ Já:
 }
 ```
 
-é permanente.
+is permanent.
 
 ---
 
-# 89. O algoritmo não reserva memória fisicamente
+# 89. The algorithm does not physically reserve memory
 
-Quando executa:
+When it executes:
 
 ```python
 output_slot = 1
 ```
 
-nenhum byte é alocado.
+no bytes are allocated.
 
-Ele apenas produz uma decisão lógica.
+It only produces a logical decision.
 
-A alocação física será:
+The physical allocation will be:
 
 ```text
 slot 1
     ↓
 SLOT1_BASE
     ↓
-região [SLOT1_BASE,
+region [SLOT1_BASE,
        SLOT1_BASE + SLOT_BYTES)
 ```
 
 ---
 
-# 90. Por que `NUM_SLOTS = 3` é suficiente para o modelo atual?
+# 90. Why is `NUM_SLOTS = 3` sufficient for the current model?
 
-O modelo utilizado pelo projeto consegue ser planejado pelo algoritmo atual com três regiões reutilizáveis.
+The model used by the project can be planned by the current algorithm with three reusable regions.
 
-A necessidade vem principalmente da combinação de:
+The need comes mainly from the combination of:
 
 ```text
-entrada atual
-saída nova
-valor residual preservado
+current input
+new output
+preserved residual value
 ```
 
-Em um bloco residual típico:
+In a typical residual block:
 
 ```text
 SLOT A
   ├─────────────────────────┐
   ▼                         │
-cadeia de operações         │
+chain of operations        │
   ▼                         │
 SLOT B/C                    │
                             ▼
                            ADD
 ```
 
-três slots permitem manter um valor antigo enquanto outros dois participam da cadeia de cálculo.
+three slots allow an old value to be retained while the other two participate in the computation chain.
 
-Isso descreve o comportamento observado no modelo atual, não uma garantia de que qualquer rede possa ser executada com três slots.
+This describes the behavior observed in the current model, not a guarantee that any network can run with three slots.
 
 ---
 
-# 91. `NUM_SLOTS` não é propriedade do TFLite
+# 91. `NUM_SLOTS` is not a TFLite property
 
-O arquivo TFLite não diz:
+The TFLite file does not say:
 
 ```text
-use três slots
+use three slots
 ```
 
-Essa é uma decisão do runtime desenvolvido no projeto.
+This is a decision made by the runtime developed in this project.
 
-Portanto:
+Therefore:
 
 ```text
 TFLite
     ↓
-grafo
+graph
     ↓
-estratégia própria
+custom strategy
     ↓
 3 slots
 ```
 
 ---
 
-# 92. Limitação importante: contagem por slot
+# 92. Important limitation: counting per slot
 
-O algoritmo atual mantém:
+The current algorithm maintains:
 
 ```python
 slot_readers_count
 ```
 
-por slot.
+per slot.
 
-Por exemplo:
+For example:
 
 ```python
 {
@@ -2670,182 +2672,182 @@ Por exemplo:
 }
 ```
 
-Ele não mantém explicitamente:
+It does not explicitly maintain:
 
 ```text
-tensor X possui 2 leitores
-tensor Y possui 1 leitor
+tensor X has 2 readers
+tensor Y has 1 reader
 ```
 
-Essa é uma simplificação importante da implementação.
+This is an important simplification in the implementation.
 
 ---
 
-# 93. Por que isso funciona no cenário atual?
+# 93. Why does this work in the current scenario?
 
-A estratégia pressupõe que um slot represente, naquele momento, um único valor lógico vivo.
+The strategy assumes that a slot represents a single live logical value at that moment.
 
-Enquanto ele possui leitores pendentes:
-
-```text
-não pode ser sobrescrito
-```
-
-Quando a contagem chega a zero:
+While it has pending readers:
 
 ```text
-pode receber outro valor
+cannot be overwritten
 ```
 
-Assim, o slot atua como proxy da vida útil do tensor atualmente armazenado nele.
+When the count reaches zero:
+
+```text
+it can receive another value
+```
+
+Thus, the slot acts as a proxy for the lifetime of the tensor currently stored in it.
 
 ---
 
-# 94. Limite conceitual dessa abordagem
+# 94. Conceptual limit of this approach
 
-Uma análise de liveness mais geral poderia rastrear:
+A more general liveness analysis could track:
 
 ```text
 tensor_id
     ↓
-número de usos restantes
+number of remaining uses
 ```
 
-e depois associar tensores a slots.
+and then associate tensors with slots.
 
-O algoritmo atual combina parte dessas duas responsabilidades:
+The current algorithm combines part of these two responsibilities:
 
 ```text
 slot
     ↓
-número de leitores restantes
+number of remaining readers
 ```
 
-Isso é mais simples, mas depende da estratégia de reutilização adotada.
+This is simpler, but depends on the adopted reuse strategy.
 
 ---
 
-# 95. Caso especial que merece atenção: `QUANTIZE`
+# 95. Special case requiring attention: `QUANTIZE`
 
-No bloco:
+In the block:
 
 ```python
 if layer_type == "QUANTIZE":
 ```
 
-a função registra o mesmo slot para entrada e saída e executa:
+the function records the same slot for input and output and executes:
 
 ```python
 continue
 ```
 
-Portanto o caminho `QUANTIZE` não executa a lógica comum de:
+Therefore the `QUANTIZE` path does not execute the common logic for:
 
 ```text
-decrementar leitores da entrada
-registrar leitores da saída
+decrementing input readers
+recording output readers
 ```
 
-Esse comportamento é exatamente o comportamento atual do código.
+This is exactly how the current code behaves.
 
 ---
 
-# 96. Implicação
+# 96. Implication
 
-Para o modelo atual, essa implementação foi mantida para preservar o comportamento da versão original.
+For the current model, this implementation was retained to preserve the original version's behavior.
 
-Entretanto, conceitualmente existe uma diferença entre:
-
-```text
-operação in-place
-```
-
-e:
+Conceptually, however, there is a difference between:
 
 ```text
-vida útil do valor antes e depois da operação
+in-place operation
 ```
 
-Se no futuro houver modelos com diferentes padrões de ramificação em torno de um `QUANTIZE`, esse ponto merece validação específica.
+and:
+
+```text
+the value's lifetime before and after the operation
+```
+
+If future models have different branching patterns around a `QUANTIZE`, this point needs specific validation.
 
 ---
 
-# 97. Por que não alterar agora?
+# 97. Why not change it now?
 
-A refatoração teve como objetivo inicial:
+The refactoring's initial objective was:
 
 ```text
-separar responsabilidades
-preservando o comportamento funcional existente
+separate responsibilities
+while preserving existing functional behavior
 ```
 
-Modificar simultaneamente o algoritmo de slots poderia introduzir diferenças difíceis de atribuir.
+Changing the slot algorithm at the same time could introduce differences that are difficult to attribute.
 
-A estratégia adotada foi:
+The adopted strategy was:
 
 ```text
-primeiro modularizar
-depois validar
-depois melhorar
+first modularize
+then validate
+then improve
 ```
 
 ---
 
-# 98. Invariante importante
+# 98. Important invariant
 
-Antes de uma camada utilizar:
+Before a layer uses:
 
 ```python
 layer_output_slot[above]
 ```
 
-o produtor correspondente deve já ter sido processado.
+the corresponding producer must have been processed already.
 
-Isso depende da ordem topológica de `layers`.
+This depends on the topological order of `layers`.
 
-Se `layers` não estivesse em uma ordem válida:
+If `layers` were not in a valid order:
 
 ```text
-consumidor antes do produtor
+consumer before producer
 ```
 
-a função poderia gerar:
+the function could raise:
 
 ```text
 KeyError
 ```
 
-ao procurar um slot ainda inexistente.
+when looking up a slot that does not yet exist.
 
 ---
 
-# 99. Invariante dos slots
+# 99. Slot invariant
 
-Todo valor em:
+Every value in:
 
 ```python
 input_slots
 ```
 
-e:
+and:
 
 ```python
 output_slot
 ```
 
-deve satisfazer:
+must satisfy:
 
 ```text
 0 <= slot < num_slots
 ```
 
-Com:
+With:
 
 ```python
 num_slots = 3
 ```
 
-os únicos valores válidos são:
+the only valid values are:
 
 ```text
 0
@@ -2855,9 +2857,9 @@ os únicos valores válidos são:
 
 ---
 
-# 100. Invariante de saída
+# 100. Output invariant
 
-Para cada camada processada deve existir:
+For each processed layer, there must be:
 
 ```python
 layer_output_slot[
@@ -2865,33 +2867,33 @@ layer_output_slot[
 ]
 ```
 
-Isso garante que qualquer consumidor posterior consiga descobrir sua entrada.
+This ensures that any subsequent consumer can discover its input.
 
 ---
 
-# 101. Invariante de slot vivo
+# 101. Live slot invariant
 
-Quando:
+When:
 
 ```python
 slot_readers_count[slot] > 0
 ```
 
-o algoritmo deve impedir que ele seja escolhido como saída de outra camada.
+the algorithm must prevent it from being chosen as another layer's output.
 
-É exatamente isso que o filtro de:
+This is exactly what the filter on:
 
 ```python
 available_slots
 ```
 
-implementa.
+implements.
 
 ---
 
-# 102. Exemplo passo a passo detalhado
+# 102. Detailed step-by-step example
 
-Considere:
+Consider:
 
 ```text
 L0 QUANTIZE
@@ -2907,7 +2909,7 @@ L3 CONV           │
           L4 ADD
 ```
 
-Suponha:
+Suppose:
 
 ```text
 NUM_SLOTS = 3
@@ -2915,18 +2917,18 @@ NUM_SLOTS = 3
 
 ---
 
-# 103. Passo L0
+# 103. Step L0
 
 `QUANTIZE`.
 
-Sem predecessores.
+No predecessors.
 
 ```text
 input = 0
 output = 0
 ```
 
-Estado:
+State:
 
 ```python
 layer_output_slot = {
@@ -2936,40 +2938,40 @@ layer_output_slot = {
 
 ---
 
-# 104. Passo L1
+# 104. Step L1
 
-Entrada:
+Input:
 
 ```text
 L0 → SLOT0
 ```
 
-Slots disponíveis inicialmente:
+Initially available slots:
 
 ```text
 0, 1, 2
 ```
 
-Preferência:
+Preference:
 
 ```text
 1
 ```
 
-Então:
+Then:
 
 ```text
 L1 → SLOT1
 ```
 
-Como L1 possui dois consumidores:
+Because L1 has two consumers:
 
 ```text
 L2
 L4
 ```
 
-registramos:
+we record:
 
 ```python
 slot_readers_count = {
@@ -2979,58 +2981,58 @@ slot_readers_count = {
 
 ---
 
-# 105. Passo L2
+# 105. Step L2
 
-Entrada:
+Input:
 
 ```text
 SLOT1
 ```
 
-Antes de escolher a saída:
+Before choosing the output:
 
 ```text
-SLOT1 protegido
+SLOT1 protected
 ```
 
-Disponíveis:
+Available:
 
 ```text
 SLOT0
 SLOT2
 ```
 
-Preferência atual:
+Current preference:
 
 ```text
 SLOT2
 ```
 
-Logo:
+Therefore:
 
 ```text
 L2 output → SLOT2
 ```
 
-Ao consumir SLOT1:
+When consuming SLOT1:
 
 ```text
 2 → 1
 ```
 
-Se L2 possui um consumidor:
+If L2 has one consumer:
 
 ```text
 L3
 ```
 
-registramos:
+we record:
 
 ```text
-SLOT2 → 1 leitor
+SLOT2 → 1 reader
 ```
 
-Estado:
+State:
 
 ```python
 slot_readers_count = {
@@ -3041,48 +3043,48 @@ slot_readers_count = {
 
 ---
 
-# 106. Passo L3
+# 106. Step L3
 
-Entrada:
+Input:
 
 ```text
 SLOT2
 ```
 
-Slots protegidos:
+Protected slots:
 
 ```text
 1
 2
 ```
 
-Livre:
+Free:
 
 ```text
 0
 ```
 
-Logo:
+Therefore:
 
 ```text
 L3 output → SLOT0
 ```
 
-SLOT2 é consumido:
+SLOT2 is consumed:
 
 ```text
 1 → 0
 ```
 
-Então SLOT2 é liberado.
+SLOT2 is then released.
 
-Se L3 alimenta L4:
+If L3 feeds L4:
 
 ```text
-SLOT0 → 1 leitor
+SLOT0 → 1 reader
 ```
 
-Estado:
+State:
 
 ```python
 slot_readers_count = {
@@ -3093,35 +3095,35 @@ slot_readers_count = {
 
 ---
 
-# 107. Passo L4 — ADD
+# 107. Step L4 — ADD
 
-Entradas:
+Inputs:
 
 ```text
 L1 → SLOT1
 L3 → SLOT0
 ```
 
-Slots protegidos antes do consumo:
+Protected slots before consumption:
 
 ```text
 SLOT1
 SLOT0
 ```
 
-Livre:
+Free:
 
 ```text
 SLOT2
 ```
 
-Então:
+Then:
 
 ```text
 ADD output → SLOT2
 ```
 
-Depois do consumo:
+After consumption:
 
 ```text
 SLOT1:
@@ -3131,11 +3133,11 @@ SLOT0:
 1 → 0
 ```
 
-Ambos são liberados.
+Both are released.
 
 ---
 
-# 108. Resultado final do exemplo
+# 108. Final example result
 
 ```text
 L0 QUANTIZE  [0 → 0]
@@ -3145,7 +3147,7 @@ L3 CONV      [2 → 0]
 L4 ADD       [1,0 → 2]
 ```
 
-Visualmente:
+Visually:
 
 ```text
                 ┌──────────── SLOT1 ──────────────┐
@@ -3164,30 +3166,30 @@ SLOT0 → L0 → SLOT0 → L1 → SLOT1 → L2 → SLOT2     │
 
 ---
 
-# 109. Relação entre liveness e residual connection
+# 109. Relationship between liveness and residual connections
 
-Esse exemplo mostra o ponto mais importante do módulo:
+This example shows the module's most important point:
 
 ```text
-o resultado de L1 permanece vivo
-mesmo depois de L2 e L3
+L1's result remains live
+even after L2 and L3
 ```
 
-porque ainda existe:
+because there is still:
 
 ```text
 L4
 ```
 
-como consumidor.
+as a consumer.
 
-Sem esse controle, a residual connection seria destruída.
+Without this control, the residual connection would be destroyed.
 
 ---
 
-# 110. Complexidade
+# 110. Complexity
 
-Para cada camada, o algoritmo examina:
+For each layer, the algorithm examines:
 
 ```text
 inputs
@@ -3195,78 +3197,78 @@ slots
 consumidores
 ```
 
-Como o número de slots é pequeno e fixo no projeto:
+Because the number of slots in the project is small and fixed:
 
 ```text
 3
 ```
 
-o custo dessa etapa é insignificante comparado à inferência.
+the cost of this stage is negligible compared with inference.
 
-Conceitualmente, o custo depende aproximadamente de:
+Conceptually, the cost depends approximately on:
 
 ```text
-número de camadas
+number of layers
 +
-número de relações do grafo
+number of graph relationships
 ```
 
 ---
 
-# 111. O que este módulo deliberadamente não faz
+# 111. What this module deliberately does not do
 
-`slots.py` não:
+`slots.py` does not:
 
 ```text
-calcula SLOT_BYTES
-calcula SLOT0_BASE
-calcula SLOT1_BASE
-calcula SLOT2_BASE
-lê tensors TFLite
-calcula quantização
-gera LayerParam
-gera params_blob
-gera WAT
+calculate SLOT_BYTES
+calculate SLOT0_BASE
+calculate SLOT1_BASE
+calculate SLOT2_BASE
+read TFLite tensors
+compute quantization
+generate LayerParam
+generate params_blob
+generate WAT
 ```
 
-Ele responde apenas:
+It only answers:
 
 ```text
-qual slot lógico cada camada lê e escreve?
+which logical slot does each layer read and write?
 ```
 
 ---
 
-# 112. Por que essa separação é importante?
+# 112. Why is this separation important?
 
-Se `slots.py` também calculasse endereços físicos, ele precisaria conhecer:
+If `slots.py` also calculated physical addresses, it would need to know:
 
 ```text
-tamanho máximo de tensor
-alinhamento
+maximum tensor size
+alignment
 params_base
-tamanho da memória
+memory size
 ```
 
-Isso criaria acoplamento com `memory.py`.
+This would couple it to `memory.py`.
 
-A arquitetura atual mantém:
+The current architecture keeps:
 
 ```text
 slots.py
     ↓
-identidade lógica
+logical identity
 
 memory.py
     ↓
-posição física
+physical location
 ```
 
 ---
 
-# 113. Representação final do módulo
+# 113. Final representation of the module
 
-Podemos resumir assim:
+We can summarize it as follows:
 
 ```text
            graph.py
@@ -3283,65 +3285,65 @@ Podemos resumir assim:
         │           │
         │           └──→ tensor_mapping.py
         │
-        ├──→ relatório
+        ├──→ report
         │
         └──→ layer_params.py
 ```
 
 ---
 
-# 114. Relação com o problema de memória do ESP32
+# 114. Relationship with the ESP32 memory problem
 
-A escolha de slots reutilizáveis é particularmente importante no contexto deste projeto porque o dispositivo alvo possui recursos limitados.
+Choosing reusable slots is especially important in this project because the target device has limited resources.
 
-Uma implementação conceitualmente simples poderia fazer:
+A conceptually simple implementation could use:
 
 ```text
-uma região por tensor
+one region per tensor
 ```
 
-Mas isso aumentaria significativamente o consumo de memória.
+But this would significantly increase memory consumption.
 
-A estratégia adotada é:
+The adopted strategy is:
 
 ```text
-determinar vida útil
+determine lifetimes
        ↓
-reutilizar regiões
+reuse regions
        ↓
-reduzir memória de ativações
+reduce activation memory
 ```
 
 ---
 
-# 115. Slots versus pesos
+# 115. Slots versus weights
 
-Os slots guardam:
+Slots store:
 
 ```text
-ativações intermediárias
+intermediate activations
 ```
 
-e não:
+rather than:
 
 ```text
-pesos
-bias
+weights
+biases
 multipliers
 shifts
 q6
 LayerParams
 ```
 
-Esses dados possuem outras regiões.
+These data have their own regions.
 
-Layout conceitual:
+Conceptual layout:
 
 ```text
-memória WASM
+WASM memory
 
 ┌──────────────────────┐
-│ região inicial       │
+│ initial region       │
 ├──────────────────────┤
 │ WEIGHTS              │
 ├──────────────────────┤
@@ -3363,378 +3365,378 @@ memória WASM
 └──────────────────────┘
 ```
 
-`slots.py` decide apenas a ocupação lógica das três últimas regiões.
+`slots.py` only decides the logical occupancy of the last three regions.
 
 ---
 
 # 116. Slots versus tensors
 
-Um mesmo slot pode armazenar muitos tensors diferentes ao longo da inferência.
+One slot can store many different tensors over the course of inference.
 
-Exemplo:
+Example:
 
 ```text
 SLOT1
 
 tempo 1:
-tensor de saída de L1
+L1 output tensor
 
 tempo 2:
-tensor de saída de L4
+L4 output tensor
 
 tempo 3:
-tensor de saída de L7
+L7 output tensor
 ```
 
-Portanto:
+Therefore:
 
 ```text
 slot ≠ tensor
 ```
 
-A relação é temporal:
+The relationship is temporal:
 
 ```text
-tensor utiliza slot durante parte da execução
+a tensor uses a slot during part of execution
 ```
 
 ---
 
-# 117. Consequência para depuração
+# 117. Implication for debugging
 
-Quando o relatório mostra:
+When the report shows:
 
 ```text
 L5 → SLOT1
 ```
 
-isso não significa:
+this does not mean:
 
 ```text
-SLOT1 sempre contém L5
+SLOT1 always contains L5
 ```
 
-Significa:
+It means:
 
 ```text
-depois da execução de L5,
-seu output é colocado em SLOT1
-até que seja consumido ou sobrescrito de forma segura
+after L5 executes,
+its output is placed in SLOT1
+until it is consumed or safely overwritten
 ```
 
 ---
 
-# 118. Por que guardar `in_place`
+# 118. Why retain `in_place`
 
-O campo:
+The field:
 
 ```python
 "in_place": True
 ```
 
-pode parecer redundante porque:
+may seem redundant because:
 
 ```text
 input_slot == output_slot
 ```
 
-já revela o compartilhamento.
+already reveals the sharing.
 
-Mas mantê-lo torna a intenção explícita.
+Keeping it makes the intention explicit.
 
-É possível conceber situações em que:
+One can imagine situations where:
 
 ```text
 input_slot == output_slot
 ```
 
-aconteça por algum outro motivo.
+occurs for some other reason.
 
-O flag informa:
+The flag states:
 
 ```text
-esta operação foi deliberadamente planejada como in-place
+this operation was deliberately planned to run in place
 ```
 
 ---
 
-# 119. Diferença entre slot livre e slot vazio
+# 119. Difference between a free slot and an empty slot
 
-O algoritmo não limpa bytes quando um slot é liberado.
+The algorithm does not clear bytes when a slot is released.
 
-Portanto:
-
-```text
-slot livre
-```
-
-não significa:
+Therefore:
 
 ```text
-memória contém zeros
+free slot
 ```
 
-Significa apenas:
+does not mean:
 
 ```text
-o valor anterior não é mais semanticamente necessário
+memory contains zeros
 ```
 
-A próxima operação poderá sobrescrever a região.
+It only means:
+
+```text
+the previous value is no longer semantically needed
+```
+
+The next operation can overwrite the region.
 
 ---
 
-# 120. Importância dessa distinção
+# 120. Importance of this distinction
 
-Após:
+After:
 
 ```text
-SLOT1 liberado
+SLOT1 released
 ```
 
-ele ainda pode conter os bytes da ativação antiga.
+it may still contain the previous activation's bytes.
 
-Mas isso não importa porque nenhuma camada futura deve lê-los como aquele tensor.
+This does not matter because no future layer should read them as that tensor.
 
-Logo, "livre" é uma propriedade lógica, não uma propriedade do conteúdo físico.
+Thus, "free" is a logical property, not a property of the physical contents.
 
 ---
 
-# 121. Dependência da qualidade do grafo
+# 121. Dependence on graph quality
 
-A correção deste módulo depende diretamente de:
+This module's correctness depends directly on:
 
 ```text
 layers_above
 layers_below
 ```
 
-estarem corretos.
+being correct.
 
-Se `graph.py` esquecer um consumidor:
+If `graph.py` omits a consumer:
 
 ```text
-readers_count menor do que deveria
+readers_count is lower than it should be
 ```
 
-o slot poderá ser reutilizado cedo demais.
+the slot may be reused too early.
 
-Resultado possível:
+Possible result:
 
 ```text
-tensor sobrescrito antes de uso
+tensor overwritten before use
 ```
 
 ---
 
-# 122. Cadeia de consequência de um erro
+# 122. Chain of consequences of an error
 
 ```text
-grafo incorreto
+incorrect graph
       ↓
-readers_count incorreto
+incorrect readers_count
       ↓
-slot liberado cedo demais
+slot released too early
       ↓
-outro tensor sobrescreve memória
+another tensor overwrites memory
       ↓
-camada futura lê dado errado
+future layer reads incorrect data
       ↓
-inferência incorreta
+incorrect inference
 ```
 
-Isso mostra que a alocação de slots é uma etapa crítica mesmo sem realizar nenhuma operação neural.
+This shows that slot allocation is a critical stage even though it performs no neural operation.
 
 ---
 
-# 123. Validação atual
+# 123. Current validation
 
-O algoritmo possui uma validação explícita:
+The algorithm has an explicit validation:
 
 ```python
 if not available_slots:
     raise RuntimeError(...)
 ```
 
-Ela detecta:
+It detects:
 
 ```text
-necessidade de mais slots
+need for more slots
 ```
 
-segundo o estado calculado.
+according to the computed state.
 
-Outras propriedades são verificadas indiretamente durante a execução do pipeline.
+Other properties are checked indirectly during pipeline execution.
 
 ---
 
-# 124. Possíveis validações futuras
+# 124. Possible future validations
 
-Uma versão futura mais rigorosa poderia verificar explicitamente:
+A stricter future version could explicitly check:
 
 ```text
-todos os input_slots estão no intervalo
-todos os output_slots estão no intervalo
-nenhuma camada referencia predecessor inexistente
-todo predecessor já possui output_slot
-in-place só ocorre em tipos permitidos
+all input_slots are within range
+all output_slots are within range
+no layer references a nonexistent predecessor
+every predecessor already has an output_slot
+in-place execution only occurs for allowed types
 ```
 
-Também seria possível comparar a alocação contra uma análise de vida útil por tensor.
+Allocation could also be compared against a per-tensor lifetime analysis.
 
-Essas melhorias não são necessárias para explicar o comportamento atual, mas são caminhos naturais de validação.
+These improvements are not needed to explain the current behavior, but are natural validation paths.
 
 ---
 
-# 125. Papel do relatório
+# 125. Role of the report
 
-`slot_allocation_to_text()` permite visualizar imediatamente padrões suspeitos.
+`slot_allocation_to_text()` makes suspicious patterns immediately visible.
 
-Por exemplo:
+For example:
 
 ```text
 CONV_2D             L10   [1 -> 2]
 ADD                 L11   [1 e 2 -> 0]
 ```
 
-é coerente com duas entradas distintas.
+is consistent with two distinct inputs.
 
-Já uma saída inesperada como:
+An unexpected output such as:
 
 ```text
 ADD                 L11   [1 e 1 -> 2]
 ```
 
-pode justificar inspeção adicional, dependendo do grafo.
+may justify further inspection, depending on the graph.
 
 ---
 
-# 126. O relatório não é usado pela inferência
+# 126. The report is not used by inference
 
-Depois que o texto é gravado:
+After the text is written:
 
 ```text
 reports/03-alocacao-slots.txt
 ```
 
-o pipeline não o lê novamente.
+the pipeline does not read it again.
 
-Logo:
+Therefore:
 
 ```text
-relatório = observabilidade
+report = observability
 ```
 
-e:
+and:
 
 ```text
-allocation = dados de execução
+allocation = execution data
 ```
 
 ---
 
-# 127. Resumo das estruturas
+# 127. Structure summary
 
-| Estrutura            | Função                                                                   |
+| Structure | Purpose |
 | -------------------- | ------------------------------------------------------------------------ |
-| `layer_output_slot`  | Descobrir em qual slot está a saída de cada camada                       |
-| `slot_readers_count` | Controlar quantos consumidores ainda necessitam do conteúdo de cada slot |
-| `allocation`         | Registrar a alocação final de cada camada                                |
-| `next_slot`          | Indicar o slot preferencial para a próxima saída                         |
-| `available_slots`    | Slots que podem ser sobrescritos naquele momento                         |
+| `layer_output_slot` | Find the slot containing each layer's output |
+| `slot_readers_count` | Track how many consumers still need each slot's contents |
+| `allocation` | Record each layer's final allocation |
+| `next_slot` | Indicate the preferred slot for the next output |
+| `available_slots` | Slots that can be overwritten at that moment |
 
 ---
 
-# 128. Resumo dos campos de `allocation`
+# 128. Summary of `allocation` fields
 
-| Campo         | Significado                                       |
+| Field | Meaning |
 | ------------- | ------------------------------------------------- |
-| `layer`       | Label lógico da camada                            |
-| `type`        | Tipo da operação                                  |
-| `input_slots` | Slots contendo as entradas                        |
-| `output_slot` | Slot onde a saída será armazenada                 |
-| `in_place`    | Indica reutilização deliberada do slot de entrada |
+| `layer` | Logical layer label |
+| `type` | Operation type |
+| `input_slots` | Slots containing the inputs |
+| `output_slot` | Slot where the output will be stored |
+| `in_place` | Indicates deliberate reuse of the input slot |
 
 ---
 
-# 129. Resumo do algoritmo
+# 129. Algorithm summary
 
-A lógica geral pode ser representada assim:
+The general logic can be represented as follows:
 
 ```text
-para cada camada
+for each layer
       │
       ▼
-descobrir slots das entradas
+find input slots
       │
       ▼
-é QUANTIZE?
+is it QUANTIZE?
   │          │
- sim        não
+ yes        no
   │          │
   ▼          ▼
-reusar     encontrar
-entrada    slots livres
+reuse      find
+input      free slots
   │          │
   │          ▼
-  │       escolher
+  │       choose
   │       output_slot
   │          │
   │          ▼
-  │       consumir
-  │       leitores das entradas
+  │       consume
+  │       input readers
   │          │
   │          ▼
-  │       registrar leitores
-  │       da nova saída
+  │       record readers
+  │       of the new output
   │          │
   └──────┬───┘
          ▼
-registrar camada → slot
+record layer → slot
          │
          ▼
-próxima camada
+next layer
 ```
 
 ---
 
-# 130. Visão mais abstrata
+# 130. More abstract view
 
-O problema resolvido pelo módulo é:
+The problem solved by the module is:
 
 ```text
-GRAFO DE DEPENDÊNCIAS
+DEPENDENCY GRAPH
         │
         ▼
-ANÁLISE DE VIDA ÚTIL
+LIFETIME ANALYSIS
         │
         ▼
-REUTILIZAÇÃO DE BUFFERS
+BUFFER REUSE
         │
         ▼
-MENOR QUANTIDADE DE REGIÕES
-DE ATIVAÇÃO NECESSÁRIAS
+FEWER REQUIRED
+ACTIVATION REGIONS
 ```
 
 ---
 
-# 131. Papel no pipeline completo
+# 131. Role in the complete pipeline
 
-Neste ponto, o projeto pode ser entendido assim:
+At this point, the project can be understood as follows:
 
 ```text
 ┌──────────────────────────────┐
 │          config.py           │
 │                              │
-│ define NUM_SLOTS = 3         │
+│ defines NUM_SLOTS = 3        │
 └─────────────┬────────────────┘
               │
               ▼
 ┌──────────────────────────────┐
 │          graph.py            │
 │                              │
-│ Lx → predecessores           │
-│ Lx → consumidores            │
+│ Lx → predecessors           │
+│ Lx → consumers              │
 └─────────────┬────────────────┘
               │
               ▼
@@ -3749,14 +3751,14 @@ Neste ponto, o projeto pode ser entendido assim:
 ┌──────────────────────────────┐
 │      tensor_mapping.py       │
 │                              │
-│ tensor TFLite → slot         │
+│ TFLite tensor → slot        │
 └─────────────┬────────────────┘
               │
               ▼
 ┌──────────────────────────────┐
 │         memory.py            │
 │                              │
-│ slot → endereço físico       │
+│ slot → physical address     │
 └─────────────┬────────────────┘
               │
               ▼
@@ -3769,46 +3771,46 @@ Neste ponto, o projeto pode ser entendido assim:
 
 ---
 
-# 132. Síntese
+# 132. Summary
 
-O `slots.py` implementa a transição entre:
+`slots.py` implements the transition between:
 
 ```text
-dependência lógica
+logical dependency
 ```
 
-e:
+and:
 
 ```text
-reutilização concreta de memória
+concrete memory reuse
 ```
 
-Ele ainda não conhece bytes ou endereços, mas decide uma propriedade essencial:
+It does not yet know bytes or addresses, but decides an essential property:
 
 ```text
-qual resultado pode ocupar qual região
-sem destruir dados que ainda serão necessários
+which result can occupy which region
+without destroying data that will still be needed
 ```
 
-A lógica central é:
+The central logic is:
 
 ```text
-saída possui consumidores?
+does the output have consumers?
         │
         ▼
-mantenha o slot protegido
+keep the slot protected
 
-último consumidor executou?
+has the last consumer executed?
         │
         ▼
-libere o slot
+release the slot
 
-nova camada precisa de saída?
+does a new layer need an output?
         │
         ▼
-escolha um slot disponível
+choose an available slot
 ```
 
-Essa estratégia permite que uma rede com dezenas de camadas reutilize apenas três grandes buffers intermediários, em vez de reservar uma região independente para cada saída de camada.
+This strategy allows a network with dozens of layers to reuse just three large intermediate buffers instead of reserving an independent region for every layer output.
 
-Ao mesmo tempo, o código preserva o comportamento especial do `QUANTIZE`, que atualmente opera in-place, e mantém explícitas as limitações da estratégia de contagem por slot para que futuras generalizações do extrator possam ser feitas de forma consciente e validada.
+The code also preserves the special behavior of `QUANTIZE`, which currently runs in place, and makes the limitations of counting per slot explicit so future extractor generalizations can be deliberate and validated.

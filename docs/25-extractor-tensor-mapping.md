@@ -1,22 +1,24 @@
-# 25 — Mapeamento de tensores para slots
+[English](25-extractor-tensor-mapping.md) | [Português (Brasil)](25-extractor-tensor-mapping.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/tensor_mapping.py](../extractor/tensor_mapping.py)
+# 25 — Mapping tensors to slots
 
-## Entrada, saída e consumidores
+[Index](README.md) · Source: [extractor/tensor_mapping.py](../extractor/tensor_mapping.py)
 
-O módulo cruza IDs TFLite com labels do grafo e alocação lógica. `build_tensor_slot_mapping` retorna `tensor_to_slot`, `graph_inputs`, `mapped_from_layers`, `graph_input_mappings`, `pending_before_resolution`, `unmapped_after`. O pipeline valida e relata esse mapa; o conjunto `graph_inputs` participa do mapa runtime com shift, mas esse último é reconstruído em `layer_params.py`, não uma simples mutação do mapa validado.
+## Input, output, and consumers
 
-## Construção em três passagens
+The module matches TFLite IDs to graph labels and logical allocation. `build_tensor_slot_mapping` returns `tensor_to_slot`, `graph_inputs`, `mapped_from_layers`, `graph_input_mappings`, `pending_before_resolution`, and `unmapped_after`. The pipeline validates and reports this map; the `graph_inputs` set contributes to the shifted runtime map, but the latter is rebuilt in `layer_params.py`, not simply mutated from the validated map.
 
-Primeiro, percorre cada registro de alocação, obtém `op_idx` por `label_to_op_idx` e associa todos os outputs não negativos ao `output_slot`. Depois, percorre tensores ainda não mapeados, ignora constantes e atribui slot 0 às entradas declaradas do subgrafo; os demais entram nas pendências. Na terceira passagem, tenta resolver cada não constante restante por sua cadeia de produtores. Por fim enumera os ainda ausentes, sem levantar erro nesse próprio método.
+## Construction in three passes
 
-`resolve_slot_from_producer` usa `visiting` para impedir ciclos; retorna None se revisitar um tensor ou não houver produtor. Se o tensor já tem mapa, retorna o slot. Se seu produtor possui label e saída alocada, grava esse slot. Caso contrário, segue recursivamente os inputs não negativos e não constantes do produtor, usando cópia do conjunto de visita por ramo; o primeiro slot encontrado é propagado ao tensor de saída. A função modifica `tensor_to_slot` como cache.
+First, it visits each allocation record, obtains `op_idx` from `label_to_op_idx`, and associates all nonnegative outputs with `output_slot`. Next, it visits still-unmapped tensors, ignores constants, and assigns slot 0 to declared subgraph inputs; the others become pending. In the third pass, it attempts to resolve each remaining nonconstant through its producer chain. Finally, it lists those still missing, without raising an error in this method itself.
+
+`resolve_slot_from_producer` uses `visiting` to prevent cycles; it returns None if it revisits a tensor or there is no producer. If the tensor is already mapped, it returns the slot. If its producer has a label and an allocated output, it stores that slot. Otherwise, it recursively follows the producer's nonnegative, nonconstant inputs, copying the visited set per branch; the first slot found propagates to the output tensor. The function modifies `tensor_to_slot` as a cache.
 
 ```text
 allocation: L7 → SLOT2
           │
           ▼
-label_to_op_idx[L7] → operador original
+label_to_op_idx[L7] → original operator
           │
           ▼
 outputs: tensor 42, tensor 43
@@ -24,37 +26,37 @@ outputs: tensor 42, tensor 43
           ├──► tensor_to_slot[42] = 2
           └──► tensor_to_slot[43] = 2
 
-tensor pendente → produtor sem label → input não constante
+pending tensor → producer without label → nonconstant input
                                               │
                                               ▼
-                                     resolver slot recursivamente
+                                     recursively resolve slot
 ```
 
-Entram registros de alocação e ligações de tensores. O módulo associa IDs a armazenamento e tenta fechar lacunas. Sai o mapa lógico. IDs/labels são dados do modelo; a política de resolução é compartilhada. A associação de múltiplos outputs ao mesmo slot e a propagação pelo primeiro input são hipóteses, não implementação de kernels de transformação.
+Inputs are allocation records and tensor connections. The module associates IDs with storage and attempts to fill gaps. The output is the logical map. IDs/labels are model data; the resolution policy is shared. Mapping multiple outputs to one slot and propagating the first input are assumptions, not implementations of transformation kernels.
 
-## Validação
+## Validation
 
-`validate_tensor_slot_mapping` percorre somente operadores presentes em `old_idx_to_label`. Para entradas, ignora IDs negativos e constantes; exige todos os demais mapeados. Para saídas, ignora apenas IDs negativos e exige presença no mapa. Falhas levantam `RuntimeError` com `[MAP-ERROR]`, direção, op_index, tensor_id e nome de operação. Retorna True se passar.
+`validate_tensor_slot_mapping` visits only operators present in `old_idx_to_label`. For inputs, it ignores negative IDs and constants, requiring all others to be mapped. For outputs, it ignores only negative IDs and requires their presence in the map. Failures raise `RuntimeError` with `[MAP-ERROR]`, direction, op_index, tensor_id, and operation name. It returns True on success.
 
-Não valida que cada índice de slot esteja na faixa, que haja capacidade física, que duas entradas vivas não colidam nem que os ponteiros resultantes sejam os corretos. Isso é tratado parcialmente em etapas seguintes; completar o dicionário não prova liveness.
+It does not validate slot index bounds, physical capacity, collisions between two live inputs, or whether the resulting pointers are correct. Later stages handle some of this; completing the dictionary does not prove liveness.
 
-## Relatório
+## Report
 
-`tensor_mapping_to_text` lista associações vindas de layers, inputs, pendências iniciais e resumo de fechamento. Não imprime necessariamente todas as resoluções recursivas individualmente; a quantidade total reflete o dicionário final. O relatório 04 descreve slots lógicos antes do deslocamento sintético. Para conferir os endereços realmente usados, compare 09 e 10.
+`tensor_mapping_to_text` lists mappings from layers, inputs, initial pending tensors, and a resolution summary. It does not necessarily print every recursive resolution individually; the total count reflects the final dictionary. Report 04 describes logical slots before the synthetic shift. To check the addresses actually used, compare 09 and 10.
 
-## Armadilhas
+## Pitfalls
 
-Ignorar um operador no grafo e herdar o slot de sua entrada só é semanticamente válido quando a transformação pode realmente ser tratada como alias naquele layout. O código não prova essa condição. `runtime_mapping` não reutiliza essa busca recursiva; modelos dependentes de aliases resolvidos apenas aqui podem falhar ou divergir mais adiante. Nos manifests atuais não há configuração para ignorar operadores.
+Ignoring an operator in the graph and inheriting its input slot is semantically valid only when the transformation can actually be treated as an alias in that layout. The code does not prove this condition. `runtime_mapping` does not reuse this recursive search; models relying on aliases resolved only here may fail or diverge later. Current manifests have no configuration for ignoring operators.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 from extractor.tflite_utils import is_constant_tensor, op_name
 ```
 
-### `resolve_slot_from_producer` — assinatura
+### `resolve_slot_from_producer` — signature
 
 ```python
 def resolve_slot_from_producer(
@@ -70,7 +72,7 @@ def resolve_slot_from_producer(
 )
 ```
 
-### `build_tensor_slot_mapping` — assinatura
+### `build_tensor_slot_mapping` — signature
 
 ```python
 def build_tensor_slot_mapping(
@@ -85,18 +87,18 @@ def build_tensor_slot_mapping(
 )
 ```
 
-### `validate_tensor_slot_mapping` — assinatura
+### `validate_tensor_slot_mapping` — signature
 
 ```python
 def validate_tensor_slot_mapping(model, subgraph, *, tensor_to_slot, old_idx_to_label)
 ```
 
-### `tensor_mapping_to_text` — assinatura
+### `tensor_mapping_to_text` — signature
 
 ```python
 def tensor_mapping_to_text(mapping)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [06-mapeamento-tensor-slot.md](historico/06-mapeamento-tensor-slot.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [06-mapeamento-tensor-slot.md](historico/06-mapeamento-tensor-slot.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

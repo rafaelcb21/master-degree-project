@@ -1,78 +1,63 @@
-# 06 — Host de inferência Wasmtime
+[English](06-inferencia-wasm.md) | [Português (Brasil)](06-inferencia-wasm.pt-BR.md)
 
-[Índice](README.md) · Fonte: [inference/wasm_inference.py](../inference/wasm_inference.py)
+# 06 — Wasmtime inference host
 
-## Responsabilidade e dependências
+[Index](README.md) · Source: [inference/wasm_inference.py](../inference/wasm_inference.py)
 
-O módulo é a ponte entre bytes Python e memória linear WebAssembly. Depende de `pathlib`, `math`, classes Wasmtime, constantes de formato em `layer_params` e helpers de tensores. Não existe mais `extractor/wasm_inference.py`. A pasta `inference/` não contém `__init__.py`; é importável como namespace package na execução pela raiz.
+## Responsibility and dependencies
+
+This module bridges Python bytes and WebAssembly linear memory. It depends on pathlib, math, Wasmtime classes, layer_params format constants and tensor helpers. extractor/wasm_inference.py no longer exists. inference/ has no __init__.py; it is importable as a namespace package when running from the root.
 
 ## _instantiate_wasm(wasm_path)
 
-Converte o caminho em `Path`, exige arquivo existente, lê bytes, cria `Store()`, compila `Module(store.engine, wasm_bytes)` e resolve imports na ordem declarada. Admite somente funções `env.log`, `env.logf` e `env.log64`, com callbacks `lambda *args: None`. Qualquer outro import levanta `RuntimeError`. O callback pressupõe assinatura compatível com retorno `None`; não implementa retornos numéricos arbitrários.
+Converts the path to Path, requires an existing file, reads bytes, creates Store(), compiles Module(store.engine, wasm_bytes), and resolves imports in declaration order. Only env.log, env.logf and env.log64 functions are accepted, with lambda *args: None callbacks. Other imports raise RuntimeError. Callbacks assume signatures compatible with returning None; arbitrary numeric return values are not implemented.
 
-Cria `Instance`, consulta exports e exige `memory`, `run_mobilenetv2` e `get_result_ptr`. Verifica que `memory` é `wasmtime.Memory`; não valida antecipadamente as assinaturas das duas funções. Retorna um dict com `store`, `instance`, `memory`, `run`, `get_result_ptr`. Erros de validação binária, instanciação e assinatura podem vir de Wasmtime.
+After creating Instance, it requires memory, run_mobilenetv2 and get_result_ptr exports. memory must be wasmtime.Memory; function signatures are not checked in advance. It returns store, instance, memory, run and get_result_ptr in a dictionary. Binary validation, instantiation and signature errors can originate in Wasmtime.
 
 ## tensor_info(tensor)
 
-Aceita tipo TFLite 3 (UINT8) ou 9 (INT8); outros tipos causam `ValueError`. Obtém escala e zero point pelos helpers escalares. Rejeita `scale <= 0`, mas não testa `isfinite`. Retorna `shape`, `elements=math.prod(shape)`, `scale`, `zero_point`, `dtype`. Como os helpers têm defaults, quantização ausente pode aparecer como scale 1 e zp 0; o método não comprova que o tensor possui quantização explícita. Não valida dimensões positivas, canais ou batch: parte dessas verificações fica no pipeline.
+Accepts TFLite type 3 (UINT8) or 9 (INT8); other types raise ValueError. Scalar helpers provide scale and zero point. scale <= 0 is rejected, but isfinite is not checked. Returns shape, elements=math.prod(shape), scale, zero_point and dtype. Helper defaults mean absent quantization may appear as scale 1/zp 0; explicit tensor quantization is not established. Positive dimensions, channels and batch are not checked here; some checks belong to the pipeline.
 
-## run_wasm_inference: parâmetros
+## run_wasm_inference parameters
 
-Todos são keyword-only: `wasm_path`, `adapter`, `cases`, `input_info`, `output_info`, `input_ptr`, `slot_bytes`. `cases` deve permitir iteração e `len`, como a lista criada pelo pipeline. A instância é criada uma única vez para todos os casos.
-
-Entrada esperada:
+All parameters are keyword-only: wasm_path, adapter, cases, input_info, output_info, input_ptr and slot_bytes. cases must support iteration and len, as the pipeline's list does. One instance is created for all cases.
 
 ```text
-synthetic_layer_count = 1          synthetic_layer_count = 0
-input_info.elements / 3 × 2        input_info.elements
-           │                                  │
-           ▼                                  ▼
-      bytes RGB565                     bytes RGB888/INT8
-           └────────────────┬─────────────────┘
-                            ▼
-            expected <= slot_bytes e fim <= memória
+synthetic_layer_count = 1              synthetic_layer_count = 0
+input_info.elements // 3 * 2           input_info.elements
+       RGB565 bytes                       RGB888/INT8 bytes
+                └────────────┬─────────────┘
+                   expected <= slot_bytes
+                   input end <= memory size
 ```
 
-Entram a geometria do modelo e o modo sintético; o runner calcula quantos bytes deve escrever. Sai o comprimento aceito. As dimensões são do modelo; a regra 2 ou 3 bytes por pixel pertence aos formatos de imagem atualmente suportados. A divisão inteira `//3` pressupõe a validação prévia de três canais.
+Geometry and synthetic mode determine accepted byte length. Dimensions are model-specific; 2/3 bytes per pixel reflect currently supported formats. Integer division by 3 assumes the pipeline already validated three channels.
 
-## Ciclo por caso
+## Per-case cycle
 
 ```text
-                  instância única
-                        │
-TestCase ──► adapter.prepare_input
-                        │ valida len(data)
-                        ▼
-         memory.write(data, input_ptr)
-                        │
-         com sintética: memory[0] = 65
-                        ▼
-              run_mobilenetv2(store)
-                        │ retorno ignorado
-                        ▼
-               get_result_ptr(store)
-                        │ valida [ptr, ptr+elements)
-                        ▼
-                 memory.read → bytes
-                        ▼
-              adapter.evaluate_output
-                        │
-              ┌─────────┴─────────┐
-              ▼                   ▼
-        records.append       errors.append
-                             file + str(exc)
+single instance
+  TestCase → adapter.prepare_input → validate len(data)
+           → memory.write(data, input_ptr)
+           → if synthetic: memory[0] = 65
+           → run_mobilenetv2(store), return value ignored
+           → get_result_ptr(store)
+           → validate [ptr, ptr+elements)
+           → memory.read → bytes → adapter.evaluate_output
+           → records.append, or errors.append(file, str(exc))
 ```
 
-Entram os bytes preparados; o runner escreve na memória, chama o runtime e lê uma saída de 8 bits. Saem registros do adapter ou erros por arquivo. O endereço do slot é calculado pelo extrator; o protocolo dos exports é comum. Labels e ranking não entram no host.
+The runner writes prepared bytes, calls the runtime and reads 8-bit output. It returns adapter records or per-file errors. The extractor determines the slot address; exports use a shared protocol. Labels/ranking do not belong to this host.
 
-Antes dos casos, valida `expected <= slot_bytes`, `input_ptr >= 0` e fim da entrada dentro da memória. Em cada caso verifica tamanho exato e faixa da saída. Não limpa os slots entre imagens, não reinstancia após exceção e não verifica que a saída está em uma região de slot específica: basta estar dentro da memória. O grafo deve sobrescrever os dados que lê a cada execução. Um erro de kernel que deixe memória parcialmente escrita pode influenciar casos seguintes; não há isolamento por caso.
+Before processing, it checks expected <= slot_bytes, input_ptr >= 0 and input end within memory. Each case checks exact input size and output bounds. Slots are not cleared, exceptions do not trigger reinstantiation, and output need not lie in a specific slot region: linear-memory bounds are sufficient. The graph must overwrite values it reads on each run. Partially written memory after a kernel error can affect subsequent cases; cases are not isolated.
 
-O `try` por caso captura `Exception` de leitura, preparação, execução e avaliação. O erro da própria instanciação ocorre antes desse bloco e interrompe tudo. Não captura `KeyboardInterrupt`. A cada 100 casos tentados imprime progresso, incluindo os que falharam. Retorna `records`, `errors` e `processed=len(records)`, não acurácia.
+The per-case try catches Exception during reading, preparation, execution and evaluation. Instantiation happens before that block, so its failures stop the entire run. KeyboardInterrupt is not caught. Progress prints every 100 attempted cases, including failures. Returns records, errors and processed=len(records), not accuracy.
 
-## Formato e sincronização
+## Format and synchronization
 
-O marcador de formato é o byte 65 no endereço 0 quando há sintética. O WAT possui outra flag em endereço 4, usada por `is_ready_for_image` e por `run_mobilenetv2`; o host síncrono não a consulta. Não confunda essas flags com os bits de dtype dentro de uma LayerParam. Não há threads, fila de imagens, timeout ou limite de combustível configurado.
+Synthetic mode writes format byte 65 at address 0. A separate WAT flag at address 4 is used by is_ready_for_image and run_mobilenetv2; this synchronous host does not query it. Neither flag is a LayerParam dtype bit. No threads, image queue, timeout or fuel limit is configured.
 
-## Limites de generalização
+## Generalization limits
 
-O arquivo é genérico quanto ao adapter, mas ainda exige nome de export `run_mobilenetv2`, saída de um byte por elemento e protocolo de imagem. O código não usa `get_top_class`, `get_top5` nem `get_result_count`; o ranking é Python e a contagem vem do TFLite/gerador. O resultado não é comparado automaticamente com TensorFlow Lite.
+Adapters are interchangeable, but the host still requires the run_mobilenetv2 export name, one byte per output element and an image protocol. It does not use get_top_class, get_top5 or get_result_count: ranking is Python-side and count comes from TFLite/generation. Results are not automatically compared against TensorFlow Lite.
+

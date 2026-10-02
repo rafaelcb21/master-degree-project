@@ -1,12 +1,14 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+﻿[English](12-params-blob.md) | [Português (Brasil)](12-params-blob.pt-BR.md)
 
-# 12 — Serialização das LayerParams (`params_blob.py`)
+> **Preserved historical document.** This text describes the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in Portuguese and translated here.
 
-## 1. Objetivo do módulo
+# 12 — LayerParam serialization (`params_blob.py`)
 
-O arquivo `extractor/params_blob.py` é responsável por transformar a representação estruturada produzida por `layer_params.py` em um bloco binário contínuo que será inserido diretamente na memória linear do módulo WebAssembly.
+## 1. Module purpose
 
-Até o módulo anterior, cada camada é representada por um dicionário Python semelhante a:
+`extractor/params_blob.py` transforms the structured representation produced by `layer_params.py` into a contiguous binary block inserted directly into the WebAssembly module's linear memory.
+
+Up to the previous module, each layer is represented by a Python dictionary such as:
 
 ```python
 {
@@ -37,18 +39,18 @@ Até o módulo anterior, cada camada é representada por um dicionário Python s
 }
 ```
 
-Essa representação é excelente para:
+This representation works well for:
 
 ```text
-cálculo
-validação
+calculation
+validation
 debug
-relatório
+report
 ```
 
-mas o runtime WebAssembly não recebe dicionários Python.
+but the WebAssembly runtime does not receive Python dictionaries.
 
-Ele precisa de uma sequência binária fixa:
+It needs a fixed binary sequence:
 
 ```text
 LayerParam 0
@@ -57,22 +59,22 @@ LayerParam 2
 ...
 ```
 
-Assim, este módulo executa:
+This module therefore performs:
 
 ```text
 layer_params.py
       │
       ▼
-dicts Python
+Python dicts
       │
       ▼
 params_blob.py
       │
-      ├── valida slots
-      ├── resolve ponteiros
-      ├── empacota 29 int32
-      ├── concatena estruturas
-      └── adiciona padding
+      ├── validates slots
+      ├── resolves pointers
+      ├── packs 29 int32 values
+      ├── concatenates structures
+      └── adds padding
       │
       ▼
 params_blob
@@ -81,31 +83,31 @@ params_blob
 wat_generator.py
       │
       ▼
-memória WASM
+WASM memory
 ```
 
 ---
 
-# 2. Posição no pipeline
+# 2. Position in the pipeline
 
-O fluxo completo próximo desta etapa é:
+The complete workflow around this stage is:
 
 ```text
 weights.py
    │
-   └── offsets dos pesos e bias
+   └── weight and bias offsets
 
 quantization.py
    │
-   └── offsets de MUL / SHIFT / Q6
+   └── MUL / SHIFT / Q6 offsets
 
 memory.py
    │
-   └── bases absolutas dessas regiões
+   └── absolute bases of these regions
 
 layer_params.py
    │
-   └── representação lógica de cada operação
+   └── logical representation of each operation
 
          │
          ▼
@@ -114,9 +116,9 @@ layer_params.py
 
          │
          ├── base + offset
-         ├── ponteiros
+         ├── pointers
          ├── struct.pack()
-         └── blob binário
+         └── binary blob
 
          │
          ▼
@@ -124,50 +126,50 @@ layer_params.py
    wat_generator.py
 ```
 
-Este módulo é, portanto, a fronteira entre:
+This module therefore marks the boundary between:
 
 ```text
-representação estruturada
+structured representation
 ```
 
-e:
+and:
 
 ```text
-representação binária
+binary representation
 ```
 
 ---
 
-# 3. Importações
+# 3. Imports
 
-O arquivo começa com:
+The file starts with:
 
 ```python
 import struct
 ```
 
-A biblioteca `struct` é utilizada para converter valores inteiros Python em bytes seguindo um layout binário exato.
+The `struct` library converts Python integer values to bytes using an exact binary layout.
 
-Também são importados de `layer_params.py`:
+The following are also imported from `layer_params.py`:
 
 ```python
 LP_FMT
 LP_SIZE
 ```
 
-e todos os códigos de operações e flags necessários para interpretar as estruturas.
+along with every operation code and flag needed to interpret the structures.
 
 ---
 
 # 4. `LP_FMT`
 
-No módulo anterior:
+In the previous module:
 
 ```python
 LP_FMT = "<" + "i" * 29
 ```
 
-Portanto:
+Therefore:
 
 ```text
 <
@@ -177,10 +179,10 @@ i
     signed int32
 
 29
-    quantidade de valores
+    number of values
 ```
 
-Cada `LayerParam` ocupa:
+Each `LayerParam` occupies:
 
 ```text
 29 × 4
@@ -192,33 +194,33 @@ Cada `LayerParam` ocupa:
 
 # 5. `LP_SIZE`
 
-Também importamos:
+We also import:
 
 ```python
 LP_SIZE
 ```
 
-que corresponde a:
+which corresponds to:
 
 ```text
 116 bytes
 ```
 
-no formato atual.
+in the current format.
 
-Essa constante é utilizada para verificar que cada chamada a:
+This constant verifies that each call to:
 
 ```python
 struct.pack()
 ```
 
-produziu exatamente o tamanho esperado.
+produced exactly the expected size.
 
 ---
 
-# 6. Operações conhecidas
+# 6. Known operations
 
-São importados:
+The imports include:
 
 ```text
 OP_CONV
@@ -231,13 +233,13 @@ OP_QUANTIZE
 OP_RGB565_TO_RGB888
 ```
 
-Esses códigos servem principalmente para tornar os relatórios legíveis.
+These codes mainly make reports readable.
 
 ---
 
 # 7. Flags
 
-Também são importados:
+The following are also imported:
 
 ```text
 FLAG_PADDING_SAME
@@ -245,33 +247,33 @@ FLAG_HAS_Q6
 FLAG_QUANTIZE_INPUT_INT8
 ```
 
-O relatório precisa interpretar:
+The report needs to interpret:
 
 ```text
 flags
 ```
 
-de maneira contextual.
+in context.
 
-Isso é particularmente importante porque:
+This matters particularly because:
 
 ```text
 FLAG_PADDING_SAME
 ```
 
-e:
+and:
 
 ```text
 FLAG_QUANTIZE_INPUT_INT8
 ```
 
-utilizam o mesmo bit.
+use the same bit.
 
 ---
 
-# 8. Ativações
+# 8. Activations
 
-De `operator_options.py` são importados:
+The following are imported from `operator_options.py`:
 
 ```python
 ACT_NONE
@@ -279,33 +281,33 @@ ACT_RELU
 ACT_RELU6
 ```
 
-Eles serão usados tanto na serialização quanto no relatório.
+They are used in both serialization and reporting.
 
 ---
 
-# 9. Separação das responsabilidades
+# 9. Separation of responsibilities
 
-O módulo possui quatro grupos principais de funções:
+The module has four main groups of functions:
 
 ```text
-1. nomes para relatório
+1. names for reporting
 
 op_type_name()
 act_name()
 flags_pretty()
 
 
-2. serialização individual
+2. individual serialization
 
 pack_layerparam()
 
 
-3. validação
+3. validation
 
 validate_layer_params()
 
 
-4. serialização completa
+4. complete serialization
 
 build_params_blob()
 params_blob_to_text()
@@ -315,15 +317,15 @@ params_blob_to_text()
 
 # 10. `op_type_name()`
 
-A função:
+The function:
 
 ```python
 def op_type_name(op_type):
 ```
 
-converte um código inteiro em nome legível.
+converts an integer code to a readable name.
 
-Por exemplo:
+For example:
 
 ```text
 1 → CONV
@@ -345,9 +347,9 @@ Por exemplo:
 
 ---
 
-# 11. Valor desconhecido
+# 11. Unknown value
 
-O código utiliza:
+The code uses:
 
 ```python
 .get(
@@ -356,25 +358,25 @@ O código utiliza:
 )
 ```
 
-Portanto um código desconhecido, por exemplo:
+An unknown code, for example:
 
 ```text
 12
 ```
 
-seria apresentado simplesmente como:
+would therefore simply be displayed as:
 
 ```text
 "12"
 ```
 
-O relatório não falha por causa disso.
+This does not cause the report to fail.
 
 ---
 
 # 12. `act_name()`
 
-A função possui a mesma finalidade para ativações.
+This function serves the same purpose for activations.
 
 ```text
 0 → NONE
@@ -388,7 +390,7 @@ A função possui a mesma finalidade para ativações.
 
 # 13. `flags_pretty()`
 
-Essa função merece atenção especial:
+This function deserves particular attention:
 
 ```python
 def flags_pretty(
@@ -397,47 +399,47 @@ def flags_pretty(
 ):
 ```
 
-porque a interpretação dos bits depende do tipo de operação.
+because bit interpretation depends on the operation type.
 
 ---
 
-# 14. Flags do `QUANTIZE`
+# 14. QUANTIZE flags
 
-Se:
+If:
 
 ```python
 optype == "QUANTIZE"
 ```
 
-o bit:
+the bit:
 
 ```text
 FLAG_QUANTIZE_INPUT_INT8
 ```
 
-é interpretado.
+is interpreted.
 
-Se estiver ligado:
+If set:
 
 ```text
 INPUT_INT8
 ```
 
-é mostrado.
+is displayed.
 
-Caso contrário:
+Otherwise:
 
 ```text
 INPUT_UINT8
 ```
 
-é mostrado.
+is displayed.
 
 ---
 
-# 15. Flags das demais operações
+# 15. Flags for other operations
 
-Para as outras operações:
+For other operations:
 
 ```text
 bit 0
@@ -449,55 +451,55 @@ bit 1
 HAS_Q6
 ```
 
-podem ser registrados.
+may be recorded.
 
 ---
 
-# 16. Importância do contexto
+# 16. Why context matters
 
-Isso evita interpretar:
+This avoids always interpreting:
 
 ```text
 flags = 1
 ```
 
-sempre como:
+as:
 
 ```text
 PADDING_SAME
 ```
 
-Quando:
+When:
 
 ```text
 optype = QUANTIZE
 ```
 
-o mesmo valor significa:
+the same value means:
 
 ```text
 INPUT_INT8
 ```
 
-A função implementa exatamente essa distinção contextual.
+The function implements precisely this contextual distinction.
 
 ---
 
-# 17. Retorno sem flags
+# 17. Return value with no flags
 
-Se nenhuma descrição for aplicável:
+If no description applies:
 
 ```python
 return "0"
 ```
 
-Isso produz um relatório mais legível que uma string vazia.
+This produces a more readable report than an empty string.
 
 ---
 
 # 18. `pack_layerparam()`
 
-Esta é a função central de serialização individual:
+This is the central function for serializing one record:
 
 ```python
 def pack_layerparam(
@@ -505,13 +507,13 @@ def pack_layerparam(
 ):
 ```
 
-Ela recebe exatamente os campos que serão armazenados no runtime.
+It receives exactly the fields that will be stored in the runtime.
 
 ---
 
-# 19. Ordem dos 29 campos
+# 19. Order of the 29 fields
 
-A ordem é fixa:
+The order is fixed:
 
 ```text
  1  op_type
@@ -555,13 +557,13 @@ A ordem é fixa:
 29  out_w
 ```
 
-Essa ordem é parte do protocolo entre:
+This order is part of the protocol between:
 
 ```text
 Python extractor
 ```
 
-e:
+and:
 
 ```text
 WAT runtime
@@ -569,39 +571,39 @@ WAT runtime
 
 ---
 
-# 20. Ordem não pode mudar arbitrariamente
+# 20. The order cannot change arbitrarily
 
-Imagine trocar:
+Imagine replacing:
 
 ```text
 mul_ptr
 ```
 
-por:
+with:
 
 ```text
 shift_ptr
 ```
 
-no Python, mas manter o leitor do WAT como está.
+in Python while leaving the WAT reader unchanged.
 
-O resultado seria:
+The result would be:
 
 ```text
-runtime pede multiplier
+runtime requests multiplier
         ↓
-lê endereço de SHIFT
+reads SHIFT address
 ```
 
-O WAT continuaria podendo ser sintaticamente válido, porém a inferência seria incorreta.
+The WAT could remain syntactically valid, but inference would be incorrect.
 
-Portanto a ordem dos campos é um contrato binário.
+Field order is therefore a binary contract.
 
 ---
 
-# 21. Lista `values`
+# 21. The `values` list
 
-A função primeiro constrói:
+The function first builds:
 
 ```python
 values = [
@@ -609,59 +611,59 @@ values = [
 ]
 ```
 
-com todos os 29 valores na ordem exata.
+with all 29 values in the exact order.
 
-Isso facilita verificar a quantidade antes da serialização.
+This makes it easier to check the count before serialization.
 
 ---
 
-# 22. Validação da quantidade
+# 22. Count validation
 
-Existe:
+There is:
 
 ```python
 if len(values) != 29:
 ```
 
-seguido por:
+followed by:
 
 ```text
 RuntimeError
 ```
 
-Caso a estrutura seja modificada incorretamente.
+if the structure is changed incorrectly.
 
 ---
 
-# 23. Por que validar?
+# 23. Why validate?
 
-Porque:
+Because:
 
 ```text
 LP_FMT
 ```
 
-espera exatamente:
+expects exactly:
 
 ```text
 29 int32
 ```
 
-Uma diferença indicaria quebra no contrato.
+A difference would indicate a broken contract.
 
 ---
 
-# 24. Conversão explícita para `int`
+# 24. Explicit conversion to `int`
 
-Antes do `pack`:
+Before `pack`:
 
 ```python
 int(value)
 ```
 
-é aplicado a todos os elementos.
+is applied to all elements.
 
-Isso normaliza valores que possam estar em tipos como:
+This normalizes values that might use types such as:
 
 ```text
 np.int32
@@ -669,13 +671,13 @@ np.int64
 bool
 ```
 
-para inteiros Python.
+into Python integers.
 
 ---
 
-# 25. Serialização
+# 25. Serialization
 
-Finalmente:
+Finally:
 
 ```python
 struct.pack(
@@ -684,39 +686,39 @@ struct.pack(
 )
 ```
 
-produz:
+produces:
 
 ```text
 116 bytes
 ```
 
-para uma camada.
+for one layer.
 
 ---
 
 # 26. Little-endian
 
-Como:
+Because:
 
 ```text
 LP_FMT
 ```
 
-começa com:
+starts with:
 
 ```text
 <
 ```
 
-cada inteiro de 32 bits é serializado em little-endian.
+each 32-bit integer is serialized in little-endian order.
 
-Por exemplo, conceitualmente:
+For example, conceptually:
 
 ```text
-valor = 1
+value = 1
 ```
 
-é armazenado como:
+is stored as:
 
 ```text
 01 00 00 00
@@ -724,7 +726,7 @@ valor = 1
 
 ---
 
-# 27. Estrutura física de uma camada
+# 27. Physical structure of a layer
 
 ```text
 offset +0
@@ -748,15 +750,15 @@ offset +116
 
 ---
 
-# 28. Offset de um campo
+# 28. Field offset
 
-Como cada campo possui:
+Since each field has:
 
 ```text
 4 bytes
 ```
 
-o campo de índice `n`, começando em zero, está em:
+the field at zero-based index `n` is at:
 
 ```text
 layer_base
@@ -766,7 +768,7 @@ n × 4
 
 ---
 
-# 29. Exemplo
+# 29. Example
 
 `op_type`:
 
@@ -798,13 +800,13 @@ offset 12
 offset 16
 ```
 
-e assim por diante.
+and so on.
 
 ---
 
-# 30. Função `validate_layer_params()`
+# 30. The `validate_layer_params()` function
 
-Antes da serialização, o módulo executa validações estruturais.
+Before serialization, the module performs structural validation.
 
 ```python
 def validate_layer_params(
@@ -816,35 +818,35 @@ def validate_layer_params(
 
 ---
 
-# 31. Validação de `in_slot`
+# 31. Validating `in_slot`
 
-Para cada camada:
+For each layer:
 
 ```python
 in_slot = params["in_slot"]
 ```
 
-precisa satisfazer:
+must satisfy:
 
 ```text
-0 <= in_slot < número de slots
+0 <= in_slot < number of slots
 ```
 
 ---
 
-# 32. Exemplo
+# 32. Example
 
-Com três slots:
+With three slots:
 
 ```text
-válidos:
+valid:
 
 0
 1
 2
 ```
 
-Inválidos:
+Invalid:
 
 ```text
 -1
@@ -857,7 +859,7 @@ Inválidos:
 
 # 33. `out_slot`
 
-A mesma regra é aplicada a:
+The same rule applies to:
 
 ```text
 out_slot
@@ -865,9 +867,9 @@ out_slot
 
 ---
 
-# 34. Por que validar índices?
+# 34. Why validate indices?
 
-Porque posteriormente será feito:
+Because a later step performs:
 
 ```python
 slot_bases[
@@ -875,31 +877,31 @@ slot_bases[
 ]
 ```
 
-Um índice inválido significaria:
+An invalid index would mean:
 
 ```text
-ponteiro inexistente
+nonexistent pointer
 ```
 
-ou erro de acesso durante a construção.
+or an access error during construction.
 
 ---
 
-# 35. Validação especial do ADD
+# 35. Special ADD validation
 
-A maior parte da validação adicional é dedicada ao:
+Most additional validation concerns:
 
 ```text
 ADD
 ```
 
-porque ele possui:
+because it has:
 
 ```text
-duas entradas dinâmicas
+two dynamic inputs
 ```
 
-enquanto a estrutura padrão contém apenas um:
+whereas the standard structure contains only one:
 
 ```text
 in_ptr
@@ -907,17 +909,17 @@ in_ptr
 
 ---
 
-# 36. Exatamente dois `input_slots`
+# 36. Exactly two `input_slots`
 
-Para `ADD`:
+For `ADD`:
 
 ```python
 len(input_slots) == 2
 ```
 
-é obrigatório.
+is required.
 
-Caso contrário:
+Otherwise:
 
 ```text
 RuntimeError
@@ -925,9 +927,9 @@ RuntimeError
 
 ---
 
-# 37. Primeiro slot
+# 37. First slot
 
-Também:
+Also:
 
 ```text
 params["in_slot"]
@@ -935,29 +937,29 @@ params["in_slot"]
 input_slots[0]
 ```
 
-deve ser verdadeiro.
+must hold.
 
 ---
 
-# 38. Por que isso importa?
+# 38. Why does this matter?
 
-A convenção adotada é:
+The adopted convention is:
 
 ```text
-primeira entrada
+first input
     ↓
 in_slot
     ↓
 in_ptr
 ```
 
-A segunda entrada é transportada de outra maneira.
+The second input is carried differently.
 
 ---
 
-# 39. Ponteiro esperado da entrada A
+# 39. Expected input A pointer
 
-O código calcula:
+The code calculates:
 
 ```python
 expected_ptr_a = (
@@ -969,9 +971,9 @@ expected_ptr_a = (
 
 ---
 
-# 40. Ponteiro esperado da entrada B
+# 40. Expected input B pointer
 
-Da mesma forma:
+Likewise:
 
 ```python
 expected_ptr_b = (
@@ -983,37 +985,37 @@ expected_ptr_b = (
 
 ---
 
-# 41. Convenção especial do ADD
+# 41. Special ADD convention
 
-Em `layer_params.py`:
+In `layer_params.py`:
 
 ```text
 pad_t
 ```
 
-foi reutilizado como:
+was reused as:
 
 ```text
-pointer da entrada A
+input A pointer
 ```
 
-e:
+and:
 
 ```text
 pad_b
 ```
 
-como:
+as:
 
 ```text
-pointer da entrada B
+input B pointer
 ```
 
 ---
 
-# 42. Validação de `pad_t`
+# 42. Validating `pad_t`
 
-É exigido:
+The requirement is:
 
 ```text
 params["pad_t"]
@@ -1023,9 +1025,9 @@ slot_bases[slot_a]
 
 ---
 
-# 43. Validação de `pad_b`
+# 43. Validating `pad_b`
 
-Da mesma maneira:
+Likewise:
 
 ```text
 params["pad_b"]
@@ -1035,9 +1037,9 @@ slot_bases[slot_b]
 
 ---
 
-# 44. Verificação adicional
+# 44. Additional check
 
-O código ainda verifica:
+The code also checks:
 
 ```text
 pad_t in slot_bases
@@ -1045,90 +1047,90 @@ pad_t in slot_bases
 pad_b in slot_bases
 ```
 
-Assim os ponteiros precisam corresponder exatamente a alguma base física de slot conhecida.
+Thus, pointers must exactly match a known physical slot base.
 
 ---
 
-# 45. Por que há verificações aparentemente redundantes?
+# 45. Why are some checks seemingly redundant?
 
-Por exemplo:
+For example:
 
 ```text
 pad_t == expected_ptr_a
 ```
 
-já implica que:
+already implies that:
 
 ```text
 pad_t
 ```
 
-corresponde ao slot A.
+corresponds to slot A.
 
-Mas a verificação adicional:
+But the additional check:
 
 ```text
 pad_t in slot_bases
 ```
 
-torna a intenção explícita:
+makes the intention explicit:
 
 ```text
-os ponteiros especiais do ADD
-precisam apontar para bases de slots
+ADD's special pointers
+must point to slot bases
 ```
 
 ---
 
-# 46. O que a validação não faz
+# 46. What validation does not do
 
-Ela não verifica aqui:
+It does not check the following here:
 
 ```text
-w_off dentro de weights_raw
+w_off within weights_raw
 
-b_off dentro de bias_raw
+b_off within bias_raw
 
-mul_off dentro de mul_blob
+mul_off within mul_blob
 
-q6_off dentro de q6_blob
+q6_off within q6_blob
 ```
 
-A função concentra-se principalmente em:
+The function focuses mainly on:
 
 ```text
-integridade dos slots
+slot integrity
 +
-convenção especial do ADD
+special ADD convention
 ```
 
-A própria docstring declara esse foco.
+The docstring itself states that focus.
 
 ---
 
-# 47. Retorno
+# 47. Return value
 
-Se tudo estiver correto:
+If everything is correct:
 
 ```python
 return True
 ```
 
-O retorno não carrega novos dados.
+The return value carries no new data.
 
-A principal função é:
+Its main purpose is to:
 
 ```text
-falhar cedo
+fail early
 ```
 
-quando existe inconsistência.
+when an inconsistency exists.
 
 ---
 
 # 48. `build_params_blob()`
 
-Esta é a função principal do módulo.
+This is the module's main function.
 
 ```python
 def build_params_blob(
@@ -1140,29 +1142,29 @@ def build_params_blob(
 ):
 ```
 
-Ela serializa todas as camadas em um único bloco binário contínuo.
+It serializes all layers into one contiguous binary block.
 
 ---
 
-# 49. Entradas
+# 49. Inputs
 
-A função recebe quatro grupos de informações.
+The function receives four groups of information.
 
 ### `layer_params`
 
-Descrição lógica de todas as camadas.
+Logical description of all layers.
 
 ### `slot_bases`
 
-Endereços absolutos dos slots.
+Absolute slot addresses.
 
 ### `params_bytes`
 
-Tamanho total reservado para a região PARAMS.
+Total size reserved for the PARAMS region.
 
 ### `parameter_layout`
 
-Bases absolutas das regiões:
+Absolute bases of these regions:
 
 ```text
 WEIGHTS
@@ -1174,25 +1176,25 @@ Q6
 
 ---
 
-# 50. Primeira operação: validação
+# 50. First operation: validation
 
-Antes de gerar qualquer byte:
+Before any bytes are generated:
 
 ```python
 validate_layer_params(...)
 ```
 
-é executada.
+is executed.
 
-Assim:
+Thus:
 
 ```text
-dados inconsistentes
+inconsistent data
     ↓
-erro
+error
 ```
 
-ocorre antes de:
+happens before:
 
 ```text
 struct.pack()
@@ -1200,9 +1202,9 @@ struct.pack()
 
 ---
 
-# 51. Bases absolutas
+# 51. Absolute bases
 
-A função recupera:
+The function retrieves:
 
 ```text
 kernel_base
@@ -1216,7 +1218,7 @@ shift_base
 q6_base
 ```
 
-do:
+from:
 
 ```python
 parameter_layout
@@ -1224,9 +1226,9 @@ parameter_layout
 
 ---
 
-# 52. Por que essas bases são necessárias?
+# 52. Why are these bases needed?
 
-`layer_params.py` guardava offsets relativos:
+`layer_params.py` stored relative offsets:
 
 ```text
 w_off
@@ -1240,7 +1242,7 @@ shift_off
 q6_off
 ```
 
-Agora precisamos gerar:
+Now we need to generate:
 
 ```text
 wptr
@@ -1256,30 +1258,30 @@ q6_ptr
 
 ---
 
-# 53. Transformação geral
+# 53. General transformation
 
-A regra é:
+The rule is:
 
 ```text
-ponteiro absoluto
+absolute pointer
 =
-base da região
+region base
 +
-offset interno
+internal offset
 ```
 
 ---
 
-# 54. Exemplo de peso
+# 54. Weight example
 
-Suponha:
+Suppose:
 
 ```text
 kernel_base = 2048
 w_off = 5000
 ```
 
-Então:
+Then:
 
 ```text
 wptr =
@@ -1290,14 +1292,14 @@ wptr =
 
 ---
 
-# 55. Exemplo de multiplier
+# 55. Multiplier example
 
 ```text
 mul_base = 414832
 mul_off = 128
 ```
 
-Então:
+Then:
 
 ```text
 mul_ptr =
@@ -1306,33 +1308,33 @@ mul_ptr =
 
 ---
 
-# 56. Inicialização do blob
+# 56. Initializing the blob
 
-O código cria:
+The code creates:
 
 ```python
 params_blob = bytearray()
 ```
 
-Novamente usamos uma estrutura mutável durante a construção.
+Again, construction uses a mutable structure.
 
 ---
 
-# 57. Registros para relatório
+# 57. Report records
 
-Também:
+Also:
 
 ```python
 records = []
 ```
 
-guardará informações detalhadas sobre cada camada serializada.
+will store detailed information about each serialized layer.
 
 ---
 
-# 58. Loop das camadas
+# 58. Layer loop
 
-A função percorre:
+The function iterates through:
 
 ```python
 enumerate(
@@ -1340,7 +1342,7 @@ enumerate(
 )
 ```
 
-Portanto:
+Therefore:
 
 ```text
 layer_index = 0
@@ -1350,19 +1352,19 @@ layer_index = 0
 ...
 ```
 
-corresponde diretamente à posição da estrutura dentro do blob.
+corresponds directly to the structure's position in the blob.
 
 ---
 
-# 59. Relação entre índice e offset
+# 59. Relationship between index and offset
 
-Como:
+Since:
 
 ```text
 LP_SIZE = 116
 ```
 
-esperamos:
+we expect:
 
 ```text
 L0 → offset 0
@@ -1374,15 +1376,15 @@ L2 → offset 232
 L3 → offset 348
 ```
 
-desde que nenhuma informação adicional seja inserida entre as estruturas.
+provided no additional information is inserted between structures.
 
-E é exatamente isso que o código faz.
+This is exactly what the code does.
 
 ---
 
-# 60. Cálculo de `in_ptr`
+# 60. Calculating `in_ptr`
 
-Essa etapa possui uma exceção importante para:
+This stage has a significant exception for:
 
 ```text
 ADD
@@ -1390,9 +1392,9 @@ ADD
 
 ---
 
-# 61. Operações comuns
+# 61. Ordinary operations
 
-Para qualquer operação diferente de `ADD`:
+For any operation other than `ADD`:
 
 ```python
 in_ptr = (
@@ -1402,7 +1404,7 @@ in_ptr = (
 )
 ```
 
-Portanto:
+Therefore:
 
 ```text
 in_slot
@@ -1414,9 +1416,9 @@ in_ptr
 
 ---
 
-# 62. Exemplo
+# 62. Example
 
-Se:
+If:
 
 ```text
 in_slot = 2
@@ -1424,7 +1426,7 @@ in_slot = 2
 slot_bases[2] = 900464
 ```
 
-então:
+then:
 
 ```text
 in_ptr = 900464
@@ -1434,7 +1436,7 @@ in_ptr = 900464
 
 # 63. ADD
 
-Para `ADD`:
+For `ADD`:
 
 ```python
 in_ptr = int(
@@ -1444,71 +1446,71 @@ in_ptr = int(
 
 ---
 
-# 64. Por quê?
+# 64. Why?
 
-Porque em `layer_params.py`:
+Because in `layer_params.py`:
 
 ```text
 pad_t
 ```
 
-já foi definido como:
+has already been defined as:
 
 ```text
-ponteiro absoluto da entrada A
+absolute input A pointer
 ```
 
 ---
 
-# 65. Segunda entrada do ADD
+# 65. ADD's second input
 
-O comentário do código deixa explícito:
+The code comment makes this explicit:
 
 ```text
-o primeiro ponteiro vai em in_ptr
+the first pointer goes in in_ptr
 
-o segundo permanece em pad_b
+the second remains in pad_b
 ```
 
-Portanto a estrutura final contém:
+The final structure therefore contains:
 
 ```text
 in_ptr
-    → entrada A
+    → input A
 ```
 
-e:
+and:
 
 ```text
 pad_b
-    → entrada B
+    → input B
 ```
 
 ---
 
-# 66. Duplicação intencional no ADD
+# 66. Intentional duplication in ADD
 
-Para ADD, `pad_t` também continua sendo serializado posteriormente no próprio campo `pad_t`.
+For ADD, `pad_t` also remains serialized later in its own `pad_t` field.
 
-Assim a entrada A aparece:
+Input A therefore appears:
 
 ```text
 in_ptr = ptr A
 ```
 
-e:
+and:
 
 ```text
 pad_t = ptr A
 ```
 
-Essa duplicação decorre do protocolo atual da estrutura.
+This duplication follows from the structure's current protocol.
 
 ---
 
 # 67. `out_ptr`
 
-O ponteiro de saída é sempre:
+The output pointer is always:
 
 ```python
 out_ptr = (
@@ -1520,7 +1522,7 @@ out_ptr = (
 
 ---
 
-# 68. Exemplo
+# 68. Example
 
 ```text
 out_slot = 1
@@ -1528,7 +1530,7 @@ out_slot = 1
 SLOT1_BASE = 703856
 ```
 
-então:
+then:
 
 ```text
 out_ptr = 703856
@@ -1536,9 +1538,9 @@ out_ptr = 703856
 
 ---
 
-# 69. Peso: `wptr`
+# 69. Weight: `wptr`
 
-O código sempre executa:
+The code always executes:
 
 ```python
 wptr = (
@@ -1547,13 +1549,13 @@ wptr = (
 )
 ```
 
-Essa é uma característica importante.
+This is a significant property.
 
 ---
 
-# 70. Operações sem pesos
+# 70. Operations without weights
 
-Operações como:
+Operations such as:
 
 ```text
 ADD
@@ -1563,25 +1565,25 @@ QUANTIZE
 RGB565_TO_RGB888
 ```
 
-normalmente possuem:
+normally have:
 
 ```text
 w_off = 0
 ```
 
-Portanto seu:
+Their:
 
 ```text
 wptr
 ```
 
-será:
+will therefore be:
 
 ```text
 kernel_base
 ```
 
-e não:
+rather than:
 
 ```text
 0
@@ -1589,53 +1591,53 @@ e não:
 
 ---
 
-# 71. Isso significa que elas usam pesos?
+# 71. Does that mean they use weights?
 
-Não.
+No.
 
-O significado do campo depende de:
+The field's meaning depends on:
 
 ```text
 op_type
 ```
 
-Os kernels dessas operações não devem interpretar `wptr` como um peso válido.
+These operations' kernels must not interpret `wptr` as a valid weight.
 
 ---
 
-# 72. Importância dessa distinção
+# 72. Why this distinction matters
 
-No relatório pode aparecer:
+The report may display:
 
 ```text
 wptr = 2048
 ```
 
-para uma operação que não utiliza pesos.
+for an operation that does not use weights.
 
-Isso não significa que ela consome o primeiro tensor de pesos.
+That does not mean it consumes the first weight tensor.
 
-Significa apenas que a serialização atual sempre calcula:
+It only means current serialization always calculates:
 
 ```text
 kernel_base + w_off
 ```
 
-e:
+and:
 
 ```text
 w_off = 0
 ```
 
-para essas operações.
+for these operations.
 
 ---
 
 # 73. Bias
 
-O comportamento é diferente.
+The behavior differs here.
 
-O código primeiro verifica:
+The code first checks:
 
 ```python
 params["has_bias"]
@@ -1643,9 +1645,9 @@ params["has_bias"]
 
 ---
 
-# 74. Bias presente
+# 74. Bias present
 
-Quando verdadeiro:
+When true:
 
 ```text
 bias_ptr =
@@ -1656,53 +1658,53 @@ b_off
 
 ---
 
-# 75. Bias ausente
+# 75. Bias absent
 
-Caso contrário:
+Otherwise:
 
 ```python
 bias_ptr = 0
 ```
 
-Portanto `bias_ptr = 0` possui significado explícito:
+Thus, `bias_ptr = 0` has an explicit meaning:
 
 ```text
-sem bias
+no bias
 ```
 
 ---
 
-# 76. Por que `b_off = 0` sozinho não basta?
+# 76. Why is `b_off = 0` alone insufficient?
 
-Porque um bias real poderia perfeitamente estar no início do blob:
+Because a real bias may be at the start of the blob:
 
 ```text
 b_off = 0
 ```
 
-Assim precisamos do booleano:
+We therefore need the Boolean:
 
 ```text
 has_bias
 ```
 
-para distinguir:
+to distinguish:
 
 ```text
-bias existente no offset zero
+existing bias at offset zero
 ```
 
-de:
+from:
 
 ```text
-bias inexistente
+absent bias
 ```
 
 ---
 
-# 77. MUL e SHIFT
+# 77. MUL and SHIFT
 
-Também existe:
+There is also:
 
 ```python
 params["has_mulq6"]
@@ -1710,16 +1712,16 @@ params["has_mulq6"]
 
 ---
 
-# 78. Quando verdadeiro
+# 78. When true
 
-São calculados:
+The following are calculated:
 
 ```text
 mul_ptr =
 mul_base + mul_off
 ```
 
-e:
+and:
 
 ```text
 shift_ptr =
@@ -1728,9 +1730,9 @@ shift_base + shift_off
 
 ---
 
-# 79. Quando falso
+# 79. When false
 
-O código define:
+The code sets:
 
 ```text
 mul_ptr = 0
@@ -1740,15 +1742,15 @@ shift_ptr = 0
 
 ---
 
-# 80. Q6 possui uma condição adicional
+# 80. Q6 has an additional condition
 
-Mesmo com:
+Even with:
 
 ```text
 has_mulq6 = True
 ```
 
-o `q6_ptr` só é materializado se:
+`q6_ptr` is only materialized if:
 
 ```text
 act == ACT_RELU6
@@ -1756,36 +1758,36 @@ act == ACT_RELU6
 
 ---
 
-# 81. Regra completa
+# 81. Complete rule
 
 ```text
 has_mulq6
 AND
 activation == RELU6
       │
-      ├── sim
+      ├── yes
       │     ↓
       │ q6_ptr =
       │ Q6_BASE + q6_off
       │
-      └── não
+      └── no
             ↓
          q6_ptr = 0
 ```
 
 ---
 
-# 82. Por que essa diferença?
+# 82. Why this difference?
 
-Os multipliers e shifts são necessários para requantização.
+Multipliers and shifts are required for requantization.
 
-Já:
+In contrast:
 
 ```text
 Q6
 ```
 
-é especificamente necessário para implementar o limite superior da:
+is specifically needed to implement the upper limit of:
 
 ```text
 ReLU6
@@ -1793,23 +1795,23 @@ ReLU6
 
 ---
 
-# 83. Consequência para SOFTMAX
+# 83. Consequence for SOFTMAX
 
-O `SOFTMAX` pode possuir:
+`SOFTMAX` may have:
 
 ```text
 has_mulq6 = True
 ```
 
-porque existem `mul_off` e `shift_off`.
+because `mul_off` and `shift_off` exist.
 
-Mas:
+But:
 
 ```text
 act = ACT_NONE
 ```
 
-Logo:
+Therefore:
 
 ```text
 q6_ptr = 0
@@ -1819,7 +1821,7 @@ q6_ptr = 0
 
 # 84. `blob_offset`
 
-Antes de serializar a camada:
+Before serializing the layer:
 
 ```python
 blob_offset = len(
@@ -1827,25 +1829,25 @@ blob_offset = len(
 )
 ```
 
-é calculado.
+is calculated.
 
 ---
 
-# 85. Significado
+# 85. Meaning
 
-`blob_offset` é o início daquela `LayerParam` dentro de:
+`blob_offset` is the start of that `LayerParam` within:
 
 ```text
 params_blob
 ```
 
-Ele não é o endereço absoluto da memória WASM.
+It is not the absolute address in WASM memory.
 
 ---
 
-# 86. Conversão para endereço absoluto
+# 86. Conversion to an absolute address
 
-Posteriormente:
+Later:
 
 ```text
 LayerParam address
@@ -1857,39 +1859,39 @@ blob_offset
 
 ---
 
-# 87. Exemplo
+# 87. Example
 
-Se:
+If:
 
 ```text
 PARAMS_BASE = 499360
 ```
 
-e:
+and:
 
 ```text
 blob_offset = 232
 ```
 
-então:
+then:
 
 ```text
-endereço da LayerParam
+LayerParam address
 =
 499592
 ```
 
 ---
 
-# 88. Relação matemática do offset
+# 88. Mathematical offset relationship
 
-Como cada camada ocupa:
+Since each layer occupies:
 
 ```text
 116 bytes
 ```
 
-antes do padding final:
+before final padding:
 
 ```text
 blob_offset
@@ -1899,11 +1901,11 @@ layer_index × 116
 
 ---
 
-# 89. Chamada a `pack_layerparam()`
+# 89. Calling `pack_layerparam()`
 
-Depois o módulo envia todos os valores na ordem definida pelo contrato.
+The module then passes all values in the contract's order.
 
-Os primeiros são:
+The first are:
 
 ```text
 op_type
@@ -1911,24 +1913,24 @@ act
 flags
 ```
 
-seguidos de:
+followed by:
 
 ```text
 in_ptr
 out_ptr
 ```
 
-e finalmente todos os parâmetros de geometria, ponteiros auxiliares, zero points e shape de saída.
+and finally all geometry parameters, auxiliary pointers, zero points, and output shape.
 
-A chamada mantém a ordem exata dos 29 valores esperados.
+The call preserves the exact order of the 29 expected values.
 
 ---
 
-# 90. Campos de ponteiro já resolvidos
+# 90. Already resolved pointer fields
 
-Observe a diferença:
+Notice the difference:
 
-No dicionário original:
+In the original dictionary:
 
 ```text
 w_off
@@ -1938,7 +1940,7 @@ b_off
 mul_off
 ```
 
-Na chamada a `pack_layerparam()`:
+In the call to `pack_layerparam()`:
 
 ```text
 wptr
@@ -1948,27 +1950,27 @@ bias_ptr
 mul_ptr
 ```
 
-Portanto o blob final não precisa conhecer a ideia de offset relativo.
+The final blob therefore does not need the concept of relative offsets.
 
-Ele já recebe os endereços que o runtime utilizará.
+It already receives the addresses the runtime will use.
 
 ---
 
-# 91. Validação do tamanho da estrutura
+# 91. Validating structure size
 
-Depois:
+After:
 
 ```python
 if len(packed) != LP_SIZE:
 ```
 
-o código lança erro.
+the code raises an error.
 
 ---
 
-# 92. Valor esperado
+# 92. Expected value
 
-No formato atual:
+In the current format:
 
 ```text
 len(packed)
@@ -1978,27 +1980,27 @@ len(packed)
 
 ---
 
-# 93. Por que verificar mesmo usando `struct.pack()`?
+# 93. Why check even with `struct.pack()`?
 
-Porque isso cria um invariante explícito entre:
+Because this creates an explicit invariant between:
 
 ```text
 LP_FMT
 ```
 
-e:
+and:
 
 ```text
 LP_SIZE
 ```
 
-e torna uma futura alteração da estrutura mais fácil de diagnosticar.
+and makes future structural changes easier to diagnose.
 
 ---
 
-# 94. Concatenação
+# 94. Concatenation
 
-Depois:
+Then:
 
 ```python
 params_blob.extend(
@@ -2006,11 +2008,11 @@ params_blob.extend(
 )
 ```
 
-A camada é anexada imediatamente depois da anterior.
+The layer is appended immediately after the previous one.
 
 ---
 
-# 95. Layout do blob
+# 95. Blob layout
 
 ```text
 params_blob
@@ -2038,9 +2040,9 @@ offset 232
 
 ---
 
-# 96. Metadados da camada serializada
+# 96. Serialized layer metadata
 
-Depois da serialização, um registro é criado contendo:
+After serialization, a record is created containing:
 
 ```text
 layer_index
@@ -2082,55 +2084,55 @@ params
 
 ---
 
-# 97. Por que guardar `params` inteiro novamente?
+# 97. Why store the entire `params` again?
 
-O registro contém:
+The record contains:
 
 ```python
 "params": params
 ```
 
-Isso permite que o relatório posterior tenha acesso tanto aos:
+This gives the later report access to both:
 
 ```text
-valores antes da serialização
+values before serialization
 ```
 
-quanto aos:
+and:
 
 ```text
-ponteiros absolutos calculados
+calculated absolute pointers
 ```
 
 ---
 
-# 98. Exemplo
+# 98. Example
 
-Podemos mostrar simultaneamente:
+We can show simultaneously:
 
 ```text
 w_off = 5000
 ```
 
-e:
+and:
 
 ```text
 wptr = 7048
 ```
 
-Assim fica clara a transformação:
+This makes the transformation clear:
 
 ```text
-offset relativo
+relative offset
     ↓
-endereço absoluto
+absolute address
 ```
 
 ---
 
-# 99. Fim do loop
+# 99. End of the loop
 
-Ao terminar todas as camadas:
+After all layers:
 
 ```python
 used_bytes = len(
@@ -2138,13 +2140,13 @@ used_bytes = len(
 )
 ```
 
-representa quantos bytes foram efetivamente utilizados pelas estruturas.
+represents how many bytes the structures actually use.
 
 ---
 
-# 100. Fórmula esperada
+# 100. Expected formula
 
-Como cada camada possui exatamente `LP_SIZE`:
+Since every layer has exactly `LP_SIZE`:
 
 ```text
 used_bytes
@@ -2156,21 +2158,21 @@ LP_SIZE
 
 ---
 
-# 101. Exemplo
+# 101. Example
 
-Para:
+For:
 
 ```text
 68 layers
 ```
 
-e:
+and:
 
 ```text
 LP_SIZE = 116
 ```
 
-temos:
+we have:
 
 ```text
 68 × 116
@@ -2180,40 +2182,40 @@ temos:
 
 ---
 
-# 102. Diferença entre `used_bytes` e `params_bytes`
+# 102. Difference between `used_bytes` and `params_bytes`
 
-`used_bytes` é:
+`used_bytes` is:
 
 ```text
-tamanho real das LayerParams
+actual LayerParam size
 ```
 
-`params_bytes` é:
+`params_bytes` is:
 
 ```text
-área total reservada,
-já considerando alinhamento
+total reserved area,
+including alignment
 ```
 
 ---
 
-# 103. Exemplo
+# 103. Example
 
-Suponha:
+Suppose:
 
 ```text
 used_bytes = 7888
 ```
 
-Com alinhamento:
+With alignment:
 
 ```text
 params_bytes = 7888
 ```
 
-se já estiver alinhado.
+if already aligned.
 
-Ou poderia ocorrer:
+Alternatively:
 
 ```text
 used_bytes = 7890
@@ -2221,19 +2223,19 @@ used_bytes = 7890
 params_bytes = 7904
 ```
 
-em outro cenário.
+could occur in another scenario.
 
 ---
 
-# 104. Validação da área reservada
+# 104. Validating reserved space
 
-Se:
+If:
 
 ```text
 used_bytes > params_bytes
 ```
 
-o código lança:
+the code raises:
 
 ```text
 RuntimeError
@@ -2241,23 +2243,23 @@ RuntimeError
 
 ---
 
-# 105. Significado
+# 105. Meaning
 
-Isso indicaria que:
+This would indicate that:
 
 ```text
 memory planning
 ```
 
-reservou menos memória do que a serialização efetivamente requer.
+reserved less memory than serialization actually requires.
 
-Essa seria uma inconsistência grave entre:
+This would be a serious inconsistency between:
 
 ```text
 calculate_layer_memory_layout()
 ```
 
-e:
+and:
 
 ```text
 build_params_blob()
@@ -2265,9 +2267,9 @@ build_params_blob()
 
 ---
 
-# 106. Padding final
+# 106. Final padding
 
-Se a região reservada for maior:
+If the reserved region is larger:
 
 ```python
 padding_bytes = (
@@ -2278,7 +2280,7 @@ padding_bytes = (
 
 ---
 
-# 107. Exemplo
+# 107. Example
 
 ```text
 used_bytes = 7890
@@ -2286,7 +2288,7 @@ used_bytes = 7890
 params_bytes = 7904
 ```
 
-então:
+then:
 
 ```text
 padding_bytes = 14
@@ -2294,9 +2296,9 @@ padding_bytes = 14
 
 ---
 
-# 108. Conteúdo do padding
+# 108. Padding contents
 
-O código adiciona:
+The code adds:
 
 ```python
 b"\x00"
@@ -2304,11 +2306,11 @@ b"\x00"
 padding_bytes
 ```
 
-Portanto o padding é preenchido com bytes zero.
+Padding is therefore filled with zero bytes.
 
 ---
 
-# 109. Estrutura final
+# 109. Final structure
 
 ```text
 PARAMS region
@@ -2320,18 +2322,18 @@ PARAMS region
 ├──────────────────────┤
 │ ...                  │
 ├──────────────────────┤
-│ última LayerParam    │
+│ last LayerParam    │
 ├──────────────────────┤
 │ 00 00 00 ...         │
-│ padding de alinhamento│
+│ alignment padding│
 └──────────────────────┘
 ```
 
 ---
 
-# 110. Por que incluir o padding dentro de `params_blob`?
+# 110. Why include padding in `params_blob`?
 
-Isso faz com que:
+This ensures:
 
 ```text
 len(params_blob)
@@ -2339,33 +2341,33 @@ len(params_blob)
 params_bytes
 ```
 
-ao final.
+at completion.
 
-Consequentemente, o data segment gerado posteriormente já cobre exatamente toda a área reservada para `PARAMS`.
+The data segment generated later therefore covers exactly the entire reserved PARAMS area.
 
 ---
 
-# 111. Relação com SLOT0
+# 111. Relationship to SLOT0
 
-Como o planejamento calculou:
+Since planning calculated:
 
 ```text
 SLOT0_BASE
 ```
 
-depois de:
+after:
 
 ```text
 PARAMS_BASE + params_bytes
 ```
 
-o blob completo precisa respeitar exatamente esse tamanho reservado.
+the full blob must exactly respect that reserved size.
 
 ---
 
-# 112. Invariante final
+# 112. Final invariant
 
-Ao retornar:
+On return:
 
 ```text
 len(serialization["params_blob"])
@@ -2373,13 +2375,13 @@ len(serialization["params_blob"])
 serialization["params_bytes"]
 ```
 
-deve ser verdadeiro.
+must hold.
 
 ---
 
-# 113. Retorno de `build_params_blob()`
+# 113. Return value of `build_params_blob()`
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -2397,15 +2399,15 @@ A função retorna:
 
 # 114. `params_blob`
 
-É o artefato binário que será efetivamente colocado na memória.
+The binary artifact that will actually be placed in memory.
 
-O tipo retornado é:
+Its return type is:
 
 ```text
 bytes
 ```
 
-e não mais:
+no longer:
 
 ```text
 bytearray
@@ -2415,19 +2417,19 @@ bytearray
 
 # 115. `records`
 
-São metadados para:
+Metadata for:
 
 ```text
 debug
-relatório
-validação posterior
+report
+later validation
 ```
 
 ---
 
 # 116. `layer_count`
 
-Corresponde a:
+Corresponds to:
 
 ```python
 len(
@@ -2435,53 +2437,53 @@ len(
 )
 ```
 
-e inclui a camada sintética.
+and includes the synthetic layer.
 
 ---
 
 # 117. `layer_param_size`
 
-É:
+It is:
 
 ```text
 LP_SIZE
 ```
 
-ou, atualmente:
+or, currently:
 
 ```text
 116
 ```
 
-Esse campo também é consumido posteriormente pelo `wat_generator.py`.
+This field is also consumed later by `wat_generator.py`.
 
 ---
 
 # 118. `used_bytes`
 
-Quantidade de bytes efetivamente ocupados pelas estruturas.
+Number of bytes actually occupied by the structures.
 
 ---
 
 # 119. `padding_bytes`
 
-Quantidade de bytes zero adicionados apenas para completar a área alinhada.
+Number of zero bytes added solely to fill the aligned area.
 
 ---
 
 # 120. `params_bytes`
 
-Tamanho físico final da região reservada.
+Final physical size of the reserved region.
 
-O processo completo de construção, incluindo cálculo dos ponteiros, serialização e padding, está concentrado nessa função.
+The entire construction process, including pointer calculation, serialization, and padding, is concentrated in this function.
 
 ---
 
-# 121. Offsets relativos versus ponteiros absolutos
+# 121. Relative offsets versus absolute pointers
 
-Esse é provavelmente o conceito mais importante do módulo.
+This is probably the module's most significant concept.
 
-Antes:
+Before:
 
 ```text
 weights.py
@@ -2489,7 +2491,7 @@ weights.py
 weight tensor → w_off
 ```
 
-Depois:
+After:
 
 ```text
 params_blob.py
@@ -2500,7 +2502,7 @@ WEIGHTS_BASE + w_off
 
 ---
 
-# 122. Para bias
+# 122. For bias
 
 ```text
 b_off
@@ -2512,7 +2514,7 @@ bias_ptr
 
 ---
 
-# 123. Para multiplier
+# 123. For multiplier
 
 ```text
 mul_off
@@ -2524,7 +2526,7 @@ mul_ptr
 
 ---
 
-# 124. Para shift
+# 124. For shift
 
 ```text
 shift_off
@@ -2536,7 +2538,7 @@ shift_ptr
 
 ---
 
-# 125. Para Q6
+# 125. For Q6
 
 ```text
 q6_off
@@ -2546,7 +2548,7 @@ Q6_BASE + q6_off
 q6_ptr
 ```
 
-apenas quando:
+only when:
 
 ```text
 has_mulq6
@@ -2556,11 +2558,11 @@ activation == RELU6
 
 ---
 
-# 126. Slots funcionam de forma diferente
+# 126. Slots work differently
 
-O slot não possui offset por tensor.
+A slot has no per-tensor offset.
 
-Seu ponteiro é diretamente:
+Its pointer is directly:
 
 ```text
 slot_bases[
@@ -2570,9 +2572,9 @@ slot_bases[
 
 ---
 
-# 127. Exemplo completo de CONV
+# 127. Complete CONV example
 
-Suponha:
+Suppose:
 
 ```text
 in_slot = 1
@@ -2586,7 +2588,7 @@ slot_bases =
 ]
 ```
 
-Então:
+Then:
 
 ```text
 in_ptr = 703856
@@ -2596,9 +2598,9 @@ out_ptr = 900464
 
 ---
 
-# 128. Pesos da mesma CONV
+# 128. Weights of the same CONV
 
-Suponha:
+Suppose:
 
 ```text
 kernel_base = 2048
@@ -2606,7 +2608,7 @@ kernel_base = 2048
 w_off = 5000
 ```
 
-Então:
+Then:
 
 ```text
 wptr = 7048
@@ -2622,7 +2624,7 @@ bias_base = 386656
 b_off = 256
 ```
 
-Então:
+Then:
 
 ```text
 bias_ptr = 386912
@@ -2630,7 +2632,7 @@ bias_ptr = 386912
 
 ---
 
-# 130. Quantização
+# 130. Quantization
 
 ```text
 mul_base = 414832
@@ -2643,7 +2645,7 @@ q6_base = 471184
 q6_off = 128
 ```
 
-Então:
+Then:
 
 ```text
 mul_ptr = 414960
@@ -2653,13 +2655,13 @@ shift_ptr = 443136
 q6_ptr = 471312
 ```
 
-se a camada utilizar `ReLU6`.
+if the layer uses `ReLU6`.
 
 ---
 
-# 131. Estrutura final da CONV
+# 131. Final CONV structure
 
-O runtime receberá diretamente:
+The runtime directly receives:
 
 ```text
 in_ptr     = 703856
@@ -2673,77 +2675,77 @@ shift_ptr  = 443136
 q6_ptr     = 471312
 ```
 
-Ele não precisa conhecer:
+It does not need to know:
 
 ```text
 tensor IDs
-offsets relativos
-dicionários Python
+relative offsets
+Python dictionaries
 ```
 
 ---
 
-# 132. Isso simplifica o runtime
+# 132. This simplifies the runtime
 
-Todo o trabalho de resolução de:
+All resolution of:
 
 ```text
-grafo
+graph
 slots
 tensors
 offsets
 bases
 ```
 
-é realizado antecipadamente no Python.
+takes place in advance in Python.
 
-O WAT recebe uma estrutura já materializada.
+WAT receives an already materialized structure.
 
 ---
 
-# 133. Relação com AOT e interpretador
+# 133. Relationship to AOT and the interpreter
 
-A mesma `LayerParam` binária pode ser consumida pela lógica do módulo independentemente de a execução do WebAssembly ocorrer posteriormente de forma:
+The module's logic can consume the same binary `LayerParam` whether WebAssembly later executes through:
 
 ```text
-interpretada
+interpreted
 ```
 
-ou:
+or:
 
 ```text
 AOT
 ```
 
-A estrutura dos dados permanece a mesma.
+The data structure remains the same.
 
 ---
 
 # 134. `params_blob_to_text()`
 
-A segunda grande função gera um relatório da serialização.
+The second main function generates a serialization report.
 
-Sua docstring diz explicitamente que ela substitui os antigos comentários e informações de debug que ficavam embutidos no próprio WAT.
+Its docstring explicitly states that it replaces old comments and debug information previously embedded in WAT itself.
 
 ---
 
-# 135. Cabeçalho do relatório
+# 135. Report header
 
-O relatório começa com:
+The report begins with:
 
 ```text
 PARAMS BLOB
 ================================================================================
 ```
 
-e apresenta:
+and presents:
 
 ```text
 LayerParam size
 
 Layers
 
-Bytes usados
+Bytes used
 
 Padding
 
@@ -2752,33 +2754,33 @@ Params bytes
 
 ---
 
-# 136. Exemplo conceitual
+# 136. Conceptual example
 
 ```text
 LayerParam size : 116 bytes
 Layers          : 68
-Bytes usados    : 7888
+Bytes used    : 7888
 Padding         : 0
 Params bytes    : 7888
 ```
 
 ---
 
-# 137. Dump por camada
+# 137. Per-layer dump
 
-Depois cada:
+Then each:
 
 ```text
 record
 ```
 
-gera uma seção.
+generates a section.
 
 ---
 
-# 138. Identificação
+# 138. Identification
 
-São mostrados:
+The report displays:
 
 ```text
 L<layer_index>
@@ -2794,29 +2796,29 @@ op_type
 
 ---
 
-# 139. `layer_index` versus label TFLite
+# 139. `layer_index` versus TFLite label
 
-Assim como no relatório anterior:
+As in the previous report:
 
 ```text
 L0
 ```
 
-nesse ponto representa:
+at this point represents:
 
 ```text
-posição dentro do params_blob
+position within params_blob
 ```
 
-e não necessariamente o label lógico `L0` de `graph.py`.
+and not necessarily the logical `L0` label from `graph.py`.
 
-A primeira estrutura é a camada sintética.
+The first structure is the synthetic layer.
 
 ---
 
 # 140. `blob_offset`
 
-Esse campo é especialmente útil para conferir:
+This field is particularly useful for checking:
 
 ```text
 L0 → 0
@@ -2830,29 +2832,29 @@ L3 → 348
 
 ---
 
-# 141. Nome da operação
+# 141. Operation name
 
-O relatório apresenta:
+The report presents:
 
 ```text
 op_type = 1 (CONV)
 ```
 
-por exemplo.
+for example.
 
-Isso mostra simultaneamente:
+This shows simultaneously:
 
 ```text
-código binário
+binary code
 +
-interpretação humana
+human interpretation
 ```
 
 ---
 
-# 142. Ativação
+# 142. Activation
 
-Também:
+Also:
 
 ```text
 act = 3 (RELU6)
@@ -2862,13 +2864,13 @@ act = 3 (RELU6)
 
 # 143. Flags
 
-E:
+And:
 
 ```text
 flags = 3 (PADDING_SAME|HAS_Q6)
 ```
 
-ou, no caso de QUANTIZE:
+or, for QUANTIZE:
 
 ```text
 flags = 1 (INPUT_INT8)
@@ -2878,57 +2880,57 @@ flags = 1 (INPUT_INT8)
 
 # 144. Slots
 
-Para operações com uma entrada:
+For operations with one input:
 
 ```text
 in_slot/out_slot
 ```
 
-é mostrado.
+is displayed.
 
-Para operações com múltiplas entradas:
+For operations with multiple inputs:
 
 ```text
 in_slots/out_slot
 ```
 
-é utilizado.
+is used.
 
 ---
 
-# 145. Ponteiros reais
+# 145. Actual pointers
 
-Depois:
+Then:
 
 ```text
 in_ptr/out_ptr
 ```
 
-mostra os endereços que foram efetivamente serializados.
+shows the addresses actually serialized.
 
-Isso permite comparar:
+This lets you compare:
 
 ```text
-slot lógico
+logical slot
 ```
 
-com:
+with:
 
 ```text
-endereço físico
+physical address
 ```
 
 ---
 
-# 146. Parâmetros especiais de quantização
+# 146. Special quantization parameters
 
-Se a camada possuir:
+If the layer has:
 
 ```text
 quant_params
 ```
 
-o relatório cria seções específicas para:
+the report creates dedicated sections for:
 
 ```text
 ADD
@@ -2942,7 +2944,7 @@ QUANTIZE
 
 # 147. ADD
 
-São exibidos:
+The following are displayed:
 
 ```text
 sA / sB / sY
@@ -2962,7 +2964,7 @@ out_mul / out_shift
 
 # 148. SOFTMAX
 
-São mostrados:
+The following are shown:
 
 ```text
 sX / sY
@@ -2986,28 +2988,28 @@ diff_min
 
 ---
 
-# 149. Distinção crítica do SOFTMAX
+# 149. Critical SOFTMAX distinction
 
-O relatório contém explicitamente o comentário:
+The report explicitly contains the comment:
 
 ```text
-stride_w armazena input_left_shift,
-não integer_bits
+stride_w stores input_left_shift,
+no integer_bits
 ```
 
-e imprime:
+and prints:
 
 ```text
 stride_w input_left_shift
 ```
 
-Essa é a interpretação correta do código atual.
+This is the correct interpretation of the documented code.
 
 ---
 
 # 150. QUANTIZE
 
-São exibidos:
+The following are displayed:
 
 ```text
 input_dtype
@@ -3023,9 +3025,9 @@ mul / shift
 
 ---
 
-# 151. Geometria tradicional
+# 151. Conventional geometry
 
-Para operações comuns, o relatório mostra:
+For ordinary operations, the report shows:
 
 ```text
 kh / kw
@@ -3039,9 +3041,9 @@ pad top/bottom/left/right
 
 ---
 
-# 152. Operações especiais
+# 152. Special operations
 
-Para:
+For:
 
 ```text
 ADD
@@ -3050,15 +3052,15 @@ SOFTMAX
 QUANTIZE
 ```
 
-os rótulos mudam para refletir o significado real dos campos.
+labels change to reflect the fields' actual meaning.
 
-Isso evita imprimir, por exemplo:
+This avoids printing, for example:
 
 ```text
 kernel 123456789 × -3
 ```
 
-quando os campos na verdade significam:
+when the fields actually mean:
 
 ```text
 multiplier / shift
@@ -3066,9 +3068,9 @@ multiplier / shift
 
 ---
 
-# 153. Relatório do ADD
+# 153. ADD report
 
-O relatório mostra:
+The report shows:
 
 ```text
 kh/kw (mul0/sh0)
@@ -3084,9 +3086,9 @@ pad_l/r (zA/zB)
 
 ---
 
-# 154. Relatório do MEAN
+# 154. MEAN report
 
-Mostra:
+It shows:
 
 ```text
 kh/kw (mul/shift)
@@ -3098,9 +3100,9 @@ pad_t input_ptr
 
 ---
 
-# 155. Relatório do SOFTMAX
+# 155. SOFTMAX report
 
-Mostra:
+It shows:
 
 ```text
 kh/kw beta
@@ -3114,9 +3116,9 @@ pad_t input_ptr
 
 ---
 
-# 156. Relatório do QUANTIZE
+# 156. QUANTIZE report
 
-Mostra:
+It shows:
 
 ```text
 kh/kw (mul/shift)
@@ -3128,13 +3130,13 @@ pad_t input_ptr
 
 # 157. Depthwise
 
-Para:
+For:
 
 ```text
 DEPTHWISE_CONV_2D
 ```
 
-também é mostrado:
+the report also shows:
 
 ```text
 depth_mult
@@ -3142,9 +3144,9 @@ depth_mult
 
 ---
 
-# 158. Offsets e ponteiros
+# 158. Offsets and pointers
 
-A parte final de cada camada compara:
+The final part of each layer compares:
 
 ```text
 w_off / b_off
@@ -3156,7 +3158,7 @@ shift_off
 q6_off
 ```
 
-com:
+with:
 
 ```text
 wptr
@@ -3172,7 +3174,7 @@ q6_ptr
 
 ---
 
-# 159. Esse é um dos melhores pontos para depuração
+# 159. A useful debugging location
 
 Imagine:
 
@@ -3180,31 +3182,31 @@ Imagine:
 w_off = 12000
 ```
 
-mas:
+but:
 
 ```text
 wptr
 ```
 
-não corresponder a:
+does not match:
 
 ```text
 WEIGHTS_BASE + 12000
 ```
 
-O relatório tornaria a inconsistência evidente.
+The report would make the inconsistency clear.
 
 ---
 
 # 160. Zero points
 
-Também são exibidos:
+Also displayed are:
 
 ```text
 zx / zw / zy
 ```
 
-permitindo verificar:
+allowing you to check:
 
 ```text
 input
@@ -3212,13 +3214,13 @@ weights
 output
 ```
 
-num mesmo ponto.
+in one place.
 
 ---
 
-# 161. Representação completa das três fases
+# 161. Complete representation of the three phases
 
-Para um parâmetro de peso, podemos acompanhar:
+For a weight parameter, we can follow:
 
 ```text
 TFLite tensor 42
@@ -3250,7 +3252,7 @@ WASM
 
 ---
 
-# 162. Para uma ativação
+# 162. For an activation
 
 ```text
 TFLite tensor
@@ -3277,7 +3279,7 @@ struct.pack()
 
 ---
 
-# 163. Para multiplier
+# 163. For multiplier
 
 ```text
 op_index
@@ -3303,122 +3305,122 @@ mul_ptr
 
 ---
 
-# 164. Diferença entre `params_blob` e blobs anteriores
+# 164. Difference between `params_blob` and earlier blobs
 
-`weights_raw` contém:
+`weights_raw` contains:
 
 ```text
-dados treinados
+trained data
 ```
 
-`mul_blob` contém:
+`mul_blob` contains:
 
 ```text
-parâmetros de requantização
+requantization parameters
 ```
 
-Já `params_blob` contém:
+`params_blob`, in turn, contains:
 
 ```text
-descrição de como executar a rede
+description of how to execute the network
 ```
 
 ---
 
-# 165. Pode-se pensar em três categorias
+# 165. Three conceptual categories
 
 ```text
-DADOS
+data
     ↓
 weights
 bias
 
 
-TABELAS NUMÉRICAS AUXILIARES
+AUXILIARY NUMERICAL TABLES
     ↓
 MUL
 SHIFT
 Q6
 
 
-METADADOS DE EXECUÇÃO
+EXECUTION METADATA
     ↓
 PARAMS
 ```
 
 ---
 
-# 166. `PARAMS` como tabela de instruções de alto nível
+# 166. PARAMS as a high-level instruction table
 
-Cada `LayerParam` informa ao runtime algo semelhante a:
+Each `LayerParam` tells the runtime something like:
 
 ```text
-qual kernel executar?
+which kernel to run?
 
-onde está a entrada?
+where is the input?
 
-onde escrever a saída?
+where to write output?
 
-onde estão os pesos?
+where are the weights?
 
-quais são as dimensões?
+what are the dimensions?
 
-qual stride usar?
+which stride to use?
 
-qual padding usar?
+which padding to use?
 
-onde estão os parâmetros de requantização?
+where are requantization parameters?
 
-quais são os zero points?
+what are the zero points?
 ```
 
 ---
 
-# 167. Não é bytecode WASM
+# 167. It is not WASM bytecode
 
-É importante distinguir.
+The distinction matters.
 
-`params_blob` não contém:
-
-```text
-instruções WebAssembly
-```
-
-Ele contém:
+`params_blob` does not contain:
 
 ```text
-dados
+WebAssembly instructions
 ```
 
-que o código WebAssembly lê para decidir como executar cada camada.
+It contains:
+
+```text
+data
+```
+
+which WebAssembly code reads to decide how to execute each layer.
 
 ---
 
-# 168. Modelo conceitual
+# 168. Conceptual model
 
 ```text
 WASM
     ↓
-código genérico dos kernels
+generic kernel code
 
 PARAMS
     ↓
-configuração de cada execução
+configuration of each execution
 ```
 
-Assim os kernels podem ser reutilizados para muitas camadas.
+Kernels can therefore be reused across many layers.
 
 ---
 
-# 169. Exemplo
+# 169. Example
 
-Um único kernel:
+A single kernel:
 
 ```text
 conv2d
 ```
 
-pode executar:
+can execute:
 
 ```text
 CONV layer 1
@@ -3430,7 +3432,7 @@ CONV layer 17
 CONV layer 42
 ```
 
-porque cada `LayerParam` fornece:
+because each `LayerParam` supplies different:
 
 ```text
 shape
@@ -3440,25 +3442,25 @@ pointers
 quantization
 ```
 
-diferentes.
+values.
 
 ---
 
-# 170. Relação com portabilidade
+# 170. Relationship to portability
 
-Essa separação também ajuda a manter:
-
-```text
-algoritmo do runtime
-```
-
-separado de:
+This separation also helps keep:
 
 ```text
-dados específicos do modelo
+runtime algorithm
 ```
 
-O template WAT pode manter os kernels estáticos enquanto o extrator altera:
+separate from:
+
+```text
+model-specific data
+```
+
+The WAT template can keep kernels static while the extractor changes:
 
 ```text
 weights
@@ -3469,17 +3471,17 @@ number of layers
 
 ---
 
-# 171. Padding do `params_blob` não é LayerParam
+# 171. `params_blob` padding is not a LayerParam
 
-Os bytes adicionais no final:
+The additional trailing bytes:
 
 ```text
 00 00 00 ...
 ```
 
-não representam uma camada.
+do not represent a layer.
 
-O número real de camadas continua sendo:
+The actual layer count remains:
 
 ```text
 layer_count
@@ -3487,27 +3489,27 @@ layer_count
 
 ---
 
-# 172. Runtime deve respeitar `NUM_LAYERS`
+# 172. Runtime must respect `NUM_LAYERS`
 
-O loop do runtime deve executar:
+The runtime loop must execute:
 
 ```text
 0 .. NUM_LAYERS - 1
 ```
 
-e não inferir quantidade de camadas pelo tamanho total de:
+rather than infer layer count from the total size of:
 
 ```text
 PARAMS
 ```
 
-porque o final pode conter padding.
+because the end may contain padding.
 
 ---
 
-# 173. Relação com `NUM_LAYERS`
+# 173. Relationship to `NUM_LAYERS`
 
-Posteriormente:
+Later:
 
 ```text
 NUM_LAYERS
@@ -3515,13 +3517,13 @@ NUM_LAYERS
 serialization["layer_count"]
 ```
 
-pode ser usado pelo gerador WAT.
+can be used by the WAT generator.
 
 ---
 
-# 174. Relação com `LP_SIZE`
+# 174. Relationship to `LP_SIZE`
 
-Também:
+Also:
 
 ```text
 LP_SIZE
@@ -3529,13 +3531,13 @@ LP_SIZE
 serialization["layer_param_size"]
 ```
 
-é consumido pelo template/runtime.
+is consumed by the template/runtime.
 
 ---
 
-# 175. Endereço de uma LayerParam
+# 175. Address of a LayerParam
 
-Com:
+With:
 
 ```text
 PARAMS_BASE
@@ -3543,7 +3545,7 @@ LP_SIZE
 layer_index
 ```
 
-temos:
+we have:
 
 ```text
 layer_ptr =
@@ -3554,7 +3556,7 @@ layer_index × LP_SIZE
 
 ---
 
-# 176. Exemplo
+# 176. Example
 
 ```text
 PARAMS_BASE = 499360
@@ -3564,7 +3566,7 @@ LP_SIZE = 116
 layer_index = 10
 ```
 
-Então:
+Then:
 
 ```text
 layer_ptr =
@@ -3577,9 +3579,9 @@ layer_ptr =
 
 ---
 
-# 177. O leitor do WAT
+# 177. The WAT reader
 
-O runtime pode então carregar:
+The runtime can then load:
 
 ```text
 op_type
@@ -3588,15 +3590,15 @@ flags
 ...
 ```
 
-em offsets fixos dentro dessa estrutura.
+at fixed offsets within the structure.
 
 ---
 
-# 178. Invariantes fundamentais
+# 178. Fundamental invariants
 
-Depois de `build_params_blob()`, algumas propriedades devem ser verdadeiras.
+After `build_params_blob()`, several properties must hold.
 
-### Cada camada
+### Each layer
 
 ```text
 len(packed) == LP_SIZE
@@ -3604,7 +3606,7 @@ len(packed) == LP_SIZE
 
 ---
 
-### Quantidade de bytes úteis
+### Number of useful bytes
 
 ```text
 used_bytes
@@ -3614,7 +3616,7 @@ layer_count × LP_SIZE
 
 ---
 
-### Área reservada suficiente
+### Sufficient reserved area
 
 ```text
 used_bytes
@@ -3624,7 +3626,7 @@ params_bytes
 
 ---
 
-### Blob final
+### Final blob
 
 ```text
 len(params_blob)
@@ -3650,39 +3652,39 @@ params_bytes
 len(input_slots) == 2
 ```
 
-e:
+and:
 
 ```text
-pad_t = base do slot A
+pad_t = slot A base
 
-pad_b = base do slot B
+pad_b = slot B base
 ```
 
 ---
 
-# 179. Validações que poderiam ser acrescentadas futuramente
+# 179. Potential future validation
 
-O código atual poderia ser endurecido posteriormente para verificar também:
+The code could later be strengthened to also check:
 
 ```text
-wptr dentro de WEIGHTS
+wptr within WEIGHTS
 
-bias_ptr dentro de BIAS
+bias_ptr within BIAS
 
-mul_ptr dentro de MUL
+mul_ptr within MUL
 
-shift_ptr dentro de SHIFT
+shift_ptr within SHIFT
 
-q6_ptr dentro de Q6
+q6_ptr within Q6
 ```
 
-quando esses ponteiros forem utilizados.
+when these pointers are used.
 
 ---
 
-# 180. Outra validação possível
+# 180. Another possible check
 
-Poderíamos confirmar:
+We could confirm:
 
 ```text
 blob_offset
@@ -3690,15 +3692,15 @@ blob_offset
 layer_index × LP_SIZE
 ```
 
-durante cada iteração.
+during each iteration.
 
-Hoje isso decorre naturalmente da construção sequencial.
+Currently, this follows naturally from sequential construction.
 
 ---
 
-# 181. Outra validação possível
+# 181. Another possible check
 
-Também seria possível garantir:
+It would also be possible to guarantee:
 
 ```text
 used_bytes
@@ -3706,15 +3708,15 @@ used_bytes
 len(layer_params) × LP_SIZE
 ```
 
-explicitamente.
+explicitly.
 
-Novamente, o código atual já produz essa relação pela construção.
+Again, the code already produces this relationship by construction.
 
 ---
 
-# 182. Um detalhe importante sobre `wptr`
+# 182. A detail about `wptr`
 
-Diferentemente de:
+Unlike:
 
 ```text
 bias_ptr
@@ -3723,9 +3725,9 @@ shift_ptr
 q6_ptr
 ```
 
-que podem ser zero explicitamente quando não existem,
+which can explicitly be zero when absent,
 
-`wptr` é sempre:
+`wptr` is always:
 
 ```text
 kernel_base + w_off
@@ -3733,17 +3735,17 @@ kernel_base + w_off
 
 ---
 
-# 183. Consequência no relatório
+# 183. Consequence for reporting
 
-Portanto não devemos usar:
+We must therefore not use:
 
 ```text
 wptr == 0
 ```
 
-como teste de existência de peso.
+to test for the existence of weights.
 
-Para saber se um operador realmente usa `wptr`, é necessário interpretar:
+To know whether an operator actually uses `wptr`, interpret:
 
 ```text
 op_type
@@ -3751,9 +3753,9 @@ op_type
 
 ---
 
-# 184. Exemplo
+# 184. Example
 
-`ADD` pode possuir:
+`ADD` may have:
 
 ```text
 w_off = 0
@@ -3761,49 +3763,49 @@ w_off = 0
 wptr = KERNEL_BASE
 ```
 
-Mas o kernel ADD simplesmente não utiliza esse campo como peso.
+But the ADD kernel simply does not use this field as a weight.
 
 ---
 
-# 185. Estrutura fixa versus campos opcionais
+# 185. Fixed structure versus optional fields
 
-Esse comportamento é consequência direta de utilizar:
+This behavior follows directly from using:
 
 ```text
-uma estrutura fixa
+a fixed structure
 ```
 
-para operações heterogêneas.
+for heterogeneous operations.
 
-Todos os 29 campos existem fisicamente em todas as `LayerParams`, mesmo quando alguns são irrelevantes.
+All 29 fields physically exist in every `LayerParam`, even when some are irrelevant.
 
 ---
 
-# 186. Benefício
+# 186. Benefit
 
-O runtime pode trabalhar com:
+The runtime can work with:
 
 ```text
-LP_SIZE fixo
+fixed LP_SIZE
 ```
 
-e offsets fixos.
+and fixed offsets.
 
-Não precisa lidar com estruturas variáveis.
+It does not need variable structures.
 
 ---
 
-# 187. Custo
+# 187. Cost
 
-Alguns campos contêm:
+Some fields contain:
 
 ```text
 0
 ```
 
-ou valores sem significado para determinada operação.
+or values with no meaning for a given operation.
 
-O runtime precisa interpretar cada campo com base em:
+The runtime must interpret each field based on:
 
 ```text
 op_type
@@ -3811,7 +3813,7 @@ op_type
 
 ---
 
-# 188. Exemplo do protocolo
+# 188. Protocol example
 
 ```text
 op_type = CONV
@@ -3835,31 +3837,31 @@ op_type = QUANTIZE
 kh = multiplier
 ```
 
-`params_blob.py` não precisa reinterpretar tudo isso.
+`params_blob.py` does not need to reinterpret all this.
 
-Ele apenas garante que o valor preparado pelo módulo anterior seja colocado na posição correta.
-
----
-
-# 189. Separação de responsabilidades entre os dois módulos
-
-`layer_params.py` responde:
-
-```text
-qual valor deve ir em cada campo?
-```
-
-`params_blob.py` responde:
-
-```text
-como transformar esses campos
-em uma estrutura binária
-com ponteiros absolutos?
-```
+It only ensures that the value prepared by the previous module is placed in the correct position.
 
 ---
 
-# 190. Exemplo
+# 189. Separation of responsibilities between the two modules
+
+`layer_params.py` answers:
+
+```text
+which value belongs in each field?
+```
+
+`params_blob.py` answers:
+
+```text
+how to transform these fields
+into a binary structure
+with absolute pointers?
+```
+
+---
+
+# 190. Example
 
 `layer_params.py`:
 
@@ -3881,7 +3883,7 @@ bias_ptr =
 BIAS_BASE + 256
 ```
 
-e finalmente:
+and finally:
 
 ```text
 struct.pack(...)
@@ -3889,9 +3891,9 @@ struct.pack(...)
 
 ---
 
-# 191. Relação com `memory.py`
+# 191. Relationship to `memory.py`
 
-`memory.py` decide:
+`memory.py` decides:
 
 ```text
 WEIGHTS_BASE
@@ -3907,37 +3909,37 @@ Q6_BASE
 PARAMS_BASE
 ```
 
-`params_blob.py` utiliza essas bases, mas não decide onde elas ficam.
+`params_blob.py` uses these bases but does not decide where they reside.
 
 ---
 
-# 192. Relação com `wat_generator.py`
+# 192. Relationship to `wat_generator.py`
 
-Depois desta etapa, o gerador recebe:
+After this stage, the generator receives:
 
 ```text
 params_blob
 ```
 
-já completamente pronto.
+already fully prepared.
 
-Ele não precisa:
+It does not need to:
 
 ```text
-calcular ponteiros
+calculate pointers
 
-interpretar slots
+interpret slots
 
-calcular offset de pesos
+calculate weight offsets
 
-montar LayerParam
+assemble LayerParam
 ```
 
 ---
 
-# 193. O gerador apenas posiciona o blob
+# 193. The generator only positions the blob
 
-Conceitualmente:
+Conceptually:
 
 ```wat
 (data
@@ -3948,34 +3950,34 @@ Conceitualmente:
 
 ---
 
-# 194. Separação desejada
+# 194. Intended separation
 
 ```text
 params_blob.py
     ↓
-produz bytes corretos
+produces correct bytes
 
 wat_generator.py
     ↓
-coloca esses bytes
-no endereço correto
+places those bytes
+at the correct address
 ```
 
 ---
 
-# 195. Isso reduz acoplamento
+# 195. This reduces coupling
 
-Se futuramente quisermos armazenar:
+If we later want to store:
 
 ```text
 params_blob
 ```
 
-em outro formato de artefato, a lógica de construção da estrutura não depende da sintaxe WAT.
+in another artifact format, structure construction logic does not depend on WAT syntax.
 
 ---
 
-# 196. Fluxo completo dos endereços
+# 196. Complete address workflow
 
 ```text
 weights.py
@@ -3997,7 +3999,7 @@ Q6_BASE
 
 layer_params.py
     ↓
-estrutura lógica
+logical structure
 
 params_blob.py
     ↓
@@ -4011,12 +4013,12 @@ WASM
 
 ---
 
-# 197. Fluxo completo dos slots
+# 197. Complete slot workflow
 
 ```text
 slots.py
     ↓
-slot lógico
+logical slot
 
 tensor_mapping.py
     ↓
@@ -4037,7 +4039,7 @@ in_ptr / out_ptr
 
 ---
 
-# 198. Visão completa do `PARAMS`
+# 198. Complete PARAMS view
 
 ```text
 PARAMS_BASE
@@ -4050,7 +4052,7 @@ PARAMS_BASE
 │ 116 bytes                   │
 ├─────────────────────────────┤
 │ LayerParam 1                │
-│ primeira operação TFLite    │
+│ first TFLite operation    │
 │ 116 bytes                   │
 ├─────────────────────────────┤
 │ LayerParam 2                │
@@ -4061,7 +4063,7 @@ PARAMS_BASE
 │ LayerParam N-1              │
 │ 116 bytes                   │
 ├─────────────────────────────┤
-│ padding opcional            │
+│ optional padding            │
 │ 00 00 00 ...                │
 └─────────────────────────────┘
    │
@@ -4071,34 +4073,34 @@ SLOT0_BASE
 
 ---
 
-# 199. Papel no pipeline completo
+# 199. Role in the full pipeline
 
 ```text
 ┌─────────────────────────────┐
 │       layer_params.py       │
 │                             │
-│ dicionários estruturados    │
-│ offsets relativos           │
+│ structured dictionaries    │
+│ relative offsets           │
 │ slots                       │
-│ parâmetros especiais        │
+│ special parameters        │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
 │       params_blob.py        │
 │                             │
-│ valida slots                │
-│ resolve ponteiros           │
+│ validates slots                │
+│ resolves pointers           │
 │ struct.pack 29 × int32      │
-│ concatena LayerParams       │
-│ adiciona padding            │
+│ concatenates LayerParams       │
+│ adds padding            │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
 │         params_blob         │
 │                             │
-│ bytes finais de PARAMS      │
+│ final PARAMS bytes      │
 └──────────────┬──────────────┘
                │
                ▼
@@ -4112,26 +4114,26 @@ SLOT0_BASE
 ┌─────────────────────────────┐
 │           WASM              │
 │                             │
-│ runtime lê LayerParam[]     │
+│ runtime reads LayerParam[]     │
 └─────────────────────────────┘
 ```
 
 ---
 
-# 200. Síntese
+# 200. Summary
 
-`params_blob.py` transforma a descrição lógica das operações em uma representação binária diretamente consumível pelo runtime WebAssembly.
+`params_blob.py` transforms the logical operation description into a binary representation directly consumable by the WebAssembly runtime.
 
-A primeira responsabilidade é validar o uso dos slots, com atenção especial ao `ADD`, que possui duas entradas e reutiliza:
+Its first responsibility is validating slot use, especially `ADD`, which has two inputs and reuses:
 
 ```text
 pad_t
 pad_b
 ```
 
-como ponteiros dessas entradas.
+as pointers to those inputs.
 
-A segunda responsabilidade é converter informações relativas:
+Its second responsibility is converting relative information:
 
 ```text
 w_off
@@ -4145,7 +4147,7 @@ shift_off
 q6_off
 ```
 
-em endereços absolutos:
+into absolute addresses:
 
 ```text
 wptr
@@ -4159,13 +4161,13 @@ shift_ptr
 q6_ptr
 ```
 
-utilizando:
+using:
 
 ```text
 BASE + OFFSET
 ```
 
-A terceira responsabilidade é organizar exatamente 29 valores em cada `LayerParam`, obedecendo a uma ordem fixa e serializando-os como:
+Its third responsibility is organizing exactly 29 values in each `LayerParam`, in fixed order, and serializing them as:
 
 ```text
 29 × int32 little-endian
@@ -4173,7 +4175,7 @@ A terceira responsabilidade é organizar exatamente 29 valores em cada `LayerPar
 116 bytes
 ```
 
-A quarta responsabilidade é concatenar todas essas estruturas:
+Its fourth responsibility is concatenating all these structures:
 
 ```text
 LayerParam[0]
@@ -4182,32 +4184,34 @@ LayerParam[2]
 ...
 ```
 
-e completar a região com bytes zero até:
+and filling the region with zero bytes up to:
 
 ```text
 params_bytes
 ```
 
-garantindo que o tamanho final seja exatamente aquele utilizado pelo planejamento da memória.
+ensuring the final size matches memory planning exactly.
 
-Assim, este módulo realiza a transformação:
+This module therefore performs the transformation:
 
 ```text
-descrição Python da rede
+Python network description
           ↓
-endereços absolutos
+absolute addresses
           ↓
-estrutura binária fixa
+fixed binary structure
           ↓
 PARAMS
 ```
 
-Depois dele, praticamente toda a engenharia semântica da extração já terminou.
+After it, virtually all semantic extraction work is complete.
 
-O `wat_generator.py` não precisa mais entender como uma convolução, um ADD ou um SOFTMAX foi construído. Ele recebe simplesmente um bloco binário pronto para ser colocado em:
+`wat_generator.py` no longer needs to understand how a convolution, ADD, or SOFTMAX was built. It simply receives a binary block ready to be placed in:
 
 ```text
 PARAMS_BASE
 ```
 
-junto aos demais blocos do modelo.
+alongside the model's other blocks.
+
+

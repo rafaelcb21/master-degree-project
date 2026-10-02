@@ -1,60 +1,63 @@
-# 99 — Inconsistências, limitações e informações não determinadas
+﻿# 99 — Inconsistencies, limitations, and undetermined information
 
-[Índice](README.md) · Revisão do estado local em 28/09/2026.
+[English](99-inconsistencias-e-limitacoes.md) | [Português (Brasil)](99-inconsistencias-e-limitacoes.pt-BR.md)
 
-## Método e alcance
+[Index](README.md) · Local state reviewed on September 28, 2026.
 
-Os itens abaixo resultam da leitura do código, manifests, templates, testes e artefatos existentes. A tarefa alterou documentação, não kernels ou regras funcionais. “Recomendação” descreve possível evolução, não uma capacidade implementada. Um risco identificado por inspeção não significa que os modelos atuais tenham disparado todos esses casos.
+## Method and scope
 
-## Comportamento atual e divergências verificadas
+The items below come from reading existing code, manifests, templates, tests, and artifacts. The task changed documentation, not kernels or functional rules. “Recommendation” describes possible future work, not an implemented capability. A risk identified by inspection does not mean that current models triggered every case.
 
-| ID | Arquivo / conceito | Comportamento atual | Divergência ou limitação | Recomendação |
+## Current behavior and verified discrepancies
+
+| ID | File / concept | Current behavior | Discrepancy or limitation | Recommendation |
 |---|---|---|---|---|
-| 01 | `wat/templates/model_template.wat`, QUANTIZE | Template legado usa `layer_idx==67` para escolher UINT8 | Não segue as flags de saída atuais; nenhum manifest o seleciona | Usar os templates ativos; remover/deprecar o legado em tarefa funcional separada |
-| 02 | Templates ativos, SOFTMAX | Multiplica diferenças de logits por 7877, shift 16, tabela Q15 e fator 256 | Python calcula parâmetros por modelo que o kernel não usa; comentários sugerem scale fixa 0.12 | Implementar uso dos parâmetros e comparar numericamente com referência |
-| 03 | Templates ativos, `FLAG_BASE` | Constante tem valor 4 | Comentário diz endereço 0; host escreve marcador de formato em 0 | Distinguir formato em 0 de busy em 4; corrigir comentário em revisão apropriada |
-| 04 | `layer_params.py` e kernel depthwise | Python registra depth_mult; WAT usa canal oc diretamente na entrada | depth_mult não está nos 29 campos e valor >1 não é corretamente generalizado | Rejeitar casos não suportados ou implementar correspondência de canais |
-| 05 | `operator_options.py`, ADD/FC | Ativação é extraída e registrada | Kernels ADD/FC não aplicam act | Implementar ou rejeitar ativação diferente de NONE nesses kernels |
-| 06 | MEAN builder/runtime | Média espacial H×W por canal | Não lê axis/keep_dims; usa divisão truncada | Declarar/restringir o caso suportado e validar arredondamento |
-| 07 | `_build_softmax_params` | Beta fixo 1 e parâmetros derivados | Não lê beta real de SoftmaxOptions | Validar beta do modelo ou implementá-lo |
-| 08 | `build_layer_params` | Tipos desconhecidos e operadores sem output podem ser pulados | Não há falha global obrigatória por opcode incompatível | Adicionar validação de cobertura completa antes da geração |
-| 09 | `graph.py` versus `layer_params.py` | Slots usam ordem topológica; camadas serializadas usam ordem original | As ordens não são explicitamente comparadas | Validar invariantes de ordenação/identidade dos outputs |
-| 10 | `slots.py`, QUANTIZE | Usa mesmo slot e executa continue | Não atualiza contagem de leitores nesse ramo | Testar liveness em ramificações com QUANTIZE intermediário |
-| 11 | `tensor_mapping.py` | Propaga primeiro slot encontrado por produtor; múltiplos outputs recebem mesmo slot | Não demonstra equivalência semântica do alias | Restringir aliases válidos e validar grafos com múltiplas saídas |
-| 12 | Mapa lógico versus runtime | Runtime reconstrói somente inputs/outputs de alocação | Resoluções recursivas do mapa lógico não são reaproveitadas | Verificar consistência dos dois mapas em modelos novos |
-| 13 | Pesos/bias e builders | Ausências podem ser puladas; w_off default 0; ponteiros ausentes 0 | Alguns kernels fazem load de bias/quantização sem checar zero | Falhar cedo para parâmetros obrigatórios ausentes |
-| 14 | Quantização por canal | Usa primeiro scale de I/O e completa scales de pesos repetindo a última | qdim é relatado, mas não controla genericamente o eixo de quantização | Validar número/eixo de escalas |
-| 15 | `operator_options.py` | Captura exceções e usa defaults | Opções incompatíveis podem virar stride 1/VALID/NONE silenciosamente | Distinguir opção ausente de falha de parsing |
-| 16 | `tflite_utils.py` | Scale ausente→1; zp ausente→0; reshape malsucedido é ignorado | Valores neutros não comprovam validade do tensor | Validar schema/shape/quantização nos consumidores |
-| 17 | `ModelConfig` | Validação parcial; campos desconhecidos ignorados | Tipos anotados não são impostos; num_slots=3.0 e top_k=true são casos problemáticos | Introduzir validação explícita de tipos |
-| 18 | `ModelPackage.resolve` | Permite `..` e paths absolutos | README anterior dizia todos os paths relativos como regra absoluta | Documentação atual distingue convenção de restrição |
-| 19 | `main.py` | Captura OSError, ValueError, RuntimeError | Nem todo erro vira mensagem sem traceback | Documentar classes que propagam; melhorar fronteira de erros se necessário |
-| 20 | Runner | Uma instância por lote, memória não limpa, continua após erro por caso | Trap pode deixar estado parcial; não há isolamento ou timeout | Testar falha seguida de inferência e definir política de reinicialização |
-| 21 | WAT ranking | get_top_class/get_top5 leem INT8 | Saídas dos dois TFLite atuais são UINT8 | Manter ranking no adapter; generalizar exports se usados externamente |
-| 22 | Helpers WAT duplicados | Variantes `_2`, `_3` e exportadas têm diferenças | Função exportada sem sufixo não faz o mesmo left shift de `_3` | Consolidar ou documentar ABI numérico de cada helper |
-| 23 | Runtime e host | Nome obrigatório `run_mobilenetv2`, imagens NHWC RGB e I/O 8 bits | Parte da infraestrutura ainda é específica deste domínio | Separar contrato de execução ao suportar áudio/outros formatos |
-| 24 | ImageNet INT8 | Normaliza pixel/127.5−1 antes de quantizar | Não é pré-processamento configurável para qualquer rede | Tornar a normalização explícita em futura configuração |
-| 25 | Template compartilhado/local | Dois arquivos ativos têm o mesmo conteúdo | Não há vínculo de sincronização; podem divergir | Versionar e testar cada template selecionado |
-| 26 | Pacote drowsiness | Template fica fora de sua pasta | Não é autocontido para distribuição isolada | Incluir template compartilhado ou usar cópia local ao distribuir |
-| 27 | `README.md` anterior | Citava `test/incompatible/a0397.raw` | Caminho não existe no estado atual; destino não pode ser determinado | Referência operacional removida; nenhum arquivo de dados foi criado para sustentá-la |
-| 28 | `img_mobilenetv2/aviao_uint8.raw` | Existe cópia externa ao pacote | Manifest só lê o arquivo em models/.../test/img | Documentar a cópia como não usada pela execução atual |
-| 29 | Docs antigos | Contêm centenas de exemplos sobre extrator e arquitetura anterior | main.py orquestrador, globals de paths e sintética obrigatória ficaram obsoletos | Corpos preservados em historico; capítulos atuais 00–33 são a referência |
-| 30 | `inference/wasm_inference.py` | Imports de constantes repetidos; string descritiva no meio do arquivo | Essa string não é docstring do módulo | Limpeza editorial em tarefa separada, sem efeito funcional necessário aqui |
-| 31 | Artefatos/reports | Escrita incremental e sobrescrita direta | Execução interrompida pode misturar versões; sem timestamps/checksums | Conferir código de saída; considerar metadados e escrita atômica |
-| 32 | `wat_generator.py` | Saída vem da última LayerParam; regex verifica tokens remanescentes | Não garante identidade do tensor final nem presença de todos os placeholders | Validar identidade e interface do template |
-| 33 | `memory.py` | Alinhamento por bitmask; dimensionamento com defaults para negativos | Sem checagem de potência de dois/overlap/shapes dinâmicos completos | Validar invariantes do layout |
-| 34 | `setup_env.ps1` | Reutiliza .venv existente e chama python/pip | Não valida se o interpretador da venv ainda existe; ambiente local antigo está quebrado | Criar ambiente válido explicitamente; não tratar sucesso impresso como teste de execução |
-| 35 | Testes atuais | Sete testes direcionados | Não há equivalência completa TFLite/WASM nem cobertura de todos os kernels | Adicionar referência diferencial por operador/tensor |
-| 36 | Histórico de flags | Texto antigo “flags 0 uint8, 1 int8” era incompleto | Código atual já descreve bits de entrada e saída; relatórios antigos podem conservar o texto anterior | Regenerar relatórios numa execução funcional quando necessário; esta tarefa não os altera |
+| 01 | `wat/templates/model_template.wat`, QUANTIZE | Legacy template uses `layer_idx==67` to select UINT8 | Does not follow current output flags; no manifest selects it | Use active templates; remove/deprecate the legacy template in a separate functional task |
+| 02 | Active templates, SOFTMAX | Multiplies logit differences by 7877, uses shift 16, a Q15 table, and factor 256 | Python calculates model-specific parameters that the kernel does not use; comments suggest fixed scale 0.12 | Implement parameter use and compare numerically against a reference |
+| 03 | Active templates, `FLAG_BASE` | Constant value is 4 | Comment says address 0; host writes the format marker at 0 | Distinguish format at 0 from busy at 4; correct the comment in an appropriate revision |
+| 04 | `layer_params.py` and depthwise kernel | Python records depth_mult; WAT uses channel oc directly in the input | depth_mult is absent from the 29 fields and values >1 are not correctly generalized | Reject unsupported cases or implement channel mapping |
+| 05 | `operator_options.py`, ADD/FC | Activation is extracted and recorded | ADD/FC kernels do not apply act | Implement or reject activation other than NONE in these kernels |
+| 06 | MEAN builder/runtime | Spatial H×W mean per channel | Does not read axis/keep_dims; uses truncated division | Declare/restrict the supported case and validate rounding |
+| 07 | `_build_softmax_params` | Fixed beta 1 and derived parameters | Does not read the actual beta from SoftmaxOptions | Validate model beta or implement it |
+| 08 | `build_layer_params` | Unknown types and operators without output may be skipped | No mandatory global failure for incompatible opcodes | Add complete coverage validation before generation |
+| 09 | `graph.py` versus `layer_params.py` | Slots use topological order; serialized layers use original order | The orders are not explicitly compared | Validate ordering/output identity invariants |
+| 10 | `slots.py`, QUANTIZE | Uses the same slot and executes continue | Does not update reader counts in this branch | Test liveness in branches with intermediate QUANTIZE |
+| 11 | `tensor_mapping.py` | Propagates the first slot found through a producer; multiple outputs receive the same slot | Does not demonstrate semantic equivalence of the alias | Restrict valid aliases and validate graphs with multiple outputs |
+| 12 | Logical map versus runtime | Runtime reconstructs only allocation inputs/outputs | Recursive resolutions in the logical map are not reused | Check consistency between both maps for new models |
+| 13 | Weights/bias and builders | Missing values may be skipped; w_off defaults to 0; missing pointers are 0 | Some kernels load bias/quantization without checking zero | Fail early for missing required parameters |
+| 14 | Per-channel quantization | Uses the first I/O scale and fills missing weight scales by repeating the last | qdim is reported but does not generically control the quantization axis | Validate scale count/axis |
+| 15 | `operator_options.py` | Catches exceptions and uses defaults | Incompatible options may silently become stride 1/VALID/NONE | Distinguish missing options from parsing failures |
+| 16 | `tflite_utils.py` | Missing scale → 1; missing zp → 0; failed reshape is ignored | Neutral values do not prove tensor validity | Validate schema/shape/quantization in consumers |
+| 17 | `ModelConfig` | Partial validation; unknown fields ignored | Annotated types are not enforced; num_slots=3.0 and top_k=true are problematic cases | Introduce explicit type validation |
+| 18 | `ModelPackage.resolve` | Allows `..` and absolute paths | Previous README stated all paths were relative as an absolute rule | Current documentation distinguishes convention from restriction |
+| 19 | `main.py` | Catches OSError, ValueError, RuntimeError | Not every error becomes a message without a traceback | Document propagated classes; improve the error boundary if needed |
+| 20 | Runner | One instance per batch, memory not cleared, continues after per-case errors | A trap may leave partial state; no isolation or timeout | Test failure followed by inference and define a reinitialization policy |
+| 21 | WAT ranking | get_top_class/get_top5 read INT8 | Outputs of both current TFLite files are UINT8 | Keep ranking in the adapter; generalize exports if used externally |
+| 22 | Duplicate WAT helpers | `_2`, `_3`, and exported variants differ | Unsuffixed exported function does not perform the same left shift as `_3` | Consolidate or document each helper's numerical ABI |
+| 23 | Runtime and host | Required name `run_mobilenetv2`, NHWC RGB images, and 8-bit I/O | Part of the infrastructure remains specific to this domain | Separate the execution contract when supporting audio/other formats |
+| 24 | ImageNet INT8 | Normalizes pixel/127.5−1 before quantization | Not configurable preprocessing for any network | Make normalization explicit in future configuration |
+| 25 | Shared/local template | Both active files have the same contents | No synchronization link; they may diverge | Version and test each selected template |
+| 26 | Drowsiness package | Template is outside its folder | Not self-contained for standalone distribution | Include the shared template or use a local copy when distributing |
+| 27 | Previous `README.md` | Referenced `test/incompatible/a0397.raw` | Path does not exist in the current state; intended destination cannot be determined | Operational reference removed; no data file was created to support it |
+| 28 | `img_mobilenetv2/aviao_uint8.raw` | A copy exists outside the package | Manifest only reads the file in models/.../test/img | Document the copy as unused by current execution |
+| 29 | Old documentation | Contains hundreds of examples about the previous extractor and architecture | Orchestrator main.py, global paths, and mandatory synthetic layer became obsolete | Bodies preserved in historico; current chapters 00–33 are the reference |
+| 30 | `inference/wasm_inference.py` | Repeated constant imports; descriptive string in the middle of the file | That string is not a module docstring | Editorial cleanup in a separate task, with no required functional effect here |
+| 31 | Artifacts/reports | Incremental writes and direct overwriting | Interrupted execution may mix versions; no timestamps/checksums | Check exit codes; consider metadata and atomic writes |
+| 32 | `wat_generator.py` | Output comes from the last LayerParam; regex checks remaining tokens | Does not guarantee final tensor identity or presence of every placeholder | Validate identity and template interface |
+| 33 | `memory.py` | Bitmask alignment; sizing with defaults for negative values | No complete checks for powers of two/overlap/dynamic shapes | Validate layout invariants |
+| 34 | `setup_env.ps1` | Reuses an existing .venv and calls python/pip | Does not validate whether the venv interpreter still exists; the old local environment is broken | Create a valid environment explicitly; do not treat printed success as an execution test |
+| 35 | Current tests | Seven focused tests | No full TFLite/WASM equivalence or coverage of every kernel | Add differential references per operator/tensor |
+| 36 | Flag history | Old text “flags 0 uint8, 1 int8” was incomplete | Current code already describes input and output bits; old reports may retain the previous text | Regenerate reports in a functional run when needed; this task does not change them |
 
-## Limites que o código rejeita explicitamente
+## Limits explicitly rejected by the code
 
-O manifest aceita somente `layerparam-v1`, três slots e os três pares formato/camada documentados. O pipeline exige uma entrada/saída, dtype de I/O UINT8 ou INT8, shape de entrada rank 4, batch 1, canais 3, e entrada UINT8 para sintética RGB565. O runner exige tamanho exato do RAW e acesso dentro da memória. Adapters rejeitam pastas sem casos; ImageNet rejeita labels estruturalmente inválidos e binário exige duas classes.
+The manifest accepts only `layerparam-v1`, three slots, and the three documented format/layer pairs. The pipeline requires one input/output, UINT8 or INT8 I/O dtype, rank-4 input shape, batch 1, three channels, and UINT8 input for the RGB565 synthetic layer. The runner requires exact RAW size and accesses within memory bounds. Adapters reject folders without cases; ImageNet rejects structurally invalid labels, and the binary adapter requires two classes.
 
-## Informações que não podem ser determinadas aqui
+## Information that cannot be determined here
 
-Não estão documentadas de forma recuperável no fluxo atual a procedência completa de treinamento, origem/licenças de todos os RAWs, divisão treino/teste, cadeia de conversão dos modelos, configuração original do Colab, calibração de probabilidades ou desempenho em hardware ESP32. Os nomes dos arquivos e comentários não bastam como evidência. O objetivo indicado pelos manifests pode ser descrito, mas não esses detalhes ausentes.
+The current workflow does not provide recoverable documentation of the full training provenance, origin/licenses of all RAW files, train/test split, model conversion chain, original Colab configuration, probability calibration, or ESP32 hardware performance. Filenames and comments are insufficient evidence. The purpose indicated by the manifests can be described, but those missing details cannot.
 
-## Possíveis evoluções
+## Possible improvements
 
-A prioridade técnica sugerida é validação de cobertura de operadores e comparação numérica por camada, seguida da remoção de constantes de softmax e de validação rigorosa de opções/dtypes. Depois podem ser generalizados formatos, número de entradas/saídas e contratos. Essas são propostas documentadas; a tarefa não as implementou nem alterou resultados existentes.
+The suggested technical priority is operator coverage validation and numerical comparison per layer, followed by removing softmax constants and strictly validating options/dtypes. Formats, input/output counts, and contracts can then be generalized. These are documented proposals; the task did not implement them or alter existing results.
+

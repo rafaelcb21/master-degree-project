@@ -1,12 +1,14 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](04-grafo.md) | [Português (Brasil)](04-grafo.pt-BR.md)
 
-# 04 — Construção do grafo de operadores (`graph.py`)
+> **Preserved historical document.** This text describes an earlier architecture and retains useful technical examples. Paths, orchestration in main.py, the mandatory synthetic layer and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original technical examples are preserved.
 
-## 1. Objetivo do módulo
+# 04 — Building the operator graph (`graph.py`)
 
-O arquivo `extractor/graph.py` transforma o conjunto de operadores e tensors do `SubGraph` TFLite em uma representação explícita das dependências entre operações.
+## 1. Module purpose
 
-O código atual é:
+The extractor/graph.py file transforms TFLite SubGraph operators and tensors into an explicit representation of dependencies between operations.
+
+The code described here is:
 
 ```python
 from collections import defaultdict, deque
@@ -395,27 +397,27 @@ def build_graph(
 
 ---
 
-# 2. Papel arquitetural
+# 2. Architectural role
 
-O TFLite fornece operadores e tensors, mas o restante do extrator precisa responder perguntas como:
+TFLite provides operators and tensors, but the rest of the extractor needs to answer questions such as:
 
 ```text
-qual camada produz o dado usado por esta camada?
+which layer produces the data this layer uses?
 
-quais camadas dependem da saída desta camada?
+which layers depend on this layer's output?
 
-uma saída ainda será utilizada no futuro?
+will an output still be needed later?
 
-quando um slot pode ser reutilizado?
+when can a slot be reused?
 
-quais são as duas entradas de um ADD?
+what are the two inputs of an ADD?
 
-qual é a ordem válida de execução?
+what is a valid execution order?
 ```
 
-O objetivo de `graph.py` é construir as estruturas necessárias para responder essas perguntas.
+graph.py builds the structures needed to answer these questions.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 TFLite SubGraph
@@ -428,50 +430,50 @@ TFLite SubGraph
              │
              ├── producers
              ├── consumers
-             ├── dependências
-             ├── ordem topológica
+             ├── dependencies
+             ├── topological order
              └── layers
                      │
                      ▼
-              módulos posteriores
+              subsequent modules
 ```
 
 ---
 
-# 3. O grafo não é construído diretamente entre tensors
+# 3. The graph is not built directly between tensors
 
-Uma característica importante é que a representação final utilizada pelo extrator é principalmente um **grafo entre operadores**.
+The final representation used by the extractor is primarily an **operator graph**.
 
-No TFLite, a relação original ocorre por intermédio dos tensors:
+In TFLite, the original relationship passes through tensors:
 
 ```text
-Operador A
+Operator A
     │
-    │ produz
+    │ produces
     ▼
 Tensor 10
     │
-    │ consumido por
+    │ consumed by
     ▼
-Operador B
+Operator B
 ```
 
-O módulo converte essa estrutura para:
+The module converts that structure into:
 
 ```text
-Operador A
+Operator A
     │
     ▼
-Operador B
+Operator B
 ```
 
-Assim, os tensors funcionam como meio para descobrir as dependências entre operações.
+Tensors therefore provide the information needed to discover operation dependencies.
 
 ---
 
-# 4. Exemplo simples
+# 4. Simple example
 
-Imagine três operações:
+Consider three operations:
 
 ```text
 Op 0: CONV_2D
@@ -483,7 +485,7 @@ Op 1: DEPTHWISE_CONV_2D
 Op 2: CONV_2D
 ```
 
-O TFLite descreve:
+TFLite describes:
 
 ```text
 Op0 output = tensor 4
@@ -493,7 +495,7 @@ Op1 output = tensor 7
 Op2 input  = tensor 7
 ```
 
-O grafo lógico torna-se:
+The logical graph becomes:
 
 ```text
 Op0
@@ -503,7 +505,7 @@ Op1
 Op2
 ```
 
-Posteriormente:
+Later:
 
 ```text
 L0
@@ -515,49 +517,49 @@ L2
 
 ---
 
-# 5. Importações
+# 5. Imports
 
-O módulo começa com:
+The module starts with:
 
 ```python
 from collections import defaultdict, deque
 ```
 
-e:
+and:
 
 ```python
 from extractor.tflite_utils import op_name
 ```
 
-Cada uma possui uma função distinta.
+Each has a different role.
 
 ---
 
-# 6. `defaultdict`
+# 6. defaultdict
 
-`defaultdict` é utilizado para construir coleções nas quais uma chave inexistente recebe automaticamente um valor inicial.
+defaultdict builds collections where missing keys automatically receive an initial value.
 
-Exemplo:
+Example:
 
 ```python
 consumers_by_tensor = defaultdict(list)
 ```
 
-Assim:
+Thus:
 
 ```python
 consumers_by_tensor[10].append(3)
 ```
 
-funciona mesmo que:
+works even when:
 
 ```text
 tensor 10
 ```
 
-ainda não tenha aparecido no dicionário.
+has not yet appeared in the dictionary.
 
-O valor inicial será:
+The initial value is:
 
 ```python
 []
@@ -565,37 +567,37 @@ O valor inicial será:
 
 ---
 
-# 7. Uso de `defaultdict(set)`
+# 7. Using defaultdict(set)
 
-Mais tarde:
+Later:
 
 ```python
 forward = defaultdict(set)
 ```
 
-e:
+and:
 
 ```python
 backward = defaultdict(set)
 ```
 
-utilizam conjuntos.
+use sets.
 
-Isso é importante porque a mesma relação entre dois operadores não precisa aparecer mais de uma vez.
+The same relationship between two operators only needs to appear once.
 
-Por exemplo:
+For example:
 
 ```python
 forward[3].add(5)
 ```
 
-executado duas vezes ainda resulta em:
+executed twice still gives:
 
 ```python
 {5}
 ```
 
-e não:
+rather than:
 
 ```python
 [5, 5]
@@ -603,48 +605,48 @@ e não:
 
 ---
 
-# 8. `deque`
+# 8. deque
 
-A estrutura:
+The structure:
 
 ```python
 deque
 ```
 
-é usada em:
+is used in:
 
 ```python
 topo_order()
 ```
 
-para manter a fila de operadores que já não possuem dependências pendentes.
+to hold the queue of operators with no remaining dependencies.
 
-As operações:
+The operations:
 
 ```python
 queue.append(...)
 queue.popleft()
 ```
 
-são apropriadas para implementar uma fila FIFO.
+are suitable for implementing a FIFO queue.
 
 ---
 
-# 9. `op_name()`
+# 9. op_name()
 
-A função:
+The function:
 
 ```python
 op_name(model, op)
 ```
 
-vem de:
+comes from:
 
 ```text
 tflite_utils.py
 ```
 
-e converte o código interno TFLite em um nome como:
+and converts TFLite's internal code into a name such as:
 
 ```text
 CONV_2D
@@ -655,13 +657,13 @@ SOFTMAX
 QUANTIZE
 ```
 
-Assim, `graph.py` trabalha com nomes legíveis.
+This lets graph.py use readable names.
 
 ---
 
-# 10. Primeira fase: `build_graph_for_subgraph()`
+# 10. First phase: build_graph_for_subgraph()
 
-A primeira função é:
+The first function is:
 
 ```python
 def build_graph_for_subgraph(
@@ -670,9 +672,9 @@ def build_graph_for_subgraph(
 ):
 ```
 
-Ela realiza uma varredura completa nos operadores do subgrafo.
+It scans every operator in the subgraph.
 
-Seu objetivo é descobrir três estruturas:
+Its purpose is to discover three structures:
 
 ```text
 op_types
@@ -684,27 +686,27 @@ consumers_by_tensor
 
 ---
 
-# 11. Quantidade de operadores
+# 11. Operator count
 
-A primeira linha é:
+The first line is:
 
 ```python
 n_ops = subgraph.OperatorsLength()
 ```
 
-Se o modelo possuir, por exemplo:
+For a model containing, for example:
 
 ```text
-67 operadores TFLite
+67 TFLite operators
 ```
 
-teremos:
+we get:
 
 ```python
 n_ops = 67
 ```
 
-Os índices serão:
+The indices are:
 
 ```text
 0
@@ -716,9 +718,9 @@ Os índices serão:
 
 ---
 
-# 12. Estruturas iniciais
+# 12. Initial structures
 
-São criadas:
+The following are created:
 
 ```python
 producer_by_tensor = {}
@@ -732,21 +734,21 @@ consumers_by_tensor = defaultdict(list)
 op_types = []
 ```
 
-Cada uma responde a uma pergunta diferente.
+Each answers a different question.
 
 ---
 
-# 13. `op_types`
+# 13. op_types
 
-Essa lista relaciona:
+This list maps:
 
 ```text
-índice do operador
+operator index
         ↓
-tipo do operador
+operator type
 ```
 
-Por exemplo:
+For example:
 
 ```python
 op_types = [
@@ -758,13 +760,13 @@ op_types = [
 ]
 ```
 
-Assim:
+Thus:
 
 ```python
 op_types[3]
 ```
 
-retorna:
+returns:
 
 ```text
 CONV_2D
@@ -772,9 +774,9 @@ CONV_2D
 
 ---
 
-# 14. Varredura dos operadores
+# 14. Scanning operators
 
-O loop principal é:
+The main loop is:
 
 ```python
 for op_idx in range(n_ops):
@@ -783,7 +785,7 @@ for op_idx in range(n_ops):
     )
 ```
 
-Para cada posição:
+For each position:
 
 ```text
 0
@@ -793,13 +795,13 @@ Para cada posição:
 n_ops - 1
 ```
 
-é recuperado o operador correspondente.
+the corresponding operator is retrieved.
 
 ---
 
-# 15. Identificação do tipo
+# 15. Identifying the type
 
-Depois:
+Then:
 
 ```python
 op_type = op_name(
@@ -808,7 +810,7 @@ op_type = op_name(
 )
 ```
 
-e:
+and:
 
 ```python
 op_types.append(
@@ -816,13 +818,13 @@ op_types.append(
 )
 ```
 
-Assim, a posição da lista coincide com o índice original da operação no TFLite.
+The list position therefore matches the operation's original TFLite index.
 
 ---
 
-# 16. Identificação dos produtores
+# 16. Identifying producers
 
-O código:
+The code:
 
 ```python
 for j in range(
@@ -830,9 +832,9 @@ for j in range(
 ):
 ```
 
-percorre todos os tensors produzidos pelo operador.
+visits every tensor produced by the operator.
 
-Cada saída é recuperada com:
+Each output is retrieved with:
 
 ```python
 tensor_id = int(
@@ -842,15 +844,15 @@ tensor_id = int(
 
 ---
 
-# 17. Estrutura `producer_by_tensor`
+# 17. producer_by_tensor
 
-Se:
+If:
 
 ```python
 tensor_id >= 0
 ```
 
-é armazenado:
+the following is stored:
 
 ```python
 producer_by_tensor[
@@ -858,7 +860,7 @@ producer_by_tensor[
 ] = op_idx
 ```
 
-Isso cria relações como:
+This creates relationships such as:
 
 ```text
 tensor 10 → op 3
@@ -866,7 +868,7 @@ tensor 11 → op 4
 tensor 15 → op 7
 ```
 
-Ou:
+Or:
 
 ```python
 {
@@ -876,39 +878,39 @@ Ou:
 }
 ```
 
-A interpretação é:
+The interpretation is:
 
 ```text
-o tensor 10 foi produzido pelo operador 3
+tensor 10 was produced by operator 3
 ```
 
 ---
 
-# 18. Por que um dicionário simples é suficiente?
+# 18. Why is a plain dictionary sufficient?
 
-A estrutura assume que um tensor possui um produtor.
+The structure assumes each tensor has one producer.
 
-Isso corresponde à natureza do fluxo de dados:
+This matches the nature of the data flow:
 
 ```text
-um tensor intermediário
+an intermediate tensor
         ↓
-é resultado de uma determinada operação
+is the result of a particular operation
 ```
 
-Por isso:
+Therefore:
 
 ```python
 tensor_id → op_idx
 ```
 
-é suficiente.
+is sufficient.
 
 ---
 
-# 19. Identificação dos consumidores
+# 19. Identifying consumers
 
-Depois são percorridas as entradas:
+The inputs are then traversed:
 
 ```python
 for j in range(
@@ -916,7 +918,7 @@ for j in range(
 ):
 ```
 
-Cada tensor é obtido por:
+Each tensor is retrieved with:
 
 ```python
 tensor_id = int(
@@ -924,7 +926,7 @@ tensor_id = int(
 )
 ```
 
-Se o ID for válido:
+For valid IDs:
 
 ```python
 consumers_by_tensor[
@@ -936,11 +938,11 @@ consumers_by_tensor[
 
 ---
 
-# 20. Por que consumidores são uma lista?
+# 20. Why are consumers a list?
 
-Uma mesma saída pode ser consumida por mais de uma operação.
+The same output can be consumed by several operations.
 
-Exemplo:
+Example:
 
 ```text
                ┌──→ Op B
@@ -948,35 +950,35 @@ Op A → tensor X
                └──→ Op C
 ```
 
-Então:
+Then:
 
 ```python
 consumers_by_tensor[X]
 ```
 
-pode ser:
+can be:
 
 ```python
 [B, C]
 ```
 
-Por isso não é utilizado:
+This is why the code does not use:
 
 ```python
-tensor → único consumidor
+tensor → single consumer
 ```
 
-mas:
+but:
 
 ```python
-tensor → lista de consumidores
+tensor → list of consumers
 ```
 
 ---
 
-# 21. Exemplo de producer/consumer
+# 21. Producer/consumer example
 
-Considere:
+Consider:
 
 ```text
 Op 0
@@ -987,7 +989,7 @@ Op 0
        └──→ Op 3
 ```
 
-As estruturas serão:
+The structures are:
 
 ```python
 producer_by_tensor = {
@@ -995,7 +997,7 @@ producer_by_tensor = {
 }
 ```
 
-e:
+and:
 
 ```python
 consumers_by_tensor = {
@@ -1005,31 +1007,31 @@ consumers_by_tensor = {
 
 ---
 
-# 22. IDs negativos
+# 22. Negative IDs
 
-O código verifica:
+The code checks:
 
 ```python
 if tensor_id >= 0:
 ```
 
-Tanto para inputs quanto outputs.
+for both inputs and outputs.
 
-Isso impede que identificadores negativos sejam tratados como índices reais de tensor.
+This prevents negative identifiers from being treated as real tensor indices.
 
-Portanto:
+Therefore:
 
 ```text
 tensor_id < 0
 ```
 
-é ignorado na construção das relações.
+is ignored when building relationships.
 
 ---
 
-# 23. Retorno da primeira fase
+# 23. First-phase return value
 
-A função retorna:
+The function returns:
 
 ```python
 return (
@@ -1039,7 +1041,7 @@ return (
 )
 ```
 
-Neste momento ainda não existe:
+At this point there is no:
 
 ```text
 L0
@@ -1047,26 +1049,26 @@ L1
 L2
 ```
 
-nem ordenação topológica.
+or topological ordering yet.
 
-Existe apenas um mapeamento estrutural do subgrafo original.
+There is only a structural mapping of the original subgraph.
 
 ---
 
-# 24. Primeira representação
+# 24. First representation
 
-Após `build_graph_for_subgraph()` temos conceitualmente:
+After build_graph_for_subgraph(), conceptually we have:
 
 ```text
                    tensor 5
                   /        \
                  /          \
-             produz       consome
+             produces       consumes
                /              \
             Op 0              Op 1
 ```
 
-Convertido para estruturas:
+Converted into structures:
 
 ```text
 producer_by_tensor[5] = 0
@@ -1076,9 +1078,9 @@ consumers_by_tensor[5] = [1]
 
 ---
 
-# 25. Segunda fase: `compute_useful_adjacency()`
+# 25. Second phase: compute_useful_adjacency()
 
-A função:
+The function:
 
 ```python
 def compute_useful_adjacency(
@@ -1089,46 +1091,46 @@ def compute_useful_adjacency(
 ):
 ```
 
-transforma as relações via tensors em relações diretas entre operadores.
+turns tensor-mediated relationships into direct operator relationships.
 
-Ela também suporta ignorar determinados tipos de operação sem quebrar o grafo lógico.
+It also supports ignoring selected operation types without breaking the logical graph.
 
 ---
 
-# 26. `ignored_types`
+# 26. ignored_types
 
-O parâmetro:
+The parameter:
 
 ```python
 ignored_types=None
 ```
 
-permite definir tipos de operador que não devem aparecer como nós finais do grafo útil.
+specifies operator types excluded from the final useful graph's nodes.
 
-Se nada for informado:
+When omitted:
 
 ```python
 if ignored_types is None:
     ignored_types = set()
 ```
 
-Portanto, por padrão:
+Thus, by default:
 
 ```text
-nenhuma operação é ignorada
+no operations are ignored
 ```
 
 ---
 
-# 27. Por que utilizar `set()`?
+# 27. Why use set()?
 
-Um conjunto é apropriado para testes como:
+A set is suitable for checks such as:
 
 ```python
 if op_type in ignored_types:
 ```
 
-Exemplo:
+Example:
 
 ```python
 ignored_types = {
@@ -1137,7 +1139,7 @@ ignored_types = {
 }
 ```
 
-A consulta é direta:
+The lookup is direct:
 
 ```text
 "RESHAPE" ∈ ignored_types?
@@ -1145,9 +1147,9 @@ A consulta é direta:
 
 ---
 
-# 28. Identificação dos operadores ignorados
+# 28. Identifying ignored operators
 
-O código:
+The code:
 
 ```python
 ignored = {
@@ -1158,19 +1160,19 @@ ignored = {
 }
 ```
 
-converte:
+converts:
 
 ```text
-tipos ignorados
+ignored types
 ```
 
-em:
+into:
 
 ```text
-índices concretos de operadores ignorados
+actual indices of ignored operators
 ```
 
-Exemplo:
+Example:
 
 ```python
 op_types = [
@@ -1180,7 +1182,7 @@ op_types = [
 ]
 ```
 
-e:
+and:
 
 ```python
 ignored_types = {
@@ -1188,7 +1190,7 @@ ignored_types = {
 }
 ```
 
-resultam em:
+give:
 
 ```python
 ignored = {
@@ -1198,9 +1200,9 @@ ignored = {
 
 ---
 
-# 29. Operadores úteis
+# 29. Useful operators
 
-Depois:
+Then:
 
 ```python
 useful = [
@@ -1210,15 +1212,15 @@ useful = [
 ]
 ```
 
-No exemplo:
+In this example:
 
 ```text
-op 0 = útil
-op 1 = ignorado
-op 2 = útil
+op 0 = useful
+op 1 = ignored
+op 2 = useful
 ```
 
-Então:
+Therefore:
 
 ```python
 useful = [
@@ -1229,21 +1231,21 @@ useful = [
 
 ---
 
-# 30. Importante: ignorar não significa simplesmente apagar
+# 30. Ignoring does not mean simply deleting
 
-Se fizéssemos apenas:
+If we took:
 
 ```text
 Op 0 → Op 1 → Op 2
 ```
 
-e removêssemos:
+and removed:
 
 ```text
 Op 1
 ```
 
-o resultado ingênuo seria:
+the naive result would be:
 
 ```text
 Op 0
@@ -1251,51 +1253,51 @@ Op 0
 Op 2
 ```
 
-sem relação.
+with no relationship.
 
-Mas a dependência lógica deveria continuar:
+However, the logical dependency should remain:
 
 ```text
 Op 0 → Op 2
 ```
 
-A função resolve exatamente esse problema.
+The function solves precisely this problem.
 
 ---
 
-# 31. Construção de `forward`
+# 31. Building forward
 
-A estrutura:
+The structure:
 
 ```python
 forward = defaultdict(set)
 ```
 
-representa:
+represents:
 
 ```text
-operador
+operator
     ↓
-operadores seguintes diretamente conectados
+directly connected next operators
 ```
 
 ---
 
-# 32. Percorrendo outputs
+# 32. Traversing outputs
 
-Para cada operador:
+For each operator:
 
 ```python
 for op_idx in range(n_ops):
 ```
 
-é percorrido:
+the code traverses:
 
 ```python
 op.OutputsLength()
 ```
 
-Cada output fornece:
+Each output provides:
 
 ```python
 tensor_id
@@ -1303,9 +1305,9 @@ tensor_id
 
 ---
 
-# 33. Encontrando consumidores
+# 33. Finding consumers
 
-Para cada tensor produzido:
+For each produced tensor:
 
 ```python
 for consumer in (
@@ -1316,19 +1318,19 @@ for consumer in (
 ):
 ```
 
-são encontrados todos os operadores que o utilizam.
+all operators consuming it are found.
 
 ---
 
-# 34. Criando a aresta
+# 34. Creating an edge
 
-Se:
+If:
 
 ```python
 consumer != op_idx
 ```
 
-é adicionada:
+the code adds:
 
 ```python
 forward[
@@ -1338,7 +1340,7 @@ forward[
 )
 ```
 
-Ou seja:
+In other words:
 
 ```text
 op_idx → consumer
@@ -1346,16 +1348,16 @@ op_idx → consumer
 
 ---
 
-# 35. Exemplo de `forward`
+# 35. forward example
 
-Suponha:
+Suppose:
 
 ```text
-Op 2 produz tensor 11
-Op 4 consome tensor 11
+Op 2 produces tensor 11
+Op 4 consumes tensor 11
 ```
 
-Teremos:
+We get:
 
 ```python
 forward[2] = {
@@ -1363,7 +1365,7 @@ forward[2] = {
 }
 ```
 
-Se Op 2 alimentar dois operadores:
+If Op2 feeds two operators:
 
 ```text
        ┌──→ Op 4
@@ -1371,7 +1373,7 @@ Op 2 ──┤
        └──→ Op 7
 ```
 
-teremos:
+we get:
 
 ```python
 forward[2] = {
@@ -1382,33 +1384,33 @@ forward[2] = {
 
 ---
 
-# 36. Por que `set`?
+# 36. Why a set?
 
-Imagine que dois tensors diferentes criem relação entre os mesmos operadores.
+Two different tensors may create a relationship between the same operators.
 
-Mesmo assim, para a topologia basta saber:
+For topology, it is enough to record:
 
 ```text
-Op A depende de Op B
+Op A depends on Op B
 ```
 
-uma única vez.
+once.
 
-O `set` elimina duplicação.
+The set removes duplication.
 
 ---
 
-# 37. Estrutura `backward`
+# 37. backward structure
 
-Depois:
+Next:
 
 ```python
 backward = defaultdict(set)
 ```
 
-é construída invertendo todas as arestas.
+is built by reversing all edges.
 
-O código é:
+The code is:
 
 ```python
 for source, destinations in (
@@ -1424,15 +1426,15 @@ for source, destinations in (
 
 ---
 
-# 38. `forward` versus `backward`
+# 38. forward versus backward
 
-Se:
+If:
 
 ```text
 Op 3 → Op 8
 ```
 
-temos:
+we have:
 
 ```python
 forward[3] = {
@@ -1440,7 +1442,7 @@ forward[3] = {
 }
 ```
 
-e:
+and:
 
 ```python
 backward[8] = {
@@ -1448,32 +1450,32 @@ backward[8] = {
 }
 ```
 
-Portanto:
+Therefore:
 
 ```text
 forward
-   pergunta:
-   "quem vem depois?"
+   asks:
+   "who comes next?"
 
 backward
-   pergunta:
-   "quem vem antes?"
+   asks:
+   "who comes before?"
 ```
 
 ---
 
-# 39. Por que precisamos das duas direções?
+# 39. Why both directions?
 
-Posteriormente queremos montar:
+Later we want to build:
 
 ```text
 above
 below
 ```
 
-para cada camada.
+for each layer.
 
-Por exemplo:
+For example:
 
 ```text
        L3
@@ -1483,32 +1485,32 @@ Por exemplo:
        L8
 ```
 
-Para L5:
+For L5:
 
 ```text
 above = [L3]
 below = [L8]
 ```
 
-Uma única direção não seria tão conveniente.
+A single direction would be less convenient.
 
 ---
 
-# 40. `next_useful_from()`
+# 40. next_useful_from()
 
-Essa função interna é:
+This inner function is:
 
 ```python
 def next_useful_from(op_idx):
 ```
 
-Ela procura os próximos operadores **úteis**, atravessando automaticamente operadores ignorados.
+It finds the next **useful** operators, automatically traversing ignored operators.
 
 ---
 
-# 41. Estruturas internas da busca
+# 41. Internal search structures
 
-São criadas:
+The following are created:
 
 ```python
 result = set()
@@ -1524,39 +1526,39 @@ stack = [
 seen = set()
 ```
 
-Cada uma possui uma função.
+Each has a role.
 
 ### `result`
 
-Armazena os próximos operadores úteis encontrados.
+Stores the next useful operators found.
 
 ### `stack`
 
-Controla os nós ainda a visitar.
+Tracks nodes still to visit.
 
 ### `seen`
 
-Evita visitar repetidamente o mesmo operador.
+Prevents repeatedly visiting the same operator.
 
 ---
 
-# 42. Estratégia de busca
+# 42. Search strategy
 
-O código usa:
+The code uses:
 
 ```python
 current = stack.pop()
 ```
 
-Portanto a estrutura funciona como uma pilha.
+The structure therefore behaves as a stack.
 
-Conceitualmente, trata-se de uma travessia em profundidade.
+Conceptually, this is depth-first traversal.
 
 ---
 
-# 43. Próximos operadores
+# 43. Next operators
 
-Para cada operador atual:
+For each current operator:
 
 ```python
 for next_op in forward.get(
@@ -1565,22 +1567,22 @@ for next_op in forward.get(
 ):
 ```
 
-são analisadas suas saídas lógicas.
+its logical outputs are examined.
 
 ---
 
-# 44. Evitando revisitas
+# 44. Avoiding repeated visits
 
-O código:
+The code:
 
 ```python
 if next_op in seen:
     continue
 ```
 
-impede processar novamente um nó já encontrado.
+prevents reprocessing a previously encountered node.
 
-Depois:
+Then:
 
 ```python
 seen.add(
@@ -1588,13 +1590,13 @@ seen.add(
 )
 ```
 
-registra a visita.
+records the visit.
 
 ---
 
-# 45. Operador ignorado
+# 45. Ignored operator
 
-O ponto principal é:
+The key point is:
 
 ```python
 if next_op in ignored:
@@ -1603,21 +1605,21 @@ if next_op in ignored:
     )
 ```
 
-Ou seja:
+In other words:
 
 ```text
-encontrei um operador ignorado
+found an ignored operator
             ↓
-não adiciono ao resultado
+do not add it to the result
             ↓
-continuo procurando depois dele
+continue searching beyond it
 ```
 
 ---
 
-# 46. Operador útil
+# 46. Useful operator
 
-Caso contrário:
+Otherwise:
 
 ```python
 else:
@@ -1626,77 +1628,77 @@ else:
     )
 ```
 
-A busca para naquele caminho assim que encontra o próximo operador útil.
+Search stops along that path as soon as the next useful operator is found.
 
 ---
 
-# 47. Exemplo sem ignorados
+# 47. Example without ignored operators
 
 ```text
 Op0 → Op1 → Op2
 ```
 
-Se todos forem úteis:
+If all are useful:
 
 ```python
 next_useful_from(0)
 ```
 
-retorna:
+returns:
 
 ```python
 {1}
 ```
 
-Não retorna:
+It does not return:
 
 ```python
 {1, 2}
 ```
 
-porque Op1 já é o próximo nó útil.
+because Op1 is already the next useful node.
 
 ---
 
-# 48. Exemplo com operador ignorado
+# 48. Example with an ignored operator
 
-Considere:
+Consider:
 
 ```text
 Op0 → Op1 → Op2
 ```
 
-onde:
+where:
 
 ```text
-Op1 = ignorado
+Op1 = ignored
 ```
 
-Então:
+Then:
 
 ```python
 next_useful_from(0)
 ```
 
-faz:
+performs:
 
 ```text
 Op0
  ↓
-Op1 ignorado
+Op1 ignored
  ↓
-continua busca
+continue search
  ↓
-Op2 útil
+Op2 useful
 ```
 
-resultado:
+Result:
 
 ```python
 {2}
 ```
 
-Portanto a relação útil torna-se:
+The useful relationship becomes:
 
 ```text
 Op0 → Op2
@@ -1704,23 +1706,23 @@ Op0 → Op2
 
 ---
 
-# 49. Cadeia de vários ignorados
+# 49. A chain of ignored operators
 
-Também funciona com:
+This also works with:
 
 ```text
 Op0
  ↓
-Op1 ignorado
+Op1 ignored
  ↓
-Op2 ignorado
+Op2 ignored
  ↓
-Op3 ignorado
+Op3 ignored
  ↓
-Op4 útil
+Op4 useful
 ```
 
-Resultado:
+Result:
 
 ```text
 Op0 → Op4
@@ -1728,17 +1730,17 @@ Op0 → Op4
 
 ---
 
-# 50. Ramificações
+# 50. Branches
 
-Considere:
+Consider:
 
 ```text
-            ┌→ Op2 ignorado → Op4
+            ┌→ Op2 ignored → Op4
 Op0 → Op1 ──┤
-            └→ Op3 ignorado → Op5
+            └→ Op3 ignored → Op5
 ```
 
-A função pode retornar:
+The function can return:
 
 ```python
 {
@@ -1747,27 +1749,27 @@ A função pode retornar:
 }
 ```
 
-permitindo preservar bifurcações.
+preserving branches.
 
 ---
 
-# 51. `prev_useful_to()`
+# 51. prev_useful_to()
 
-A segunda função interna:
+The second inner function:
 
 ```python
 def prev_useful_to(op_idx):
 ```
 
-faz a mesma operação na direção oposta.
+performs the same operation in the opposite direction.
 
-Ela utiliza:
+It uses:
 
 ```python
 backward
 ```
 
-em vez de:
+instead of:
 
 ```python
 forward
@@ -1775,35 +1777,35 @@ forward
 
 ---
 
-# 52. Objetivo
+# 52. Purpose
 
-A pergunta respondida é:
+The question answered is:
 
 ```text
-quais são os operadores úteis imediatamente anteriores?
+which useful operators immediately precede this one?
 ```
 
-atravessando operadores ignorados.
+while traversing ignored operators.
 
 ---
 
-# 53. Exemplo
+# 53. Example
 
 ```text
-Op0 útil
+Op0 useful
  ↓
-Op1 ignorado
+Op1 ignored
  ↓
-Op2 útil
+Op2 useful
 ```
 
-Então:
+Then:
 
 ```python
 prev_useful_to(2)
 ```
 
-retorna:
+returns:
 
 ```python
 {0}
@@ -1811,9 +1813,9 @@ retorna:
 
 ---
 
-# 54. Relações úteis finais
+# 54. Final useful relationships
 
-Depois são construídos:
+The following are then built:
 
 ```python
 useful_inputs = {
@@ -1824,7 +1826,7 @@ useful_inputs = {
 }
 ```
 
-e:
+and:
 
 ```python
 useful_outputs = {
@@ -1837,15 +1839,15 @@ useful_outputs = {
 
 ---
 
-# 55. Significado de `useful_inputs`
+# 55. Meaning of useful_inputs
 
-Para uma operação:
+For an operation:
 
 ```text
 Op 10
 ```
 
-poderíamos ter:
+we could have:
 
 ```python
 useful_inputs[10] = {
@@ -1854,7 +1856,7 @@ useful_inputs[10] = {
 }
 ```
 
-Isso significa:
+This means:
 
 ```text
 Op6 ─┐
@@ -1862,13 +1864,13 @@ Op6 ─┐
 Op9 ─┘
 ```
 
-Esse tipo de situação ocorre, por exemplo, em operações com múltiplas entradas como `ADD`.
+This occurs, for example, in operations with multiple inputs such as ADD.
 
 ---
 
-# 56. Significado de `useful_outputs`
+# 56. Meaning of useful_outputs
 
-Poderíamos ter:
+We could have:
 
 ```python
 useful_outputs[10] = {
@@ -1877,7 +1879,7 @@ useful_outputs[10] = {
 }
 ```
 
-Representando:
+Representing:
 
 ```text
           ┌→ Op11
@@ -1887,9 +1889,9 @@ Op10 ─────┤
 
 ---
 
-# 57. Retorno da segunda fase
+# 57. Second-phase return value
 
-A função retorna:
+The function returns:
 
 ```python
 return (
@@ -1899,13 +1901,13 @@ return (
 )
 ```
 
-Neste ponto o grafo já está representado diretamente entre operadores úteis.
+The graph now directly represents relationships between useful operators.
 
 ---
 
-# 58. Antes e depois da normalização
+# 58. Before and after normalization
 
-Antes:
+Before:
 
 ```text
 Op A
@@ -1919,7 +1921,7 @@ Tensor Y
 Op C
 ```
 
-Depois:
+After:
 
 ```text
 Op A
@@ -1929,23 +1931,23 @@ Op B
 Op C
 ```
 
-Com ignorados:
+With ignored operators:
 
 ```text
-ANTES
+BEFORE
 
 Op A
  ↓
 Tensor X
  ↓
-Op B ignorado
+Op B ignored
  ↓
 Tensor Y
  ↓
 Op C
 
 
-DEPOIS
+AFTER
 
 Op A
  ↓
@@ -1954,9 +1956,9 @@ Op C
 
 ---
 
-# 59. Terceira fase: ordenação topológica
+# 59. Third phase: topological ordering
 
-A função:
+The function:
 
 ```python
 def topo_order(
@@ -1966,21 +1968,21 @@ def topo_order(
 ):
 ```
 
-calcula uma ordem válida para processar o grafo.
+computes a valid graph-processing order.
 
 ---
 
-# 60. O que é uma ordenação topológica?
+# 60. What is topological ordering?
 
-Em um grafo acíclico direcionado, uma ordenação topológica garante:
+In a directed acyclic graph, topological ordering guarantees:
 
 ```text
-se A precisa executar antes de B
+if A must execute before B
 
-A aparece antes de B
+A appears before B
 ```
 
-Exemplo:
+Example:
 
 ```text
 L0
@@ -1990,23 +1992,23 @@ L1
 L2
 ```
 
-ordem válida:
+Valid order:
 
 ```text
 L0, L1, L2
 ```
 
-ordem inválida:
+Invalid order:
 
 ```text
 L2, L0, L1
 ```
 
-porque L2 depende de dados anteriores.
+because L2 depends on earlier data.
 
 ---
 
-# 61. Exemplo com ramificação
+# 61. Branching example
 
 ```text
        L0
@@ -2018,7 +2020,7 @@ porque L2 depende de dados anteriores.
        L3
 ```
 
-Uma ordem possível é:
+One possible order is:
 
 ```text
 L0
@@ -2027,7 +2029,7 @@ L2
 L3
 ```
 
-Outra também poderia ser:
+Another is:
 
 ```text
 L0
@@ -2036,13 +2038,13 @@ L1
 L3
 ```
 
-porque L1 e L2 são independentes entre si.
+because L1 and L2 are independent of each other.
 
 ---
 
-# 62. `indegree`
+# 62. indegree
 
-O algoritmo começa calculando:
+The algorithm starts by computing:
 
 ```python
 indegree = {
@@ -2053,17 +2055,17 @@ indegree = {
 }
 ```
 
-O indegree representa:
+Indegree represents:
 
 ```text
-quantos predecessores ainda precisam ser processados
+number of predecessors still awaiting processing
 ```
 
 ---
 
-# 63. Exemplo de indegree
+# 63. Indegree example
 
-No grafo:
+For the graph:
 
 ```text
        A
@@ -2075,7 +2077,7 @@ No grafo:
        D
 ```
 
-temos:
+we have:
 
 ```text
 A = 0
@@ -2086,9 +2088,9 @@ D = 2
 
 ---
 
-# 64. Fila inicial
+# 64. Initial queue
 
-O código:
+The code:
 
 ```python
 queue = deque(
@@ -2100,9 +2102,9 @@ queue = deque(
 )
 ```
 
-coloca inicialmente na fila apenas nós que não possuem predecessores.
+initially queues only nodes with no predecessors.
 
-No exemplo:
+In this example:
 
 ```text
 queue = [A]
@@ -2110,37 +2112,37 @@ queue = [A]
 
 ---
 
-# 65. Por que `sorted()`?
+# 65. Why sorted()?
 
-Pode haver mais de um nó sem dependências.
+Several nodes may have no dependencies.
 
-O uso de:
+Using:
 
 ```python
 sorted(...)
 ```
 
-produz um comportamento determinístico.
+makes behavior deterministic.
 
-Sem isso, a ordem poderia variar dependendo da ordem interna de conjuntos ou dicionários.
+Otherwise, ordering could vary with the internal order of sets or dictionaries.
 
 ---
 
-# 66. Processamento da fila
+# 66. Processing the queue
 
-O loop principal:
+The main loop:
 
 ```python
 while queue:
 ```
 
-remove:
+removes:
 
 ```python
 current = queue.popleft()
 ```
 
-e adiciona:
+and adds:
 
 ```python
 order.append(current)
@@ -2148,9 +2150,9 @@ order.append(current)
 
 ---
 
-# 67. Liberando dependências
+# 67. Releasing dependencies
 
-Para cada sucessor:
+For each successor:
 
 ```python
 for destination in sorted(
@@ -2158,7 +2160,7 @@ for destination in sorted(
 ):
 ```
 
-é decrementado:
+the following is decremented:
 
 ```python
 indegree[
@@ -2166,17 +2168,17 @@ indegree[
 ] -= 1
 ```
 
-Isso representa:
+This represents:
 
 ```text
-uma dependência deste nó já foi resolvida
+one dependency of this node has been resolved
 ```
 
 ---
 
-# 68. Quando um nó entra na fila?
+# 68. When does a node enter the queue?
 
-Quando:
+When:
 
 ```python
 indegree[
@@ -2184,9 +2186,9 @@ indegree[
 ] == 0
 ```
 
-ele pode ser executado.
+it can execute.
 
-Então:
+Then:
 
 ```python
 queue.append(
@@ -2196,9 +2198,9 @@ queue.append(
 
 ---
 
-# 69. Exemplo passo a passo
+# 69. Step-by-step example
 
-Considere:
+Consider:
 
 ```text
 A → B
@@ -2207,7 +2209,7 @@ B → D
 C → D
 ```
 
-Inicialmente:
+Initially:
 
 ```text
 A=0
@@ -2216,40 +2218,40 @@ C=1
 D=2
 ```
 
-Fila:
+Queue:
 
 ```text
 [A]
 ```
 
-Processa A:
+Process A:
 
 ```text
 B=0
 C=0
 ```
 
-Fila:
+Queue:
 
 ```text
 [B,C]
 ```
 
-Processa B:
+Process B:
 
 ```text
 D=1
 ```
 
-Processa C:
+Process C:
 
 ```text
 D=0
 ```
 
-D entra na fila.
+D enters the queue.
 
-Resultado:
+Result:
 
 ```text
 A,B,C,D
@@ -2257,19 +2259,19 @@ A,B,C,D
 
 ---
 
-# 70. Detecção de ciclos
+# 70. Cycle detection
 
-Depois do algoritmo:
+After the algorithm:
 
 ```python
 if len(order) != len(nodes):
 ```
 
-significa que algum nó nunca conseguiu chegar a indegree zero.
+means some node never reached indegree zero.
 
-Isso indica ciclo.
+This indicates a cycle.
 
-Exemplo:
+Example:
 
 ```text
 A → B
@@ -2277,13 +2279,13 @@ A → B
 └── C
 ```
 
-Nesse caso não existe uma ordem topológica válida.
+There is no valid topological ordering in this case.
 
 ---
 
-# 71. Exceção
+# 71. Exception
 
-O código lança:
+The code raises:
 
 ```python
 raise RuntimeError(
@@ -2292,17 +2294,17 @@ raise RuntimeError(
 )
 ```
 
-A intenção é falhar cedo.
+The intention is to fail early.
 
-O restante do extrator pressupõe um fluxo acíclico de operações.
+The remaining extractor assumes an acyclic flow of operations.
 
 ---
 
-# 72. Quarta fase: `build_layers()`
+# 72. Fourth phase: build_layers()
 
-Depois de descobrir as dependências e a ordem, o módulo cria uma representação mais conveniente para o restante do pipeline.
+After discovering dependencies and order, the module creates a more convenient representation for the rest of the pipeline.
 
-A função é:
+The function is:
 
 ```python
 def build_layers(
@@ -2316,15 +2318,15 @@ def build_layers(
 
 ---
 
-# 73. Objetivo de `build_layers()`
+# 73. Purpose of build_layers()
 
-Ela converte:
+It converts:
 
 ```text
-índices de operadores TFLite
+TFLite operator indices
 ```
 
-em estruturas como:
+into structures such as:
 
 ```python
 {
@@ -2338,43 +2340,43 @@ em estruturas como:
 
 ---
 
-# 74. Diferença entre `op_index` e `name`
+# 74. Difference between op_index and name
 
-Essa distinção é fundamental.
+This distinction is fundamental.
 
-`op_index` é o índice original do operador no arquivo TFLite.
+op_index is the original operator index in the TFLite file.
 
-Exemplo:
+Example:
 
 ```text
 op_index = 37
 ```
 
-Já:
+By contrast:
 
 ```text
 name = "L34"
 ```
 
-é um identificador criado pelo extrator para a representação lógica.
+is an extractor-created identifier for the logical representation.
 
-Portanto:
+Therefore:
 
 ```text
 op_index
     ↓
-identidade original no TFLite
+original TFLite identity
 
 name
     ↓
-identidade usada pelo grafo do extrator
+identity used by the extractor graph
 ```
 
 ---
 
-# 75. Criação de `new_label`
+# 75. Creating new_label
 
-O código:
+The code:
 
 ```python
 new_label = {
@@ -2384,13 +2386,13 @@ new_label = {
 }
 ```
 
-cria o mapeamento:
+creates the mapping:
 
 ```text
-índice TFLite → label lógico
+TFLite index → logical label
 ```
 
-Exemplo:
+Example:
 
 ```python
 useful = [
@@ -2401,7 +2403,7 @@ useful = [
 ]
 ```
 
-Então:
+Then:
 
 ```python
 new_label = {
@@ -2414,9 +2416,9 @@ new_label = {
 
 ---
 
-# 76. Por que renumerar?
+# 76. Why renumber?
 
-Se determinadas operações forem ignoradas, os índices TFLite podem possuir lacunas:
+Ignoring some operations can leave gaps in TFLite indices:
 
 ```text
 0
@@ -2426,7 +2428,7 @@ Se determinadas operações forem ignoradas, os índices TFLite podem possuir la
 7
 ```
 
-A representação lógica pode ficar:
+The logical representation can become:
 
 ```text
 L0
@@ -2436,25 +2438,25 @@ L3
 L4
 ```
 
-Isso torna relatórios e estruturas posteriores mais compactos.
+This makes reports and subsequent structures more compact.
 
 ---
 
-# 77. Detalhe importante sobre a numeração
+# 77. An important numbering detail
 
-Os labels são criados com:
+Labels are created with:
 
 ```python
 enumerate(useful)
 ```
 
-e não com:
+rather than:
 
 ```python
 enumerate(order)
 ```
 
-Isso significa que os nomes:
+This means names:
 
 ```text
 L0
@@ -2463,61 +2465,61 @@ L2
 ...
 ```
 
-seguem a ordem dos índices úteis originais do TFLite.
+follow the order of original useful TFLite indices.
 
-Já:
+Meanwhile:
 
 ```python
 layers
 ```
 
-é construída percorrendo:
+is built by traversing:
 
 ```python
 order
 ```
 
-ou seja, em ordem topológica.
+in topological order.
 
-Na maioria dos modelos em que a ordem original dos operadores já acompanha o fluxo do grafo, esses dois ordenamentos coincidem.
+For most models whose original operator order already follows the graph, these orders coincide.
 
-Mas conceitualmente são coisas diferentes:
+Conceptually, however, they differ:
 
 ```text
 label
     ↓
-baseado na lista useful
+based on the useful list
 
-posição em layers
+position in layers
     ↓
-baseada em order
+based on order
 ```
 
-Essa diferença deve ser preservada na interpretação do código.
+Keep that distinction when interpreting the code.
 
 ---
 
-# 78. Construção de `layers`
+# 78. Building layers
 
-É criada:
+The code creates:
 
 ```python
 layers = []
 ```
 
-Depois:
+Then:
 
 ```python
 for old_idx in order:
 ```
 
-cada operação útil é processada na ordem topológica.
+each useful operation is processed in topological order.
 
 ---
 
-# 79. Construção de `above`
+# 79. Building above
 
-O código:
+The code:
 
 ```python
 above = sorted(
@@ -2532,13 +2534,13 @@ above = sorted(
 )
 ```
 
-converte predecessores de:
+converts predecessors from:
 
 ```text
-índice TFLite
+TFLite index
 ```
 
-para:
+to:
 
 ```text
 labels Lx
@@ -2546,9 +2548,9 @@ labels Lx
 
 ---
 
-# 80. Exemplo de `above`
+# 80. above example
 
-Suponha:
+Suppose:
 
 ```python
 useful_inputs[10] = {
@@ -2557,7 +2559,7 @@ useful_inputs[10] = {
 }
 ```
 
-e:
+and:
 
 ```python
 new_label = {
@@ -2567,7 +2569,7 @@ new_label = {
 }
 ```
 
-Então:
+Then:
 
 ```python
 above = [
@@ -2578,9 +2580,9 @@ above = [
 
 ---
 
-# 81. Por que ordenar por número?
+# 81. Why sort numerically?
 
-Uma ordenação textual comum poderia produzir:
+Ordinary text sorting could produce:
 
 ```text
 L1
@@ -2589,52 +2591,52 @@ L11
 L2
 ```
 
-porque strings são comparadas caractere a caractere.
+because strings are compared character by character.
 
-Por isso o código utiliza:
+The code therefore uses:
 
 ```python
 key=lambda label:
     int(label[1:])
 ```
 
-Para:
+For:
 
 ```text
 L10
 ```
 
-temos:
+we have:
 
 ```python
 label[1:]
 ```
 
-igual a:
+equal to:
 
 ```text
 "10"
 ```
 
-e:
+and:
 
 ```python
 int("10")
 ```
 
-igual a:
+equal to:
 
 ```text
 10
 ```
 
-Assim a ordem torna-se numérica.
+The ordering is therefore numeric.
 
 ---
 
-# 82. Construção de `below`
+# 82. Building below
 
-O mesmo processo é aplicado aos consumidores:
+The same process applies to consumers:
 
 ```python
 below = sorted(
@@ -2649,7 +2651,7 @@ below = sorted(
 )
 ```
 
-Exemplo:
+Example:
 
 ```text
 L10
@@ -2657,7 +2659,7 @@ L10
  └→ L15
 ```
 
-gera:
+produces:
 
 ```python
 below = [
@@ -2668,9 +2670,9 @@ below = [
 
 ---
 
-# 83. Estrutura de uma layer
+# 83. Layer structure
 
-Depois:
+Then:
 
 ```python
 layers.append(
@@ -2688,37 +2690,37 @@ layers.append(
 )
 ```
 
-Cada entrada possui cinco propriedades.
+Each entry has five properties.
 
 ---
 
-# 84. Campo `type`
+# 84. type field
 
-Exemplo:
+Example:
 
 ```python
 "type": "CONV_2D"
 ```
 
-Indica o tipo TFLite da operação.
+Identifies the TFLite operation type.
 
 ---
 
-# 85. Campo `name`
+# 85. name field
 
-Exemplo:
+Example:
 
 ```python
 "name": "L15"
 ```
 
-É o identificador lógico criado pelo extrator.
+The logical identifier created by the extractor.
 
 ---
 
-# 86. Campo `above`
+# 86. above field
 
-Exemplo:
+Example:
 
 ```python
 "above": [
@@ -2727,13 +2729,13 @@ Exemplo:
 ]
 ```
 
-Lista as camadas das quais esta operação depende diretamente.
+Lists the layers on which this operation directly depends.
 
 ---
 
-# 87. Campo `below`
+# 87. below field
 
-Exemplo:
+Example:
 
 ```python
 "below": [
@@ -2741,21 +2743,21 @@ Exemplo:
 ]
 ```
 
-Lista as operações que dependem diretamente da saída atual.
+Lists operations that directly depend on the current output.
 
 ---
 
-# 88. Campo `op_index`
+# 88. op_index field
 
-Exemplo:
+Example:
 
 ```python
 "op_index": 18
 ```
 
-Preserva o vínculo com o operador original do TFLite.
+Preserves the link to the original TFLite operator.
 
-Isso é essencial porque etapas posteriores precisam voltar ao:
+Later stages need to return to:
 
 ```python
 subgraph.Operators(
@@ -2763,13 +2765,13 @@ subgraph.Operators(
 )
 ```
 
-para extrair parâmetros reais.
+to extract actual parameters.
 
 ---
 
-# 89. Exemplo de residual block
+# 89. Residual block example
 
-Uma estrutura como:
+A structure such as:
 
 ```text
 L5 ───────────────┐
@@ -2783,7 +2785,7 @@ L8 ───────────────┤
                  L9 ADD
 ```
 
-pode gerar para `L9`:
+can produce the following for L9:
 
 ```python
 {
@@ -2800,13 +2802,13 @@ pode gerar para `L9`:
 }
 ```
 
-Essa informação será especialmente importante para a alocação de memória.
+This information is especially important for memory allocation.
 
 ---
 
-# 90. Retorno de `build_layers()`
+# 90. build_layers() return value
 
-A função retorna:
+The function returns:
 
 ```python
 return (
@@ -2815,13 +2817,13 @@ return (
 )
 ```
 
-São mantidas tanto a representação completa quanto a tabela de conversão de índices.
+Both the full representation and index conversion table are retained.
 
 ---
 
-# 91. Quinta fase: `graph_to_text()`
+# 91. Fifth phase: graph_to_text()
 
-A função:
+The function:
 
 ```python
 def graph_to_text(
@@ -2829,25 +2831,25 @@ def graph_to_text(
 ):
 ```
 
-não participa dos cálculos posteriores.
+does not participate in subsequent calculations.
 
-Ela existe para transformar a estrutura em texto legível para relatório.
+It turns the structure into readable report text.
 
-Essa separação é importante.
+This separation matters.
 
 ---
 
-# 92. Estrutura versus relatório
+# 92. Structure versus report
 
-O pipeline utiliza:
+The pipeline uses:
 
 ```python
 layers
 ```
 
-para cálculos.
+for calculations.
 
-Já:
+Meanwhile:
 
 ```python
 graph_to_text(
@@ -2855,39 +2857,39 @@ graph_to_text(
 )
 ```
 
-produz apenas uma visualização textual.
+only produces a textual view.
 
-Portanto:
+Therefore:
 
 ```text
 layers
     ↓
-fonte estruturada
+structured source
 
 data
     ↓
-representação humana
+human-readable representation
 ```
 
-O código não lê o relatório novamente para reconstruir o grafo.
+The code does not read the report again to reconstruct the graph.
 
 ---
 
-# 93. Cabeçalho
+# 93. Header
 
-O relatório começa com:
+The report starts with:
 
 ```text
 nome_da_camada; camada_atual; camada_acima; camada_de_baixo
 ```
 
-Apesar do nome histórico `nome_da_camada`, o primeiro campo corresponde atualmente a:
+Despite the historical name nome_da_camada, the first field currently corresponds to:
 
 ```python
 layer["type"]
 ```
 
-como:
+such as:
 
 ```text
 CONV_2D
@@ -2897,9 +2899,9 @@ SOFTMAX
 
 ---
 
-# 94. Conversão de `above`
+# 94. Converting above
 
-Se existirem predecessores:
+If predecessors exist:
 
 ```python
 [
@@ -2908,13 +2910,13 @@ Se existirem predecessores:
 ]
 ```
 
-o texto será:
+the text is:
 
 ```text
 [L5, L8]
 ```
 
-Se não existirem:
+If none exist:
 
 ```text
 []
@@ -2922,15 +2924,15 @@ Se não existirem:
 
 ---
 
-# 95. Conversão de `below`
+# 95. Converting below
 
-O mesmo ocorre com as saídas:
+The same applies to outputs:
 
 ```text
 [L10]
 ```
 
-ou:
+or:
 
 ```text
 []
@@ -2938,9 +2940,9 @@ ou:
 
 ---
 
-# 96. Linha final
+# 96. Final line
 
-A linha é construída como:
+The line is built as:
 
 ```python
 f"{layer['type']}; "
@@ -2949,7 +2951,7 @@ f"{above}; "
 f"{below}"
 ```
 
-Exemplo:
+Example:
 
 ```text
 ADD; L9; [L5, L8]; [L10]
@@ -2957,9 +2959,9 @@ ADD; L9; [L5, L8]; [L10]
 
 ---
 
-# 97. Exemplo de relatório
+# 97. Report example
 
-Poderíamos ter:
+We could have:
 
 ```text
 nome_da_camada; camada_atual; camada_acima; camada_de_baixo
@@ -2970,13 +2972,13 @@ CONV_2D; L3; [L2]; [L4, L6]
 ADD; L6; [L3, L5]; [L7]
 ```
 
-Essa representação é útil para inspeção humana.
+This representation is useful for human inspection.
 
 ---
 
-# 98. Sexta fase: `build_graph()`
+# 98. Sixth phase: build_graph()
 
-A função:
+The function:
 
 ```python
 def build_graph(
@@ -2986,15 +2988,15 @@ def build_graph(
 ):
 ```
 
-é a função pública que coordena todas as etapas anteriores.
+is the public entry point coordinating all previous stages.
 
-Ela evita que `main.py` precise conhecer os detalhes internos.
+It keeps main.py from needing to know their internal details.
 
 ---
 
-# 99. Orquestração
+# 99. Orchestration
 
-O fluxo interno é:
+The internal flow is:
 
 ```text
 build_graph_for_subgraph()
@@ -3014,7 +3016,7 @@ graph_to_text()
 
 ---
 
-# 100. Primeira chamada
+# 100. First call
 
 ```python
 (
@@ -3027,15 +3029,15 @@ graph_to_text()
 )
 ```
 
-Resultado:
+Result:
 
 ```text
-operadores + relações via tensors
+operators + relationships through tensors
 ```
 
 ---
 
-# 101. Segunda chamada
+# 101. Second call
 
 ```python
 (
@@ -3045,29 +3047,29 @@ operadores + relações via tensors
 ) = compute_useful_adjacency(...)
 ```
 
-Resultado:
+Result:
 
 ```text
-grafo lógico entre operadores úteis
+logical graph of useful operators
 ```
 
 ---
 
-# 102. Terceira chamada
+# 102. Third call
 
 ```python
 order = topo_order(...)
 ```
 
-Resultado:
+Result:
 
 ```text
-ordem válida de processamento
+valid processing order
 ```
 
 ---
 
-# 103. Quarta chamada
+# 103. Fourth call
 
 ```python
 layers, new_label = (
@@ -3075,15 +3077,15 @@ layers, new_label = (
 )
 ```
 
-Resultado:
+Result:
 
 ```text
-estrutura de camadas Lx
+Lx layer structure
 ```
 
 ---
 
-# 104. Quinta chamada
+# 104. Fifth call
 
 ```python
 data = graph_to_text(
@@ -3091,17 +3093,17 @@ data = graph_to_text(
 )
 ```
 
-Resultado:
+Result:
 
 ```text
-representação para relatório
+report representation
 ```
 
 ---
 
-# 105. `old_idx_to_label`
+# 105. old_idx_to_label
 
-Depois é criado:
+Next, the code creates:
 
 ```python
 old_idx_to_label = {
@@ -3111,21 +3113,21 @@ old_idx_to_label = {
 }
 ```
 
-Na prática, isso contém o mesmo sentido de:
+In practice, it has the same direction as:
 
 ```python
 new_label
 ```
 
-Ou seja:
+In other words:
 
 ```text
-índice original → label
+original index → label
 ```
 
 ---
 
-# 106. Exemplo
+# 106. Example
 
 ```python
 old_idx_to_label = {
@@ -3135,13 +3137,13 @@ old_idx_to_label = {
 }
 ```
 
-Isso permite:
+This allows:
 
 ```python
 old_idx_to_label[3]
 ```
 
-obter:
+to retrieve:
 
 ```text
 L2
@@ -3149,9 +3151,9 @@ L2
 
 ---
 
-# 107. `label_to_op_idx`
+# 107. label_to_op_idx
 
-Depois é construída a relação inversa:
+Next, the inverse relationship is built:
 
 ```python
 label_to_op_idx = {
@@ -3161,7 +3163,7 @@ label_to_op_idx = {
 }
 ```
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -3171,7 +3173,7 @@ Exemplo:
 }
 ```
 
-Agora:
+Now:
 
 ```python
 label_to_op_idx[
@@ -3179,7 +3181,7 @@ label_to_op_idx[
 ]
 ```
 
-retorna:
+returns:
 
 ```text
 3
@@ -3187,23 +3189,23 @@ retorna:
 
 ---
 
-# 108. Por que manter as duas direções?
+# 108. Why keep both directions?
 
-Módulos diferentes usam identificadores diferentes.
+Different modules use different identifiers.
 
-Algumas estruturas trabalham com:
+Some structures work with:
 
 ```text
 L17
 ```
 
-Enquanto a API TFLite exige:
+while the TFLite API requires:
 
 ```text
 op_index
 ```
 
-Assim:
+Thus:
 
 ```text
 L17
@@ -3215,7 +3217,7 @@ op_index
 subgraph.Operators(op_index)
 ```
 
-No sentido inverso:
+In the reverse direction:
 
 ```text
 op_index
@@ -3227,9 +3229,9 @@ L17
 
 ---
 
-# 109. Dicionário final
+# 109. Final dictionary
 
-`build_graph()` retorna:
+build_graph() returns:
 
 ```python
 {
@@ -3248,60 +3250,60 @@ L17
 }
 ```
 
-Isso cria uma interface única para os módulos posteriores.
+This provides a single interface for subsequent modules.
 
 ---
 
-# 110. Significado de cada item
+# 110. Meaning of each item
 
-| Campo                 | Significado                          |
+| Field | Meaning |
 | --------------------- | ------------------------------------ |
-| `op_types`            | Tipo de cada operador TFLite         |
-| `producer_by_tensor`  | Operador que produz cada tensor      |
-| `consumers_by_tensor` | Operadores que consomem cada tensor  |
-| `useful`              | Índices de operadores não ignorados  |
-| `useful_inputs`       | Predecessores úteis de cada operador |
-| `useful_outputs`      | Sucessores úteis de cada operador    |
-| `order`               | Ordenação topológica                 |
-| `new_label`           | Mapeamento `op_index → Lx`           |
-| `old_idx_to_label`    | Mapeamento explícito `op_index → Lx` |
-| `label_to_op_idx`     | Mapeamento `Lx → op_index`           |
-| `layers`              | Representação estruturada do grafo   |
-| `data`                | Representação textual para relatório |
+| op_types | Type of each TFLite operator |
+| producer_by_tensor | Operator producing each tensor |
+| consumers_by_tensor | Operators consuming each tensor |
+| useful | Indices of non-ignored operators |
+| useful_inputs | Useful predecessors of each operator |
+| useful_outputs | Useful successors of each operator |
+| order | Topological ordering |
+| new_label | op_index → Lx mapping |
+| old_idx_to_label | Explicit op_index → Lx mapping |
+| label_to_op_idx | Lx → op_index mapping |
+| layers | Structured graph representation |
+| data | Text representation for reporting |
 
 ---
 
-# 111. `producer_by_tensor` ainda é importante
+# 111. producer_by_tensor remains important
 
-Embora `compute_useful_adjacency()` construa a relação `forward` usando principalmente:
+Although compute_useful_adjacency() builds forward primarily using:
 
 ```python
 consumers_by_tensor
 ```
 
-o mapa:
+the map:
 
 ```python
 producer_by_tensor
 ```
 
-continua sendo mantido.
+is still retained.
 
-Ele é uma informação estrutural útil para etapas que precisem responder:
+It provides structural information to stages that need to answer:
 
 ```text
-quem produziu este tensor?
+who produced this tensor?
 ```
 
-Isso é diferente de perguntar:
+This differs from asking:
 
 ```text
-quem consome este tensor?
+who consumes this tensor?
 ```
 
 ---
 
-# 112. Exemplo completo de transformação
+# 112. Complete transformation example
 
 Imagine:
 
@@ -3322,7 +3324,7 @@ Op3: CONV_2D
  output tensor 13
 
 Op4: ADD
- inputs tensor 13 e tensor 11
+ inputs tensor 13 and tensor 11
  output tensor 14
 ```
 
@@ -3355,7 +3357,7 @@ consumers_by_tensor = {
 
 ---
 
-# 115. Grafo derivado
+# 115. Derived graph
 
 ```text
 Op0
@@ -3373,9 +3375,9 @@ Op3      │
 
 ---
 
-# 116. Relações úteis
+# 116. Useful relationships
 
-Para Op4:
+For Op4:
 
 ```python
 useful_inputs[4] = {
@@ -3384,7 +3386,7 @@ useful_inputs[4] = {
 }
 ```
 
-Para Op1:
+For Op1:
 
 ```python
 useful_outputs[1] = {
@@ -3397,7 +3399,7 @@ useful_outputs[1] = {
 
 # 117. Layers
 
-A representação pode se tornar:
+The representation can become:
 
 ```python
 [
@@ -3431,9 +3433,9 @@ A representação pode se tornar:
 
 ---
 
-# 118. Por que o grafo é essencial para a memória
+# 118. Why the graph matters for memory
 
-A alocação de slots não pode simplesmente alternar:
+Slot allocation cannot simply alternate:
 
 ```text
 slot0
@@ -3442,9 +3444,9 @@ slot0
 slot1
 ```
 
-porque uma saída antiga pode ainda ser utilizada posteriormente.
+because an older output may still be needed later.
 
-No exemplo:
+In this example:
 
 ```text
 L1
@@ -3452,15 +3454,15 @@ L1
  └────────→ L4
 ```
 
-A saída de L1 precisa permanecer disponível até L4.
+L1's output must remain available until L4.
 
-Então o grafo informa a vida útil lógica desse resultado.
+The graph therefore describes the logical lifetime of that result.
 
 ---
 
-# 119. Exemplo de risco
+# 119. Risk example
 
-Uma estratégia ingênua poderia fazer:
+A naive strategy might:
 
 ```text
 L1 output → SLOT1
@@ -3468,27 +3470,27 @@ L2 output → SLOT2
 L3 output → SLOT1
 ```
 
-Mas isso destruiria o resultado de L1 antes do `ADD` em L4.
+But that would destroy L1's result before the ADD in L4.
 
-O grafo permite detectar:
-
-```text
-L1 ainda possui consumidor futuro
-```
-
-Portanto:
+The graph lets us detect:
 
 ```text
-SLOT1 ainda não pode ser reutilizado
+L1 still has a future consumer
 ```
 
-Esse ponto conecta diretamente:
+Therefore:
+
+```text
+SLOT1 cannot be reused yet
+```
+
+This directly connects:
 
 ```text
 graph.py
 ```
 
-com:
+with:
 
 ```text
 slots.py
@@ -3496,31 +3498,31 @@ slots.py
 
 ---
 
-# 120. Relação com `tensor_mapping.py`
+# 120. Relationship with tensor_mapping.py
 
-Mais tarde, precisamos relacionar:
-
-```text
-tensor TFLite
-```
-
-a:
+Later we need to relate:
 
 ```text
-slot de memória
+TFLite tensor
 ```
 
-Para isso são necessárias informações como:
+to:
 
 ```text
-qual operação produziu este tensor?
-
-qual label corresponde à operação?
-
-qual slot foi atribuído a essa camada?
+memory slot
 ```
 
-Fluxo:
+This requires information such as:
+
+```text
+which operation produced this tensor?
+
+which label corresponds to the operation?
+
+which slot was assigned to that layer?
+```
+
+Flow:
 
 ```text
 tensor_id
@@ -3540,54 +3542,54 @@ slot
 
 ---
 
-# 121. Relação com `layer_params.py`
+# 121. Relationship with layer_params.py
 
-`layer_params.py` também utiliza:
+layer_params.py also uses:
 
 ```text
 old_idx_to_label
 label_to_op_idx
 ```
 
-para transitar entre:
+to move between:
 
 ```text
-grafo lógico
+logical graph
 ```
 
-e:
+and:
 
 ```text
-operador original do TFLite
+original TFLite operator
 ```
 
 ---
 
-# 122. Separação entre grafo e tensors
+# 122. Separating graph and tensors
 
-É importante perceber que o projeto mantém duas representações complementares:
+The project keeps two complementary representations:
 
 ```text
 graph.py
     ↓
-dependências entre operações
+dependencies between operations
 ```
 
-e:
+and:
 
 ```text
 tensor_mapping.py
     ↓
-relação entre tensors e memória
+relationship between tensors and memory
 ```
 
-Não é necessário transformar tudo em uma única estrutura gigante.
+There is no need to merge everything into one large structure.
 
 ---
 
-# 123. Por que não utilizar diretamente a ordem TFLite?
+# 123. Why not use TFLite order directly?
 
-O arquivo TFLite possui operadores indexados, mas o extrator não depende apenas da suposição:
+TFLite has indexed operators, but the extractor does not rely solely on:
 
 ```text
 op0
@@ -3596,29 +3598,29 @@ op2
 op3
 ```
 
-como ordem semântica suficiente.
+as a sufficient semantic ordering.
 
-Ele reconstrói explicitamente as dependências e calcula:
+It explicitly reconstructs dependencies and computes:
 
 ```python
 topo_order(...)
 ```
 
-Isso torna a relação lógica explícita.
+This makes logical relationships explicit.
 
 ---
 
-# 124. Vantagem para ramificações
+# 124. Benefits for branches
 
-Em uma cadeia linear:
+In a linear chain:
 
 ```text
 L0 → L1 → L2
 ```
 
-a ordem parece óbvia.
+the order seems obvious.
 
-Mas arquiteturas modernas possuem:
+Modern architectures, however, contain:
 
 ```text
         ┌──────────────┐
@@ -3626,18 +3628,18 @@ Mas arquiteturas modernas possuem:
 L0 → L1 → L2 → L3 → ADD
 ```
 
-O grafo é necessário para representar corretamente essas dependências.
+The graph is needed to represent these dependencies correctly.
 
-MobileNetV2 possui justamente estruturas residuais em determinados blocos.
+MobileNetV2 includes residual structures in some blocks.
 
 ---
 
-# 125. Relação com MobileNetV2
+# 125. Relationship with MobileNetV2
 
-Blocos residuais podem possuir:
+Residual blocks may contain:
 
 ```text
-entrada
+input
   │
   ├─────────────────────┐
   │                     │
@@ -3653,45 +3655,45 @@ Conv                    │
             ADD
 ```
 
-Isso significa que uma ativação produzida anteriormente precisa sobreviver por várias camadas.
+An earlier activation must therefore survive across several layers.
 
-O grafo permite capturar essa estrutura.
+The graph captures that structure.
 
 ---
 
-# 126. Operadores ignorados e semântica
+# 126. Ignored operators and semantics
 
-O suporte a:
+Support for:
 
 ```python
 ignored_types
 ```
 
-deve ser utilizado com cuidado.
+must be used carefully.
 
-Ignorar um operador na representação do grafo não significa que ele possa ser removido semanticamente da inferência.
+Ignoring an operator in the graph does not mean it can be semantically removed from inference.
 
-A função apenas permite construir uma adjacência lógica atravessando operadores considerados transparentes para determinado propósito.
+The function only builds logical adjacency through operators treated as transparent for a particular purpose.
 
-Ou seja:
-
-```text
-ignorar no grafo
-```
-
-não é automaticamente igual a:
+In other words:
 
 ```text
-remover da execução
+ignore in the graph
 ```
 
-Essa distinção é importante.
+is not automatically equivalent to:
+
+```text
+remove from execution
+```
+
+This distinction matters.
 
 ---
 
-# 127. Exemplo
+# 127. Example
 
-Se tivermos:
+If we have:
 
 ```text
 CONV
@@ -3701,107 +3703,107 @@ RESHAPE
 CONV
 ```
 
-e `RESHAPE` for ignorado para um determinado cálculo estrutural:
+and RESHAPE is ignored for a particular structural calculation:
 
 ```text
 CONV → CONV
 ```
 
-isso não demonstra por si só que a operação `RESHAPE` pode ser eliminada da implementação.
+that alone does not demonstrate that RESHAPE can be removed from the implementation.
 
-A validade depende da semântica concreta dessa operação.
-
----
-
-# 128. Situação atual
-
-No uso atual do pipeline, `ignored_types` permite preservar essa capacidade de abstração.
-
-A função é genérica, mas o conjunto efetivamente utilizado deve ser decidido conscientemente pelo pipeline.
+Validity depends on the operation's actual semantics.
 
 ---
 
-# 129. Complexidade aproximada
+# 128. Current situation
 
-A primeira varredura percorre:
+The pipeline's ignored_types parameter preserves this abstraction capability.
+
+The function is generic, but the pipeline must deliberately choose the set it uses.
+
+---
+
+# 129. Approximate complexity
+
+The first scan visits:
 
 ```text
-todos os operadores
+all operators
 +
-todos os inputs
+all inputs
 +
-todos os outputs
+all outputs
 ```
 
-Em termos conceituais:
+Conceptually:
 
 ```text
 O(V + E)
 ```
 
-onde:
+where:
 
 ```text
-V = operadores
-E = relações entre operadores/tensors
+V = operators
+E = operator/tensor relationships
 ```
 
-A ordenação topológica também opera aproximadamente em:
+Topological sorting also operates approximately in:
 
 ```text
 O(V + E)
 ```
 
-para um grafo dessa natureza.
+for this kind of graph.
 
-Para uma rede como a utilizada neste projeto, esse custo é pequeno em comparação ao processo de inferência propriamente dito.
+For a network like this project's, this cost is small compared with inference itself.
 
 ---
 
-# 130. Estrutura de dados versus formato de relatório
+# 130. Data structure versus report format
 
-Uma decisão importante da refatoração foi não utilizar mais o texto como estrutura intermediária.
+A key refactoring decision was to stop using text as an intermediate structure.
 
-A abordagem ruim seria:
+The problematic approach would be:
 
 ```text
-grafo
+graph
  ↓
-gera texto
+generate text
  ↓
-parseia texto
+parse text
  ↓
 slots.py
 ```
 
-A abordagem atual é:
+The current approach is:
 
 ```text
-grafo
+graph
  ↓
 layers
  ├────────────→ slots.py
  ├────────────→ tensor_mapping.py
  └────────────→ graph_to_text()
                          ↓
-                    relatório
+                    report
 ```
 
-Assim:
+Thus:
 
 ```python
 layers
 ```
 
-é a fonte de verdade.
+is the source of truth.
 
 ---
 
-# 131. Por que isso melhora o projeto?
+# 131. How does this improve the project?
 
-Porque estruturas Python preservam tipos reais.
+Python structures preserve actual types.
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -3812,164 +3814,164 @@ Exemplo:
 }
 ```
 
-é uma lista real.
+is an actual list.
 
-No texto:
+In text:
 
 ```text
 [L6, L9]
 ```
 
-seria necessário fazer parsing novamente.
+it would require parsing again.
 
-A estrutura evita:
+The structure avoids unnecessary:
 
 ```text
 split()
 replace()
 regex
-conversões de string
+string conversions
 ```
 
-desnecessárias.
+operations.
 
 ---
 
-# 132. Determinismo
+# 132. Determinism
 
-Existem vários pontos em que o código aplica:
+Several places in the code apply:
 
 ```python
 sorted(...)
 ```
 
-Isso é importante para produzir resultados reproduzíveis.
+to produce reproducible results.
 
-Mesmo que internamente sejam utilizados:
+Even though internals use:
 
 ```python
 set()
 ```
 
-o relatório e a ordem processada não dependem da ordem interna arbitrária do conjunto.
+reports and processing order do not depend on arbitrary internal set ordering.
 
 ---
 
-# 133. Invariantes esperados
+# 133. Expected invariants
 
-Depois de `build_graph()`, algumas condições importantes devem ser verdadeiras.
+After build_graph(), these conditions should hold.
 
-### Todo nó útil possui entrada em `useful_inputs`
+### Every useful node has a useful_inputs entry
 
-Mesmo que seja:
-
-```python
-set()
-```
-
-### Todo nó útil possui entrada em `useful_outputs`
-
-Mesmo que seja:
+Even if it is:
 
 ```python
 set()
 ```
 
-### Todo label aponta para um operador
+### Every useful node has a useful_outputs entry
+
+Even if it is:
+
+```python
+set()
+```
+
+### Every label points to an operator
 
 ```text
 Lx → op_index
 ```
 
-### Todo operador útil possui label
+### Every useful operator has a label
 
 ```text
 op_index → Lx
 ```
 
-### `order` contém exatamente os nós úteis
+### order contains exactly the useful nodes
 
-Caso contrário a ordenação topológica falha.
+Otherwise topological sorting fails.
 
 ---
 
-# 134. Nós de entrada do grafo
+# 134. Graph input nodes
 
-Um nó com:
+A node with:
 
 ```python
 useful_inputs[op_idx] == set()
 ```
 
-é uma raiz no grafo lógico.
+is a root in the logical graph.
 
-Isso não significa necessariamente que ele não possua inputs TFLite.
+This does not necessarily mean it lacks TFLite inputs.
 
-Ele pode consumir:
+It may consume:
 
 ```text
-entrada externa do modelo
+external model input
 ```
 
-que não foi produzida por outro operador.
+that was not produced by another operator.
 
 ---
 
-# 135. Nós de saída do grafo
+# 135. Graph output nodes
 
-Um nó com:
+A node with:
 
 ```python
 useful_outputs[op_idx] == set()
 ```
 
-é uma folha no grafo lógico.
+is a leaf in the logical graph.
 
-Normalmente corresponde a uma operação cujo resultado:
+It usually corresponds to an operation whose result:
 
 ```text
-não é consumido por outra operação útil
+is not consumed by another useful operation
 ```
 
-e pode representar uma saída final do modelo.
+may be a final model output.
 
 ---
 
-# 136. Entrada do modelo versus produtor
+# 136. Model input versus producer
 
-Considere:
+Consider:
 
 ```text
 Tensor 0
 ```
 
-como entrada externa.
+as an external input.
 
-Nenhum operador produz esse tensor.
+No operator produces that tensor.
 
-Então:
+Therefore:
 
 ```text
 tensor 0
 ```
 
-não aparece necessariamente em:
+does not necessarily appear in:
 
 ```python
 producer_by_tensor
 ```
 
-mas aparece em:
+but appears in:
 
 ```python
 consumers_by_tensor
 ```
 
-porque a primeira camada o utiliza.
+because the first layer consumes it.
 
 ---
 
-# 137. Exemplo
+# 137. Example
 
 ```text
 INPUT TENSOR 0
@@ -3984,7 +3986,7 @@ INPUT TENSOR 0
     Op1
 ```
 
-Temos:
+We have:
 
 ```python
 consumers_by_tensor[0] = [
@@ -3992,19 +3994,19 @@ consumers_by_tensor[0] = [
 ]
 ```
 
-mas não:
+but not:
 
 ```python
 producer_by_tensor[0]
 ```
 
-porque a origem é externa ao grafo de operadores.
+because its origin is external to the operator graph.
 
 ---
 
-# 138. Saída final do modelo
+# 138. Final model output
 
-Da mesma maneira:
+Similarly:
 
 ```text
 Op67
@@ -4014,54 +4016,54 @@ Tensor 100
 MODEL OUTPUT
 ```
 
-Pode existir produtor:
+There may be a producer:
 
 ```python
 producer_by_tensor[100] = 67
 ```
 
-mas nenhum consumidor operador:
+but no consuming operator:
 
 ```python
 consumers_by_tensor[100]
 ```
 
-pode estar vazio.
+may be empty.
 
 ---
 
-# 139. O grafo representa dependência computacional
+# 139. The graph represents computational dependencies
 
-Isso explica uma distinção importante.
+This explains an important distinction.
 
-O grafo não representa literalmente:
+The graph does not literally represent:
 
 ```text
-todos os objetos do arquivo TFLite
+all objects in the TFLite file
 ```
 
-Ele representa:
+It represents:
 
 ```text
-dependência computacional entre operadores
+computational dependency between operators
 ```
 
-Por isso:
+Therefore:
 
 ```text
-inputs externos
-outputs externos
-pesos constantes
+external inputs
+external outputs
+constant weights
 bias
 ```
 
-não precisam aparecer como nós `Lx`.
+need not appear as Lx nodes.
 
 ---
 
-# 140. Grafo de operadores versus grafo completo de dados
+# 140. Operator graph versus complete data graph
 
-Um grafo completo poderia ser bipartido:
+A full graph could be bipartite:
 
 ```text
 Operator
@@ -4073,7 +4075,7 @@ Operator
 Tensor
 ```
 
-O extrator simplifica para:
+The extractor simplifies it to:
 
 ```text
 Operator
@@ -4081,34 +4083,34 @@ Operator
 Operator
 ```
 
-porque essa é a representação necessária para:
+because this is the representation needed for:
 
 ```text
-ordem
+order
 liveness
 slots
-execução
+execution
 ```
 
 ---
 
-# 141. O que este módulo deliberadamente não faz
+# 141. What this module deliberately does not do
 
-`graph.py` não:
+graph.py does not:
 
 ```text
-extrai pesos
-extrai bias
-calcula quantização
-calcula padding
-calcula endereços
-aloca bytes
-gera LayerParams
-serializa estruturas
-gera WAT
+extract weights
+extract bias
+compute quantization
+compute padding
+compute addresses
+allocate bytes
+generate LayerParams
+serialize structures
+generate WAT
 ```
 
-Também não deveria conhecer detalhes de:
+Nor should it know the details of:
 
 ```text
 ESP32
@@ -4116,17 +4118,17 @@ WAMR
 WebAssembly
 ```
 
-Seu problema é puramente estrutural:
+Its concern is structural:
 
 ```text
-quem depende de quem?
+who depends on whom?
 ```
 
 ---
 
-# 142. Fronteira arquitetural
+# 142. Architectural boundary
 
-Podemos representar:
+We can represent it as:
 
 ```text
 TFLite
@@ -4141,13 +4143,13 @@ tflite_utils.py
 graph.py
   │
   ▼
-grafo lógico
+logical graph
 ```
 
-Depois:
+Then:
 
 ```text
-grafo lógico
+logical graph
   │
   ├──→ slots.py
   ├──→ tensor_mapping.py
@@ -4156,22 +4158,22 @@ grafo lógico
 
 ---
 
-# 143. Funções do módulo
+# 143. Module functions
 
-| Função                       | Responsabilidade                                      |
+| Function | Responsibility |
 | ---------------------------- | ----------------------------------------------------- |
-| `build_graph_for_subgraph()` | Descobrir tipos, produtores e consumidores            |
-| `compute_useful_adjacency()` | Construir dependências diretas entre operadores úteis |
-| `topo_order()`               | Calcular uma ordenação topológica                     |
-| `build_layers()`             | Criar representação estruturada `Lx`                  |
-| `graph_to_text()`            | Converter estrutura para relatório                    |
-| `build_graph()`              | Orquestrar todo o processo                            |
+| build_graph_for_subgraph() | Discover types, producers and consumers |
+| compute_useful_adjacency() | Build direct dependencies between useful operators |
+| topo_order() | Compute topological ordering |
+| build_layers() | Create the structured Lx representation |
+| graph_to_text() | Convert the structure into a report |
+| build_graph() | Orchestrate the entire process |
 
 ---
 
-# 144. Estruturas produzidas
+# 144. Produced structures
 
-| Estrutura             | Exemplo                   |
+| Structure | Example |
 | --------------------- | ------------------------- |
 | `op_types`            | `["CONV_2D", "ADD", ...]` |
 | `producer_by_tensor`  | `{10: 3}`                 |
@@ -4181,12 +4183,12 @@ grafo lógico
 | `useful_outputs`      | `{10: {11}}`              |
 | `order`               | `[0,1,2,...]`             |
 | `new_label`           | `{10: "L8"}`              |
-| `layers`              | lista de dicionários      |
-| `data`                | texto do relatório        |
+| layers | List of dictionaries |
+| data | Report text |
 
 ---
 
-# 145. Visão completa da transformação
+# 145. Complete transformation
 
 ```text
                    TFLITE SUBGRAPH
@@ -4213,7 +4215,7 @@ grafo lógico
                    topo_order()
                          │
                          ▼
-                 ordem topológica
+                 topological order
                          │
                          ▼
                   build_layers()
@@ -4223,31 +4225,31 @@ grafo lógico
                          │
                ┌─────────┴─────────┐
                ▼                   ▼
-       módulos seguintes     graph_to_text()
+       subsequent modules     graph_to_text()
                │                   │
                ▼                   ▼
-        alocação/memória       relatório
+        allocation/memory       report
 ```
 
 ---
 
-# 146. Relação com a execução final
+# 146. Relationship with final execution
 
-Esse arquivo não executa inferência, mas sua saída influencia diretamente o runtime.
+This file does not run inference, but its output directly affects the runtime.
 
-O encadeamento completo é:
+The complete chain is:
 
 ```text
 graph.py
    │
    ▼
-dependências
+dependencies
    │
    ▼
 slots.py
    │
    ▼
-quem ocupa qual região
+which value occupies each region
    │
    ▼
 tensor_mapping.py
@@ -4271,121 +4273,121 @@ WAT
 WASM
 ```
 
-Portanto um erro no grafo pode eventualmente produzir:
+A graph error can eventually produce:
 
 ```text
-slot incorreto
+incorrect slot
         ↓
-ponteiro incorreto
+incorrect pointer
         ↓
-sobrescrita de tensor ainda vivo
+overwriting a still-live tensor
         ↓
-inferência incorreta
+incorrect inference
 ```
 
-Isso demonstra por que essa etapa, apesar de não realizar cálculos neurais, é estruturalmente crítica.
+Although this stage performs no neural calculations, it is structurally critical.
 
 ---
 
-# 147. Resumo conceitual
+# 147. Conceptual summary
 
-O `graph.py` responde essencialmente a quatro perguntas.
+graph.py essentially answers four questions.
 
-## 1. Quem produz cada tensor?
+## 1. Who produces each tensor?
 
 ```text
 tensor
   ↓
 producer_by_tensor
   ↓
-operador
+operator
 ```
 
-## 2. Quem consome cada tensor?
+## 2. Who consumes each tensor?
 
 ```text
 tensor
   ↓
 consumers_by_tensor
   ↓
-operadores
+operators
 ```
 
-## 3. Quem depende de quem?
+## 3. Who depends on whom?
 
 ```text
-operador
+operator
   ↓
 useful_inputs / useful_outputs
   ↓
-operadores relacionados
+related operators
 ```
 
-## 4. Em que ordem as operações podem ser processadas?
+## 4. In what order can operations be processed?
 
 ```text
-grafo
+graph
   ↓
 topo_order()
   ↓
-ordem topológica
+topological order
 ```
 
 ---
 
-# 148. Papel no desenho geral do extrator
+# 148. Role in the overall extractor design
 
-Até este ponto, o pipeline possui quatro níveis bem definidos:
+At this point, the pipeline has four distinct levels:
 
 ```text
 ┌────────────────────────────────┐
 │           config.py            │
 │                                │
-│ define entradas e políticas    │
+│ defines inputs and policies    │
 └───────────────┬────────────────┘
                 │
                 ▼
 ┌────────────────────────────────┐
 │       model_loader.py          │
 │                                │
-│ arquivo → Model → SubGraph     │
+│ file → Model → SubGraph     │
 └───────────────┬────────────────┘
                 │
                 ▼
 ┌────────────────────────────────┐
 │       tflite_utils.py          │
 │                                │
-│ interpreta e normaliza         │
-│ estruturas TFLite              │
+│ interprets and normalizes         │
+│ TFLite structures              │
 └───────────────┬────────────────┘
                 │
                 ▼
 ┌────────────────────────────────┐
 │           graph.py             │
 │                                │
-│ reconstrói dependências        │
-│ entre operações                │
+│ reconstructs dependencies        │
+│ between operations                │
 └───────────────┬────────────────┘
                 │
                 ▼
 ┌────────────────────────────────┐
-│       engenharia de memória    │
+│       memory planning    │
 │                                │
 │ slots                          │
 │ tensors                        │
-│ parâmetros                     │
-│ serialização                   │
+│ parameters                     │
+│ serialization                   │
 └────────────────────────────────┘
 ```
 
-A principal transformação introduzida por `graph.py` é:
+The main transformation introduced by graph.py is:
 
 ```text
-estrutura TFLite orientada a tensors
+tensor-oriented TFLite structure
 
               ↓
 
-grafo lógico orientado a operações
+operation-oriented logical graph
 ```
 
-Essa representação intermediária será a base para decidir como os resultados intermediários da rede podem compartilhar a memória limitada disponibilizada pelos três slots do runtime.
+This intermediate representation forms the basis for deciding how network intermediates can share the limited memory provided by the runtime's three slots.

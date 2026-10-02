@@ -1,12 +1,14 @@
-# Drowsiness MobileNetV2
+﻿# Drowsiness MobileNetV2
 
-[Documentação principal](../../README.md) · [Comparação dos pacotes](../../docs/09-modelos-e-pacotes.md)
+[English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
-## Objetivo
+[Main documentation](../../README.md) · [Package comparison](../../docs/09-modelos-e-pacotes.md)
 
-Pacote de classificação binária de sonolência. O manifest nomeia a rede como MobileNetV2 e define duas classes: `drowsy` (label 1) e `non_drowsy` (label 0). O projeto usa essa rede para testar a extração TFLite, conversão RGB565 e execução quantizada no runtime WAT. O arquivo chama-se `model_int8_esp32.tflite`, mas o fluxo Python aqui executa Wasmtime no host, não um ESP32.
+## Purpose
 
-## Arquivos e dependências do pacote
+Binary drowsiness classification package. The manifest names the network MobileNetV2 and defines two classes: `drowsy` (label 1) and `non_drowsy` (label 0). The project uses this network to test TFLite extraction, RGB565 conversion, and quantized execution in the WAT runtime. The file is named `model_int8_esp32.tflite`, but the Python workflow here runs Wasmtime on the host, not on ESP32.
+
+## Package files and dependencies
 
 ```text
 models/drowsiness/
@@ -23,88 +25,110 @@ models/drowsiness/
 ├── generated/
 │   ├── model.wat
 │   └── model.wasm
-└── reports/          11 arquivos, listados abaixo
+└── reports/          11 files, listed below
 ```
 
-Entram o manifest, TFLite, template externo e RAWs; `ModelPackage` os resolve e o pipeline escreve os artefatos locais. Os arquivos de teste e as classes são específicos deste modelo; o template é compartilhado. O pacote depende desse arquivo fora da pasta e não pode ser distribuído isoladamente sem incluí-lo ou ajustar a configuração. Não há pasta labels ou template local neste pacote.
+Inputs are the manifest, TFLite, external template, and RAW files; `ModelPackage` resolves them and the pipeline writes local artifacts.
+Test files and classes are specific to this model; the template is shared.
+The package depends on this file outside its folder and cannot be distributed alone without including it or adjusting configuration.
+There is no labels folder or local template in this package.
 
-## Execução
+## Running
 
-Na raiz do repositório:
+From the repository root:
 
 ```powershell
 python main.py
 python main.py --model drowsiness
 ```
 
-Os comandos são equivalentes, pois drowsiness é o default. No ambiente local usado na validação também é possível usar `.venv-models/Scripts/python.exe` no lugar de `python`.
+The commands are equivalent because drowsiness is the default.
+In the local environment used for validation, `.venv-models/Scripts/python.exe` can also replace `python`.
 
-## Formato RAW e synthetic layer
+## RAW format and synthetic layer
 
-Cada imagem é 128×128, 2 bytes por pixel, total **32768 bytes**, sem cabeçalho. O WAT lê little-endian com `i32.load16_u`: bits 15–11 são R, 10–5 são G e 4–0 são B. Não existe troca de endianness no adapter. Pixel vermelho máximo é valor 0xf800, representado por bytes `00 f8`. O arquivo deve estar previamente redimensionado; nenhum módulo faz resize.
+Each image is 128×128, 2 bytes per pixel, **32,768 bytes** total, without a header.
+WAT reads little-endian with `i32.load16_u`: bits 15–11 are R, 10–5 are G, and 4–0 are B. The adapter does not swap endianness.
+Maximum red is 0xf800, represented by bytes `00 f8`.
+The file must already be resized; no module performs resizing.
 
 ```text
 RAW RGB565 (32768 bytes)
-             │ BinaryFoldersAdapter lê sem alterar
+             │ BinaryFoldersAdapter reads unchanged
              ▼
            SLOT0
-             │ host grava memory[0]=65
+             │ host writes memory[0]=65
              ▼
 ┌─────────────────────────────┐
-│ camada sintética            │
-│ RGB565_TO_RGB888            │
-│ R5/G6/B5 → R8/G8/B8         │
+│ synthetic layer             │
+│ RGB565_TO_RGB888             │
+│ R5/G6/B5 → R8/G8/B8          │
 └─────────────┬───────────────┘
               ▼
-            SLOT1 (49152 bytes RGB888)
+            SLOT1 (49152 RGB888 bytes)
               ▼
-      QUANTIZE real do TFLite
+      actual TFLite QUANTIZE
               ▼
-        restante da rede
+        rest of network
 ```
 
-Entram bytes RGB565 do dataset; a sintética WAT expande canais por replicação de bits. Sai RGB888 UINT8 para a primeira operação do grafo real. Formato/dimensões são do pacote; OP8 e as flags são do runtime. `synthetic_layer_count=1` e `slot_shift=1`: reserva-se mais um registro e o mapa lógico de slots é rotacionado em 1. O TFLite original tem 67 operadores; o runtime tem 68 registros.
+RGB565 dataset bytes enter the synthetic WAT layer, which expands channels through bit replication. RGB888 UINT8 leaves it for the real graph's first operation.
+Format/dimensions belong to the package; OP8 and flags belong to the runtime.
+`synthetic_layer_count=1` and `slot_shift=1`: one extra record is reserved and the logical slot map is rotated by 1. The original TFLite has 67 operators; the runtime has 68 records.
 
-## Adapter e dados de teste
+## Adapter and test data
 
-`discover_cases()` exige duas classes e datasets não vazios, percorre primeiro `test/drowsy` (1000 RAWs, label 1), depois `test/non_drowsy` (1000 RAWs, label 0), com arquivos ordenados dentro de cada pasta. Todos os RAWs encontrados têm 32768 bytes. `prepare_input()` apenas lê os bytes RGB565. `evaluate_output()` usa dois valores UINT8 e o zero point/scale do TFLite. `build_report()` lista cada caso e agrega acertos, inválidos e acurácia; erros por caso são acrescentados pelo pipeline.
+`discover_cases()` requires two classes and nonempty datasets, visits `test/drowsy` first (1,000 RAW files, label 1), then `test/non_drowsy` (1,000 RAW files, label 0), with files sorted within each folder.
+All discovered RAW files contain 32,768 bytes.
+`prepare_input()` only reads RGB565 bytes.
+`evaluate_output()` uses two UINT8 values and the TFLite zero point/scale.
+`build_report()` lists each case and aggregates correct predictions, invalid cases, and accuracy; the pipeline adds per-case errors.
 
-## Saída e interpretação binária
+## Output and binary interpretation
 
-A ordem é `output[0] → drowsy → label 1`, `output[1] → non_drowsy → label 0`. Não é a ordem crescente de labels. `score=q/256`, pois scale=1/256 e zp=0. A classe vencedora tem o maior valor único; empate ou soma de scores≤0 é inválido. Um inválido tem result=None e não conta como acerto. Erros que impedem gerar um registro são excluídos do denominador; inválidos permanecem.
+Order is `output[0] → drowsy → label 1`, `output[1] → non_drowsy → label 0`. This is not ascending label order.
+`score=q/256` because scale=1/256 and zp=0.
+The winning class has the unique largest value; a tie or score sum≤0 is invalid.
+An invalid case has result=None and does not count as correct.
+Errors that prevent a record from being generated are excluded from the denominator; invalid cases remain.
 
 ```text
-2 bytes UINT8
+2 UINT8 bytes
       │
       ▼
-valores e scores dequantizados
+values and dequantized scores
       │
-      ├── empate/soma zero ──► inválido, right=False
-      └── máximo único ─────► índice → classes[index].label
+      ├── tie/zero sum ──────► invalid, right=False
+      └── unique maximum ───► index → classes[index].label
                                        │
                                        ▼
-                               compara com label da pasta
+                               compare with folder label
                                        ▼
-                              acertos / casos processados
+                              correct / processed cases
 ```
 
-Entram vetor de saída e ground-truth da pasta. O adapter calcula validade e acerto; sai um registro e a métrica agregada. Labels pertencem ao pacote; o critério binário pertence ao adapter compartilhável. O resultado observado no relatório atual é **1965/2000 = 98,25%**, com **5 inválidos/empates e 0 erros**. Isso é desempenho nesse conjunto, sem inferência sobre outros datasets.
+Inputs are the output vector and folder ground truth.
+The adapter calculates validity and correctness, producing a record and aggregate metric.
+Labels belong to the package; the binary criterion belongs to the reusable adapter.
+The current report records **1965/2000 = 98.25%**, with **5 invalid cases/ties and 0 errors**. This measures performance on that set without implying performance on other datasets.
 
-## Entrada e saída medidas no TFLite
+## Input and output measured in TFLite
 
-Os valores abaixo foram lidos do subgrafo 0 com os bindings do projeto; não foram inferidos pelo nome do arquivo.
+The values below were read from subgraph 0 with the project's bindings; they were not inferred from the filename.
 
-| Propriedade | Entrada | Saída |
+| Property | Input | Output |
 |---|---|---|
 | Shape | `[1, 128, 128, 3]` | `[1, 2]` |
-| Elementos | `49152` | `2` |
+| Elements | `49152` | `2` |
 | Dtype | `uint8` | `uint8` |
 | Scale | `0.003921508323401213` | `0.00390625` |
 | Zero point | `0` | `0` |
 
-O pipeline interpreta a entrada como NHWC: batch 1, altura e largura nas posições 1 e 2, três canais na posição 3. O FlatBuffer guarda shape e tipo; a interpretação RGB/BGR vem do manifest e dos kernels. Ambos os modelos expõem UINT8, mesmo tendo operações internas INT8.
+The pipeline interprets input as NHWC: batch 1, height and width at positions 1 and 2, and three channels at position 3.
+The FlatBuffer stores shape and type; RGB/BGR interpretation comes from the manifest and kernels.
+Both models expose UINT8, even with internal INT8 operations.
 
-## Manifesto selecionado
+## Selected manifest
 
 ```toml
 [model]
@@ -133,13 +157,13 @@ name = "non_drowsy"
 label = 0
 ```
 
-Os caminhos são resolvidos a partir desta pasta. O significado e a validação de cada campo estão na [referência TOML](../../docs/03-model-config-manifesto.md).
+Paths are resolved from this folder. The meaning and validation of each field are in the [TOML reference](../../docs/03-model-config-manifesto.md).
 
-## Arquitetura encontrada no FlatBuffer
+## Architecture found in the FlatBuffer
 
-O arquivo tem 618376 bytes, 1 subgrafo e 175 tensores. Foram encontrados 67 operadores:
+The file contains 618,376 bytes, 1 subgraph, and 175 tensors. There are 67 operators:
 
-| Operador | Quantidade |
+| Operator | Count |
 |---|---:|
 | QUANTIZE | 2 |
 | CONV_2D | 35 |
@@ -149,32 +173,32 @@ O arquivo tem 618376 bytes, 1 subgrafo e 175 tensores. Foram encontrados 67 oper
 | FULLY_CONNECTED | 1 |
 | SOFTMAX | 1 |
 
-O primeiro operador é QUANTIZE. O final é FULLY_CONNECTED → SOFTMAX → QUANTIZE. O runtime usa os kernels WAT próprios descritos no [capítulo 13](../../docs/13-runtime-wat.md); não executa um interpretador TFLite.
+The first operator is QUANTIZE. The final sequence is FULLY_CONNECTED → SOFTMAX → QUANTIZE. The runtime uses the project's own WAT kernels described in [chapter 13](../../docs/13-runtime-wat.md); it does not run a TFLite interpreter.
 
-## Geração e execução
+## Generation and execution
 
 ```text
 model_int8_esp32.tflite
              │
              ▼
-ModelPipeline: grafo / slots / parâmetros / memória
-             │ + template do manifest
+ModelPipeline: graph / slots / parameters / memory
+             │ + manifest template
              ▼
 generated/model.wat
              │ wasmtime.wat2wasm
              ▼
 generated/model.wasm
-             │ host Wasmtime + adapter
+             │ Wasmtime host + adapter
              ▼
 reports/12-inferencia-wasm.txt
 ```
 
-Entra o TFLite original e a configuração deste pacote; o pipeline materializa dados e código, compila e testa. Saem dois artefatos e onze relatórios. Modelo, template selecionado e RAWs são fontes específicas; extração, ABI e compilação são compartilhados. Uma falha pode deixar artefatos parciais ou antigos, pois não há transação. O TFLite não é reescrito.
+The original TFLite and this package's configuration are inputs; the pipeline materializes data and code, compiles, and tests. It produces two artifacts and eleven reports. The model, selected template, and RAW files are specific sources; extraction, ABI, and compilation are shared. A failure may leave partial or old artifacts because there is no transaction. The TFLite is not rewritten.
 
-## Memória registrada
+## Recorded memory layout
 
 ```text
-REGIAO              BASE       BYTES         END
+REGION              BASE       BYTES         END
 ------------------------------------------------
 WEIGHTS             2048      384608      386656
 BIAS              386656       28168      414824
@@ -187,26 +211,28 @@ SLOT1             703856      196608      900464
 SLOT2             900464      196608     1097072
 ```
 
-Entram os comprimentos dos blobs e o maior tensor. O extrator calcula bases alinhadas; saem regiões físicas usadas pelo WAT. Esses números pertencem ao pacote; páginas de 65536 bytes, três slots e registros de 116 bytes são convenções compartilhadas. END é exclusivo e não é o último byte ocupado.
+Blob lengths and the largest tensor are inputs. The extractor calculates aligned bases and produces the physical regions used by WAT. These numbers belong to the package; 65,536-byte pages, three slots, and 116-byte records are shared conventions. END is exclusive, not the last occupied byte.
 
-## Relatórios produzidos
+## Generated reports
 
-| Arquivo | Conteúdo |
+| File | Contents |
 |---|---|
-| [02-grafo.txt](reports/02-grafo.txt) | Tipos, labels e dependências de operadores. |
-| [03-alocacao-slots.txt](reports/03-alocacao-slots.txt) | Slots lógicos e operações in-place. |
-| [04-mapeamento-tensor-slot.txt](reports/04-mapeamento-tensor-slot.txt) | IDs de tensores associados a slots e pendências. |
-| [05-pesos-bias.txt](reports/05-pesos-bias.txt) | Shapes, offsets e bytes dos pesos/bias. |
-| [06-quantizacao.txt](reports/06-quantizacao.txt) | Scales, multiplicadores, shifts e limites Q6. |
-| [07-slot-bytes.txt](reports/07-slot-bytes.txt) | Maior tensor não constante e capacidade de cada slot. |
-| [08-layout-parametros.txt](reports/08-layout-parametros.txt) | Bases de WEIGHTS, BIAS, MUL, SHIFT, Q6 e PARAMS. |
-| [09-layer-params.txt](reports/09-layer-params.txt) | Campos por camada, mapa runtime e parâmetros especiais. |
-| [10-params-blob.txt](reports/10-params-blob.txt) | Registros serializados, ponteiros absolutos e padding. |
-| [11-layout-final-memoria.txt](reports/11-layout-final-memoria.txt) | Regiões físicas, fim, páginas e espaço residual. |
-| [12-inferencia-wasm.txt](reports/12-inferencia-wasm.txt) | Resultados por imagem e erros de processamento. |
+| [02-grafo.txt](reports/02-grafo.txt) | Operator types, labels, and dependencies. |
+| [03-alocacao-slots.txt](reports/03-alocacao-slots.txt) | Logical slots and in-place operations. |
+| [04-mapeamento-tensor-slot.txt](reports/04-mapeamento-tensor-slot.txt) | Tensor IDs associated with slots and unresolved mappings. |
+| [05-pesos-bias.txt](reports/05-pesos-bias.txt) | Weight/bias shapes, offsets, and bytes. |
+| [06-quantizacao.txt](reports/06-quantizacao.txt) | Scales, multipliers, shifts, and Q6 limits. |
+| [07-slot-bytes.txt](reports/07-slot-bytes.txt) | Largest nonconstant tensor and capacity of each slot. |
+| [08-layout-parametros.txt](reports/08-layout-parametros.txt) | WEIGHTS, BIAS, MUL, SHIFT, Q6, and PARAMS bases. |
+| [09-layer-params.txt](reports/09-layer-params.txt) | Per-layer fields, runtime map, and special parameters. |
+| [10-params-blob.txt](reports/10-params-blob.txt) | Serialized records, absolute pointers, and padding. |
+| [11-layout-final-memoria.txt](reports/11-layout-final-memoria.txt) | Physical regions, end, pages, and remaining space. |
+| [12-inferencia-wasm.txt](reports/12-inferencia-wasm.txt) | Per-image results and processing errors. |
 
-Os relatórios existentes são uma fotografia de execuções anteriores à tarefa documental. Com fontes/dependências válidas, uma execução completa os recria e sobrescreve; arquivos extras não são limpos. 09 descreve valores Python, 10 os campos serializados, e 12 a interpretação do adapter. Um campo relatado nem sempre é consumido pelo kernel, especialmente no softmax atual.
+Existing reports are a snapshot of runs preceding the documentation task.
+With valid sources/dependencies, a full run recreates and overwrites them; extra files are not cleaned up. Report 09 describes Python values, 10 the serialized fields, and 12 the adapter's interpretation. A reported field is not always consumed by the kernel, particularly in the current softmax.
 
-## Limitações e procedência
+## Limitations and provenance
 
-O objetivo da rede é indicado pelo nome/configuração e confirmado pela forma da saída; o repositório não fornece a história completa de treinamento, origem/licença dos RAWs ou script original de conversão. O teste atual não prova equivalência completa com TFLite. Consulte as [limitações verificadas](../../docs/99-inconsistencias-e-limitacoes.md), especialmente softmax fixo, kernels especializados e cobertura dos testes.
+The network's purpose is indicated by its name/configuration and confirmed by the output shape; the repository does not provide the complete training history, RAW origin/license, or original conversion script. The current test does not prove full TFLite equivalence. See the [verified limitations](../../docs/99-inconsistencias-e-limitacoes.md), especially fixed softmax, specialized kernels, and test coverage.
+

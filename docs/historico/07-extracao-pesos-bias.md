@@ -1,35 +1,37 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](07-extracao-pesos-bias.md) | [Português (Brasil)](07-extracao-pesos-bias.pt-BR.md)
 
-# 07 — Extração e serialização de pesos e bias (`weights.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 07 — Extracting and serializing weights and biases (`weights.py`)
 
-O arquivo `extractor/weights.py` extrai do modelo TFLite os tensors constantes correspondentes aos pesos e bias das operações que possuem parâmetros treináveis.
+## 1. Module purpose
 
-Seu objetivo é transformar diversos buffers separados do arquivo TFLite em dois blocos binários contínuos:
+`extractor/weights.py` extracts constant weight and bias tensors from TFLite operations that have trainable parameters.
+
+It converts the TFLite file's separate buffers into two contiguous binary blocks:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-Além disso, o módulo registra onde cada tensor foi colocado dentro desses blocos.
+The module also records where each tensor was placed within these blocks.
 
-O resultado conceitual é:
+The conceptual result is:
 
 ```text
 TFLite
 
-peso tensor 10 ──┐
-peso tensor 20 ──┼──► weights_raw
-peso tensor 35 ──┘
+weight tensor 10 ──┐
+weight tensor 20 ──┼──► weights_raw
+weight tensor 35 ──┘
 
 bias tensor 11 ──┐
 bias tensor 21 ──┼──► bias_raw
 bias tensor 36 ──┘
 ```
 
-Cada tensor recebe um offset relativo:
+Each tensor receives a relative offset:
 
 ```text
 tensor 10 → offset 0
@@ -37,11 +39,11 @@ tensor 20 → offset 864
 tensor 35 → offset 1728
 ```
 
-Esses offsets serão utilizados posteriormente para calcular os endereços reais dentro da memória linear do WebAssembly.
+These offsets will later determine actual addresses in WebAssembly linear memory.
 
 ---
 
-# 2. Código atual
+# 2. Current code
 
 ```python
 from extractor.tflite_utils import (
@@ -269,9 +271,9 @@ def weights_bias_to_text(
 
 ---
 
-# 3. Posição no pipeline
+# 3. Position in the pipeline
 
-O fluxo até esta etapa é:
+The flow up to this stage is:
 
 ```text
 model.tflite
@@ -295,27 +297,27 @@ weights.py
      └── bias_tensor_off
 ```
 
-Esse módulo não trabalha com ativações temporárias.
+This module does not handle temporary activations.
 
-Ele trabalha com parâmetros constantes da rede.
+It handles constant network parameters.
 
 ---
 
-# 4. Duas grandes categorias de memória
+# 4. Two major memory categories
 
-Neste ponto do projeto torna-se importante separar:
-
-```text
-ATIVAÇÕES
-```
-
-de:
+At this point, it is important to separate:
 
 ```text
-PARÂMETROS CONSTANTES
+ACTIVATIONS
 ```
 
-As ativações utilizam:
+from:
+
+```text
+CONSTANT PARAMETERS
+```
+
+Activations use:
 
 ```text
 SLOT0
@@ -323,24 +325,24 @@ SLOT1
 SLOT2
 ```
 
-Já pesos e bias utilizam regiões próprias:
+Weights and biases use their own regions:
 
 ```text
 WEIGHTS
 BIAS
 ```
 
-Conceitualmente:
+Conceptually:
 
 ```text
-memória WASM
+WASM memory
 
 ┌──────────────────────┐
-│ região inicial       │
+│ initial region       │
 ├──────────────────────┤
-│ WEIGHTS              │ ← este módulo
+│ WEIGHTS              │ ← this module
 ├──────────────────────┤
-│ BIAS                 │ ← este módulo
+│ BIAS                 │ ← this module
 ├──────────────────────┤
 │ MUL                  │
 ├──────────────────────┤
@@ -358,21 +360,21 @@ memória WASM
 
 ---
 
-# 5. Importação de `op_name()`
+# 5. Importing `op_name()`
 
-O módulo importa:
+The module imports:
 
 ```python
 op_name
 ```
 
-de:
+from:
 
 ```text
 tflite_utils.py
 ```
 
-Essa função transforma o código interno TFLite em nomes como:
+This function converts internal TFLite codes into names such as:
 
 ```text
 CONV_2D
@@ -380,35 +382,35 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-O módulo precisa disso para decidir quais operações possuem pesos e bias que devem ser extraídos.
+The module needs this to decide which operations have weights and biases to extract.
 
 ---
 
-# 6. Importação de `safe_bytes_from_tensor()`
+# 6. Importing `safe_bytes_from_tensor()`
 
-Também é importada:
+It also imports:
 
 ```python
 safe_bytes_from_tensor
 ```
 
-Sua função é transformar:
+Its purpose is to convert:
 
 ```text
 tensor_id
 ```
 
-em:
+into:
 
 ```text
-Tensor TFLite
+TFLite Tensor
 +
-array NumPy
+NumPy array
 +
-bytes lineares
+linear bytes
 ```
 
-Fluxo:
+Flow:
 
 ```text
 tensor_id
@@ -421,7 +423,7 @@ safe_bytes_from_tensor()
     └── raw bytes
 ```
 
-`weights.py` utiliza principalmente:
+`weights.py` mainly uses:
 
 ```text
 ndarray
@@ -432,7 +434,7 @@ raw bytes
 
 # 7. `WEIGHT_OPERATORS`
 
-O módulo define:
+The module defines:
 
 ```python
 WEIGHT_OPERATORS = {
@@ -442,23 +444,23 @@ WEIGHT_OPERATORS = {
 }
 ```
 
-Isso delimita explicitamente quais operações serão examinadas para extração de pesos e bias.
+This explicitly defines which operations are examined for weight and bias extraction.
 
-A regra atual é:
+The current rule is:
 
 ```text
 op_type ∈ WEIGHT_OPERATORS
           │
-          ├── sim → analisar parâmetros
+          ├── yes → analyze parameters
           │
-          └── não → ignorar
+          └── no → skip
 ```
 
 ---
 
-# 8. Operações consideradas
+# 8. Operations considered
 
-O conjunto atual contém:
+The current set contains:
 
 ```text
 CONV_2D
@@ -468,7 +470,7 @@ DEPTHWISE_CONV_2D
 FULLY_CONNECTED
 ```
 
-Outras operações presentes na rede, como:
+Other network operations, such as:
 
 ```text
 ADD
@@ -477,39 +479,39 @@ SOFTMAX
 QUANTIZE
 ```
 
-não passam por essa rotina de extração de pesos e bias.
+do not go through this weight and bias extraction routine.
 
 ---
 
-# 9. Por que manter explicitamente um conjunto?
+# 9. Why keep an explicit set?
 
-Poderíamos escrever:
+We could write:
 
 ```python
 if op_type == "CONV_2D":
 ```
 
-e depois repetir regras.
+and then repeat rules.
 
-Mas:
+But:
 
 ```python
 WEIGHT_OPERATORS
 ```
 
-torna explícito que essas três operações compartilham a mesma convenção estrutural usada pelo extrator:
+makes it explicit that these three operations share the same structural convention used by the extractor:
 
 ```text
-input[0] = ativação
-input[1] = pesos
-input[2] = bias, quando presente
+input[0] = activation
+input[1] = weights
+input[2] = bias, when present
 ```
 
 ---
 
-# 10. Função `extract_weights_and_bias()`
+# 10. The `extract_weights_and_bias()` function
 
-A função principal é:
+The main function is:
 
 ```python
 def extract_weights_and_bias(
@@ -518,20 +520,20 @@ def extract_weights_and_bias(
 ):
 ```
 
-Ela recebe:
+It receives:
 
 ```text
 Model
 SubGraph
 ```
 
-e retorna todos os blocos e índices necessários para localizar os parâmetros posteriormente.
+and returns all blocks and indices needed to locate parameters later.
 
 ---
 
-# 11. Estruturas de bytes
+# 11. Byte structures
 
-No início são criados:
+Initially, it creates:
 
 ```python
 weights_raw = bytearray()
@@ -540,11 +542,11 @@ bias_raw = bytearray()
 
 ---
 
-# 12. Por que `bytearray`?
+# 12. Why `bytearray`?
 
-`bytearray` é uma estrutura binária mutável.
+`bytearray` is a mutable binary structure.
 
-Ela permite fazer:
+It allows:
 
 ```python
 weights_raw.extend(
@@ -552,68 +554,68 @@ weights_raw.extend(
 )
 ```
 
-repetidamente.
+repeatedly.
 
-Isso é conveniente porque o tamanho final ainda não é conhecido.
+This is convenient because the final size is not yet known.
 
-O bloco cresce à medida que os tensors são encontrados.
-
----
-
-# 13. Exemplo
-
-Inicialmente:
-
-```text
-weights_raw = vazio
-```
-
-Depois do primeiro tensor:
-
-```text
-[ PESO A ]
-```
-
-Depois do segundo:
-
-```text
-[ PESO A ][ PESO B ]
-```
-
-Depois do terceiro:
-
-```text
-[ PESO A ][ PESO B ][ PESO C ]
-```
-
-Não existe uma região separada por camada.
-
-Todos os tensors são concatenados.
+The block grows as tensors are found.
 
 ---
 
-# 14. Dicionários de offsets
+# 13. Example
 
-Também são criados:
+Initially:
+
+```text
+weights_raw = empty
+```
+
+After the first tensor:
+
+```text
+[ WEIGHT A ]
+```
+
+After the second:
+
+```text
+[ WEIGHT A ][ WEIGHT B ]
+```
+
+After the third:
+
+```text
+[ WEIGHT A ][ WEIGHT B ][ WEIGHT C ]
+```
+
+There is no separate region per layer.
+
+All tensors are concatenated.
+
+---
+
+# 14. Offset dictionaries
+
+The following are also created:
 
 ```python
 weight_tensor_off = {}
 bias_tensor_off = {}
 ```
 
-Eles relacionam:
+They relate:
 
 ```text
 tensor_id
     ↓
-offset dentro do blob
+offset within the blob
 ```
 
 ---
 
-# 15. Exemplo de `weight_tensor_off`
+# 15. Example of `weight_tensor_off`
 
-Suponha:
+Suppose:
 
 ```text
 tensor 10:
@@ -626,7 +628,7 @@ tensor 30:
 100 bytes
 ```
 
-A concatenação será:
+Concatenation will be:
 
 ```text
 offset
@@ -648,7 +650,7 @@ offset
 1300
 ```
 
-Então:
+Then:
 
 ```python
 weight_tensor_off = {
@@ -660,43 +662,43 @@ weight_tensor_off = {
 
 ---
 
-# 16. Offset não é endereço absoluto
+# 16. An offset is not an absolute address
 
-Essa distinção é fundamental.
+This distinction is fundamental.
 
-Quando temos:
+When we have:
 
 ```python
 weight_tensor_off[20] = 400
 ```
 
-isso NÃO significa:
+this does NOT mean:
 
 ```text
-endereço WASM = 400
+WASM address = 400
 ```
 
-Significa:
+It means:
 
 ```text
-400 bytes depois do início de WEIGHTS
+400 bytes after the start of WEIGHTS
 ```
 
 ---
 
-# 17. Conversão futura
+# 17. Later conversion
 
-Posteriormente:
+Later:
 
 ```text
 WEIGHTS_BASE
 +
 weight_tensor_off[tensor_id]
 =
-endereço absoluto
+absolute address
 ```
 
-Exemplo:
+Example:
 
 ```text
 WEIGHTS_BASE = 2048
@@ -704,7 +706,7 @@ WEIGHTS_BASE = 2048
 offset = 400
 ```
 
-Então:
+Then:
 
 ```text
 wptr =
@@ -715,75 +717,75 @@ wptr =
 
 ---
 
-# 18. Mesmo conceito para bias
+# 18. Same concept for bias
 
-Se:
+If:
 
 ```python
 bias_tensor_off[21] = 128
 ```
 
-e:
+and:
 
 ```text
 BIAS_BASE = 386656
 ```
 
-então:
+then:
 
 ```text
 bias_ptr =
 386656 + 128
 ```
 
-O offset continua relativo ao seu próprio bloco.
+The offset remains relative to its own block.
 
 ---
 
-# 19. Registros para relatório
+# 19. Report records
 
-Também são criados:
+The following are also created:
 
 ```python
 weight_records = []
 bias_records = []
 ```
 
-Essas listas não armazenam o conteúdo binário.
+These lists do not store binary contents.
 
-Armazenam metadados:
+They store metadata:
 
 ```text
-qual operação
-qual tipo
-qual tensor
+which operation
+which type
+which tensor
 offset
-quantidade de bytes
+number of bytes
 shape
 dtype
 ```
 
 ---
 
-# 20. Separação entre dados e metadados
+# 20. Separating data and metadata
 
-Temos:
+We have:
 
 ```text
 weights_raw
     ↓
-dados efetivamente utilizados no runtime
+data actually used by the runtime
 ```
 
-e:
+and:
 
 ```text
 weight_records
     ↓
-informações para rastreabilidade
+traceability information
 ```
 
-Da mesma maneira:
+Similarly:
 
 ```text
 bias_raw
@@ -797,9 +799,9 @@ bias_records
 
 ---
 
-# 21. Varredura dos operadores
+# 21. Scanning operators
 
-A função percorre:
+The function iterates over:
 
 ```python
 for op_idx in range(
@@ -807,11 +809,11 @@ for op_idx in range(
 ):
 ```
 
-Portanto examina todos os operadores do subgrafo, na ordem em que aparecem nele.
+It therefore examines all subgraph operators in their original order.
 
 ---
 
-# 22. Recuperando o operador
+# 22. Retrieving the operator
 
 ```python
 op = subgraph.Operators(
@@ -819,13 +821,13 @@ op = subgraph.Operators(
 )
 ```
 
-Assim temos acesso às entradas daquela operação.
+This provides access to that operation's inputs.
 
 ---
 
-# 23. Identificando o tipo
+# 23. Identifying the type
 
-Depois:
+Then:
 
 ```python
 op_type = op_name(
@@ -834,7 +836,7 @@ op_type = op_name(
 )
 ```
 
-produz algo como:
+produces something like:
 
 ```text
 CONV_2D
@@ -842,27 +844,27 @@ CONV_2D
 
 ---
 
-# 24. Filtragem
+# 24. Filtering
 
-Se:
+If:
 
 ```python
 op_type not in WEIGHT_OPERATORS
 ```
 
-é executado:
+the following executes:
 
 ```python
 continue
 ```
 
-Portanto aquela operação não participa da extração.
+That operation therefore does not participate in extraction.
 
 ---
 
-# 25. Exemplo
+# 25. Example
 
-Uma sequência:
+A sequence:
 
 ```text
 CONV_2D
@@ -874,7 +876,7 @@ FULLY_CONNECTED
 SOFTMAX
 ```
 
-resulta em processamento apenas de:
+results in processing only:
 
 ```text
 CONV_2D
@@ -885,9 +887,9 @@ FULLY_CONNECTED
 
 ---
 
-# 26. Coleta dos IDs de entrada
+# 26. Collecting input IDs
 
-Para uma operação aceita:
+For an accepted operation:
 
 ```python
 input_ids = [
@@ -898,13 +900,13 @@ input_ids = [
 ]
 ```
 
-Essa expressão converte as entradas para uma lista comum de inteiros Python.
+This expression converts inputs into an ordinary list of Python integers.
 
 ---
 
-# 27. Exemplo
+# 27. Example
 
-Se:
+If:
 
 ```text
 op.InputsAsNumpy()
@@ -912,7 +914,7 @@ op.InputsAsNumpy()
 [12, 30, 31]
 ```
 
-o resultado será:
+the result will be:
 
 ```python
 input_ids = [
@@ -924,39 +926,39 @@ input_ids = [
 
 ---
 
-# 28. Entradas negativas
+# 28. Negative inputs
 
-IDs negativos são descartados:
+Negative IDs are discarded:
 
 ```python
 if int(tensor_id) >= 0
 ```
 
-Assim, apenas referências válidas permanecem.
+Only valid references remain.
 
 ---
 
-# 29. Convenção de inputs
+# 29. Input convention
 
-O módulo trabalha com a convenção:
+The module uses the convention:
 
 ```text
-input[0] = ativação
+input[0] = activation
 
-input[1] = pesos
+input[1] = weights
 
 input[2] = bias
 ```
 
-quando o terceiro input existe.
+when the third input exists.
 
-Essa convenção é central para a implementação.
+This convention is central to the implementation.
 
 ---
 
-# 30. Exemplo
+# 30. Example
 
-Uma operação pode possuir:
+An operation may have:
 
 ```python
 input_ids = [
@@ -966,46 +968,46 @@ input_ids = [
 ]
 ```
 
-O módulo interpreta:
+The module interprets:
 
 ```text
-tensor 45 → ativação
+tensor 45 → activation
 
-tensor 46 → pesos
+tensor 46 → weights
 
 tensor 47 → bias
 ```
 
 ---
 
-# 31. Operação sem peso suficiente
+# 31. Operation with insufficient weight inputs
 
-Antes de tentar acessar:
+Before attempting to access:
 
 ```python
 input_ids[1]
 ```
 
-existe:
+there is:
 
 ```python
 if len(input_ids) < 2:
     continue
 ```
 
-Isso evita:
+This prevents:
 
 ```text
 IndexError
 ```
 
-e também indica que aquela operação não possui a estrutura mínima esperada para extração de pesos.
+and indicates that the operation lacks the minimum structure expected for weight extraction.
 
 ---
 
-# 32. Extração do tensor de pesos
+# 32. Extracting the weight tensor
 
-O peso é identificado por:
+The weight is identified by:
 
 ```python
 weight_tensor_id = (
@@ -1015,9 +1017,9 @@ weight_tensor_id = (
 
 ---
 
-# 33. Leitura do peso
+# 33. Reading the weight
 
-Depois:
+Then:
 
 ```python
 (
@@ -1031,23 +1033,23 @@ Depois:
 )
 ```
 
-São recebidas três representações.
+Three representations are received.
 
 ---
 
 # 34. `weight_tensor`
 
-É o próprio objeto TFLite.
+This is the TFLite object itself.
 
-Na implementação atual ele é atribuído à variável:
+In the current implementation, it is assigned to:
 
 ```python
 weight_tensor
 ```
 
-mas não é utilizado posteriormente dentro da função.
+but is not used later in the function.
 
-Sua presença decorre da interface uniforme de:
+Its presence follows from the uniform interface of:
 
 ```python
 safe_bytes_from_tensor()
@@ -1057,9 +1059,9 @@ safe_bytes_from_tensor()
 
 # 35. `weight_array`
 
-É o array NumPy contendo os valores dos pesos.
+This is the NumPy array containing weight values.
 
-Ele fornece informações como:
+It provides information such as:
 
 ```text
 shape
@@ -1067,13 +1069,13 @@ dtype
 ndim
 ```
 
-Exemplo:
+Example:
 
 ```python
 weight_array.shape
 ```
 
-e:
+and:
 
 ```python
 weight_array.dtype
@@ -1083,9 +1085,9 @@ weight_array.dtype
 
 # 36. `weight_raw`
 
-É o bloco de bytes linear correspondente ao tensor.
+This is the tensor's corresponding linear byte block.
 
-É essa representação que será concatenada em:
+This representation will be concatenated into:
 
 ```python
 weights_raw
@@ -1093,15 +1095,15 @@ weights_raw
 
 ---
 
-# 37. Condição de inserção
+# 37. Insertion condition
 
-O tensor só é incluído se:
+The tensor is included only if:
 
 ```python
 weight_array is not None
 ```
 
-e:
+and:
 
 ```python
 weight_tensor_id
@@ -1110,88 +1112,88 @@ not in weight_tensor_off
 
 ---
 
-# 38. Primeira condição
+# 38. First condition
 
 ```python
 weight_array is not None
 ```
 
-significa que:
+means that:
 
 ```text
 safe_bytes_from_tensor()
 ```
 
-conseguiu efetivamente recuperar e interpretar o buffer.
+successfully retrieved and interpreted the buffer.
 
 ---
 
-# 39. Segunda condição
+# 39. Second condition
 
 ```python
 weight_tensor_id
 not in weight_tensor_off
 ```
 
-evita inserir o mesmo tensor mais de uma vez.
+prevents inserting the same tensor more than once.
 
 ---
 
-# 40. Por que a deduplicação é importante?
+# 40. Why is deduplication important?
 
-Pode existir uma situação em que mais de uma operação faça referência ao mesmo tensor constante.
+Multiple operations may reference the same constant tensor.
 
-Sem a verificação:
+Without the check:
 
 ```text
 tensor X
 ```
 
-poderia aparecer duas vezes em:
+could appear twice in:
 
 ```text
 weights_raw
 ```
 
-desperdiçando memória.
+wasting memory.
 
 ---
 
-# 41. Exemplo de compartilhamento
+# 41. Sharing example
 
-Suponha:
-
-```text
-Op10 utiliza tensor 50
-
-Op20 também utiliza tensor 50
-```
-
-Na primeira ocorrência:
+Suppose:
 
 ```text
-tensor 50 → extraído
+Op10 uses tensor 50
+
+Op20 also uses tensor 50
 ```
 
-Na segunda:
+At the first occurrence:
 
 ```text
-tensor 50 já existe em weight_tensor_off
+tensor 50 → extracted
 ```
 
-Logo:
+At the second:
 
 ```text
-não é duplicado
+tensor 50 already exists in weight_tensor_off
 ```
 
-Ambas as operações poderão utilizar o mesmo offset.
+Therefore:
+
+```text
+it is not duplicated
+```
+
+Both operations can use the same offset.
 
 ---
 
-# 42. Determinação do offset
+# 42. Determining the offset
 
-Antes de inserir os bytes:
+Before inserting bytes:
 
 ```python
 offset = len(
@@ -1199,19 +1201,19 @@ offset = len(
 )
 ```
 
-O comprimento atual do bloco é exatamente o próximo endereço relativo livre.
+The block's current length is exactly the next free relative address.
 
 ---
 
-# 43. Exemplo
+# 43. Example
 
-Se:
+If:
 
 ```text
-weights_raw contém 15.000 bytes
+weights_raw contains 15,000 bytes
 ```
 
-então o próximo tensor começa em:
+so the next tensor starts at:
 
 ```text
 offset = 15000
@@ -1219,9 +1221,9 @@ offset = 15000
 
 ---
 
-# 44. Registro do offset
+# 44. Recording the offset
 
-Depois:
+Then:
 
 ```python
 weight_tensor_off[
@@ -1229,7 +1231,7 @@ weight_tensor_off[
 ] = offset
 ```
 
-Exemplo:
+Example:
 
 ```python
 weight_tensor_off[50] = 15000
@@ -1237,7 +1239,7 @@ weight_tensor_off[50] = 15000
 
 ---
 
-# 45. Inserção dos bytes
+# 45. Inserting bytes
 
 ```python
 weights_raw.extend(
@@ -1245,13 +1247,13 @@ weights_raw.extend(
 )
 ```
 
-Os bytes são concatenados imediatamente após o conteúdo anterior.
+Bytes are concatenated immediately after the preceding contents.
 
 ---
 
-# 46. Layout progressivo
+# 46. Progressive layout
 
-Antes:
+Before:
 
 ```text
 weights_raw
@@ -1259,40 +1261,40 @@ weights_raw
 [ A ][ B ]
 ```
 
-Depois:
+Then:
 
 ```text
 weights_raw
 
-[ A ][ B ][ NOVO PESO ]
+[ A ][ B ][ NEW WEIGHT ]
 ```
 
 ---
 
-# 47. Não existe alinhamento entre tensors aqui
+# 47. No alignment between tensors here
 
-Um detalhe importante da implementação atual é que `weights.py` simplesmente concatena os tensors.
+An important detail of the current implementation is that `weights.py` simply concatenates tensors.
 
-Não existe:
+There is no:
 
 ```text
 align_up()
 ```
 
-entre um tensor de pesos e o seguinte.
+between one weight tensor and the next.
 
-Portanto:
+Therefore:
 
 ```text
-offset seguinte =
-offset atual + número de bytes atual
+next offset =
+current offset + current byte count
 ```
 
 ---
 
-# 48. Alinhamento ocorre em outro nível
+# 48. Alignment occurs at another level
 
-O `ALIGN = 16` utilizado pelo projeto participa posteriormente do posicionamento das grandes regiões:
+The project's `ALIGN = 16` is used later when placing the major regions:
 
 ```text
 WEIGHTS
@@ -1304,13 +1306,13 @@ PARAMS
 SLOTS
 ```
 
-Este módulo não insere padding de alinhamento entre os tensors individuais de pesos.
+This module inserts no alignment padding between individual weight tensors.
 
 ---
 
-# 49. Registro de metadados
+# 49. Recording metadata
 
-Depois da inserção é criado:
+After insertion, it creates:
 
 ```python
 {
@@ -1330,35 +1332,35 @@ Depois da inserção é criado:
 
 ---
 
-# 50. Campo `op_index`
+# 50. op_index field
 
-Exemplo:
+Example:
 
 ```text
 op_index = 12
 ```
 
-informa qual operação levou à descoberta daquele tensor.
+indicates which operation led to the discovery of that tensor.
 
 ---
 
-# 51. Campo `op_type`
+# 51. The `op_type` field
 
-Exemplo:
+Example:
 
 ```text
 CONV_2D
 ```
 
-permite identificar semanticamente a operação.
+identifies the operation semantically.
 
 ---
 
-# 52. Campo `tensor_id`
+# 52. The `tensor_id` field
 
-Identifica o tensor original no TFLite.
+Identifies the original TFLite tensor.
 
-Exemplo:
+Example:
 
 ```text
 tensor_id = 78
@@ -1366,15 +1368,15 @@ tensor_id = 78
 
 ---
 
-# 53. Campo `offset`
+# 53. The `offset` field
 
-É a posição relativa dentro de:
+This is the relative position within:
 
 ```text
 weights_raw
 ```
 
-Exemplo:
+Example:
 
 ```text
 offset = 25856
@@ -1382,7 +1384,7 @@ offset = 25856
 
 ---
 
-# 54. Campo `nbytes`
+# 54. The `nbytes` field
 
 ```python
 len(
@@ -1390,13 +1392,13 @@ len(
 )
 ```
 
-informa quantos bytes aquele tensor ocupa.
+indicates how many bytes that tensor occupies.
 
 ---
 
-# 55. Campo `shape`
+# 55. The `shape` field
 
-O código utiliza:
+The code uses:
 
 ```python
 list(
@@ -1404,7 +1406,7 @@ list(
 )
 ```
 
-produzindo algo como:
+producing something like:
 
 ```python
 [
@@ -1417,27 +1419,27 @@ produzindo algo como:
 
 ---
 
-# 56. Por que usar `list(weight_array.shape)`?
+# 56. Why use `list(weight_array.shape)`?
 
-`NumPy.shape` é uma tupla.
+`NumPy.shape` is a tuple.
 
-Por exemplo:
+For example:
 
 ```python
 (32, 3, 3, 3)
 ```
 
-O relatório utiliza uma lista comum:
+The report uses an ordinary list:
 
 ```python
 [32, 3, 3, 3]
 ```
 
-Essa transformação também padroniza a estrutura retornada.
+This conversion also standardizes the returned structure.
 
 ---
 
-# 57. Campo `dtype`
+# 57. The `dtype` field
 
 ```python
 str(
@@ -1445,7 +1447,7 @@ str(
 )
 ```
 
-produz uma representação textual como:
+produces a text representation such as:
 
 ```text
 int8
@@ -1453,83 +1455,83 @@ int8
 
 ---
 
-# 58. Forma dos pesos
+# 58. Weight shape
 
-O módulo não interpreta semanticamente as dimensões do peso.
+The module does not semantically interpret weight dimensions.
 
-Ele apenas registra:
+It only records:
 
 ```python
 weight_array.shape
 ```
 
-e preserva a ordem dos bytes produzida por:
+and preserves the byte order produced by:
 
 ```python
 safe_bytes_from_tensor()
 ```
 
-Ou seja, `weights.py` não faz aqui:
+In other words, `weights.py` does not perform:
 
 ```text
-transposição
-reordenação de canais
-conversão de layout
+transposition
+channel reordering
+layout conversion
 ```
 
 ---
 
-# 59. Consequência
+# 59. Consequence
 
-O código WAT que posteriormente lê os pesos precisa ser compatível com a disposição serializada pelo pipeline.
+The WAT code that later reads the weights must be compatible with the layout serialized by the pipeline.
 
-Este módulo apenas:
+This module only:
 
 ```text
-lê
-concatena
-registra offset
+reads
+concatenates
+records offsets
 ```
 
 ---
 
-# 60. Início da extração de bias
+# 60. Starting bias extraction
 
-Depois dos pesos:
+After weights:
 
 ```python
 if len(input_ids) < 3:
     continue
 ```
 
-Se não existir um terceiro input, a operação não possui bias tratado por esta função.
+If there is no third input, the operation has no bias handled by this function.
 
 ---
 
-# 61. Isso não cancela a extração do peso
+# 61. This does not cancel weight extraction
 
-É importante observar a posição dessa verificação.
+Notice where this check occurs.
 
-O peso já foi processado antes.
+The weight has already been processed.
 
-Logo:
+Therefore:
 
 ```text
 2 inputs
 ```
 
-pode resultar em:
+may result in:
 
 ```text
-peso extraído
-bias inexistente
+weight extracted
+no bias
 ```
 
 ---
 
-# 62. Identificação do bias
+# 62. Identifying bias
 
-Quando existe terceiro input:
+When a third input exists:
 
 ```python
 bias_tensor_id = (
@@ -1539,7 +1541,7 @@ bias_tensor_id = (
 
 ---
 
-# 63. Leitura do bias
+# 63. Reading bias
 
 ```python
 (
@@ -1555,41 +1557,41 @@ bias_tensor_id = (
 
 ---
 
-# 64. Nomenclatura `bias_raw_tensor`
+# 64. The name `bias_raw_tensor`
 
-Aqui o nome é diferente de:
+Here the name differs from:
 
 ```python
 bias_raw
 ```
 
-porque:
+because:
 
 ```text
 bias_raw_tensor
 ```
 
-representa apenas o tensor atualmente extraído,
+represents only the tensor currently being extracted,
 
-enquanto:
+while:
 
 ```text
 bias_raw
 ```
 
-é o blob completo acumulado.
+is the complete accumulated blob.
 
 ---
 
-# 65. Exemplo
+# 65. Example
 
 ```text
 bias_raw_tensor
 =
-bytes de um único bias
+bytes of a single bias tensor
 ```
 
-Enquanto:
+While:
 
 ```text
 bias_raw
@@ -1601,25 +1603,25 @@ bias_raw
 
 # 66. `bias_tensor`
 
-Assim como:
+As with:
 
 ```python
 weight_tensor
 ```
 
-a variável:
+the variable:
 
 ```python
 bias_tensor
 ```
 
-é recebida de `safe_bytes_from_tensor()` mas não é utilizada posteriormente na função atual.
+is received from `safe_bytes_from_tensor()` but is not used later in the current function.
 
 ---
 
-# 67. Condições para inserir bias
+# 67. Conditions for inserting bias
 
-A condição é:
+The condition is:
 
 ```python
 if (
@@ -1630,29 +1632,29 @@ if (
 ):
 ```
 
-Existem três verificações.
+There are three checks.
 
 ---
 
-# 68. Bias precisa existir
+# 68. Bias must exist
 
 ```python
 bias_array is not None
 ```
 
-indica que o buffer pôde ser recuperado.
+indicates that the buffer could be retrieved.
 
 ---
 
-# 69. Bias precisa ser unidimensional
+# 69. Bias must be one-dimensional
 
 ```python
 bias_array.ndim == 1
 ```
 
-é uma validação estrutural adicional.
+is an additional structural check.
 
-Exemplo aceito:
+Accepted example:
 
 ```text
 shape = [32]
@@ -1660,52 +1662,52 @@ shape = [32]
 
 ---
 
-# 70. Exemplo não aceito
+# 70. Rejected example
 
-Algo como:
+Something like:
 
 ```text
 shape = [1, 32]
 ```
 
-possui:
+has:
 
 ```text
 ndim = 2
 ```
 
-e portanto não seria inserido por esta implementação.
+and would therefore not be inserted by this implementation.
 
 ---
 
-# 71. Por que essa verificação é útil?
+# 71. Why is this check useful?
 
-Ela garante que a estrutura utilizada pelo runtime para bias corresponda ao formato que o restante do projeto espera.
+It ensures that the runtime's bias structure matches the format expected by the rest of the project.
 
-O módulo não tenta corrigir ou remodelar um bias com shape inesperado.
+The module does not attempt to fix or reshape bias with an unexpected shape.
 
 ---
 
-# 72. Deduplicação do bias
+# 72. Bias deduplication
 
-A terceira condição:
+The third condition:
 
 ```python
 bias_tensor_id
 not in bias_tensor_off
 ```
 
-possui a mesma finalidade usada nos pesos:
+has the same purpose as for weights:
 
 ```text
-não armazenar duas vezes o mesmo tensor constante
+avoid storing the same constant tensor twice
 ```
 
 ---
 
-# 73. Offset do bias
+# 73. Bias offset
 
-O offset é:
+The offset is:
 
 ```python
 offset = len(
@@ -1713,21 +1715,21 @@ offset = len(
 )
 ```
 
-Exemplo:
+Example:
 
 ```text
-bias_raw atual = 1024 bytes
+current bias_raw = 1024 bytes
 ```
 
-Então:
+Then:
 
 ```text
-novo bias começa no offset 1024
+new bias starts at offset 1024
 ```
 
 ---
 
-# 74. Registro
+# 74. Recording
 
 ```python
 bias_tensor_off[
@@ -1737,7 +1739,7 @@ bias_tensor_off[
 
 ---
 
-# 75. Concatenação
+# 75. Concatenation
 
 ```python
 bias_raw.extend(
@@ -1747,9 +1749,9 @@ bias_raw.extend(
 
 ---
 
-# 76. Registro de metadados
+# 76. Recording metadata
 
-A estrutura é equivalente à dos pesos:
+The structure is equivalent to that used for weights:
 
 ```python
 {
@@ -1771,36 +1773,36 @@ A estrutura é equivalente à dos pesos:
 
 ---
 
-# 77. Exemplo de bias
+# 77. Bias example
 
-Suponha:
+Suppose:
 
 ```text
 shape = [32]
 dtype = int32
 ```
 
-Como:
+Since:
 
 ```text
 32 × 4 bytes = 128 bytes
 ```
 
-o registro pode conter:
+the record may contain:
 
 ```text
 bytes = 128
 ```
 
-O tamanho real é obtido diretamente do buffer serializado.
+The actual size comes directly from the serialized buffer.
 
 ---
 
-# 78. Dois blobs independentes
+# 78. Two independent blobs
 
-Pesos e bias não são misturados.
+Weights and biases are not mixed.
 
-Temos:
+We have:
 
 ```text
 weights_raw
@@ -1808,7 +1810,7 @@ weights_raw
 [W0][W1][W2][W3]...
 ```
 
-e separadamente:
+and separately:
 
 ```text
 bias_raw
@@ -1818,30 +1820,30 @@ bias_raw
 
 ---
 
-# 79. Por que separar?
+# 79. Why separate them?
 
-Posteriormente o layout de memória possui:
+Later, the memory layout has:
 
 ```text
 WEIGHTS_BASE
 ```
 
-e:
+and:
 
 ```text
 BIAS_BASE
 ```
 
-independentes.
+independently.
 
-Isso permite calcular:
+This allows calculating:
 
 ```text
 wptr =
 WEIGHTS_BASE + weight_offset
 ```
 
-e:
+and:
 
 ```text
 bias_ptr =
@@ -1850,18 +1852,18 @@ BIAS_BASE + bias_offset
 
 ---
 
-# 80. Relação com `LayerParam`
+# 80. Relationship with `LayerParam`
 
-Mais tarde uma convolução pode possuir:
+Later, a convolution may have:
 
 ```text
 wptr
 bias_ptr
 ```
 
-Esses ponteiros são calculados usando os mapas gerados aqui.
+These pointers are calculated using the maps generated here.
 
-Fluxo:
+Flow:
 
 ```text
 weight tensor_id
@@ -1875,7 +1877,7 @@ WEIGHTS_BASE + offset
 wptr
 ```
 
-E:
+And:
 
 ```text
 bias tensor_id
@@ -1891,9 +1893,9 @@ bias_ptr
 
 ---
 
-# 81. Retorno da função
+# 81. Function return value
 
-Ao final:
+At the end:
 
 ```python
 return {
@@ -1901,19 +1903,19 @@ return {
 }
 ```
 
-é criada uma estrutura única contendo dados e metadados.
+a single structure is created with data and metadata.
 
 ---
 
-# 82. Conversão de `bytearray` para `bytes`
+# 82. Converting `bytearray` to `bytes`
 
-O retorno utiliza:
+The return value uses:
 
 ```python
 "bytes_raw": bytes(...)
 ```
 
-mais especificamente:
+more specifically:
 
 ```python
 "weights_raw": bytes(
@@ -1921,7 +1923,7 @@ mais especificamente:
 )
 ```
 
-e:
+and:
 
 ```python
 "bias_raw": bytes(
@@ -1931,15 +1933,15 @@ e:
 
 ---
 
-# 83. Por que converter?
+# 83. Why convert?
 
-Durante a construção precisamos de mutabilidade:
+During construction, we need mutability:
 
 ```text
 bytearray
 ```
 
-Depois que a extração terminou, o blob pode ser tratado como dados binários prontos:
+Once extraction finishes, the blob can be treated as ready binary data:
 
 ```text
 bytes
@@ -1947,27 +1949,27 @@ bytes
 
 ---
 
-# 84. Ciclo de vida
+# 84. Lifecycle
 
 ```text
-início
+start
   ↓
-bytearray mutável
+mutable bytearray
   ↓
 extend()
 extend()
 extend()
   ↓
-extração concluída
+extraction complete
   ↓
-bytes imutáveis
+immutable bytes
 ```
 
 ---
 
-# 85. Estrutura retornada
+# 85. Returned structure
 
-O resultado possui:
+The result has:
 
 ```python
 {
@@ -1982,9 +1984,9 @@ O resultado possui:
 
 ---
 
-# 86. Dados necessários para execução
+# 86. Data needed for execution
 
-Os campos diretamente utilizados posteriormente na geração do artefato são principalmente:
+The fields directly used later to generate the artifact are mainly:
 
 ```text
 weights_raw
@@ -1996,34 +1998,34 @@ bias_tensor_off
 
 ---
 
-# 87. Dados para relatório
+# 87. Report data
 
-Principalmente:
+Mainly:
 
 ```text
 weight_records
 bias_records
 ```
 
-Embora também seja possível utilizar os blobs para calcular os totais de bytes.
+The blobs can also be used to calculate byte totals.
 
 ---
 
-# 88. Exemplo de saída completa
+# 88. Complete output example
 
-Considere duas operações.
+Consider two operations.
 
 ```text
 Op0 CONV
-peso tensor 10
+weight tensor 10
 bias tensor 11
 
 Op1 CONV
-peso tensor 20
+weight tensor 20
 bias tensor 21
 ```
 
-Suponha:
+Suppose:
 
 ```text
 tensor 10 = 100 bytes
@@ -2093,16 +2095,16 @@ offset 48
 
 ---
 
-# 93. Endereços futuros
+# 93. Future addresses
 
-Se depois:
+If later:
 
 ```text
 WEIGHTS_BASE = 2048
 BIAS_BASE = 10000
 ```
 
-teremos:
+we get:
 
 ```text
 tensor 10:
@@ -2112,7 +2114,7 @@ tensor 20:
 wptr = 2048 + 100
 ```
 
-e:
+and:
 
 ```text
 tensor 11:
@@ -2124,51 +2126,51 @@ bias_ptr = 10000 + 16
 
 ---
 
-# 94. Offsets independentes
+# 94. Independent offsets
 
-Note que:
+Notice that:
 
 ```text
 weight offset = 0
 ```
 
-e:
+and:
 
 ```text
 bias offset = 0
 ```
 
-podem coexistir.
+can coexist.
 
-Não há conflito porque pertencem a regiões diferentes.
-
----
-
-# 95. Importante: offset lógico por blob
-
-Portanto:
-
-```text
-offset 128 em weights_raw
-```
-
-e:
-
-```text
-offset 128 em bias_raw
-```
-
-são posições completamente diferentes.
-
-Sempre é necessário interpretar o offset junto com sua base.
+There is no conflict because they belong to different regions.
 
 ---
 
-# 96. Relação com o TFLite
+# 95. Important: logical offset per blob
 
-No arquivo TFLite, cada tensor constante pode apontar para seu próprio buffer.
+Therefore:
 
-Conceitualmente:
+```text
+offset 128 in weights_raw
+```
+
+and:
+
+```text
+offset 128 in bias_raw
+```
+
+are completely different positions.
+
+An offset must always be interpreted together with its base.
+
+---
+
+# 96. Relationship with TFLite
+
+In a TFLite file, each constant tensor may point to its own buffer.
+
+Conceptually:
 
 ```text
 Tensor W0 → Buffer X
@@ -2177,7 +2179,7 @@ Tensor W1 → Buffer Z
 ...
 ```
 
-O módulo reorganiza isso para:
+The module reorganizes this into:
 
 ```text
 WEIGHTS
@@ -2192,29 +2194,29 @@ B0 | B1 | B2 | B3 | ...
 
 ---
 
-# 97. Transformação estrutural
+# 97. Structural transformation
 
-Portanto este módulo realiza uma verdadeira transformação de representação:
+This module therefore transforms the representation:
 
 ```text
-buffers distribuídos no TFLite
+buffers distributed throughout TFLite
           ↓
-blobs contínuos do runtime
+contiguous runtime blobs
 ```
 
 ---
 
-# 98. Ele não altera os valores
+# 98. It does not change values
 
-Apesar de reorganizar a localização, o código não modifica numericamente os valores extraídos.
+Although locations are reorganized, the code does not numerically modify extracted values.
 
-Ele recebe:
+It receives:
 
 ```python
 weight_raw
 ```
 
-e faz:
+and performs:
 
 ```python
 weights_raw.extend(
@@ -2224,24 +2226,24 @@ weights_raw.extend(
 
 ---
 
-# 99. Ausência de conversão de tipo
+# 99. No type conversion
 
-Não há aqui:
+There is no:
 
 ```text
 int8 → float32
 int32 → int8
 ```
 
-nem qualquer outra conversão numérica explícita.
+or any other explicit numeric conversion here.
 
-O dtype original interpretado por `safe_bytes_from_tensor()` é preservado na representação serializada retornada por essa função.
+The original dtype interpreted by `safe_bytes_from_tensor()` is preserved in the serialized representation returned by that function.
 
 ---
 
-# 100. Ausência de quantização neste módulo
+# 100. No quantization in this module
 
-Embora os pesos sejam quantizados no modelo utilizado, `weights.py` não calcula:
+Although the model's weights are quantized, `weights.py` does not calculate:
 
 ```text
 scale
@@ -2251,7 +2253,7 @@ shift
 Q6
 ```
 
-Essa responsabilidade pertence a:
+This responsibility belongs to:
 
 ```text
 quantization.py
@@ -2259,47 +2261,47 @@ quantization.py
 
 ---
 
-# 101. Separação importante
+# 101. Important separation
 
 ```text
 weights.py
     ↓
-quais são os bytes dos pesos?
-onde cada tensor fica no blob?
+what are the weight bytes?
+where is each tensor in the blob?
 
 
 quantization.py
     ↓
-como a saída acumulada deve ser requantizada?
+how should the accumulated output be requantized?
 ```
 
-São problemas diferentes.
+These are different problems.
 
 ---
 
-# 102. Ausência de endereço absoluto
+# 102. No absolute address
 
-Também não são calculados:
+The following are not calculated either:
 
 ```text
 WEIGHTS_BASE
 BIAS_BASE
 ```
 
-Essa responsabilidade pertence ao planejamento de memória.
+This responsibility belongs to memory planning.
 
 ---
 
-# 103. Separação
+# 103. Separation
 
 ```text
 weights.py
    ↓
-offset relativo
+relative offset
 
 memory.py
    ↓
-base absoluta
+absolute base
 
 layer_params.py
    ↓
@@ -2308,9 +2310,9 @@ base + offset
 
 ---
 
-# 104. Relação com `memory.py`
+# 104. Relationship with `memory.py`
 
-`memory.py` utiliza os tamanhos:
+`memory.py` uses the sizes:
 
 ```python
 len(
@@ -2318,7 +2320,7 @@ len(
 )
 ```
 
-e:
+and:
 
 ```python
 len(
@@ -2326,9 +2328,9 @@ len(
 )
 ```
 
-para planejar onde cada região será colocada.
+to plan where each region will be placed.
 
-Exemplo:
+Example:
 
 ```text
 KERNEL_BASE
@@ -2336,7 +2338,7 @@ KERNEL_BASE
    ├── weights_raw
    │
    ▼
-fim dos pesos
+end of weights
    │
    ▼
 align_up()
@@ -2349,33 +2351,33 @@ BIAS_BASE
 
 ---
 
-# 105. Relação com `wat_generator.py`
+# 105. Relationship with `wat_generator.py`
 
-Na geração final:
+During final generation:
 
 ```text
 weights_raw
 ```
 
-é convertido em um data segment no endereço:
+is converted to a data segment at:
 
 ```text
 WEIGHTS_BASE
 ```
 
-E:
+And:
 
 ```text
 bias_raw
 ```
 
-no endereço:
+at address:
 
 ```text
 BIAS_BASE
 ```
 
-Conceitualmente:
+Conceptually:
 
 ```wat
 (data
@@ -2386,52 +2388,52 @@ Conceitualmente:
 
 ---
 
-# 106. Blobs como artefatos intermediários
+# 106. Blobs as intermediate artifacts
 
-Isso permite enxergar:
+This allows viewing:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-como artefatos binários intermediários independentes do WAT.
+as intermediate binary artifacts independent of WAT.
 
-O gerador WAT apenas os consome.
+The WAT generator simply consumes them.
 
 ---
 
-# 107. Benefício arquitetural
+# 107. Architectural benefit
 
-Antes poderíamos ter:
+Previously we might have:
 
 ```text
-extração de peso
+weight extraction
       ↓
-imediatamente gera string WAT
+immediately generate a WAT string
 ```
 
-Agora temos:
+Now we have:
 
 ```text
-extração
+extraction
    ↓
-bytes estruturados
+structured bytes
    ↓
-layout de memória
+memory layout
    ↓
-gerador
+generator
    ↓
 WAT
 ```
 
-Isso facilita validação e reutilização.
+This makes validation and reuse easier.
 
 ---
 
-# 108. Função `weights_bias_to_text()`
+# 108. The `weights_bias_to_text()` function
 
-A segunda função:
+The second function:
 
 ```python
 def weights_bias_to_text(
@@ -2439,15 +2441,15 @@ def weights_bias_to_text(
 ):
 ```
 
-transforma os metadados em relatório legível.
+converts metadata into a readable report.
 
-Ela não participa da extração.
+It does not participate in extraction.
 
 ---
 
-# 109. Primeira seção: PESOS
+# 109. First section: PESOS (weights)
 
-Começa com:
+It starts with:
 
 ```python
 lines.append(
@@ -2455,7 +2457,7 @@ lines.append(
 )
 ```
 
-e:
+and:
 
 ```python
 lines.append(
@@ -2465,7 +2467,7 @@ lines.append(
 
 ---
 
-# 110. Percorrendo `weight_records`
+# 110. Iterating over `weight_records`
 
 ```python
 for item in extraction[
@@ -2473,17 +2475,17 @@ for item in extraction[
 ]:
 ```
 
-Cada tensor extraído gera uma linha.
+Each extracted tensor produces one line.
 
 ---
 
-# 111. Conteúdo da linha
+# 111. Line contents
 
-O relatório imprime:
+The report prints:
 
 ```text
 op
-tipo da operação
+operation type
 tensor
 offset
 bytes
@@ -2493,9 +2495,9 @@ dtype
 
 ---
 
-# 112. Exemplo
+# 112. Example
 
-Algo semelhante a:
+Something like:
 
 ```text
 op=  3 CONV_2D                  tensor=  12 offset=       0 bytes=     864 shape=[32, 3, 3, 3] dtype=int8
@@ -2503,131 +2505,131 @@ op=  3 CONV_2D                  tensor=  12 offset=       0 bytes=     864 shape
 
 ---
 
-# 113. Campo `op`
+# 113. The `op` field
 
 ```python
 f"op={item['op_index']:3}"
 ```
 
-O especificador:
+The format specifier:
 
 ```text
 :3
 ```
 
-serve apenas para alinhamento visual.
+serves only for visual alignment.
 
 ---
 
-# 114. Campo `op_type`
+# 114. The `op_type` field
 
 ```python
 f"{item['op_type']:25}"
 ```
 
-reserva 25 posições no relatório.
+reserves 25 positions in the report.
 
 ---
 
-# 115. Campo `tensor`
+# 115. The `tensor` field
 
 ```python
 f"tensor={item['tensor_id']:4}"
 ```
 
-permite localizar o tensor no modelo.
+allows locating the tensor in the model.
 
 ---
 
-# 116. Campo `offset`
+# 116. The `offset` field
 
 ```python
 f"offset={item['offset']:8}"
 ```
 
-é o deslocamento relativo dentro de `weights_raw`.
+is the relative displacement within `weights_raw`.
 
-Não é endereço absoluto.
+It is not an absolute address.
 
 ---
 
-# 117. Campo `bytes`
+# 117. The `bytes` field
 
 ```python
 f"bytes={item['nbytes']:8}"
 ```
 
-indica o tamanho daquele tensor.
+indicates that tensor's size.
 
 ---
 
-# 118. Campo `shape`
+# 118. The `shape` field
 
 ```python
 f"shape={item['shape']}"
 ```
 
-mostra as dimensões interpretadas.
+shows the interpreted dimensions.
 
 ---
 
-# 119. Campo `dtype`
+# 119. The `dtype` field
 
 ```python
 f"dtype={item['dtype']}"
 ```
 
-mostra a interpretação dos elementos.
+shows how elements are interpreted.
 
 ---
 
-# 120. Segunda seção: BIAS
+# 120. Second section: BIAS
 
-Depois é gerada:
+Next, it generates:
 
 ```text
 BIAS
 ================================================================================
 ```
 
-utilizando:
+using:
 
 ```python
 bias_records
 ```
 
-com a mesma estrutura de campos.
+with the same field structure.
 
 ---
 
-# 121. Benefício da simetria
+# 121. Benefit of symmetry
 
-O relatório permite comparar facilmente:
+The report makes it easy to compare:
 
 ```text
-operação
-peso
-bias
+operation
+weight
+biases
 ```
 
-mesmo que ambos estejam em blocos diferentes.
+even though both are in different blocks.
 
 ---
 
-# 122. Seção de resumo
+# 122. Summary section
 
-A última parte é:
+The last part is:
 
 ```text
 RESUMO
 ================================================================================
 ```
 
-Ela apresenta quatro totais.
+It presents four totals.
 
 ---
 
-# 123. Quantidade de tensors de peso
+# 123. Number of weight tensors
 
 ```python
 len(
@@ -2639,7 +2641,7 @@ len(
 
 ---
 
-# 124. Quantidade total de bytes dos pesos
+# 124. Total weight bytes
 
 ```python
 len(
@@ -2651,7 +2653,7 @@ len(
 
 ---
 
-# 125. Quantidade de tensors de bias
+# 125. Number of bias tensors
 
 ```python
 len(
@@ -2663,7 +2665,7 @@ len(
 
 ---
 
-# 126. Quantidade total de bytes dos bias
+# 126. Total bias bytes
 
 ```python
 len(
@@ -2675,7 +2677,7 @@ len(
 
 ---
 
-# 127. Exemplo de resumo
+# 127. Summary example
 
 ```text
 RESUMO
@@ -2686,21 +2688,21 @@ Total de tensors de bias: 52
 Total de bytes de bias: 28176
 ```
 
-Os números acima são apenas ilustrativos; o relatório real utiliza os valores da execução.
+These numbers are illustrative; the actual report uses values from the run.
 
 ---
 
-# 128. Por que contagem de registros e contagem de operadores podem diferir?
+# 128. Why can record counts and operator counts differ?
 
-A quantidade de:
+The number of:
 
 ```text
 weight_records
 ```
 
-não precisa obrigatoriamente ser igual ao número de operações examinadas.
+does not have to equal the number of examined operations.
 
-Isso ocorre porque o código deduplica por:
+This is because the code deduplicates by:
 
 ```text
 tensor_id
@@ -2708,26 +2710,26 @@ tensor_id
 
 ---
 
-# 129. Exemplo
+# 129. Example
 
 ```text
-Op10 → peso tensor 50
-Op20 → peso tensor 50
+Op10 → weight tensor 50
+Op20 → weight tensor 50
 ```
 
-Existem:
+There are:
 
 ```text
-2 referências operacionais
+2 operation references
 ```
 
-mas apenas:
+but only:
 
 ```text
-1 tensor armazenado
+1 stored tensor
 ```
 
-Logo:
+Therefore:
 
 ```text
 weight_records = 1
@@ -2735,15 +2737,15 @@ weight_records = 1
 
 ---
 
-# 130. Ordem dos blobs
+# 130. Blob order
 
-A ordem dos tensors em:
+Tensor order within:
 
 ```text
 weights_raw
 ```
 
-é determinada pela primeira vez em que cada tensor é encontrado durante a varredura:
+is determined by the first occurrence of each tensor during the scan:
 
 ```python
 for op_idx in range(
@@ -2753,33 +2755,33 @@ for op_idx in range(
 
 ---
 
-# 131. Consequência
+# 131. Consequence
 
-O layout não é ordenado por:
+The layout is not sorted by:
 
 ```text
 tensor_id
 ```
 
-e nem por:
+or by:
 
 ```text
-tamanho
+size
 ```
 
-Ele segue essencialmente:
+It essentially follows:
 
 ```text
-ordem dos operadores
+operator order
 +
-primeira ocorrência de cada tensor
+first occurrence of each tensor
 ```
 
 ---
 
-# 132. Exemplo
+# 132. Example
 
-Se a varredura encontrar:
+If the scan encounters:
 
 ```text
 tensor 50
@@ -2787,13 +2789,13 @@ tensor 12
 tensor 90
 ```
 
-nessa ordem, o blob será:
+in that order, the blob will be:
 
 ```text
 [ tensor 50 ][ tensor 12 ][ tensor 90 ]
 ```
 
-mesmo que numericamente:
+even though numerically:
 
 ```text
 12 < 50 < 90
@@ -2801,73 +2803,73 @@ mesmo que numericamente:
 
 ---
 
-# 133. Por que isso não é problema?
+# 133. Why is this not a problem?
 
-Porque o runtime não pressupõe a ordem pelo ID.
+Because the runtime does not assume ID order.
 
-Ele utiliza:
+It uses:
 
 ```text
 tensor_id → offset
 ```
 
-Logo a localização real é explicitamente registrada.
+The actual location is explicitly recorded.
 
 ---
 
-# 134. Invariante importante dos offsets
+# 134. Important offset invariant
 
-Para cada tensor armazenado:
+For every stored tensor:
 
 ```text
 offset + nbytes
 ```
 
-não deve ultrapassar:
+must not exceed:
 
 ```text
 len(blob)
 ```
 
-Exemplo:
+Example:
 
 ```text
 offset = 1000
 nbytes = 200
 ```
 
-Então os bytes ocupam:
+The bytes therefore occupy:
 
 ```text
 1000 ... 1199
 ```
 
-e:
+and:
 
 ```text
 1200 <= len(weights_raw)
 ```
 
-ao final da construção.
+at the end of construction.
 
 ---
 
-# 135. Contiguidade
+# 135. Contiguity
 
-Como a inserção sempre utiliza:
+Because insertion always uses:
 
 ```python
 offset = len(blob)
 blob.extend(data)
 ```
 
-os tensors ficam contíguos.
+tensors are contiguous.
 
-Não existem lacunas internas criadas por este módulo.
+This module creates no internal gaps.
 
 ---
 
-# 136. Exemplo
+# 136. Example
 
 ```text
 tensor A:
@@ -2883,7 +2885,7 @@ offset = 150
 size = 20
 ```
 
-Logo:
+Therefore:
 
 ```text
 [0..........99][100....149][150...169]
@@ -2891,21 +2893,21 @@ Logo:
 
 ---
 
-# 137. Último offset
+# 137. Last offset
 
-Se o último tensor começa em:
+If the last tensor starts at:
 
 ```text
 offset = 150
 ```
 
-e possui:
+and has:
 
 ```text
 20 bytes
 ```
 
-o tamanho total é:
+the total size is:
 
 ```text
 170 bytes
@@ -2913,35 +2915,35 @@ o tamanho total é:
 
 ---
 
-# 138. Por que offsets relativos são melhores?
+# 138. Why are relative offsets better?
 
-Se `weights.py` calculasse diretamente:
+If `weights.py` directly calculated:
 
 ```text
 wptr = 2448
 ```
 
-ficaria acoplado ao layout físico atual.
+it would be coupled to the current physical layout.
 
-Com offset relativo:
+With a relative offset:
 
 ```text
 tensor → 400
 ```
 
-podemos mudar:
+we can change:
 
 ```text
 WEIGHTS_BASE
 ```
 
-sem reextrair ou reorganizar internamente os pesos.
+without extracting again or internally reorganizing weights.
 
 ---
 
-# 139. Exemplo
+# 139. Example
 
-Hoje:
+Today:
 
 ```text
 WEIGHTS_BASE = 2048
@@ -2949,7 +2951,7 @@ offset = 400
 wptr = 2448
 ```
 
-Amanhã:
+Tomorrow:
 
 ```text
 WEIGHTS_BASE = 4096
@@ -2957,57 +2959,57 @@ offset = 400
 wptr = 4496
 ```
 
-O blob permanece o mesmo.
+The blob remains the same.
 
 ---
 
-# 140. Separação entre conteúdo e posicionamento
+# 140. Separating contents and placement
 
-Essa é uma decisão arquitetural importante:
+This is an important architectural decision:
 
 ```text
 weights.py
    ↓
-conteúdo + offsets internos
+contents + internal offsets
 ```
 
 ```text
 memory.py
    ↓
-onde o bloco inteiro começa
+where the entire block starts
 ```
 
 ```text
 layer_params.py
    ↓
-endereço final usado pela operação
+final address used by the operation
 ```
 
 ---
 
-# 141. Relação com `params_blob`
+# 141. Relationship with `params_blob`
 
-Posteriormente a `LayerParam` de uma convolução contém:
+Later, a convolution's `LayerParam` contains:
 
 ```text
 wptr
 bias_ptr
 ```
 
-Não contém apenas:
+It does not contain only:
 
 ```text
 tensor_id
 ```
 
-Por isso os offsets deste módulo precisam ser convertidos em ponteiros antes da serialização.
+This module's offsets must therefore be converted into pointers before serialization.
 
 ---
 
-# 142. Fluxo completo dos pesos
+# 142. Complete weight flow
 
 ```text
-TFLite tensor de peso
+TFLite weight tensor
         │
         ▼
 safe_bytes_from_tensor()
@@ -3037,10 +3039,10 @@ WAT/WASM
 
 ---
 
-# 143. Fluxo completo do bias
+# 143. Complete bias flow
 
 ```text
-TFLite tensor de bias
+TFLite bias tensor
         │
         ▼
 safe_bytes_from_tensor()
@@ -3070,39 +3072,39 @@ WAT/WASM
 
 ---
 
-# 144. Diferença para `tensor_mapping.py`
+# 144. Difference from `tensor_mapping.py`
 
-`tensor_mapping.py` trata tensors de ativação:
+`tensor_mapping.py` handles activation tensors:
 
 ```text
 tensor → SLOT
 ```
 
-`weights.py` trata tensors constantes:
+`weights.py` handles constant tensors:
 
 ```text
 tensor → OFFSET
 ```
 
-Essa distinção é fundamental.
+This distinction is fundamental.
 
 ---
 
-# 145. Comparação
+# 145. Comparison
 
-| Tipo de tensor | Estrutura           |
+| Tensor type | Structure |
 | -------------- | ------------------- |
-| Ativação       | `tensor_to_slot`    |
-| Peso           | `weight_tensor_off` |
-| Bias           | `bias_tensor_off`   |
+| Activation | `tensor_to_slot` |
+| Weight | `weight_tensor_off` |
+| Bias | `bias_tensor_off` |
 
-Posteriormente todos serão convertidos em endereços de memória.
+All will later be converted into memory addresses.
 
 ---
 
-# 146. Exemplo completo de uma convolução
+# 146. Complete convolution example
 
-Suponha:
+Suppose:
 
 ```text
 CONV_2D
@@ -3112,20 +3114,20 @@ input[1] = tensor 101
 input[2] = tensor 102
 ```
 
-Após etapas anteriores:
+After previous stages:
 
 ```text
 tensor 100 → SLOT1
 ```
 
-Após `weights.py`:
+After `weights.py`:
 
 ```text
 tensor 101 → weight offset 5000
 tensor 102 → bias offset 256
 ```
 
-Depois do layout:
+After layout:
 
 ```text
 SLOT1_BASE = 700000
@@ -3135,7 +3137,7 @@ WEIGHTS_BASE = 2048
 BIAS_BASE = 386656
 ```
 
-Os ponteiros tornam-se:
+The pointers become:
 
 ```text
 in_ptr =
@@ -3156,37 +3158,37 @@ bias_ptr =
 386912
 ```
 
-Essa é a informação que finalmente será serializada para o runtime.
+This information will ultimately be serialized for the runtime.
 
 ---
 
-# 147. Por que pesos não precisam de slot?
+# 147. Why do weights not need slots?
 
-Pesos não são produzidos durante a inferência.
+Weights are not produced during inference.
 
-Eles já existem antes da primeira imagem.
+They exist before the first image.
 
-Portanto sua vida útil é conceitualmente:
+Their lifetime is therefore conceptually:
 
 ```text
-início do módulo
+module start
         ↓
-toda a inferência
+entire inference
         ↓
-fim
+end
 ```
 
-Não faz sentido tratá-los como ativações temporárias reutilizáveis.
+It makes no sense to treat them as reusable temporary activations.
 
 ---
 
-# 148. Por que bias também não precisa de slot?
+# 148. Why does bias also not need a slot?
 
-Pelo mesmo motivo.
+For the same reason.
 
-O bias é constante durante a execução.
+Bias is constant during execution.
 
-Ele reside em sua região permanente:
+It resides in its permanent region:
 
 ```text
 BIAS
@@ -3194,17 +3196,17 @@ BIAS
 
 ---
 
-# 149. Custo de memória
+# 149. Memory cost
 
-O tamanho de:
+The size of:
 
 ```text
 weights_raw
 ```
 
-contribui diretamente para o consumo de memória linear.
+directly contributes to linear memory consumption.
 
-Portanto esta etapa também produz uma das principais informações necessárias ao cálculo posterior de:
+This stage therefore provides key information for later calculation of:
 
 ```text
 MEM_END
@@ -3213,163 +3215,163 @@ MEM_PAGES
 
 ---
 
-# 150. Dados extraídos versus dados calculados
+# 150. Extracted data versus calculated data
 
-Os bytes de:
+The bytes of:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-vêm do modelo.
+come from the model.
 
-Já os offsets:
+The offsets:
 
 ```text
 weight_tensor_off
 bias_tensor_off
 ```
 
-são construídos pelo extrator.
+are built by the extractor.
 
-Portanto temos:
+We therefore have:
 
 ```text
-dados extraídos
+extracted data
     ↓
 raw bytes
 ```
 
-e:
+and:
 
 ```text
-dados derivados
+derived data
     ↓
 offsets
 ```
 
 ---
 
-# 151. O que este módulo deliberadamente não faz
+# 151. What this module deliberately does not do
 
-`weights.py` não:
+`weights.py` does not:
 
 ```text
-calcula scales
-calcula zero points
-calcula multiplier
-calcula shift
-calcula Q6
+calculate scales
+calculate zero points
+calculate multiplier
+calculate shift
+calculate Q6
 
-calcula WEIGHTS_BASE
-calcula BIAS_BASE
+calculate WEIGHTS_BASE
+calculate BIAS_BASE
 
-calcula slots
-calcula ponteiros finais
+calculate slots
+calculate final pointers
 
-gera LayerParam
-gera WAT
+generate LayerParam
+generate WAT
 ```
 
 ---
 
-# 152. Responsabilidade exata
+# 152. Exact responsibility
 
-Ele responde apenas:
+It only answers:
 
 ```text
-quais bytes pertencem aos pesos?
+which bytes belong to weights?
 
-quais bytes pertencem aos bias?
+which bytes belong to biases?
 
-em que offset interno cada tensor foi colocado?
+at which internal offset was each tensor placed?
 ```
 
 ---
 
-# 153. Validação atual
+# 153. Current validation
 
-O módulo possui algumas validações implícitas.
+The module has some implicit checks.
 
-Para pesos:
+For weights:
 
 ```text
-operação suportada
-mínimo 2 inputs
-buffer recuperável
-tensor ainda não armazenado
+supported operation
+at least 2 inputs
+retrievable buffer
+tensor not yet stored
 ```
 
-Para bias:
+For biases:
 
 ```text
-mínimo 3 inputs
-buffer recuperável
-array unidimensional
-tensor ainda não armazenado
+at least 3 inputs
+retrievable buffer
+one-dimensional array
+tensor not yet stored
 ```
 
 ---
 
-# 154. O que não é validado aqui?
+# 154. What is not validated here?
 
-O módulo não verifica explicitamente:
+The module does not explicitly check:
 
 ```text
-se o dtype do peso é exatamente o esperado pelo runtime
+whether the weight dtype exactly matches runtime expectations
 
-se o dtype do bias é exatamente o esperado
+whether the bias dtype exactly matches expectations
 
-se o número de elementos do bias coincide com o número de canais
+whether the bias element count matches the channel count
 
-se o shape dos pesos é semanticamente compatível com a operação
+whether the weight shape is semantically compatible with the operation
 ```
 
-Ele registra:
+It records:
 
 ```text
 shape
 dtype
 ```
 
-para inspeção, mas não impõe essas propriedades aqui.
+for inspection, but does not enforce these properties here.
 
 ---
 
-# 155. Por que isso importa?
+# 155. Why does this matter?
 
-Se futuramente o extrator aceitar modelos mais variados, poderá ser desejável transformar essas expectativas em validações formais.
+If the extractor accepts more varied models in the future, these expectations may warrant formal validation.
 
-No estado atual, a responsabilidade está concentrada em extrair corretamente o modelo utilizado pelo projeto.
+Currently, the focus is on correctly extracting the model used by the project.
 
 ---
 
-# 156. Variáveis `weight_tensor` e `bias_tensor`
+# 156. The `weight_tensor` and `bias_tensor` variables
 
-O código possui:
+The code has:
 
 ```python
 weight_tensor
 ```
 
-e:
+and:
 
 ```python
 bias_tensor
 ```
 
-mas elas não são usadas após a chamada.
+but they are not used after the call.
 
-Isso não representa erro funcional.
+This is not a functional error.
 
-A função:
+The function:
 
 ```python
 safe_bytes_from_tensor()
 ```
 
-retorna sempre três componentes:
+always returns three components:
 
 ```text
 tensor
@@ -3377,13 +3379,13 @@ array
 raw
 ```
 
-e `weights.py` utiliza apenas os dois últimos.
+and `weights.py` uses only the last two.
 
 ---
 
-# 157. Poderiam ser substituídas por `_`?
+# 157. Could they be replaced with `_`?
 
-Tecnicamente seria possível escrever:
+Technically, one could write:
 
 ```python
 (
@@ -3393,20 +3395,20 @@ Tecnicamente seria possível escrever:
 ) = safe_bytes_from_tensor(...)
 ```
 
-Mas a implementação atual mantém os nomes explícitos.
+The current implementation retains the explicit names.
 
-Para a documentação é importante apenas registrar que:
+For documentation purposes, it is enough to note that:
 
 ```text
-o objeto Tensor é recuperado,
-mas não participa dos cálculos desta função.
+the Tensor object is retrieved,
+but does not participate in this function's calculations.
 ```
 
 ---
 
-# 158. Ordem determinística
+# 158. Deterministic order
 
-Como a varredura ocorre por:
+Because scanning follows:
 
 ```python
 range(
@@ -3414,29 +3416,29 @@ range(
 )
 ```
 
-e a primeira ocorrência determina o offset, a execução com o mesmo modelo produz a mesma ordem de blobs, desde que a estrutura do modelo permaneça a mesma.
+and the first occurrence determines the offset, running on the same model produces the same blob order, provided the model structure stays the same.
 
-Isso contribui para a reprodutibilidade do artefato.
+This contributes to artifact reproducibility.
 
 ---
 
-# 159. Duplicação evitada
+# 159. Avoiding duplication
 
-A deduplicação ocorre por:
+Deduplication is based on:
 
 ```text
 tensor_id
 ```
 
-e não por comparação dos bytes.
+rather than byte comparison.
 
-Portanto dois tensors diferentes com conteúdo idêntico continuam sendo armazenados separadamente.
+Two different tensors with identical contents are therefore still stored separately.
 
 ---
 
-# 160. Exemplo
+# 160. Example
 
-Se:
+If:
 
 ```text
 tensor 10 = [1,2,3]
@@ -3444,41 +3446,41 @@ tensor 10 = [1,2,3]
 tensor 20 = [1,2,3]
 ```
 
-mas os IDs são diferentes:
+but the IDs differ:
 
 ```text
 10 ≠ 20
 ```
 
-então ambos são armazenados.
+so both are stored.
 
-O módulo não realiza deduplicação por conteúdo.
+The module does not deduplicate by contents.
 
 ---
 
-# 161. Por que essa decisão é simples e segura?
+# 161. Why is this decision simple and safe?
 
-Do ponto de vista estrutural do modelo:
+From the model's structural perspective:
 
 ```text
 tensor 10
 ```
 
-e:
+and:
 
 ```text
 tensor 20
 ```
 
-são objetos distintos.
+are distinct objects.
 
-Compartilhar memória apenas porque os bytes coincidem introduziria uma otimização adicional que o código atual não tenta realizar.
+Sharing memory merely because bytes match would introduce an additional optimization the current code does not attempt.
 
 ---
 
-# 162. Relatório como mecanismo de auditoria
+# 162. The report as an auditing mechanism
 
-Os campos:
+The fields:
 
 ```text
 op_index
@@ -3490,59 +3492,59 @@ shape
 dtype
 ```
 
-permitem verificar praticamente toda a decisão deste módulo sem imprimir os próprios milhares de bytes.
+allow checking almost every decision made by this module without printing thousands of bytes.
 
 ---
 
-# 163. Exemplo de auditoria
+# 163. Audit example
 
-Diante de:
+Given:
 
 ```text
 op=15 CONV_2D tensor=89 offset=15200 bytes=2048 shape=[...] dtype=int8
 ```
 
-podemos verificar:
+we can check:
 
 ```text
-qual operação usa o peso?
+which operation uses the weight?
 
-qual tensor era?
+which tensor was it?
 
-onde foi colocado?
+where was it placed?
 
-quanto ocupa?
+how much space does it occupy?
 
-qual shape foi lido?
+which shape was read?
 
-como seus bytes foram interpretados?
+how were its bytes interpreted?
 ```
 
 ---
 
-# 164. Por que não imprimir os valores dos pesos?
+# 164. Why not print weight values?
 
-Uma rede pode possuir centenas de milhares de parâmetros.
+A network may have hundreds of thousands of parameters.
 
-Gerar:
+Generating:
 
 ```text
-peso[0] = ...
-peso[1] = ...
-peso[2] = ...
+weight[0] = ...
+weight[1] = ...
+weight[2] = ...
 ```
 
-tornaria o relatório enorme e pouco útil.
+would make the report enormous and less useful.
 
-Por isso o relatório trabalha em nível de tensor.
+The report therefore works at tensor level.
 
 ---
 
-# 165. Blobs e eficiência
+# 165. Blobs and efficiency
 
-Armazenar os parâmetros em blocos contínuos também simplifica a geração do WAT.
+Storing parameters in contiguous blocks also simplifies WAT generation.
 
-Em vez de gerar um segmento por peso:
+Instead of generating a segment for each weight tensor:
 
 ```text
 data W0
@@ -3551,28 +3553,28 @@ data W2
 ...
 ```
 
-o gerador pode inserir um único bloco:
+the generator can insert a single block:
 
 ```text
 WEIGHTS
 ```
 
-e utilizar offsets internos.
+and use internal offsets.
 
 ---
 
-# 166. Representação conceitual final
+# 166. Final conceptual representation
 
 ```text
                       TFLite
                          │
                          ▼
-               operadores suportados
+               supported operators
                          │
            ┌─────────────┴─────────────┐
            ▼                           ▼
        input[1]                    input[2]
-        pesos                        bias
+        weights                      bias
            │                           │
            ▼                           ▼
 safe_bytes_from_tensor()   safe_bytes_from_tensor()
@@ -3588,12 +3590,12 @@ safe_bytes_from_tensor()   safe_bytes_from_tensor()
            │                           │
            └─────────────┬─────────────┘
                          ▼
-                 layout de memória
+                 memory layout
 ```
 
 ---
 
-# 167. Papel no pipeline completo
+# 167. Role in the complete pipeline
 
 ```text
 ┌────────────────────────────┐
@@ -3634,20 +3636,20 @@ quantization.py    memory.py
 
 ---
 
-# 168. Síntese
+# 168. Summary
 
-O `weights.py` transforma os parâmetros treináveis originalmente distribuídos entre vários buffers do modelo TFLite em uma representação adequada ao runtime desenvolvido no projeto.
+`weights.py` transforms trainable parameters distributed across multiple TFLite buffers into a representation suitable for the project's runtime.
 
-A transformação principal é:
+The main transformation is:
 
 ```text
 TFLite
 
-tensor de peso
-tensor de peso
-tensor de peso
-tensor de bias
-tensor de bias
+weight tensor
+weight tensor
+weight tensor
+bias tensor
+bias tensor
 
         ↓
 
@@ -3660,39 +3662,39 @@ bias_raw
 [B0][B1][B2]...
 ```
 
-Cada tensor recebe um offset:
+Each tensor receives an offset:
 
 ```text
 tensor_id → offset
 ```
 
-que posteriormente será combinado com uma base de memória:
+which will later be combined with a memory base:
 
 ```text
-endereço =
+address =
 base + offset
 ```
 
-Essa separação é importante porque permite que este módulo cuide exclusivamente do **conteúdo e da organização interna dos parâmetros**, enquanto `memory.py` decide onde os blocos serão posicionados e `layer_params.py` converte os offsets em ponteiros consumidos pelo WebAssembly.
+This separation lets the module focus exclusively on **parameter contents and internal organization**, while `memory.py` decides where blocks are placed and `layer_params.py` converts offsets into pointers consumed by WebAssembly.
 
-O módulo também preserva a rastreabilidade por meio de registros contendo:
+The module also preserves traceability through records containing:
 
 ```text
-operação
+operation
 tensor
 offset
-tamanho
+size
 shape
 dtype
 ```
 
-sem misturar esses metadados com o conteúdo binário efetivamente utilizado na inferência.
+without mixing this metadata with the binary contents actually used during inference.
 
-Assim, depois de `weights.py`, o pipeline deixa de possuir apenas referências aos buffers TFLite e passa a possuir dois artefatos binários contínuos e diretamente utilizáveis pelo runtime:
+After `weights.py`, the pipeline has more than TFLite buffer references: it has two contiguous binary artifacts directly usable by the runtime:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-acompanhados dos mapas necessários para localizar cada tensor dentro deles.
+along with the maps needed to locate each tensor within them.

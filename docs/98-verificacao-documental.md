@@ -1,41 +1,44 @@
-# 98 — Verificação da documentação
+﻿# 98 — Documentation verification
 
-[Índice](README.md) · [Limitações e divergências](99-inconsistencias-e-limitacoes.md)
+[English](98-verificacao-documental.md) | [Português (Brasil)](98-verificacao-documental.pt-BR.md)
 
-## Escopo da revisão
+[Index](README.md) · [Limitations and discrepancies](99-inconsistencias-e-limitacoes.md)
 
-A análise começou em 28/09/2026 e a revisão final foi concluída em 29/09/2026. Foram lidos os módulos da aplicação e testes, os dois manifests, os três templates fonte e os relatórios existentes. Os dois TFLite foram abertos pelos bindings do projeto para obter shapes, tipos, escalas, zero points, contagens de operadores e tensores. Os RAWs foram inventariados por pasta e tamanho; o conteúdo de cor de um RAW não fornece metadados autodescritivos, portanto sua interpretação foi documentada conforme manifest e código.
+## Review scope
 
-## Critérios verificados
+Analysis began on September 28, 2026, and the final review was completed on September 29, 2026. The application and test modules, both manifests, all three source templates, and existing reports were read. Both TFLite files were opened with the project's bindings to obtain shapes, types, scales, zero points, and operator and tensor counts. RAW files were inventoried by folder and size; a RAW file's color contents do not provide self-describing metadata, so their interpretation was documented according to the manifest and code.
 
-- Links Markdown locais, caminhos de fontes e arquivos citados como links.
-- Fechamento de blocos de código e alinhamento das caixas dos novos diagramas textuais.
-- Cobertura de cada arquivo Python relevante no inventário e nos capítulos de referência.
-- Ordem dos 29 campos, offsets de quatro bytes e LP_SIZE de 116 bytes.
-- Correspondência entre os manifests e os caminhos/templates documentados.
-- Shapes, dtypes, quantização, contagem/tamanho dos RAWs e layout de memória dos dois pacotes.
-- Distinção entre fontes, artefatos, comportamento executado e propostas de evolução.
-- Preservação dos corpos dos 14 documentos anteriores no diretório `historico/`.
-- Integridade dos arquivos não documentais, comparados por SHA-256 ao início da tarefa.
+## Verification criteria
 
-## Testes executados
+- Local Markdown links, source paths, and files referenced by links.
+- Closed code fences and aligned boxes in the new text diagrams.
+- Coverage of each relevant Python file in the inventory and reference chapters.
+- Order of the 29 fields, four-byte offsets, and the 116-byte LP_SIZE.
+- Agreement between manifests and documented paths/templates.
+- Shapes, dtypes, quantization, RAW counts/sizes, and memory layouts of both packages.
+- Distinction between sources, artifacts, executed behavior, and proposed improvements.
+- Preservation of the bodies of the 14 previous documents in `historico/`.
+- Integrity of non-documentation files, compared by SHA-256 against the start of the task.
+
+## Tests run
 
 ```powershell
 .venv-models/Scripts/python.exe -X utf8 -m unittest discover -s tests -v
 ```
 
-Resultado: **7 testes, todos aprovados**. A suíte inclui o kernel QUANTIZE em WASM e os testes de contrato, caminhos, camada sintética, conversão BGR, interpretação INT8, ranking estável e classificação binária. O [capítulo 11](11-testes.md) explica o alcance exato de cada assertion.
+Result: **7 tests, all passed**. The suite includes the WASM QUANTIZE kernel and tests of the contract, paths, synthetic layer, BGR conversion, INT8 interpretation, stable ranking, and binary classification. [Chapter 11](11-testes.md) explains the exact scope of each assertion.
 
-Não foi necessário regenerar WAT/WASM nem executar novamente as 2000 imagens para esta tarefa de documentação. As métricas nos READMEs foram lidas dos relatórios presentes, e os metadados dos modelos foram inspecionados diretamente. Os testes criam seus próprios arquivos temporários quando necessário.
+Regenerating WAT/WASM or rerunning the 2,000 images was unnecessary for this documentation task. README metrics were read from existing reports, and model metadata was inspected directly. Tests create their own temporary files when needed.
 
-## Resultado e limites
+## Results and limits
 
-Foram verificados **49 arquivos Markdown**, incluindo os READMEs e o histórico,
-com **290 links locais válidos** e **52 diagramas textuais nos documentos atuais**.
-Os 14 corpos históricos coincidem com os textos anteriores, desconsiderando
-apenas a normalização de finais de linha e o aviso acrescentado antes de cada corpo.
-A comparação por SHA-256 confirmou **2067 arquivos não documentais inalterados**.
+**49 Markdown files** were checked, including READMEs and historical documents, with **290 valid local links** and **52 text diagrams in current documents**.
+The 14 historical bodies match the previous texts, allowing only line-ending normalization and the notice added before each body.
+SHA-256 comparison confirmed **2,067 unchanged non-documentation files**.
 
-Os capítulos atuais corrigem referências à arquitetura de modelo único e identificam os arquivos históricos/legados. O capítulo 99 registra divergências sem corrigi-las silenciosamente na implementação. Código funcional, manifests, TFLite, templates, RAWs e artefatos existentes foram preservados.
+Current chapters correct references to the single-model architecture and identify historical/legacy files. Chapter 99 records discrepancies without silently fixing them in the implementation. Functional code, manifests, TFLite files, templates, RAW files, and existing artifacts were preserved.
 
-A verificação documental não demonstra equivalência matemática entre todos os kernels e TensorFlow Lite, nem valida os dados de treinamento. Também não transforma as propostas do capítulo 99 em funcionalidades existentes. A finalidade desta revisão é permitir que o leitor identifique precisamente o comportamento atual e seus limites.
+Documentation verification does not demonstrate mathematical equivalence between every kernel and TensorFlow Lite, or validate training data. It also does not turn the proposals in chapter 99 into existing features. This review aims to let readers identify the current behavior and its limits precisely.
+
+The dates, counts, and test results above describe the original documentation review. They are not a claim that tests were rerun during the English translation.
+

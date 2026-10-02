@@ -1,14 +1,16 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](03-utilitarios-tflite.md) | [Português (Brasil)](03-utilitarios-tflite.pt-BR.md)
 
-# 03 — Utilitários para leitura do TFLite (`tflite_utils.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body is retained in translation.
 
-## 1. Objetivo do módulo
+# 03 — Utilities for reading TFLite (`tflite_utils.py`)
 
-O arquivo `extractor/tflite_utils.py` concentra funções auxiliares utilizadas por vários módulos durante a leitura da estrutura TFLite.
+## 1. Module purpose
 
-Seu papel principal é transformar informações expostas pelo binding TFLite em representações Python mais simples e previsíveis.
+The `extractor/tflite_utils.py` file groups helper functions used by several modules when reading the TFLite structure.
 
-O código atual é:
+Its main role is to turn information exposed by the TFLite binding into simpler, more predictable Python representations.
+
+The current code is:
 
 ```python
 import tflite
@@ -229,25 +231,25 @@ def qparams_np(tensor):
 
 ---
 
-# 2. Responsabilidade arquitetural
+# 2. Architectural responsibility
 
-Esse módulo não executa uma etapa completa do pipeline.
+This module does not execute a complete pipeline stage.
 
-Ele funciona como uma biblioteca de apoio.
+It acts as a support library.
 
-Diversos módulos precisam fazer operações repetitivas como:
+Several modules need to perform repetitive operations such as:
 
 ```text
-converter código do operador em nome
-identificar tensor constante
-ler bytes de um tensor
-obter shape
-obter scale
-obter zero point
-obter parâmetros de quantização por canal
+convert operator code to name
+identify constant tensor
+read tensor bytes
+get shape
+get scale
+get zero point
+get per-channel quantization parameters
 ```
 
-Sem esse módulo, essa lógica ficaria duplicada em:
+Without this module, that logic would be duplicated in:
 
 ```text
 graph.py
@@ -257,13 +259,13 @@ memory.py
 layer_params.py
 ```
 
-A função de `tflite_utils.py` é centralizar essas operações.
+The role of `tflite_utils.py` is to centralize these operations.
 
 ---
 
-# 3. Posição no projeto
+# 3. Position in the project
 
-Uma visão simplificada é:
+A simplified view is:
 
 ```text
                      Model + SubGraph
@@ -282,27 +284,27 @@ Uma visão simplificada é:
                     layer_params.py
 ```
 
-Ele não controla o fluxo.
+It does not control the flow.
 
-Ele fornece funções reutilizáveis.
+It provides reusable functions.
 
 ---
 
-# 4. Importação do módulo `tflite`
+# 4. Importing the `tflite` module
 
 ```python
 import tflite
 ```
 
-Esse import é utilizado principalmente em:
+This import is used mainly in:
 
 ```python
 tflite.BuiltinOperator
 ```
 
-A estrutura `BuiltinOperator` contém os identificadores numéricos dos operadores conhecidos pelo formato TFLite.
+The `BuiltinOperator` structure contains the numeric identifiers of operators known to the TFLite format.
 
-Por exemplo, conceitualmente:
+For example, conceptually:
 
 ```text
 CONV_2D
@@ -314,27 +316,27 @@ SOFTMAX
 QUANTIZE
 ```
 
-Cada nome corresponde internamente a um código inteiro.
+Each name corresponds internally to an integer code.
 
-A função `op_name()` utiliza essa tabela para recuperar o nome textual.
+The `op_name()` function uses this table to retrieve the textual name.
 
 ---
 
-# 5. Importação do NumPy
+# 5. Importing NumPy
 
 ```python
 import numpy as np
 ```
 
-O NumPy é utilizado neste módulo para três finalidades principais:
+NumPy is used in this module for three main purposes:
 
 ```text
-1. mapear tipos TFLite para tipos NumPy
-2. reconstruir arrays a partir de bytes
-3. normalizar parâmetros de quantização
+1. map TFLite types to NumPy types
+2. reconstruct arrays from bytes
+3. normalize quantization parameters
 ```
 
-Por exemplo:
+For example:
 
 ```python
 np.int8
@@ -342,13 +344,13 @@ np.int32
 np.float32
 ```
 
-permitem interpretar corretamente os bytes armazenados nos buffers do modelo.
+allow the bytes stored in model buffers to be interpreted correctly.
 
 ---
 
 # 6. `TENSOR_TYPE_MAP`
 
-A primeira estrutura importante é:
+The first key structure is:
 
 ```python
 TENSOR_TYPE_MAP = {
@@ -363,61 +365,61 @@ TENSOR_TYPE_MAP = {
 }
 ```
 
-Ela relaciona:
+It relates:
 
 ```text
-código TFLite
+TFLite code
       ↓
-nome legível
+readable name
       +
-dtype NumPy
+NumPy dtype
 ```
 
-Exemplo:
+Example:
 
 ```python
 9: ("int8", np.int8)
 ```
 
-significa:
+means:
 
 ```text
 tensor.Type() == 9
         ↓
-tipo lógico = int8
+logical type = int8
         ↓
 NumPy dtype = np.int8
 ```
 
 ---
 
-# 7. Por que precisamos desse mapa?
+# 7. Why do we need this map?
 
-Quando o binding fornece:
+When the binding provides:
 
 ```python
 tensor.Type()
 ```
 
-o retorno é um número inteiro.
+the return value is an integer.
 
-Por exemplo:
+For example:
 
 ```text
 9
 ```
 
-Esse número isoladamente não informa diretamente ao restante do código:
+On its own, this number does not directly tell the rest of the code:
 
 ```text
-quantos bytes cada elemento possui
-como interpretar os bytes
-como reconstruir um ndarray
+how many bytes each element occupies
+how to interpret the bytes
+how to reconstruct an ndarray
 ```
 
-O mapa resolve isso.
+The map solves this.
 
-Exemplo:
+Example:
 
 ```python
 dtype = int(tensor.Type())
@@ -425,7 +427,7 @@ dtype = int(tensor.Type())
 name, numpy_dtype = TENSOR_TYPE_MAP[dtype]
 ```
 
-Resultado:
+Result:
 
 ```text
 name = "int8"
@@ -434,11 +436,11 @@ numpy_dtype = np.int8
 
 ---
 
-# 8. Tipos utilizados no projeto
+# 8. Types used in the project
 
-A tabela atual contempla:
+The current table covers:
 
-| Código | Tipo      | NumPy        |
+| Code | Type | NumPy |
 | -----: | --------- | ------------ |
 |    `0` | `float32` | `np.float32` |
 |    `1` | `float16` | `np.float16` |
@@ -449,15 +451,15 @@ A tabela atual contempla:
 |    `7` | `int16`   | `np.int16`   |
 |    `9` | `int8`    | `np.int8`    |
 
-Esses são os tipos que o extrator atual sabe transformar diretamente em arrays NumPy.
+These are the types that the current extractor can convert directly into NumPy arrays.
 
-Um tipo fora dessa tabela será considerado não suportado por `safe_bytes_from_tensor()`.
+A type outside this table is considered unsupported by `safe_bytes_from_tensor()`.
 
 ---
 
 # 9. `BYTES_PER_TYPE`
 
-A segunda tabela é:
+The second table is:
 
 ```python
 BYTES_PER_TYPE = {
@@ -472,13 +474,13 @@ BYTES_PER_TYPE = {
 }
 ```
 
-Essa estrutura responde outra pergunta:
+This structure answers a different question:
 
 ```text
-quantos bytes ocupa um elemento deste tensor?
+how many bytes does one element of this tensor occupy?
 ```
 
-Exemplo:
+Example:
 
 ```text
 int8
@@ -500,48 +502,48 @@ float32
 
 ---
 
-# 10. Por que existem dois mapas?
+# 10. Why are there two maps?
 
-Poderíamos teoricamente manter uma única estrutura com:
+In theory, we could keep a single structure with:
 
 ```text
-nome
-dtype NumPy
+name
+NumPy dtype
 bytes
 ```
 
-Mas o código atual separa duas responsabilidades.
+But the current code separates two responsibilities.
 
-`TENSOR_TYPE_MAP` é usado para interpretar o conteúdo:
+`TENSOR_TYPE_MAP` is used to interpret contents:
 
 ```text
 bytes → array
 ```
 
-Já `BYTES_PER_TYPE` é útil para planejamento de memória:
+`BYTES_PER_TYPE`, in turn, is useful for memory planning:
 
 ```text
-número de elementos × bytes por elemento
+number of elements × bytes per element
 ```
 
-Por exemplo:
+For example:
 
 ```text
 shape = [1, 128, 128, 3]
 
-elementos =
+elements =
 1 × 128 × 128 × 3
 = 49152
 ```
 
-Para `int8`:
+For `int8`:
 
 ```text
 49152 × 1
 = 49152 bytes
 ```
 
-Para `float32`:
+For `float32`:
 
 ```text
 49152 × 4
@@ -550,17 +552,17 @@ Para `float32`:
 
 ---
 
-# 11. Função `op_name()`
+# 11. The `op_name()` function
 
-A função:
+The function:
 
 ```python
 def op_name(model, op):
 ```
 
-transforma o identificador interno de um operador em seu nome textual.
+turns an operator's internal identifier into its textual name.
 
-Seu fluxo é:
+Its flow is:
 
 ```text
 Operator
@@ -571,14 +573,14 @@ OperatorCodes
    ↓
 BuiltinCode
    ↓
-nome
+name
 ```
 
 ---
 
-# 12. Obtendo o código da operação
+# 12. Getting the operation code
 
-A primeira parte é:
+The first part is:
 
 ```python
 code = model.OperatorCodes(
@@ -586,35 +588,35 @@ code = model.OperatorCodes(
 ).BuiltinCode()
 ```
 
-Podemos decompor isso.
+We can break this down.
 
-Primeiro:
+First:
 
 ```python
 op.OpcodeIndex()
 ```
 
-obtém o índice da entrada correspondente na tabela global de operadores do modelo.
+gets the index of the corresponding entry in the model's global operator table.
 
-Depois:
+Then:
 
 ```python
 model.OperatorCodes(...)
 ```
 
-obtém essa entrada.
+gets that entry.
 
-Finalmente:
+Finally:
 
 ```python
 .BuiltinCode()
 ```
 
-obtém o código inteiro que identifica o operador.
+gets the integer code identifying the operator.
 
 ---
 
-# 13. Estrutura conceitual
+# 13. Conceptual structure
 
 Imagine:
 
@@ -629,13 +631,13 @@ Model.OperatorCodes(3)
              └── BuiltinCode = X
 ```
 
-Agora é necessário descobrir qual nome corresponde a `X`.
+We now need to find which name corresponds to `X`.
 
 ---
 
-# 14. Busca em `BuiltinOperator`
+# 14. Searching `BuiltinOperator`
 
-A função percorre:
+The function iterates over:
 
 ```python
 for name, value in (
@@ -645,40 +647,40 @@ for name, value in (
 ):
 ```
 
-Isso significa que ela inspeciona os atributos definidos dentro de:
+This means it inspects the attributes defined inside:
 
 ```text
 tflite.BuiltinOperator
 ```
 
-Quando encontra:
+When it finds:
 
 ```python
 isinstance(value, int)
 and value == code
 ```
 
-retorna:
+it returns:
 
 ```python
 return name
 ```
 
-Por exemplo:
+For example:
 
 ```text
-code = código correspondente a CONV_2D
+code = code corresponding to CONV_2D
         ↓
 "CONV_2D"
 ```
 
 ---
 
-# 15. Por que verificar `isinstance(value, int)`?
+# 15. Why check `isinstance(value, int)`?
 
-O dicionário interno de uma classe ou módulo contém outros atributos além das constantes dos operadores.
+The internal dictionary of a class or module contains other attributes besides operator constants.
 
-Por isso:
+That is why:
 
 ```python
 isinstance(
@@ -687,43 +689,43 @@ isinstance(
 )
 ```
 
-filtra apenas valores inteiros.
+filters only integer values.
 
-Sem isso, a função poderia comparar o código contra atributos que não representam operadores.
+Without this, the function could compare the code against attributes that do not represent operators.
 
 ---
 
-# 16. Retorno `"CUSTOM"`
+# 16. Returning `"CUSTOM"`
 
-Se nenhum operador conhecido for encontrado:
+If no known operator is found:
 
 ```python
 return "CUSTOM"
 ```
 
-Isso funciona como fallback.
+This acts as a fallback.
 
-Ou seja:
+In other words:
 
 ```text
-BuiltinCode conhecido
+known BuiltinCode
        ↓
-nome correspondente
+corresponding name
 
-BuiltinCode não encontrado
+BuiltinCode not found
        ↓
 "CUSTOM"
 ```
 
-O retorno não significa necessariamente que todo operador desconhecido esteja corretamente implementado como operador customizado.
+The return value does not necessarily mean every unknown operator is correctly implemented as a custom operator.
 
-Ele apenas indica que não foi possível associá-lo a um nome conhecido na tabela percorrida.
+It only indicates that it could not be associated with a known name in the table being searched.
 
 ---
 
-# 17. Uso posterior de `op_name()`
+# 17. Subsequent use of `op_name()`
 
-Outros módulos podem fazer:
+Other modules can call:
 
 ```python
 optype = op_name(
@@ -732,7 +734,7 @@ optype = op_name(
 )
 ```
 
-e obter:
+and obtain:
 
 ```text
 "CONV_2D"
@@ -744,19 +746,19 @@ e obter:
 "QUANTIZE"
 ```
 
-Isso permite utilizar código legível como:
+This allows readable code such as:
 
 ```python
 if optype == "CONV_2D":
 ```
 
-em vez de comparar números diretamente.
+instead of comparing numbers directly.
 
 ---
 
-# 18. Função `is_constant_tensor()`
+# 18. The `is_constant_tensor()` function
 
-A função:
+The function:
 
 ```python
 def is_constant_tensor(
@@ -766,22 +768,22 @@ def is_constant_tensor(
 ):
 ```
 
-determina se determinado tensor possui dados armazenados em um buffer do modelo.
+determines whether a given tensor has data stored in a model buffer.
 
-O critério atual é:
+The current criterion is:
 
 ```text
-buffer possui conteúdo?
+does the buffer have contents?
      │
-     ├── sim → tensor constante
-     └── não → tensor não constante
+     ├── yes → constant tensor
+     └── no → nonconstant tensor
 ```
 
 ---
 
-# 19. Localizando o tensor
+# 19. Locating the tensor
 
-Primeiro:
+First:
 
 ```python
 tensor = subgraph.Tensors(
@@ -789,13 +791,13 @@ tensor = subgraph.Tensors(
 )
 ```
 
-O identificador recebido é um índice dentro da tabela de tensors do subgrafo.
+The received identifier is an index into the subgraph's tensor table.
 
 ---
 
-# 20. Localizando o buffer
+# 20. Locating the buffer
 
-Depois:
+Then:
 
 ```python
 buffer = model.Buffers(
@@ -803,9 +805,9 @@ buffer = model.Buffers(
 )
 ```
 
-Cada tensor possui uma referência para um buffer.
+Each tensor references a buffer.
 
-Estrutura conceitual:
+Conceptual structure:
 
 ```text
 Tensor
@@ -821,28 +823,28 @@ Tensor
 
 ---
 
-# 21. Tentativa de leitura
+# 21. Attempting to read
 
-A função tenta:
+The function tries:
 
 ```python
 data = buffer.DataAsNumpy()
 ```
 
-Caso o binding não exponha esse método:
+If the binding does not expose this method:
 
 ```python
 except AttributeError:
     return False
 ```
 
-Assim, a função considera que não foi possível confirmar que existe conteúdo constante.
+The function then considers that it was unable to confirm the presence of constant contents.
 
 ---
 
-# 22. Critério de tensor constante
+# 22. Criterion for a constant tensor
 
-O retorno final é:
+The final return value is:
 
 ```python
 return (
@@ -851,51 +853,51 @@ return (
 )
 ```
 
-Portanto, para o extrator atual:
+Thus, for the current extractor:
 
 ```text
-buffer vazio
+empty buffer
     ↓
-não constante
+nonconstant
 
-buffer com bytes
+buffer containing bytes
     ↓
-constante
+constant
 ```
 
 ---
 
-# 23. Exemplo com peso de convolução
+# 23. Example with convolution weights
 
-Uma entrada dinâmica da rede pode possuir:
+A dynamic network input may have:
 
 ```text
 Tensor input
    │
-   └── buffer vazio
+   └── empty buffer
 ```
 
-Logo:
+Thus:
 
 ```python
 is_constant_tensor(...)
 ```
 
-retorna:
+returns:
 
 ```text
 False
 ```
 
-Já os pesos:
+Weights, however:
 
 ```text
 Tensor weights
    │
-   └── buffer contendo milhares de bytes
+   └── buffer containing thousands of bytes
 ```
 
-retornam:
+return:
 
 ```text
 True
@@ -903,11 +905,11 @@ True
 
 ---
 
-# 24. Importância para o grafo
+# 24. Importance for the graph
 
-Essa distinção é importante porque os pesos não devem ser tratados como tensors temporários produzidos por outra camada.
+This distinction matters because weights should not be treated as temporary tensors produced by another layer.
 
-Por exemplo:
+For example:
 
 ```text
            input activation
@@ -919,39 +921,39 @@ Por exemplo:
                weights
 ```
 
-O tensor de entrada é um fluxo de dados do grafo.
+The input tensor is a data flow in the graph.
 
-O tensor de pesos é constante.
+The weight tensor is constant.
 
-Isso afeta:
+This affects:
 
 ```text
-dependências
+dependencies
 slot allocation
-mapeamento tensor→slot
+tensor→slot mapping
 ```
 
 ---
 
-# 25. Função `safe_bytes_from_tensor()`
+# 25. The `safe_bytes_from_tensor()` function
 
-Essa função possui uma responsabilidade maior:
+This function has a broader responsibility:
 
 ```text
-tensor constante
+constant tensor
      ↓
-localizar bytes
+locate bytes
      ↓
-descobrir dtype
+determine dtype
      ↓
-converter para NumPy
+convert to NumPy
      ↓
-aplicar shape
+apply shape
      ↓
-produzir bytes normalizados
+produce normalized bytes
 ```
 
-Ela retorna três valores:
+It returns three values:
 
 ```python
 tensor, array, raw
@@ -959,7 +961,7 @@ tensor, array, raw
 
 ---
 
-# 26. Entrada da função
+# 26. Function inputs
 
 ```python
 def safe_bytes_from_tensor(
@@ -969,7 +971,7 @@ def safe_bytes_from_tensor(
 ):
 ```
 
-Recebe:
+Receives:
 
 ```text
 Model
@@ -977,38 +979,38 @@ SubGraph
 tensor_id
 ```
 
-Ela própria localiza tanto o tensor quanto seu buffer.
+It locates both the tensor and its buffer itself.
 
 ---
 
-# 27. Normalização do `tensor_id`
+# 27. Normalizing `tensor_id`
 
-O código usa:
+The code uses:
 
 ```python
 int(tensor_id)
 ```
 
-antes de acessar:
+before accessing:
 
 ```python
 subgraph.Tensors(...)
 ```
 
-Isso é útil porque alguns índices fornecidos por arrays NumPy podem ser tipos como:
+This is useful because some indices supplied by NumPy arrays may be types such as:
 
 ```text
 np.int32
 np.int64
 ```
 
-A conversão garante um `int` Python normal.
+Conversion guarantees a normal Python `int`.
 
 ---
 
-# 28. Leitura do buffer
+# 28. Reading the buffer
 
-O processo é:
+The process is:
 
 ```python
 tensor = subgraph.Tensors(
@@ -1020,13 +1022,13 @@ buffer = model.Buffers(
 )
 ```
 
-Depois:
+Then:
 
 ```python
 data_bytes = buffer.DataAsNumpy()
 ```
 
-Se o método não estiver disponível:
+If the method is unavailable:
 
 ```python
 return None, None, None
@@ -1034,9 +1036,9 @@ return None, None, None
 
 ---
 
-# 29. Buffer vazio
+# 29. Empty buffer
 
-A função também verifica:
+The function also checks:
 
 ```python
 if (
@@ -1049,31 +1051,31 @@ if (
     return None, None, None
 ```
 
-Isso impede tentar interpretar um tensor que não possui dados constantes.
+This prevents attempts to interpret a tensor that has no constant data.
 
 ---
 
-# 30. Leitura do shape
+# 30. Reading the shape
 
-Em seguida:
+Next:
 
 ```python
 shape = tensor.ShapeAsNumpy()
 ```
 
-Exemplo:
+Example:
 
 ```text
 [32, 3, 3, 3]
 ```
 
-para um conjunto hipotético de pesos de convolução.
+for a hypothetical set of convolution weights.
 
 ---
 
-# 31. Leitura do tipo
+# 31. Reading the type
 
-Depois:
+Then:
 
 ```python
 dtype = int(
@@ -1081,19 +1083,19 @@ dtype = int(
 )
 ```
 
-Suponha:
+Suppose:
 
 ```text
 dtype = 9
 ```
 
-Pelo mapa:
+From the map:
 
 ```python
 TENSOR_TYPE_MAP[9]
 ```
 
-temos:
+we have:
 
 ```text
 ("int8", np.int8)
@@ -1101,9 +1103,9 @@ temos:
 
 ---
 
-# 32. Resolução do dtype NumPy
+# 32. Resolving the NumPy dtype
 
-O código:
+The code:
 
 ```python
 _, numpy_dtype = (
@@ -1114,9 +1116,9 @@ _, numpy_dtype = (
 )
 ```
 
-ignora o nome textual e recupera apenas o dtype NumPy.
+ignores the textual name and retrieves only the NumPy dtype.
 
-Para `int8`:
+For `int8`:
 
 ```text
 numpy_dtype = np.int8
@@ -1124,29 +1126,29 @@ numpy_dtype = np.int8
 
 ---
 
-# 33. Tipo não suportado
+# 33. Unsupported type
 
-Se:
+If:
 
 ```python
 numpy_dtype is None
 ```
 
-a função retorna:
+the function returns:
 
 ```python
 None, None, None
 ```
 
-Portanto, ela não tenta interpretar bytes de um tipo para o qual não existe mapeamento conhecido.
+Thus, it does not attempt to interpret bytes of a type for which there is no known mapping.
 
-Isso evita atribuir um significado incorreto ao conteúdo binário.
+This avoids assigning an incorrect meaning to the binary contents.
 
 ---
 
 # 34. `np.frombuffer()`
 
-A transformação principal é:
+The main transformation is:
 
 ```python
 array = np.frombuffer(
@@ -1155,83 +1157,83 @@ array = np.frombuffer(
 )
 ```
 
-Essa função interpreta os mesmos bytes segundo o tipo correto.
+This function interprets the same bytes according to the correct type.
 
-Exemplo simples.
+A simple example.
 
-Suponha quatro bytes:
+Suppose four bytes:
 
 ```text
 01 FF 02 FE
 ```
 
-interpretados como `int8`:
+interpreted as `int8`:
 
 ```text
 [1, -1, 2, -2]
 ```
 
-Os bytes não são alterados.
+The bytes are unchanged.
 
-O que muda é sua interpretação.
+What changes is their interpretation.
 
 ---
 
-# 35. Por que o dtype é essencial?
+# 35. Why is the dtype essential?
 
-Os mesmos bytes podem significar valores diferentes dependendo do tipo.
+The same bytes can mean different values depending on the type.
 
-Exemplo simplificado:
+Simplified example:
 
 ```text
 byte FF
 ```
 
-Como `uint8`:
+As `uint8`:
 
 ```text
 255
 ```
 
-Como `int8`:
+As `int8`:
 
 ```text
 -1
 ```
 
-Portanto:
+Therefore:
 
 ```python
 dtype=numpy_dtype
 ```
 
-é fundamental para preservar os valores do modelo.
+is fundamental to preserving the model's values.
 
 ---
 
-# 36. Array inicialmente linear
+# 36. Initially linear array
 
-`np.frombuffer()` produz inicialmente uma sequência linear.
+`np.frombuffer()` initially produces a linear sequence.
 
-Por exemplo:
+For example:
 
 ```text
 [1, 2, 3, 4, 5, 6]
 ```
 
-Mesmo que o tensor original tenha shape:
+Even if the original tensor has shape:
 
 ```text
 [2, 3]
 ```
 
-Por isso a etapa seguinte tenta restaurar a forma original.
+That is why the next stage attempts to restore the original shape.
 
 ---
 
 # 37. `reshape(shape)`
 
-O código:
+The code:
 
 ```python
 try:
@@ -1242,18 +1244,18 @@ except Exception:
     pass
 ```
 
-tenta reconstruir as dimensões originais do tensor.
+attempts to reconstruct the tensor's original dimensions.
 
-Exemplo:
+Example:
 
 ```text
-array linear:
+linear array:
 [1, 2, 3, 4, 5, 6]
 
 shape:
 [2, 3]
 
-resultado:
+result:
 [
   [1, 2, 3],
   [4, 5, 6]
@@ -1262,58 +1264,58 @@ resultado:
 
 ---
 
-# 38. Por que existe `try/except` no reshape?
+# 38. Why is there a `try/except` around reshape?
 
-Se o número de elementos não for compatível com o shape informado, `reshape()` gera uma exceção.
+If the element count is incompatible with the supplied shape, `reshape()` raises an exception.
 
-O código atual opta por não interromper a extração nesse ponto.
+The current code chooses not to stop extraction at this point.
 
-Ele mantém o array linear.
+It keeps the linear array.
 
-Portanto:
+Therefore:
 
 ```text
-reshape funcionou
+reshape succeeded
     ↓
-array com shape original
+array with original shape
 
-reshape falhou
+reshape failed
     ↓
-array permanece linear
+array remains linear
 ```
 
 ---
 
-# 39. Caveat importante sobre o `reshape`
+# 39. Important caveat about `reshape`
 
-Esse comportamento foi preservado da implementação original, mas merece documentação.
+This behavior was preserved from the original implementation, but deserves documentation.
 
-O trecho:
+The snippet:
 
 ```python
 except Exception:
     pass
 ```
 
-oculta o motivo da falha.
+hides the reason for failure.
 
-Em uma versão futura voltada a validação rigorosa, pode ser melhor transformar uma incompatibilidade entre:
+In a future version focused on strict validation, it may be better to turn an incompatibility between:
 
 ```text
 buffer
-e
+and
 shape
 ```
 
-em erro explícito.
+into an explicit error.
 
-Por enquanto, a decisão atual privilegia compatibilidade com o extrator existente.
+For now, the current decision favors compatibility with the existing extractor.
 
 ---
 
-# 40. Geração de `raw`
+# 40. Generating `raw`
 
-Depois:
+Then:
 
 ```python
 raw = (
@@ -1323,12 +1325,12 @@ raw = (
 )
 ```
 
-Isso cria uma versão linear em bytes.
+This creates a linear version in bytes.
 
-Fluxo:
+Flow:
 
 ```text
-buffer original
+original buffer
      ↓
 NumPy array
      ↓
@@ -1341,25 +1343,25 @@ bytes
 
 ---
 
-# 41. Por que fazer `flatten()`?
+# 41. Why call `flatten()`?
 
-Mesmo que o array tenha várias dimensões:
+Even if the array has several dimensions:
 
 ```text
 [O, H, W, I]
 ```
 
-a memória linear do WASM será um bloco sequencial de bytes.
+WASM linear memory will be a sequential block of bytes.
 
-Por isso:
+That is why:
 
 ```python
 array.flatten()
 ```
 
-remove a estrutura dimensional antes da serialização.
+removes the dimensional structure before serialization.
 
-Exemplo:
+Example:
 
 ```text
 [
@@ -1368,13 +1370,13 @@ Exemplo:
 ]
 ```
 
-vira:
+becomes:
 
 ```text
 [1, 2, 3, 4]
 ```
 
-e depois:
+and then:
 
 ```text
 bytes
@@ -1382,71 +1384,71 @@ bytes
 
 ---
 
-# 42. Retorno de `safe_bytes_from_tensor()`
+# 42. Return value of `safe_bytes_from_tensor()`
 
-O retorno é:
+The return value is:
 
 ```python
 return tensor, array, raw
 ```
 
-Cada elemento possui uma função diferente.
+Each element has a different purpose.
 
 ### `tensor`
 
-Mantém acesso aos metadados TFLite:
+Retains access to TFLite metadata:
 
 ```text
 shape
-tipo
-quantização
+type
+quantization
 buffer ID
 ```
 
 ### `array`
 
-Fornece os valores já interpretados pelo NumPy.
+Provides values already interpreted by NumPy.
 
-É útil para:
+It is useful for:
 
 ```text
-inspeção
-transformações
-cálculos
-validação
+inspection
+transformations
+calculations
+validation
 ```
 
 ### `raw`
 
-Fornece os bytes lineares.
+Provides linear bytes.
 
-É útil para:
+It is useful for:
 
 ```text
-serialização
+serialization
 weights blob
 bias blob
-data segments do WAT
+WAT data segments
 ```
 
 ---
 
-# 43. Exemplo completo
+# 43. Complete example
 
-Considere um tensor:
+Consider a tensor:
 
 ```text
 shape = [2, 2]
 dtype = int8
 ```
 
-e bytes:
+and bytes:
 
 ```text
 01 02 FF FE
 ```
 
-O processo seria:
+The process would be:
 
 ```text
 bytes
@@ -1477,27 +1479,27 @@ flatten()
 tobytes()
 ```
 
-Os valores mantêm sua representação binária apropriada.
+The values retain their appropriate binary representation.
 
 ---
 
-# 44. Função `scale_scalar()`
+# 44. The `scale_scalar()` function
 
-A função:
+The function:
 
 ```python
 def scale_scalar(tensor):
 ```
 
-obtém uma única escala de quantização associada ao tensor.
+gets a single quantization scale associated with the tensor.
 
-Seu objetivo é simplificar casos onde a quantização é per-tensor.
+Its purpose is to simplify cases where quantization is per-tensor.
 
 ---
 
-# 45. Obtendo a estrutura de quantização
+# 45. Getting the quantization structure
 
-Primeiro:
+First:
 
 ```python
 quantization = (
@@ -1505,7 +1507,7 @@ quantization = (
 )
 ```
 
-Essa estrutura contém informações como:
+This structure contains information such as:
 
 ```text
 Scale
@@ -1515,23 +1517,23 @@ QuantizedDimension
 
 ---
 
-# 46. Tensor sem quantização
+# 46. Tensor without quantization
 
-Se:
+If:
 
 ```python
 quantization is None
 ```
 
-a função retorna:
+the function returns:
 
 ```python
 1.0
 ```
 
-Esse valor funciona como escala neutra.
+This value acts as a neutral scale.
 
-Ou seja:
+In other words:
 
 ```text
 x × 1.0 = x
@@ -1539,9 +1541,9 @@ x × 1.0 = x
 
 ---
 
-# 47. Tensor sem `Scale`
+# 47. Tensor without `Scale`
 
-Depois:
+Then:
 
 ```python
 scales = (
@@ -1550,19 +1552,19 @@ scales = (
 )
 ```
 
-Se:
+If:
 
 ```text
 scales == None
 ```
 
-ou:
+or:
 
 ```text
 len(scales) == 0
 ```
 
-a função também retorna:
+the function also returns:
 
 ```python
 1.0
@@ -1570,9 +1572,9 @@ a função também retorna:
 
 ---
 
-# 48. Conversão para `float64`
+# 48. Conversion to `float64`
 
-O retorno normal é:
+The normal return value is:
 
 ```python
 return float(
@@ -1583,7 +1585,7 @@ return float(
 )
 ```
 
-A operação faz:
+The operation performs:
 
 ```text
 scales
@@ -1592,30 +1594,30 @@ np.array(... float64)
    ↓
 flatten()
    ↓
-primeiro elemento
+first element
    ↓
-float Python
+Python float
 ```
 
 ---
 
-# 49. Por que pegar apenas `[0]`?
+# 49. Why take only `[0]`?
 
-Porque essa função representa explicitamente:
+Because this function explicitly represents:
 
 ```text
-scale escalar
+scalar scale
 ```
 
-Ela é adequada para quantização per-tensor.
+It is appropriate for per-tensor quantization.
 
-Exemplo:
+Example:
 
 ```text
 Scale = [0.0039215689]
 ```
 
-resultado:
+result:
 
 ```text
 0.0039215689
@@ -1623,25 +1625,25 @@ resultado:
 
 ---
 
-# 50. Quantização per-tensor
+# 50. Per-tensor quantization
 
-Na quantização per-tensor existe um único par:
+In per-tensor quantization, there is a single pair:
 
 ```text
 scale
 zero_point
 ```
 
-para todo o tensor.
+for the entire tensor.
 
-A conversão conceitual é:
+The conceptual conversion is:
 
 ```text
-valor_real =
-scale × (valor_quantizado - zero_point)
+real_value =
+scale × (quantized_value - zero_point)
 ```
 
-Exemplo:
+Example:
 
 ```text
 scale = 0.1
@@ -1649,7 +1651,7 @@ zero_point = -128
 q = -118
 ```
 
-Então:
+Then:
 
 ```text
 real =
@@ -1662,39 +1664,39 @@ real =
 
 ---
 
-# 51. Função `zp_scalar()`
+# 51. The `zp_scalar()` function
 
-A função:
+The function:
 
 ```python
 def zp_scalar(tensor):
 ```
 
-é equivalente a `scale_scalar()`, mas retorna o zero point.
+is equivalent to `scale_scalar()`, but returns the zero point.
 
 ---
 
-# 52. Tensor sem quantização
+# 52. Tensor without quantization
 
-Se:
+If:
 
 ```python
 quantization is None
 ```
 
-o retorno é:
+the return value is:
 
 ```python
 0
 ```
 
-Zero funciona como offset neutro.
+Zero acts as a neutral offset.
 
 ---
 
-# 53. Tensor sem zero point
+# 53. Tensor without a zero point
 
-A função lê:
+The function reads:
 
 ```python
 zero_points = (
@@ -1703,7 +1705,7 @@ zero_points = (
 )
 ```
 
-Se não existir valor:
+If there is no value:
 
 ```python
 return 0
@@ -1711,9 +1713,9 @@ return 0
 
 ---
 
-# 54. Conversão para inteiro
+# 54. Conversion to integer
 
-O retorno é:
+The return value is:
 
 ```python
 return int(
@@ -1724,17 +1726,17 @@ return int(
 )
 ```
 
-Assim como no scale:
+As with scale:
 
 ```text
 array
   ↓
 flatten
   ↓
-primeiro elemento
+first element
 ```
 
-Mas o tipo final é:
+But the final type is:
 
 ```text
 int
@@ -1742,9 +1744,9 @@ int
 
 ---
 
-# 55. `scale_scalar()` e `zp_scalar()` juntos
+# 55. `scale_scalar()` and `zp_scalar()` together
 
-Os dois helpers permitem:
+The two helpers allow:
 
 ```python
 scale = scale_scalar(
@@ -1756,13 +1758,13 @@ zp = zp_scalar(
 )
 ```
 
-produzindo:
+producing:
 
 ```text
 (scale, zero_point)
 ```
 
-Exemplo:
+Example:
 
 ```text
 scale = 0.0039215689
@@ -1771,9 +1773,9 @@ zp = -128
 
 ---
 
-# 56. Uso em operações especiais
+# 56. Use in special operations
 
-Esses valores são utilizados posteriormente em operações como:
+These values are used later in operations such as:
 
 ```text
 QUANTIZE
@@ -1782,7 +1784,7 @@ MEAN
 SOFTMAX
 ```
 
-e também para:
+and also for:
 
 ```text
 zx
@@ -1790,41 +1792,41 @@ zw
 zy
 ```
 
-nos `LayerParams`.
+in `LayerParams`.
 
-Por exemplo:
+For example:
 
 ```text
-zx = zero point da entrada
-zw = zero point dos pesos
-zy = zero point da saída
+zx = input zero point
+zw = weight zero point
+zy = output zero point
 ```
 
 ---
 
-# 57. Limitação deliberada dos helpers escalares
+# 57. Deliberate limitation of scalar helpers
 
-`scale_scalar()` e `zp_scalar()` sempre pegam:
-
-```text
-primeiro elemento
-```
-
-Por isso eles não substituem a leitura completa de quantização per-channel.
-
-Se um tensor possuir:
+`scale_scalar()` and `zp_scalar()` always take:
 
 ```text
-32 escalas
+first element
 ```
 
-esses helpers retornariam apenas:
+That is why they do not replace a complete read of per-channel quantization.
+
+If a tensor has:
+
+```text
+32 scales
+```
+
+these helpers would return only:
 
 ```text
 scales[0]
 ```
 
-Para esse caso existe:
+For that case there is:
 
 ```python
 qparams_np()
@@ -1832,23 +1834,23 @@ qparams_np()
 
 ---
 
-# 58. Função `tensor_shape_list()`
+# 58. The `tensor_shape_list()` function
 
-A função:
+The function:
 
 ```python
 def tensor_shape_list(tensor):
 ```
 
-normaliza o shape para uma lista Python.
+normalizes the shape into a Python list.
 
-Ela recebe:
+It receives:
 
 ```text
-Tensor TFLite
+TFLite Tensor
 ```
 
-e retorna algo como:
+and returns something like:
 
 ```python
 [1, 128, 128, 3]
@@ -1856,9 +1858,9 @@ e retorna algo como:
 
 ---
 
-# 59. Shape vindo do binding
+# 59. Shape from the binding
 
-Primeiro:
+First:
 
 ```python
 shape = (
@@ -1866,9 +1868,9 @@ shape = (
 )
 ```
 
-O resultado normalmente é um ndarray NumPy.
+The result is normally a NumPy ndarray.
 
-Exemplo:
+Example:
 
 ```text
 array([1, 128, 128, 3])
@@ -1876,27 +1878,27 @@ array([1, 128, 128, 3])
 
 ---
 
-# 60. Tensor sem shape
+# 60. Tensor without a shape
 
-Se:
+If:
 
 ```python
 shape is None
 ```
 
-a função retorna:
+the function returns:
 
 ```python
 []
 ```
 
-Assim, os módulos consumidores podem trabalhar sempre com uma lista.
+Thus, consumer modules can always work with a list.
 
 ---
 
-# 61. Conversão para lista Python
+# 61. Conversion to a Python list
 
-O retorno normal é:
+The normal return value is:
 
 ```python
 return [
@@ -1906,53 +1908,53 @@ return [
 ]
 ```
 
-A transformação é:
+The transformation is:
 
 ```text
 NumPy array
     ↓
 .tolist()
     ↓
-lista
+list
     ↓
 int(value)
     ↓
-lista de ints Python
+list of Python ints
 ```
 
 ---
 
-# 62. Por que converter cada valor para `int`?
+# 62. Why convert each value to `int`?
 
-Sem essa conversão, os elementos podem continuar sendo tipos NumPy como:
+Without this conversion, elements may remain NumPy types such as:
 
 ```text
 np.int32
 np.int64
 ```
 
-Ao produzir:
+By producing:
 
 ```python
 int(value)
 ```
 
-o restante do projeto recebe tipos Python comuns.
+the rest of the project receives common Python types.
 
-Isso simplifica:
+This simplifies:
 
 ```text
-serialização
-comparações
-relatórios
+serialization
+comparisons
+reports
 struct.pack
 ```
 
 ---
 
-# 63. Exemplo
+# 63. Example
 
-Entrada:
+Input:
 
 ```text
 tensor.ShapeAsNumpy()
@@ -1960,7 +1962,7 @@ tensor.ShapeAsNumpy()
 → np.array([1, 128, 128, 3])
 ```
 
-Saída:
+Output:
 
 ```python
 [1, 128, 128, 3]
@@ -1968,64 +1970,64 @@ Saída:
 
 ---
 
-# 64. Função `qparams_np()`
+# 64. The `qparams_np()` function
 
-A função:
+The function:
 
 ```python
 def qparams_np(tensor):
 ```
 
-é a leitura completa dos parâmetros de quantização.
+performs a complete read of the quantization parameters.
 
-Ao contrário de:
+Unlike:
 
 ```text
 scale_scalar()
 zp_scalar()
 ```
 
-ela preserva vetores inteiros de escalas e zero points.
+it preserves entire vectors of scales and zero points.
 
 ---
 
-# 65. Por que essa função é necessária?
+# 65. Why is this function necessary?
 
-Pesos quantizados podem utilizar quantização por canal.
+Quantized weights can use per-channel quantization.
 
-Nesse caso, em vez de:
+In that case, instead of:
 
 ```text
 1 scale
 ```
 
-podemos ter:
+we can have:
 
 ```text
-uma scale para cada canal de saída
+one scale for each output channel
 ```
 
-Exemplo:
+Example:
 
 ```text
-32 filtros
+32 filters
      ↓
 32 scales
 ```
 
-Nesse cenário, pegar apenas:
+In this scenario, taking only:
 
 ```text
 scales[0]
 ```
 
-seria insuficiente.
+would be insufficient.
 
 ---
 
-# 66. Obtendo a estrutura de quantização
+# 66. Getting the quantization structure
 
-Primeiro:
+First:
 
 ```python
 quantization = (
@@ -2033,7 +2035,7 @@ quantization = (
 )
 ```
 
-Se não existir:
+If it does not exist:
 
 ```python
 return None
@@ -2041,9 +2043,9 @@ return None
 
 ---
 
-# 67. Leitura de `scales`
+# 67. Reading `scales`
 
-Depois:
+Then:
 
 ```python
 scales = (
@@ -2052,25 +2054,25 @@ scales = (
 )
 ```
 
-Se:
+If:
 
 ```python
 scales is None
 ```
 
-o retorno também é:
+the return value is also:
 
 ```python
 None
 ```
 
-A função considera que não existe informação de quantização utilizável.
+The function considers that no usable quantization information exists.
 
 ---
 
-# 68. Leitura de `zero_points`
+# 68. Reading `zero_points`
 
-Também é feita:
+It also performs:
 
 ```python
 zero_points = (
@@ -2079,17 +2081,17 @@ zero_points = (
 )
 ```
 
-Aqui existe uma diferença.
+There is a difference here.
 
-Se os zero points não estiverem presentes, a função não retorna imediatamente.
+If zero points are absent, the function does not return immediately.
 
-Ela posteriormente cria um array vazio.
+It later creates an empty array.
 
 ---
 
-# 69. Normalização de `scales`
+# 69. Normalizing `scales`
 
-O código:
+The code:
 
 ```python
 scales = np.atleast_1d(
@@ -2100,55 +2102,55 @@ scales = np.atleast_1d(
 )
 ```
 
-garante que:
+ensures that:
 
 ```text
-scale escalar
+scalar scale
 ```
 
-e:
+and:
 
 ```text
-vetor de scales
+vector of scales
 ```
 
-tenham sempre uma representação de pelo menos uma dimensão.
+always have a representation with at least one dimension.
 
 ---
 
-# 70. O que faz `np.atleast_1d()`?
+# 70. What does `np.atleast_1d()` do?
 
-Exemplo:
+Example:
 
 ```python
 np.array(0.5)
 ```
 
-possui shape:
+has shape:
 
 ```text
 ()
 ```
 
-Depois:
+Then:
 
 ```python
 np.atleast_1d(...)
 ```
 
-vira:
+becomes:
 
 ```text
 [0.5]
 ```
 
-Isso permite ao restante do código tratar escala única e múltiplas escalas de forma uniforme.
+This lets the rest of the code handle a single scale and multiple scales uniformly.
 
 ---
 
-# 71. Normalização de `zero_points`
+# 71. Normalizing `zero_points`
 
-O mesmo é feito com:
+The same is done with:
 
 ```python
 zero_points = np.atleast_1d(
@@ -2163,40 +2165,40 @@ zero_points = np.atleast_1d(
 )
 ```
 
-Assim:
+Thus:
 
 ```text
-zero_points existente
+zero_points present
        ↓
-array int64
+int64 array
 ```
 
-ou:
+or:
 
 ```text
-zero_points ausente
+zero_points absent
        ↓
 []
 ```
 
 ---
 
-# 72. Verificação final de escalas
+# 72. Final scale check
 
-Depois:
+Then:
 
 ```python
 if scales.size == 0:
     return None
 ```
 
-Sem escala, a quantização não é considerada válida para os cálculos posteriores.
+Without a scale, quantization is not considered valid for subsequent calculations.
 
 ---
 
-# 73. Retorno de `qparams_np()`
+# 73. Return value of `qparams_np()`
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -2209,7 +2211,7 @@ A função retorna:
 }
 ```
 
-Ou seja:
+In other words:
 
 ```text
 scales
@@ -2221,53 +2223,53 @@ quantized dimension
 
 # 74. `QuantizedDimension`
 
-O campo:
+The field:
 
 ```python
 quantization.QuantizedDimension()
 ```
 
-indica qual dimensão do tensor está associada à quantização por canal.
+indicates which tensor dimension is associated with per-channel quantization.
 
-Esse valor é importante porque um vetor de scales precisa ser interpretado em relação a uma dimensão específica.
+This value matters because a vector of scales must be interpreted relative to a specific dimension.
 
-Exemplo conceitual:
+Conceptual example:
 
 ```text
 weights shape:
 [32, 3, 3, 3]
 
 scales:
-[32 valores]
+[32 values]
 
 qdim:
 0
 ```
 
-Isso indica que as 32 escalas correspondem à dimensão:
+This indicates that the 32 scales correspond to dimension:
 
 ```text
 shape[0]
 ```
 
-que possui 32 elementos.
+which has 32 elements.
 
 ---
 
-# 75. Quantização per-tensor versus per-channel
+# 75. Per-tensor versus per-channel quantization
 
-Podemos representar os dois casos assim.
+We can represent the two cases as follows.
 
 ## Per-tensor
 
 ```text
-Tensor inteiro
+Entire tensor
     │
     ├── scale = 0.05
     └── zp = -3
 ```
 
-Um único conjunto de parâmetros vale para todo o tensor.
+A single set of parameters applies to the entire tensor.
 
 ---
 
@@ -2276,26 +2278,26 @@ Um único conjunto de parâmetros vale para todo o tensor.
 ```text
 Tensor
 │
-├── canal 0 → scale[0]
-├── canal 1 → scale[1]
-├── canal 2 → scale[2]
+├── channel 0 → scale[0]
+├── channel 1 → scale[1]
+├── channel 2 → scale[2]
 ├── ...
-└── canal N → scale[N]
+└── channel N → scale[N]
 ```
 
-Por isso:
+That is why:
 
 ```python
 qparams_np()
 ```
 
-preserva o vetor inteiro.
+preserves the entire vector.
 
 ---
 
-# 76. Exemplo de `qparams_np()`
+# 76. Example of `qparams_np()`
 
-Suponha:
+Suppose:
 
 ```text
 scales =
@@ -2317,7 +2319,7 @@ zero_points =
 qdim = 0
 ```
 
-O retorno é conceitualmente:
+The return value is conceptually:
 
 ```python
 {
@@ -2337,13 +2339,13 @@ O retorno é conceitualmente:
 }
 ```
 
-Esse conteúdo será utilizado posteriormente para calcular multiplicadores de requantização por canal.
+These contents will be used later to calculate per-channel requantization multipliers.
 
 ---
 
-# 77. Relação entre `qparams_np()` e requantização
+# 77. Relationship between `qparams_np()` and requantization
 
-Em uma camada quantizada temos conceitualmente:
+In a quantized layer, we conceptually have:
 
 ```text
 input scale = Sx
@@ -2351,7 +2353,7 @@ weight scale = Sw
 output scale = Sy
 ```
 
-Para cada canal pode ser necessário um fator proporcional a:
+For each channel, a factor proportional to the following may be needed:
 
 ```text
 Sx × Sw
@@ -2359,7 +2361,7 @@ Sx × Sw
    Sy
 ```
 
-Se `Sw` possuir um valor diferente por canal:
+If `Sw` has a different value per channel:
 
 ```text
 Sw[0]
@@ -2368,65 +2370,65 @@ Sw[2]
 ...
 ```
 
-o multiplicador também será diferente para cada canal.
+the multiplier will also differ for each channel.
 
-Esse é um dos motivos pelos quais a quantização completa precisa ser preservada.
+This is one reason why complete quantization information needs to be preserved.
 
 ---
 
-# 78. Diferença entre helpers escalares e vetoriais
+# 78. Difference between scalar and vector helpers
 
-Podemos resumir:
+We can summarize:
 
 ```text
 scale_scalar()
     ↓
-um único scale
+a single scale
 
 zp_scalar()
     ↓
-um único zero point
+a single zero point
 
 qparams_np()
     ↓
-todos os scales
-todos os zero points
+all scales
+all zero points
 quantized dimension
 ```
 
-Portanto:
+Therefore:
 
 ```text
 scale_scalar / zp_scalar
 ```
 
-são convenientes para quantização per-tensor,
+are convenient for per-tensor quantization,
 
-enquanto:
+while:
 
 ```text
 qparams_np
 ```
 
-é adequado para cálculos que precisam preservar quantização por canal.
+is appropriate for calculations that need to preserve per-channel quantization.
 
 ---
 
-# 79. Relação com `weights.py`
+# 79. Relationship with `weights.py`
 
-`weights.py` utiliza funções desse módulo para:
+`weights.py` uses functions from this module to:
 
 ```text
-localizar tensors constantes
-interpretar buffers
-obter dtype
-obter bytes
+locate constant tensors
+interpret buffers
+get dtype
+get bytes
 ```
 
-Fluxo simplificado:
+Simplified flow:
 
 ```text
-Tensor de pesos
+Weight tensor
       │
       ▼
 safe_bytes_from_tensor()
@@ -2441,9 +2443,9 @@ safe_bytes_from_tensor()
 
 ---
 
-# 80. Relação com `quantization.py`
+# 80. Relationship with `quantization.py`
 
-`quantization.py` necessita principalmente:
+`quantization.py` mainly needs:
 
 ```text
 scale_scalar
@@ -2451,7 +2453,7 @@ zp_scalar
 qparams_np
 ```
 
-Fluxo:
+Flow:
 
 ```text
 Tensor
@@ -2464,38 +2466,38 @@ qparams_np()
    └── quantized dimension
            │
            ▼
-cálculo de multiplier / shift / Q6
+calculate multiplier / shift / Q6
 ```
 
 ---
 
-# 81. Relação com `graph.py`
+# 81. Relationship with `graph.py`
 
-`graph.py` precisa distinguir:
-
-```text
-tensor constante
-```
-
-de:
+`graph.py` needs to distinguish:
 
 ```text
-tensor produzido dinamicamente por operador
+constant tensor
 ```
 
-Para isso pode utilizar:
+from:
+
+```text
+tensor dynamically produced by an operator
+```
+
+For this, it can use:
 
 ```python
 is_constant_tensor(...)
 ```
 
-Isso impede que pesos e bias sejam interpretados como arestas normais entre operadores do grafo.
+This prevents weights and biases from being interpreted as normal edges between graph operators.
 
 ---
 
-# 82. Relação com `layer_params.py`
+# 82. Relationship with `layer_params.py`
 
-`layer_params.py` utiliza diretamente helpers como:
+`layer_params.py` directly uses helpers such as:
 
 ```text
 op_name
@@ -2504,7 +2506,7 @@ zp_scalar
 tensor_shape_list
 ```
 
-Por exemplo:
+For example:
 
 ```text
 TFLite Tensor
@@ -2518,10 +2520,10 @@ in_w
 cin
 ```
 
-e:
+and:
 
 ```text
-Tensor quantizado
+Quantized tensor
       ↓
 scale_scalar()
 zp_scalar()
@@ -2531,161 +2533,161 @@ zx / zy
 
 ---
 
-# 83. Por que `tensor_hwc()` não está aqui?
+# 83. Why is `tensor_hwc()` not here?
 
-Um detalhe importante da arquitetura atual é que:
+A key detail of the current architecture is that:
 
 ```python
 tensor_hwc()
 ```
 
-foi mantido em:
+was kept in:
 
 ```text
 layer_params.py
 ```
 
-e não em:
+rather than:
 
 ```text
 tflite_utils.py
 ```
 
-O motivo é semântico.
+The reason is semantic.
 
-`tensor_shape_list()` apenas responde:
+`tensor_shape_list()` only answers:
 
 ```text
-qual é o shape?
+what is the shape?
 ```
 
-Por exemplo:
+For example:
 
 ```text
 [1, 128, 128, 3]
 ```
 
-Já `tensor_hwc()` interpreta esse shape segundo a convenção esperada pela implementação das `LayerParams`:
+`tensor_hwc()`, however, interprets this shape according to the convention expected by the `LayerParams` implementation:
 
 ```text
-shape[1] → altura
-shape[2] → largura
-shape[3] → canais
+shape[1] → height
+shape[2] → width
+shape[3] → channels
 ```
 
-Ou seja:
+In other words:
 
 ```text
 tflite_utils.py
         ↓
-representação genérica
+generic representation
 
 layer_params.py
         ↓
-interpretação específica da aplicação
+application-specific interpretation
 ```
 
-Essa separação é intencional.
+This separation is intentional.
 
 ---
 
-# 84. O módulo como camada de normalização
+# 84. The module as a normalization layer
 
-Podemos entender este arquivo como uma camada de normalização.
+We can understand this file as a normalization layer.
 
-O binding TFLite fornece:
+The TFLite binding provides:
 
 ```text
-inteiros de enumeração
+enumeration integers
 ndarrays
-objetos FlatBuffer
-arrays opcionais
-métodos específicos
+FlatBuffer objects
+optional arrays
+specific methods
 ```
 
-O restante do extrator prefere receber:
+The rest of the extractor prefers to receive:
 
 ```text
-nomes de operadores
-ints Python
-floats Python
-listas Python
-arrays NumPy normalizados
+operator names
+Python ints
+Python floats
+Python lists
+normalized NumPy arrays
 bytes
 ```
 
-Portanto:
+Therefore:
 
 ```text
-Binding TFLite
+TFLite binding
       │
       ▼
 tflite_utils.py
       │
       ▼
-representação mais conveniente
+more convenient representation
       │
       ▼
-restante do extrator
+rest of the extractor
 ```
 
 ---
 
-# 85. Política atual para valores ausentes
+# 85. Current policy for missing values
 
-O módulo utiliza valores padrão em alguns casos.
+The module uses default values in some cases.
 
-### Scale ausente
+### Missing scale
 
 ```python
 1.0
 ```
 
-### Zero point ausente
+### Missing zero point
 
 ```python
 0
 ```
 
-### Shape ausente
+### Missing shape
 
 ```python
 []
 ```
 
-### Buffer inexistente
+### Missing buffer
 
 ```python
 None, None, None
 ```
 
-### Quantização inexistente
+### Missing quantization
 
 ```python
 None
 ```
 
-Essas decisões evitam que todos os módulos consumidores precisem repetir as mesmas verificações.
+These decisions prevent every consumer module from having to repeat the same checks.
 
 ---
 
-# 86. Significado dos valores neutros
+# 86. Meaning of neutral values
 
-Os defaults:
+The defaults:
 
 ```text
 scale = 1.0
 zero point = 0
 ```
 
-são matematicamente neutros na expressão:
+are mathematically neutral in the expression:
 
 ```text
 real =
 scale × (q - zero_point)
 ```
 
-Substituindo:
+Substituting:
 
 ```text
 real =
@@ -2694,15 +2696,15 @@ real =
 = q
 ```
 
-Isso explica por que esses valores são convenientes quando não há informação de quantização.
+This explains why these values are convenient when there is no quantization information.
 
 ---
 
-# 87. Caveat dos valores padrão
+# 87. Caveat about default values
 
-Apesar de matematicamente neutros, esses valores também podem esconder ausência inesperada de metadados.
+Although mathematically neutral, these values can also hide an unexpected absence of metadata.
 
-Por exemplo, se uma operação quantizada deveria possuir escala mas o modelo não fornecer:
+For example, if a quantized operation should have a scale but the model does not provide one:
 
 ```text
 scale_scalar()
@@ -2710,33 +2712,33 @@ scale_scalar()
 1.0
 ```
 
-o pipeline pode continuar.
+the pipeline can continue.
 
-Em uma versão futura mais rigorosa, certas chamadas poderiam diferenciar:
-
-```text
-tensor realmente não quantizado
-```
-
-de:
+In a stricter future version, certain calls could distinguish:
 
 ```text
-tensor que deveria ser quantizado, mas possui metadados incompletos
+a genuinely nonquantized tensor
 ```
 
-No extrator atual, o comportamento foi mantido simples e compatível com o modelo utilizado.
+from:
+
+```text
+a tensor that should be quantized but has incomplete metadata
+```
+
+In the current extractor, behavior was kept simple and compatible with the model used.
 
 ---
 
-# 88. Política de retorno de `safe_bytes_from_tensor()`
+# 88. Return policy of `safe_bytes_from_tensor()`
 
-A função retorna três `None` simultaneamente em situações de falha ou ausência:
+The function returns three `None` values simultaneously in cases of failure or absence:
 
 ```python
 return None, None, None
 ```
 
-Isso permite ao chamador fazer:
+This lets the caller write:
 
 ```python
 tensor, array, raw = (
@@ -2747,81 +2749,81 @@ if raw is None:
     ...
 ```
 
-A alternativa seria levantar exceção em todos os casos.
+The alternative would be to raise an exception in every case.
 
-A implementação atual prefere:
+The current implementation prefers:
 
 ```text
-ausência esperada
+expected absence
       ↓
 None
 
-erro estrutural crítico
+critical structural error
       ↓
-tratado em etapas posteriores
+handled at later stages
 ```
 
 ---
 
-# 89. Serialização e endianness
+# 89. Serialization and endianness
 
-`safe_bytes_from_tensor()` não realiza reordenação manual dos bytes.
+`safe_bytes_from_tensor()` does not reorder bytes manually.
 
-Ela utiliza:
+It uses:
 
 ```python
 np.frombuffer(...)
 ```
 
-seguido por:
+followed by:
 
 ```python
 .tobytes()
 ```
 
-O objetivo é preservar a sequência lógica dos dados segundo o dtype interpretado.
+The goal is to preserve the logical data sequence according to the interpreted dtype.
 
-Posteriormente, estruturas específicas como `LayerParam` são serializadas explicitamente com formato little-endian:
+Later, specific structures such as `LayerParam` are explicitly serialized using little-endian format:
 
 ```text
 <i
 ```
 
-mas isso pertence ao módulo de serialização, não a este utilitário.
+but that belongs to the serialization module, not this utility.
 
 ---
 
-# 90. Diferença entre buffer de peso e `params_blob`
+# 90. Difference between a weight buffer and `params_blob`
 
-É importante distinguir dois tipos de bytes utilizados pelo projeto.
+It is useful to distinguish two types of bytes used by the project.
 
-## Bytes vindos diretamente do TFLite
+## Bytes coming directly from TFLite
 
-Produzidos por:
+Produced by:
 
 ```python
 safe_bytes_from_tensor()
 ```
 
-Exemplo:
+Example:
 
 ```text
 weights_raw
 bias_raw
 ```
 
-Eles representam dados do modelo.
+They represent model data.
 
-## Bytes construídos pelo extrator
+## Bytes constructed by the extractor
 
-Produzidos posteriormente por:
+Produced later by:
 
 ```text
 quantization.py
 params_blob.py
 ```
 
-Exemplo:
+Example:
 
 ```text
 mul_blob
@@ -2830,15 +2832,15 @@ q6_blob
 params_blob
 ```
 
-Esses não existiam dessa forma no TFLite.
+These did not exist in this form in TFLite.
 
-Foram calculados ou reorganizados pelo pipeline.
+They were calculated or reorganized by the pipeline.
 
 ---
 
-# 91. Fluxo completo de um tensor constante
+# 91. Complete flow of a constant tensor
 
-Um peso passa aproximadamente pelo seguinte caminho:
+A weight follows approximately this path:
 
 ```text
 TFLite Tensor
@@ -2870,14 +2872,14 @@ safe_bytes_from_tensor()
              wat_generator.py
                      │
                      ▼
-             data segment WASM
+             WASM data segment
 ```
 
 ---
 
-# 92. Fluxo de informações de quantização
+# 92. Quantization information flow
 
-Para um tensor quantizado:
+For a quantized tensor:
 
 ```text
 Tensor
@@ -2898,14 +2900,14 @@ scale_scalar()       qparams_np()
 zp_scalar()              │
         │                │
         ▼                ▼
-operações especiais   per-channel
+special operations    per-channel
 ```
 
 ---
 
-# 93. O que este módulo não deve fazer
+# 93. What this module should not do
 
-Este arquivo não deve conter lógica específica de:
+This file should not contain logic specific to:
 
 ```text
 CONV_2D
@@ -2916,7 +2918,7 @@ MEAN
 SOFTMAX
 ```
 
-Também não deve calcular:
+It should also not calculate:
 
 ```text
 multipliers
@@ -2924,126 +2926,126 @@ shifts
 Q6
 padding
 slots
-endereços de memória
+memory addresses
 LayerParams
 ```
 
-Essas responsabilidades pertencem a módulos especializados.
+These responsibilities belong to specialized modules.
 
 ---
 
-# 94. Por que isso é importante?
+# 94. Why does this matter?
 
-Imagine colocar dentro de:
+Imagine putting inside:
 
 ```python
 safe_bytes_from_tensor()
 ```
 
-uma regra específica para reorganizar pesos de `DEPTHWISE_CONV_2D`.
+a specific rule for reorganizing `DEPTHWISE_CONV_2D` weights.
 
-Isso faria uma função genérica começar a conhecer semântica de operador.
+This would make a generic function start to know operator semantics.
 
-A arquitetura atual evita isso.
+The current architecture avoids this.
 
-A divisão é:
+The division is:
 
 ```text
 tflite_utils.py
     ↓
-"como ler o TFLite"
+"how to read TFLite"
 
 weights.py
     ↓
-"como organizar pesos"
+"how to organize weights"
 
 quantization.py
     ↓
-"como calcular parâmetros quantizados"
+"how to calculate quantized parameters"
 
 layer_params.py
     ↓
-"como representar cada operação no runtime"
+"how to represent each operation in the runtime"
 ```
 
 ---
 
-# 95. Dependência central, mas de baixo nível
+# 95. A central but low-level dependency
 
-`tflite_utils.py` é um módulo de baixo nível.
+`tflite_utils.py` is a low-level module.
 
-Ele conhece:
+It knows:
 
 ```text
-binding TFLite
+TFLite binding
 NumPy
 ```
 
-mas não deveria conhecer:
+but should not know:
 
 ```text
 WAT
 slots
-layout de memória
-execução WASM
+memory layout
+WASM execution
 ```
 
-Isso reduz acoplamento.
+This reduces coupling.
 
 ---
 
-# 96. Benefício para uma futura API/backend
+# 96. Benefit for a future API/backend
 
-Quando o extrator for utilizado como backend, esse módulo provavelmente precisará de poucas mudanças.
+When the extractor is used as a backend, this module will probably need few changes.
 
-A entrada continuará sendo:
+Its input will still be:
 
 ```text
 Model + SubGraph
 ```
 
-independentemente de o arquivo ter vindo de:
+regardless of whether the file came from:
 
 ```text
-linha de comando
-upload web
+command line
+web upload
 API
-interface Angular
+Angular interface
 ```
 
-Portanto, o utilitário permanece reutilizável.
+Thus, the utility remains reusable.
 
 ---
 
-# 97. Resumo das funções
+# 97. Function summary
 
-| Função                     | Responsabilidade                                     |
+| Function | Responsibility |
 | -------------------------- | ---------------------------------------------------- |
-| `op_name()`                | Converter código interno de operador em nome textual |
-| `is_constant_tensor()`     | Verificar se tensor possui buffer constante          |
-| `safe_bytes_from_tensor()` | Ler e interpretar bytes de um tensor constante       |
-| `scale_scalar()`           | Obter primeira escala de quantização                 |
-| `zp_scalar()`              | Obter primeiro zero point                            |
-| `tensor_shape_list()`      | Converter shape para lista de `int`                  |
-| `qparams_np()`             | Obter parâmetros completos de quantização            |
+| `op_name()` | Convert an internal operator code to a textual name |
+| `is_constant_tensor()` | Check whether a tensor has a constant buffer |
+| `safe_bytes_from_tensor()` | Read and interpret bytes of a constant tensor |
+| `scale_scalar()` | Get the first quantization scale |
+| `zp_scalar()` | Get the first zero point |
+| `tensor_shape_list()` | Convert the shape to a list of `int` |
+| `qparams_np()` | Get complete quantization parameters |
 
 ---
 
-# 98. Resumo das constantes
+# 98. Constant summary
 
-| Constante         | Responsabilidade                           |
+| Constant | Responsibility |
 | ----------------- | ------------------------------------------ |
-| `TENSOR_TYPE_MAP` | Relacionar tipo TFLite, nome e dtype NumPy |
-| `BYTES_PER_TYPE`  | Informar tamanho em bytes de cada elemento |
+| `TENSOR_TYPE_MAP` | Relate TFLite type, name, and NumPy dtype |
+| `BYTES_PER_TYPE` | Report the size of each element in bytes |
 
 ---
 
-# 99. Resumo conceitual
+# 99. Conceptual summary
 
-O módulo pode ser resumido por:
+The module can be summarized as:
 
 ```text
-            Binding TFLite
+            TFLite binding
                   │
                   ▼
         ┌───────────────────┐
@@ -3053,48 +3055,48 @@ O módulo pode ser resumido por:
         ┌─────────┼───────────┐
         │         │           │
         ▼         ▼           ▼
-   operadores   tensors   quantização
+   operators    tensors   quantization
         │         │           │
         ▼         ▼           ▼
-     nomes      arrays      scales
+     names      arrays      scales
                 bytes       zero points
                 shapes      qdim
         │         │           │
         └─────────┼───────────┘
                   ▼
-          módulos superiores
+          higher-level modules
 ```
 
-A responsabilidade central é:
+The central responsibility is:
 
 ```text
-transformar estruturas de baixo nível
-do binding TFLite
+transform low-level structures
+from the TFLite binding
 
-em informações simples e consistentes
-para o restante do extrator
+into simple, consistent information
+for the rest of the extractor
 ```
 
 ---
 
-# 100. Papel no projeto completo
+# 100. Role in the complete project
 
-Até este ponto, a arquitetura pode ser visualizada assim:
+Up to this point, the architecture can be visualized as follows:
 
 ```text
 ┌─────────────────────────────┐
 │          config.py          │
 │                             │
-│ caminhos                    │
-│ políticas                   │
-│ alinhamento                 │
+│ paths                       │
+│ policies                    │
+│ alignment                   │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
 │      model_loader.py        │
 │                             │
-│ arquivo → Model             │
+│ file → Model                │
 │ Model → SubGraph            │
 └──────────────┬──────────────┘
                │
@@ -3102,16 +3104,16 @@ Até este ponto, a arquitetura pode ser visualizada assim:
 ┌─────────────────────────────┐
 │      tflite_utils.py        │
 │                             │
-│ normaliza tipos             │
-│ lê buffers                  │
-│ lê shapes                   │
-│ lê quantização              │
-│ resolve nomes de ops        │
+│ normalizes types            │
+│ reads buffers               │
+│ reads shapes                │
+│ reads quantization          │
+│ resolves op names           │
 └──────────────┬──────────────┘
                │
                ▼
 ┌─────────────────────────────┐
-│ módulos de engenharia       │
+│ engineering modules         │
 │                             │
 │ graph                       │
 │ weights                     │
@@ -3121,24 +3123,24 @@ Até este ponto, a arquitetura pode ser visualizada assim:
 └─────────────────────────────┘
 ```
 
-`model_loader.py` torna o arquivo TFLite navegável.
+`model_loader.py` makes the TFLite file navigable.
 
-`tflite_utils.py` torna essa estrutura navegável **conveniente de usar**.
+`tflite_utils.py` makes that navigable structure **convenient to use**.
 
-Essa distinção é importante:
+This distinction matters:
 
 ```text
 model_loader
     ↓
-abre a estrutura
+opens the structure
 
 tflite_utils
     ↓
-traduz e normaliza a estrutura
+translates and normalizes the structure
 
-demais módulos
+other modules
     ↓
-aplicam a lógica específica do extrator
+apply the extractor's specific logic
 ```
 
-Por isso, apesar de ser um módulo de utilidades, ele ocupa uma posição central na arquitetura do pipeline.
+That is why, despite being a utility module, it occupies a central position in the pipeline's architecture.

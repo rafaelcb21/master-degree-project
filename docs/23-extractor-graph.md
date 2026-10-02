@@ -1,19 +1,21 @@
-# 23 — Grafo de operadores e ordenação
+[English](23-extractor-graph.md) | [Português (Brasil)](23-extractor-graph.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/graph.py](../extractor/graph.py)
+# 23 — Operator graph and ordering
 
-## Contrato de entrada e posição
+[Index](README.md) · Source: [extractor/graph.py](../extractor/graph.py)
 
-Recebe model/subgraph do binding. Produz dependências entre operadores para `allocate_slots` e mapas de produtores para `tensor_mapping`. Não lê testes nem conhece a sintética: essa operação é adicionada depois. `ignored_types` existe na API, mas o pipeline não o fornece; por default nenhum tipo é ignorado.
+## Input contract and position
 
-## Fases e funções
+Receives model/subgraph objects from the binding. Produces operator dependencies for `allocate_slots` and producer maps for `tensor_mapping`. It does not read tests or know about the synthetic operation, which is added later. `ignored_types` exists in the API, but the pipeline does not provide it; by default no type is ignored.
 
-1. `build_graph_for_subgraph` percorre todos os operadores, obtém seu nome, associa cada output não negativo a um produtor e acrescenta cada input não negativo à lista de consumidores. Retorna `(op_types,producer_by_tensor,consumers_by_tensor)`. Um produtor posterior para o mesmo tensor sobrescreve o anterior; não há validação de unicidade.
-2. `compute_useful_adjacency` monta `forward` como conjuntos de consumidores por operador, removendo autoarestas, e `backward` como inverso. Separa índices ignorados por tipo. As funções internas `next_useful_from` e `prev_useful_to` usam pilha e `seen` para atravessar operadores ignorados e encontrar os primeiros úteis em cada direção. Retorna úteis e suas arestas. A busca não executa nem reproduz semanticamente uma operação ignorada.
-3. `topo_order` implementa Kahn: indegree por nó, fila inicial ordenada, retirada da esquerda, destinos ordenados, inclusão quando indegree chega a zero. Se quantidade produzida diverge de `nodes`, levanta `RuntimeError` por ciclo.
-4. `build_layers` cria nomes `L0,L1,...` enumerando a lista `useful` (ordem original), mas entrega a lista `layers` na ordem topológica. Cada dict contém `type,name,above,below,op_index`; vizinhos são ordenados pelo número do label.
-5. `graph_to_text` emite cabeçalho e uma linha `tipo; label; [acima]; [abaixo]`. A primeira coluna chama-se `nome_da_camada` no cabeçalho, mas recebe o tipo da operação.
-6. `build_graph` compõe essas funções e retorna todas as estruturas: tipos, produtores, consumidores, úteis, adjacências, `order`, `new_label`, dois mapas inversos de labels, `layers` e texto `data`.
+## Stages and functions
+
+1. `build_graph_for_subgraph` visits all operators, obtains their names, associates each nonnegative output with a producer, and adds each nonnegative input to the consumer list. Returns `(op_types,producer_by_tensor,consumers_by_tensor)`. A later producer for the same tensor overwrites the earlier one; uniqueness is not validated.
+2. `compute_useful_adjacency` builds `forward` as sets of consumers per operator, removes self-edges, and builds `backward` as its inverse. It separates ignored indices by type. Internal functions `next_useful_from` and `prev_useful_to` use a stack and `seen` to traverse ignored operators and find the first useful ones in each direction. Returns useful nodes and their edges. The search neither executes nor semantically reproduces an ignored operation.
+3. `topo_order` implements Kahn's algorithm: indegree per node, sorted initial queue, removal from the left, sorted destinations, and insertion when indegree reaches zero. If the number produced differs from `nodes`, it raises `RuntimeError` for a cycle.
+4. `build_layers` creates names `L0,L1,...` by enumerating `useful` (original order), but returns `layers` in topological order. Each dict contains `type,name,above,below,op_index`; neighbors are sorted by label number.
+5. `graph_to_text` emits a header and one `type; label; [above]; [below]` line. The first header column is called `nome_da_camada`, but receives the operation type.
+6. `build_graph` combines these functions and returns all structures: types, producers, consumers, useful nodes, adjacency, `order`, `new_label`, two inverse label maps, `layers`, and text `data`.
 
 ```text
 tensor T0 ──► CONV A ──► tensor T1 ──┬──► CONV B ──► T2 ──┐
@@ -22,65 +24,65 @@ tensor T0 ──► CONV A ──► tensor T1 ──┬──► CONV B ──�
 
 producer_by_tensor: T1 → A, T2 → B
 consumers_by_tensor: T1 → [B,C], T2 → [C]
-arestas úteis: A → B, A → C, B → C
-ordem possível: A, B, C
+useful edges: A → B, A → C, B → C
+possible order: A, B, C
 ```
 
-Entram relações de leitura/escrita do FlatBuffer. `graph.py` transforma dependências de tensores em dependências de operadores; sai uma ordem e uma representação adequada à contagem de leitores. IDs e tipos são específicos; o algoritmo de grafo é genérico. Constantes também aparecem nas listas de inputs, mas sem produtor interno não criam arestas por si sós.
+Inputs are FlatBuffer read/write relationships. `graph.py` transforms tensor dependencies into operator dependencies; outputs are an order and a representation suitable for counting readers. IDs and types are model-specific; the graph algorithm is generic. Constants also appear in input lists, but without an internal producer they do not create edges by themselves.
 
-## Invariantes e limitações
+## Invariants and limitations
 
-Todo nó útil tem conjuntos de entrada/saída, e os mapas de labels são inversos. Um nó sem predecessor computacional recebe entrada lógica SLOT0 no alocador, hipótese que merece revisão para grafos com múltiplas raízes independentes. Não há poda por alcançabilidade até outputs: “útil” significa apenas “não ignorado”. Operações desconectadas podem continuar na lista.
+Every useful node has input/output sets, and the label maps are inverses. A node without a computational predecessor receives logical input SLOT0 in the allocator, an assumption that deserves review for graphs with multiple independent roots. There is no pruning by reachability to outputs: “useful” only means “not ignored.” Disconnected operations may remain in the list.
 
-As arestas usam sets: várias leituras do mesmo produtor por um consumidor resultam em uma dependência de operador, não necessariamente uma contagem por tensor. Isso importa para grafos com múltiplas saídas ou inputs repetidos. O label Lk não é garantidamente igual ao op_index quando há tipos ignorados. O runtime serializa operadores na ordem original, portanto ordenação topológica do relatório não determina sozinha a ordem final de execução.
+Edges use sets: multiple reads from the same producer by one consumer produce one operator dependency, not necessarily a per-tensor count. This matters for graphs with multiple outputs or repeated inputs. Label Lk is not guaranteed to equal op_index when types are ignored. The runtime serializes operators in their original order, so the report's topological ordering does not by itself determine final execution order.
 
-Sem ignorados, a construção é próxima de O(operadores + referências + arestas), além de ordenações. Com cadeias ignoradas, buscas repetidas por nó podem revisitar partes do grafo; não há cache dessas travessias. O relatório 02 é diagnóstico e não é relido para controlar a execução.
+Without ignored nodes, construction is close to O(operators + references + edges), plus sorting. With ignored chains, repeated searches per node may revisit graph sections; these traversals are not cached. Report 02 is diagnostic and is not read back to control execution.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 from collections import defaultdict, deque
 from extractor.tflite_utils import op_name
 ```
 
-### `build_graph_for_subgraph` — assinatura
+### `build_graph_for_subgraph` — signature
 
 ```python
 def build_graph_for_subgraph(model, subgraph)
 ```
 
-### `compute_useful_adjacency` — assinatura
+### `compute_useful_adjacency` — signature
 
 ```python
 def compute_useful_adjacency(subgraph, op_types, consumers_by_tensor, ignored_types=None)
 ```
 
-### `topo_order` — assinatura
+### `topo_order` — signature
 
 ```python
 def topo_order(nodes, in_edges, out_edges)
 ```
 
-### `build_layers` — assinatura
+### `build_layers` — signature
 
 ```python
 def build_layers(op_types, useful, useful_inputs, useful_outputs, order)
 ```
 
-### `graph_to_text` — assinatura
+### `graph_to_text` — signature
 
 ```python
 def graph_to_text(layers)
 ```
 
-### `build_graph` — assinatura
+### `build_graph` — signature
 
 ```python
 def build_graph(model, subgraph, ignored_types=None)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [04-grafo.md](historico/04-grafo.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [04-grafo.md](historico/04-grafo.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

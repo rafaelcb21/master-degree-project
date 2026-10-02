@@ -1,28 +1,30 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](02-carregamento-modelo.md) | [Português (Brasil)](02-carregamento-modelo.pt-BR.md)
 
-# 02 — Carregamento do modelo TFLite (`model_loader.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body is retained in translation.
 
-## 1. Objetivo do módulo
+# 02 — Loading the TFLite model (`model_loader.py`)
 
-O arquivo `extractor/model_loader.py` é responsável pela primeira transformação realizada pelo pipeline:
+## 1. Module purpose
+
+The `extractor/model_loader.py` file is responsible for the first transformation performed by the pipeline:
 
 ```text
-arquivo .tflite no disco
+.tflite file on disk
         │
         ▼
-sequência de bytes
+sequence of bytes
         │
         ▼
-binding Python do TFLite
+TFLite Python binding
         │
         ▼
-objeto Model
+Model object
         │
         ▼
-SubGraph utilizado pelo extrator
+SubGraph used by the extractor
 ```
 
-O código atual é:
+The current code is:
 
 ```python
 from pathlib import Path
@@ -53,20 +55,20 @@ def get_subgraph(model, index=0):
     return model.Subgraphs(index)
 ```
 
-Esse módulo possui duas responsabilidades bem delimitadas:
+This module has two clearly defined responsibilities:
 
-1. carregar e interpretar o arquivo TFLite;
-2. selecionar o subgrafo que será utilizado pelo restante do pipeline.
+1. load and interpret the TFLite file;
+2. select the subgraph used by the rest of the pipeline.
 
-Ele **não** analisa operadores, tensors, pesos, quantização ou memória.
+It does **not** analyze operators, tensors, weights, quantization, or memory.
 
-Essas responsabilidades pertencem aos módulos posteriores.
+Those responsibilities belong to later modules.
 
 ---
 
-# 2. Posição no pipeline
+# 2. Position in the pipeline
 
-O módulo aparece imediatamente depois da configuração.
+The module appears immediately after configuration.
 
 ```text
 config.py
@@ -89,135 +91,135 @@ Model + SubGraph
    └── layer_params.py
 ```
 
-Portanto, praticamente todo o restante do extrator depende indiretamente dessa etapa.
+Thus, almost all of the remaining extractor indirectly depends on this stage.
 
-Se o modelo não puder ser carregado corretamente, nenhuma das fases seguintes pode ser executada.
+If the model cannot be loaded correctly, none of the following stages can run.
 
 ---
 
-# 3. Importação de `Path`
+# 3. Importing `Path`
 
-O arquivo começa com:
+The file begins with:
 
 ```python
 from pathlib import Path
 ```
 
-O `Path` é utilizado para manipular o caminho recebido por `load_model()`.
+`Path` handles the path received by `load_model()`.
 
-Dentro da função:
+Inside the function:
 
 ```python
 buf = Path(model_path).read_bytes()
 ```
 
-Isso permite que `model_path` seja fornecido tanto como:
+This allows `model_path` to be supplied either as:
 
 ```python
 Path("model_int8_esp32.tflite")
 ```
 
-quanto como:
+or as:
 
 ```python
 "model_int8_esp32.tflite"
 ```
 
-porque:
+because:
 
 ```python
 Path(model_path)
 ```
 
-normaliza o argumento para um objeto `Path`.
+normalizes the argument to a `Path` object.
 
 ---
 
-# 4. Importação do binding TFLite
+# 4. Importing the TFLite binding
 
-A segunda importação é:
+The second import is:
 
 ```python
 import tflite.Model as TFLModel
 ```
 
-O nome:
+The name:
 
 ```text
 TFLModel
 ```
 
-é apenas um alias Python utilizado para tornar explícito que esse módulo representa a estrutura `Model` definida pelo formato TFLite.
+is simply a Python alias that makes explicit that this module represents the `Model` structure defined by the TFLite format.
 
-O extrator não utiliza TensorFlow para executar a rede nesta etapa.
+The extractor does not use TensorFlow to execute the network at this stage.
 
-Ele utiliza o binding Python do formato TFLite para navegar pela estrutura serializada do arquivo.
+It uses the Python binding for the TFLite format to navigate the file's serialized structure.
 
-A distinção é importante:
+The distinction matters:
 
 ```text
 TensorFlow / TFLite Interpreter
         │
-        └── executaria o modelo
+        └── would execute the model
 
-binding tflite usado aqui
+tflite binding used here
         │
-        └── permite inspecionar sua estrutura
+        └── allows its structure to be inspected
 ```
 
-Neste projeto, o objetivo não é pedir ao TFLite que realize a inferência.
+In this project, the goal is not to ask TFLite to perform inference.
 
-O objetivo é extrair informações como:
+The goal is to extract information such as:
 
 ```text
-operadores
+operators
 tensors
 shapes
 buffers
-pesos
-bias
+weights
+biases
 zero points
 scales
-opções dos operadores
+operator options
 ```
 
-para posteriormente construir uma representação própria utilizada pelo módulo WebAssembly.
+to subsequently build a custom representation used by the WebAssembly module.
 
 ---
 
-# 5. Arquivo `.tflite`
+# 5. The `.tflite` file
 
-Um arquivo:
+A file such as:
 
 ```text
 model_int8_esp32.tflite
 ```
 
-não é um arquivo Python nem um arquivo textual.
+is neither a Python file nor a text file.
 
-Ele é uma representação binária estruturada.
+It is a structured binary representation.
 
-Por isso não fazemos:
+That is why we do not use:
 
 ```python
 open(...).read()
 ```
 
-como texto.
+to read it as text.
 
-O código utiliza:
+The code uses:
 
 ```python
 read_bytes()
 ```
 
-produzindo:
+producing:
 
 ```text
 bytes
 ```
 
-Conceitualmente:
+Conceptually:
 
 ```text
 model_int8_esp32.tflite
@@ -229,59 +231,59 @@ model_int8_esp32.tflite
 b'\x1c\x00\x00...'
 ```
 
-O conteúdo real possui milhares ou milhões de bytes.
+The actual contents comprise thousands or millions of bytes.
 
-Essa sequência será interpretada pelo binding do TFLite.
+This sequence will be interpreted by the TFLite binding.
 
 ---
 
-# 6. Função `load_model()`
+# 6. The `load_model()` function
 
-A função principal é:
+The main function is:
 
 ```python
 def load_model(model_path):
 ```
 
-Sua responsabilidade é:
+Its responsibility is:
 
 ```text
-caminho do arquivo
+file path
       ↓
-ler bytes
+read bytes
       ↓
-localizar o parser correto no binding
+find the correct parser in the binding
       ↓
-obter objeto Model
+obtain Model object
       ↓
-retornar Model
+return Model
 ```
 
-Ela recebe apenas uma informação:
+It receives only one piece of information:
 
 ```text
 model_path
 ```
 
-e retorna:
+and returns:
 
 ```text
 model
 ```
 
-Não existe estado global ou efeito colateral relacionado ao modelo.
+There is no global state or side effect related to the model.
 
 ---
 
-# 7. Leitura dos bytes
+# 7. Reading the bytes
 
-A primeira instrução é:
+The first instruction is:
 
 ```python
 buf = Path(model_path).read_bytes()
 ```
 
-Ela pode ser decomposta em:
+It can be broken down into:
 
 ```text
 model_path
@@ -290,7 +292,7 @@ model_path
 Path(model_path)
     │
     ▼
-objeto Path
+Path object
     │
     ▼
 .read_bytes()
@@ -299,17 +301,17 @@ objeto Path
 buf
 ```
 
-O nome:
+The name:
 
 ```text
 buf
 ```
 
-é abreviação de `buffer`.
+is short for `buffer`.
 
-Ele contém todo o arquivo TFLite em memória.
+It contains the entire TFLite file in memory.
 
-Conceitualmente:
+Conceptually:
 
 ```python
 buf: bytes
@@ -317,17 +319,17 @@ buf: bytes
 
 ---
 
-# 8. Por que carregar o arquivo inteiro?
+# 8. Why load the entire file?
 
-O código atual utiliza:
+The current code uses:
 
 ```python
 read_bytes()
 ```
 
-e portanto carrega o arquivo TFLite inteiro na memória.
+and therefore loads the entire TFLite file into memory.
 
-Para o modelo utilizado neste projeto, isso é adequado porque o extrator precisa navegar por diferentes partes da estrutura:
+For the model used in this project, this is appropriate because the extractor needs to navigate different parts of the structure:
 
 ```text
 Model
@@ -340,30 +342,30 @@ Model
  └── Buffers
 ```
 
-Durante a extração, diferentes módulos acessam repetidamente essas estruturas.
+During extraction, different modules repeatedly access these structures.
 
-Manter o buffer disponível permite que o binding faça essas consultas.
+Keeping the buffer available allows the binding to perform these queries.
 
 ---
 
 # 9. `GetRootAsModel`
 
-Depois da leitura:
+After reading:
 
 ```python
 if hasattr(TFLModel, "GetRootAsModel"):
     model = TFLModel.GetRootAsModel(buf, 0)
 ```
 
-A função:
+The function:
 
 ```text
 GetRootAsModel
 ```
 
-interpreta a estrutura raiz armazenada no buffer como um objeto TFLite `Model`.
+interprets the root structure stored in the buffer as a TFLite `Model` object.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 bytes
@@ -375,7 +377,7 @@ GetRootAsModel
 Model
 ```
 
-Esse passo é fundamental porque os bytes deixam de ser tratados como uma sequência opaca e passam a ser acessados por meio de métodos como:
+This step is fundamental because the bytes are no longer treated as an opaque sequence and can instead be accessed through methods such as:
 
 ```python
 model.Subgraphs(...)
@@ -385,9 +387,9 @@ model.Buffers(...)
 
 ---
 
-# 10. O segundo argumento `0`
+# 10. The second argument, `0`
 
-A chamada é:
+The call is:
 
 ```python
 TFLModel.GetRootAsModel(
@@ -396,31 +398,31 @@ TFLModel.GetRootAsModel(
 )
 ```
 
-O segundo argumento:
+The second argument:
 
 ```text
 0
 ```
 
-indica o deslocamento inicial utilizado para localizar a estrutura raiz no buffer.
+specifies the starting offset used to locate the root structure in the buffer.
 
-No uso normal do arquivo TFLite completo, o parsing é iniciado a partir do início do buffer.
+When using a complete TFLite file normally, parsing starts at the beginning of the buffer.
 
-O extrator não precisa conhecer manualmente os offsets internos de cada tensor ou operador.
+The extractor does not need to know the internal offsets of every tensor or operator manually.
 
-Essa navegação é fornecida pelo binding.
+The binding provides this navigation.
 
 ---
 
-# 11. O objeto retornado não é uma cópia simplificada do modelo
+# 11. The returned object is not a simplified copy of the model
 
-É importante entender que:
+It is useful to understand that:
 
 ```python
 model = TFLModel.GetRootAsModel(buf, 0)
 ```
 
-não converte todo o modelo para estruturas comuns como:
+does not convert the entire model into common structures such as:
 
 ```python
 dict
@@ -428,35 +430,35 @@ list
 numpy.ndarray
 ```
 
-O resultado é um objeto fornecido pelo binding do TFLite.
+The result is an object supplied by the TFLite binding.
 
-Ele expõe métodos de acesso à estrutura serializada.
+It exposes methods for accessing the serialized structure.
 
-Por exemplo:
+For example:
 
 ```python
 model.SubgraphsLength()
 ```
 
-pode informar quantos subgrafos existem.
+can report how many subgraphs exist.
 
-E:
+And:
 
 ```python
 model.Subgraphs(0)
 ```
 
-permite acessar um deles.
+allows one of them to be accessed.
 
-A extração acontece sob demanda à medida que esses métodos são chamados.
+Extraction happens on demand as these methods are called.
 
 ---
 
-# 12. Compatibilidade entre versões do binding
+# 12. Compatibility between binding versions
 
-O código contém duas formas possíveis de localizar `GetRootAsModel`.
+The code contains two possible ways to locate `GetRootAsModel`.
 
-Primeira:
+First:
 
 ```python
 if hasattr(
@@ -465,7 +467,7 @@ if hasattr(
 ):
 ```
 
-Segunda:
+Second:
 
 ```python
 elif (
@@ -477,33 +479,33 @@ elif (
 ):
 ```
 
-Isso existe porque diferentes formas de empacotamento ou versões do binding Python podem expor a classe gerada com estruturas ligeiramente diferentes.
+This is because different packaging approaches or versions of the Python binding can expose the generated class with slightly different structures.
 
-Em um ambiente, pode existir diretamente:
+In one environment, this may exist directly:
 
 ```python
 TFLModel.GetRootAsModel(...)
 ```
 
-Em outro:
+In another:
 
 ```python
 TFLModel.Model.GetRootAsModel(...)
 ```
 
-O extrator aceita ambas.
+The extractor accepts both.
 
 ---
 
-# 13. Primeira forma suportada
+# 13. First supported form
 
-A primeira tentativa é:
+The first attempt is:
 
 ```python
 if hasattr(TFLModel, "GetRootAsModel"):
 ```
 
-Caso seja verdadeira:
+If true:
 
 ```python
 model = TFLModel.GetRootAsModel(
@@ -512,7 +514,7 @@ model = TFLModel.GetRootAsModel(
 )
 ```
 
-Estruturalmente:
+Structurally:
 
 ```text
 TFLModel
@@ -520,13 +522,13 @@ TFLModel
    └── GetRootAsModel()
 ```
 
-É a forma mais direta.
+This is the most direct form.
 
 ---
 
-# 14. Segunda forma suportada
+# 14. Second supported form
 
-Se o método não existir diretamente, o código testa:
+If the method does not exist directly, the code checks:
 
 ```python
 elif (
@@ -538,7 +540,7 @@ elif (
 ):
 ```
 
-Nesse caso, a estrutura é:
+In this case, the structure is:
 
 ```text
 TFLModel
@@ -548,7 +550,7 @@ TFLModel
          └── GetRootAsModel()
 ```
 
-E a chamada torna-se:
+And the call becomes:
 
 ```python
 model = (
@@ -560,27 +562,27 @@ model = (
 )
 ```
 
-O resultado lógico é o mesmo:
+The logical result is the same:
 
 ```text
-buffer TFLite
+TFLite buffer
       ↓
-objeto Model
+Model object
 ```
 
 ---
 
-# 15. Uso de `hasattr`
+# 15. Using `hasattr`
 
-A função:
+The function:
 
 ```python
 hasattr(objeto, "atributo")
 ```
 
-verifica se determinado objeto possui um atributo.
+checks whether a given object has an attribute.
 
-Exemplo:
+Example:
 
 ```python
 hasattr(
@@ -589,39 +591,39 @@ hasattr(
 )
 ```
 
-retorna:
+returns:
 
 ```text
 True
 ```
 
-ou:
+or:
 
 ```text
 False
 ```
 
-Isso permite decidir dinamicamente qual interface do binding está disponível.
+This makes it possible to decide dynamically which binding interface is available.
 
-Sem essa verificação, utilizar diretamente:
+Without this check, directly using:
 
 ```python
 TFLModel.GetRootAsModel(...)
 ```
 
-poderia produzir:
+could produce:
 
 ```text
 AttributeError
 ```
 
-em uma instalação cuja estrutura seja diferente.
+in an installation with a different structure.
 
 ---
 
-# 16. Por que não usar `try/except` diretamente?
+# 16. Why not use `try/except` directly?
 
-Também seria possível escrever algo semelhante a:
+It would also be possible to write something like:
 
 ```python
 try:
@@ -633,19 +635,19 @@ except AttributeError:
     ...
 ```
 
-Mas o código atual prefere verificar explicitamente a estrutura disponível.
+But the current code prefers to check the available structure explicitly.
 
-Isso deixa mais claro que existem **duas interfaces conhecidas e suportadas**.
+This makes it clearer that there are **two known, supported interfaces**.
 
-A intenção não é ignorar qualquer erro.
+The intention is not to ignore arbitrary errors.
 
-É detectar qual formato de binding está instalado.
+It is to detect which binding format is installed.
 
 ---
 
-# 17. Falha explícita
+# 17. Explicit failure
 
-Se nenhuma das duas formas estiver disponível:
+If neither form is available:
 
 ```python
 else:
@@ -654,26 +656,26 @@ else:
     )
 ```
 
-O extrator interrompe a execução.
+The extractor stops execution.
 
-Isso é melhor do que continuar com:
+This is better than continuing with:
 
 ```python
 model = None
 ```
 
-e produzir erros difíceis de interpretar posteriormente.
+and producing errors that are difficult to interpret later.
 
-A falha ocorre exatamente na etapa responsável pela leitura do modelo.
+Failure occurs precisely at the stage responsible for reading the model.
 
-Fluxo:
+Flow:
 
 ```text
-GetRootAsModel disponível?
+GetRootAsModel available?
         │
      ┌──┴──┐
      │     │
-    sim   não
+    yes    no
      │     │
      ▼     ▼
  Model   RuntimeError
@@ -681,72 +683,72 @@ GetRootAsModel disponível?
 
 ---
 
-# 18. Por que `RuntimeError`?
+# 18. Why `RuntimeError`?
 
-O problema detectado não é simplesmente um arquivo ausente ou um argumento inválido.
+The detected problem is not simply a missing file or an invalid argument.
 
-Nesse ponto, o extrator encontrou uma incompatibilidade entre a interface esperada e o binding TFLite instalado.
+At this point, the extractor has found an incompatibility between the expected interface and the installed TFLite binding.
 
-Por isso a mensagem:
+That is why the message:
 
 ```text
 Binding tflite.Model não possui GetRootAsModel.
 ```
 
-explica diretamente qual requisito não foi atendido.
+directly explains which requirement was not met. (The message means: the tflite.Model binding does not have GetRootAsModel.)
 
 ---
 
-# 19. Outros erros possíveis
+# 19. Other possible errors
 
-Nem todos os erros são tratados manualmente por `load_model()`.
+Not all errors are handled manually by `load_model()`.
 
-Por exemplo, se:
+For example, if:
 
 ```python
 MODEL_PATH
 ```
 
-apontar para um arquivo inexistente:
+points to a nonexistent file:
 
 ```python
 Path(model_path).read_bytes()
 ```
 
-produzirá a exceção correspondente do sistema de arquivos.
+will produce the corresponding filesystem exception.
 
-Isso é intencionalmente diferente de:
-
-```text
-binding incompatível
-```
-
-O código não tenta transformar todos os erros em uma única exceção genérica.
-
-Assim é possível distinguir:
+This is intentionally different from:
 
 ```text
-arquivo inexistente
-arquivo inacessível
-binding incompatível
-arquivo inválido
+incompatible binding
 ```
 
-de acordo com o ponto em que ocorrer a falha.
+The code does not try to turn every error into a single generic exception.
+
+This makes it possible to distinguish:
+
+```text
+nonexistent file
+inaccessible file
+incompatible binding
+invalid file
+```
+
+according to where the failure occurs.
 
 ---
 
-# 20. Retorno de `load_model`
+# 20. Return value of `load_model`
 
-Ao final:
+At the end:
 
 ```python
 return model
 ```
 
-A função retorna o objeto que representa a raiz do modelo TFLite.
+The function returns the object representing the root of the TFLite model.
 
-No `main.py`, seu uso conceitual é:
+In `main.py`, its conceptual usage is:
 
 ```python
 model = load_model(
@@ -754,15 +756,15 @@ model = load_model(
 )
 ```
 
-A partir desse momento:
+From this point onward:
 
 ```text
 MODEL_PATH
 ```
 
-não é mais a principal fonte utilizada pelo pipeline.
+is no longer the main source used by the pipeline.
 
-A estrutura em memória passa a ser:
+The structure in memory becomes:
 
 ```text
 model
@@ -770,9 +772,9 @@ model
 
 ---
 
-# 21. Estrutura conceitual de `Model`
+# 21. Conceptual structure of `Model`
 
-Uma representação simplificada das informações posteriormente acessadas é:
+A simplified representation of the information accessed later is:
 
 ```text
 Model
@@ -796,25 +798,25 @@ Model
      └── ...
 ```
 
-Essa estrutura é essencial para entender o restante do extrator.
+This structure is essential to understanding the rest of the extractor.
 
 ---
 
-# 22. Relação entre operadores e códigos de operação
+# 22. Relationship between operators and operation codes
 
-Um operador armazenado dentro de um subgrafo não precisa carregar diretamente o nome:
+An operator stored inside a subgraph does not need to carry the name directly:
 
 ```text
 CONV_2D
 ```
 
-O operador pode referenciar uma entrada da tabela de:
+The operator can reference an entry in the table of:
 
 ```text
 OperatorCodes
 ```
 
-Por isso posteriormente o extrator utiliza funções auxiliares para converter:
+That is why the extractor later uses helper functions to convert:
 
 ```text
 OpcodeIndex
@@ -826,17 +828,17 @@ BuiltinCode
 CONV_2D
 ```
 
-Essa informação já existe no modelo carregado por `load_model()`.
+This information already exists in the model loaded by `load_model()`.
 
-O `model_loader.py`, entretanto, não interpreta esse conteúdo.
+However, `model_loader.py` does not interpret these contents.
 
-Ele apenas disponibiliza o objeto necessário para que `tflite_utils.py` e `graph.py` façam isso posteriormente.
+It only makes the necessary object available so that `tflite_utils.py` and `graph.py` can do this later.
 
 ---
 
-# 23. Relação entre tensors e buffers
+# 23. Relationship between tensors and buffers
 
-Outro exemplo importante é a relação:
+Another useful example is the relationship:
 
 ```text
 Tensor
@@ -847,25 +849,25 @@ Tensor
       Model.Buffers(...)
 ```
 
-Um tensor pode apontar para um buffer contendo dados constantes.
+A tensor can point to a buffer containing constant data.
 
-É dessa forma que, posteriormente, o extrator identifica e recupera:
+This is how the extractor later identifies and retrieves:
 
 ```text
-pesos
-bias
-outros tensors constantes
+weights
+biases
+other constant tensors
 ```
 
-Novamente, `model_loader.py` apenas fornece acesso à estrutura.
+Again, `model_loader.py` only provides access to the structure.
 
-A interpretação acontece em módulos posteriores.
+Interpretation happens in later modules.
 
 ---
 
-# 24. Função `get_subgraph()`
+# 24. The `get_subgraph()` function
 
-A segunda função do arquivo é:
+The second function in the file is:
 
 ```python
 def get_subgraph(
@@ -877,23 +879,23 @@ def get_subgraph(
     )
 ```
 
-Ela possui uma única responsabilidade:
+It has a single responsibility:
 
 ```text
 Model
   ↓
-selecionar SubGraph
+select SubGraph
   ↓
-retornar SubGraph
+return SubGraph
 ```
 
 ---
 
-# 25. O que é um subgrafo neste contexto?
+# 25. What is a subgraph in this context?
 
-O modelo pode conter uma coleção de subgrafos.
+The model can contain a collection of subgraphs.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 Model
@@ -904,7 +906,7 @@ Model
 └── ...
 ```
 
-Cada subgrafo pode possuir:
+Each subgraph can have:
 
 ```text
 inputs
@@ -913,19 +915,19 @@ tensors
 operators
 ```
 
-Para o pipeline atual, é utilizado por padrão:
+For the current pipeline, the default is:
 
 ```python
 index = 0
 ```
 
-Portanto:
+Therefore:
 
 ```python
 get_subgraph(model)
 ```
 
-equivale a:
+is equivalent to:
 
 ```python
 model.Subgraphs(0)
@@ -933,19 +935,19 @@ model.Subgraphs(0)
 
 ---
 
-# 26. Por que `index=0`?
+# 26. Why `index=0`?
 
-O extrator atual trabalha com o subgrafo principal utilizado pelo modelo analisado.
+The current extractor works with the main subgraph used by the model being analyzed.
 
-Por isso a API fornece:
+That is why the API provides:
 
 ```python
 index=0
 ```
 
-como padrão.
+as the default.
 
-Uso normal:
+Normal usage:
 
 ```python
 subgraph = get_subgraph(
@@ -953,13 +955,13 @@ subgraph = get_subgraph(
 )
 ```
 
-Resultado:
+Result:
 
 ```text
 SubGraph 0
 ```
 
-Mas a função ainda permite explicitamente:
+But the function still explicitly allows:
 
 ```python
 subgraph = get_subgraph(
@@ -968,57 +970,57 @@ subgraph = get_subgraph(
 )
 ```
 
-caso se deseje acessar outro subgrafo.
+if another subgraph needs to be accessed.
 
 ---
 
-# 27. Por que criar `get_subgraph()` se a chamada é simples?
+# 27. Why create `get_subgraph()` if the call is simple?
 
-Seria possível escrever diretamente no `main.py`:
+It would be possible to write this directly in `main.py`:
 
 ```python
 subgraph = model.Subgraphs(0)
 ```
 
-Entretanto, encapsular a operação possui algumas vantagens.
+However, encapsulating the operation has some advantages.
 
-Primeiro, torna a intenção explícita:
+First, it makes the intention explicit:
 
 ```python
 get_subgraph(model)
 ```
 
-é semanticamente mais claro que:
+is semantically clearer than:
 
 ```python
 model.Subgraphs(0)
 ```
 
-para quem está lendo o fluxo principal.
+for someone reading the main flow.
 
-Segundo, centraliza a política atual:
-
-```text
-subgrafo padrão = índice 0
-```
-
-Terceiro, se futuramente houver validações adicionais, elas podem ser implementadas nesse ponto sem alterar todas as chamadas.
-
-Por exemplo, futuramente poderia ser verificado:
+Second, it centralizes the current policy:
 
 ```text
-índice existente?
-subgrafo possui inputs?
-subgrafo possui outputs?
+default subgraph = index 0
 ```
 
-O código atual ainda não realiza essas validações.
+Third, if additional validation is needed in the future, it can be implemented here without changing every call.
+
+For example, future checks could include:
+
+```text
+does the index exist?
+does the subgraph have inputs?
+does the subgraph have outputs?
+```
+
+The current code does not yet perform these checks.
 
 ---
 
-# 28. Retorno de `get_subgraph()`
+# 28. Return value of `get_subgraph()`
 
-O resultado é armazenado normalmente como:
+The result is normally stored as:
 
 ```python
 subgraph = get_subgraph(
@@ -1026,7 +1028,7 @@ subgraph = get_subgraph(
 )
 ```
 
-A partir desse objeto, os módulos seguintes conseguem fazer consultas como:
+From this object, subsequent modules can make queries such as:
 
 ```python
 subgraph.OperatorsLength()
@@ -1048,32 +1050,32 @@ subgraph.Inputs(...)
 subgraph.Outputs(...)
 ```
 
-Portanto:
+Thus:
 
 ```text
 model
 ```
 
-representa a estrutura global,
+represents the global structure,
 
-enquanto:
+while:
 
 ```text
 subgraph
 ```
 
-é o foco principal da análise da rede.
+is the main focus of network analysis.
 
 ---
 
-# 29. Relação entre `model` e `subgraph`
+# 29. Relationship between `model` and `subgraph`
 
-Uma forma simplificada de visualizar é:
+A simplified view is:
 
 ```text
 model
 │
-├── metadados globais
+├── global metadata
 │
 ├── OperatorCodes
 │
@@ -1090,7 +1092,7 @@ model
             └── outputs
 ```
 
-Por isso, várias funções posteriores recebem os dois:
+That is why several subsequent functions receive both:
 
 ```python
 func(
@@ -1100,13 +1102,13 @@ func(
 )
 ```
 
-O motivo é que algumas informações estão no `subgraph`, enquanto outras permanecem no nível global do `model`.
+The reason is that some information belongs to `subgraph`, while other information remains at the global `model` level.
 
 ---
 
-# 30. Exemplo: resolução do nome de uma operação
+# 30. Example: resolving an operation name
 
-Posteriormente, uma função como:
+Later, a function such as:
 
 ```python
 op_name(
@@ -1115,27 +1117,27 @@ op_name(
 )
 ```
 
-precisa dos dois níveis.
+needs both levels.
 
-O operador:
+The operator:
 
 ```text
 op
 ```
 
-pertence ao:
+belongs to:
 
 ```text
 subgraph
 ```
 
-mas seu código pode ser resolvido por meio de:
+but its code can be resolved through:
 
 ```text
 model.OperatorCodes(...)
 ```
 
-Fluxo:
+Flow:
 
 ```text
 SubGraph
@@ -1153,15 +1155,15 @@ SubGraph
                      CONV_2D
 ```
 
-Isso explica por que é importante preservar ambos os objetos.
+This explains why it is useful to preserve both objects.
 
 ---
 
-# 31. Exemplo: leitura de pesos
+# 31. Example: reading weights
 
-Algo semelhante ocorre com um tensor constante.
+Something similar happens with a constant tensor.
 
-O tensor é localizado no subgrafo:
+The tensor is located in the subgraph:
 
 ```python
 tensor = subgraph.Tensors(
@@ -1169,13 +1171,13 @@ tensor = subgraph.Tensors(
 )
 ```
 
-Depois ele informa qual buffer contém os dados:
+It then indicates which buffer contains the data:
 
 ```python
 tensor.Buffer()
 ```
 
-E esse buffer é acessado no modelo:
+And that buffer is accessed in the model:
 
 ```python
 model.Buffers(
@@ -1183,7 +1185,7 @@ model.Buffers(
 )
 ```
 
-Fluxo:
+Flow:
 
 ```text
 SubGraph
@@ -1198,48 +1200,48 @@ SubGraph
                  └── Buffers
                        │
                        ▼
-                  bytes dos pesos
+                  weight bytes
 ```
 
-Portanto, `model_loader.py` prepara exatamente os dois níveis de acesso que o restante do extrator necessita.
+Thus, `model_loader.py` prepares exactly the two access levels that the rest of the extractor needs.
 
 ---
 
-# 32. O que este módulo deliberadamente não faz
+# 32. What this module deliberately does not do
 
-O módulo não possui lógica para:
+The module contains no logic for:
 
 ```text
-identificar operadores
-construir grafo
-calcular topologia
-alocar slots
-extrair pesos
-extrair bias
-calcular multiplicadores
-calcular shifts
-calcular Q6
-calcular memória
-gerar LayerParams
-gerar params_blob
-gerar WAT
+identifying operators
+building the graph
+calculating topology
+allocating slots
+extracting weights
+extracting biases
+calculating multipliers
+calculating shifts
+calculating Q6
+calculating memory
+generating LayerParams
+generating params_blob
+generating WAT
 ```
 
-Essa separação é importante.
+This separation matters.
 
-O papel deste arquivo é exclusivamente:
+The role of this file is exclusively:
 
 ```text
-arquivo → Model → SubGraph
+file → Model → SubGraph
 ```
 
 ---
 
-# 33. Ausência de efeitos durante o `import`
+# 33. No effects during `import`
 
-Uma decisão importante no código atual é que o modelo não é carregado diretamente no corpo do módulo.
+A key decision in the current code is that the model is not loaded directly in the module body.
 
-Não fazemos:
+We do not run:
 
 ```python
 MODEL = load_model(
@@ -1247,25 +1249,25 @@ MODEL = load_model(
 )
 ```
 
-ao importar `model_loader.py`.
+when importing `model_loader.py`.
 
-Em vez disso:
+Instead:
 
 ```python
 def load_model(...):
 ```
 
-apenas define a função.
+only defines the function.
 
-A leitura acontece quando o `main.py` decide executá-la.
+Reading happens when `main.py` decides to execute it.
 
-Isso evita efeitos colaterais no momento do import.
+This avoids side effects at import time.
 
 ---
 
-# 34. Por que evitar carregamento automático?
+# 34. Why avoid automatic loading?
 
-Imagine outro módulo executando:
+Imagine another module executing:
 
 ```python
 from extractor.model_loader import (
@@ -1273,36 +1275,36 @@ from extractor.model_loader import (
 )
 ```
 
-Se o arquivo fosse lido automaticamente durante o import, simplesmente importar a função já tentaria acessar:
+If the file were read automatically during import, merely importing the function would already attempt to access:
 
 ```text
 model_int8_esp32.tflite
 ```
 
-Isso criaria um acoplamento desnecessário.
+This would create unnecessary coupling.
 
-A implementação atual permite:
+The current implementation allows:
 
 ```text
-importar módulo
+import module
       │
       ▼
-nenhum arquivo aberto
+no file opened
       │
       ▼
-chamar load_model()
+call load_model()
       │
       ▼
-arquivo efetivamente carregado
+file actually loaded
 ```
 
-Essa separação facilita testes e reutilização.
+This separation makes testing and reuse easier.
 
 ---
 
-# 35. Fluxo completo deste módulo
+# 35. Complete flow of this module
 
-O comportamento pode ser resumido assim:
+The behavior can be summarized as follows:
 
 ```text
 MODEL_PATH
@@ -1319,11 +1321,11 @@ load_model()
     │
     ├── TFLModel.GetRootAsModel?
     │          │
-    │          └── sim → parse
+    │          └── yes → parse
     │
     └── TFLModel.Model.GetRootAsModel?
                │
-               └── sim → parse
+               └── yes → parse
                       │
                       ▼
                     model
@@ -1337,9 +1339,9 @@ load_model()
 
 ---
 
-# 36. Relação com o `main.py`
+# 36. Relationship with `main.py`
 
-No fluxo principal, a utilização esperada é simples:
+In the main flow, expected usage is simple:
 
 ```python
 model = load_model(
@@ -1351,7 +1353,7 @@ subgraph = get_subgraph(
 )
 ```
 
-Depois disso:
+After this:
 
 ```text
 MODEL_PATH
@@ -1361,17 +1363,17 @@ model
 subgraph
 ```
 
-e o extrator pode iniciar a análise estrutural.
+and the extractor can begin structural analysis.
 
-O `main.py` continua responsável pela orquestração, enquanto `model_loader.py` apenas implementa a tarefa específica.
+`main.py` remains responsible for orchestration, while `model_loader.py` only implements the specific task.
 
 ---
 
-# 37. Por que retornar objetos em vez de estruturas próprias?
+# 37. Why return objects instead of custom structures?
 
-Neste estágio não há motivo para copiar todo o modelo para uma estrutura Python intermediária.
+At this stage there is no reason to copy the entire model into an intermediate Python structure.
 
-Por exemplo, não fazemos:
+For example, we do not create:
 
 ```python
 model_data = {
@@ -1381,103 +1383,103 @@ model_data = {
 }
 ```
 
-A estrutura original já pode ser navegada pelo binding.
+The original structure can already be navigated through the binding.
 
-Os módulos especializados extraem apenas aquilo de que realmente necessitam.
+Specialized modules extract only what they actually need.
 
-Isso evita uma transformação intermediária completa e desnecessária.
+This avoids an unnecessary complete intermediate transformation.
 
 ---
 
-# 38. Responsabilidade arquitetural
+# 38. Architectural responsibility
 
-A função desse módulo pode ser representada em três camadas:
+The role of this module can be represented in three layers:
 
 ```text
-Sistema de arquivos
+Filesystem
       │
       ▼
 model_loader.py
       │
       ▼
-Binding TFLite
+TFLite binding
       │
       ▼
-Módulos de extração
+Extraction modules
 ```
 
-Ele funciona como uma pequena fronteira entre:
+It acts as a small boundary between:
 
 ```text
-representação persistente
+persistent representation
 ```
 
-e:
+and:
 
 ```text
-representação navegável
+navigable representation
 ```
 
-Ou seja:
+In other words:
 
 ```text
-arquivo binário no disco
+binary file on disk
            ↓
          bytes
            ↓
-      objeto Model
+      Model object
 ```
 
 ---
 
-# 39. Por que isso é importante para o projeto?
+# 39. Why does this matter for the project?
 
-O objetivo do projeto não é executar diretamente o modelo através de um runtime TensorFlow Lite.
+The project's goal is not to execute the model directly through a TensorFlow Lite runtime.
 
-O modelo TFLite funciona como fonte estruturada de informações necessárias para construir outra representação de execução.
+The TFLite model serves as a structured source of information needed to build another execution representation.
 
-Assim, o fluxo geral não é:
+Thus, the overall flow is not:
 
 ```text
 TFLite
   ↓
 TFLite Interpreter
   ↓
-inferência
+inference
 ```
 
-O fluxo do extrator é:
+The extractor's flow is:
 
 ```text
 TFLite
   ↓
-leitura estrutural
+structural reading
   ↓
-extração dos parâmetros
+parameter extraction
   ↓
-serialização própria
+custom serialization
   ↓
 WAT
   ↓
 WASM
   ↓
-runtime WebAssembly
+WebAssembly runtime
 ```
 
-Dentro desse processo, `model_loader.py` implementa a primeira ponte.
+Within this process, `model_loader.py` implements the first bridge.
 
 ---
 
-# 40. Relação com a independência posterior do TFLite
+# 40. Relationship with later independence from TFLite
 
-Durante a fase de extração, o pipeline depende da estrutura TFLite.
+During extraction, the pipeline depends on the TFLite structure.
 
-Entretanto, o artefato WAT/WASM final não precisa consultar o arquivo TFLite durante cada inferência.
+However, the final WAT/WASM artifact does not need to consult the TFLite file during each inference.
 
-A transformação conceitual é:
+The conceptual transformation is:
 
 ```text
-                 FASE DE CONSTRUÇÃO
+                 BUILD PHASE
 
 model.tflite
     │
@@ -1485,10 +1487,10 @@ model.tflite
 model_loader
     │
     ▼
-extrator
+extractor
     │
     ▼
-pesos + parâmetros + código
+weights + parameters + code
     │
     ▼
 model.wat
@@ -1497,26 +1499,26 @@ model.wat
 model.wasm
 
 
-                 FASE DE EXECUÇÃO
+                 EXECUTION PHASE
 
-imagem
+image
   │
   ▼
 model.wasm
   │
   ▼
-inferência
+inference
 ```
 
-Assim, o TFLite participa da construção do artefato, mas não precisa permanecer como runtime de inferência do módulo produzido.
+Thus, TFLite participates in building the artifact, but does not need to remain as the inference runtime of the produced module.
 
-Essa separação é central para a arquitetura deste projeto.
+This separation is central to this project's architecture.
 
 ---
 
-# 41. Tratamento atual de múltiplos subgrafos
+# 41. Current handling of multiple subgraphs
 
-Embora:
+Although:
 
 ```python
 get_subgraph(
@@ -1525,171 +1527,171 @@ get_subgraph(
 )
 ```
 
-permita informar outro índice, o restante do pipeline foi desenvolvido considerando o subgrafo selecionado como a rede que será integralmente processada.
+allows another index to be supplied, the rest of the pipeline was developed treating the selected subgraph as the network to process in full.
 
-Portanto, o suporte a modelos que dependam de múltiplos subgrafos inter-relacionados não deve ser presumido apenas porque a função aceita:
+Therefore, support for models that depend on multiple interrelated subgraphs should not be assumed merely because the function accepts:
 
 ```python
 index
 ```
 
-A função permite selecionar um subgrafo.
+The function allows a subgraph to be selected.
 
-Isso não significa que o pipeline implemente automaticamente semântica de execução envolvendo vários subgrafos.
+This does not mean the pipeline automatically implements execution semantics involving several subgraphs.
 
-Essa distinção é importante.
+This distinction matters.
 
 ---
 
-# 42. Validações que ainda não existem
+# 42. Validation that does not yet exist
 
-O código atual é propositalmente simples.
+The current code is deliberately simple.
 
-Ele não verifica explicitamente:
+It does not explicitly check:
 
 ```text
-se model_path possui extensão .tflite
-se o arquivo está vazio
-se existe pelo menos um subgrafo
-se index está dentro do intervalo
-se o subgrafo possui operadores
-se o subgrafo possui entrada
-se o subgrafo possui saída
+whether model_path has the .tflite extension
+whether the file is empty
+whether at least one subgraph exists
+whether index is within range
+whether the subgraph has operators
+whether the subgraph has an input
+whether the subgraph has an output
 ```
 
-Algumas dessas situações naturalmente causariam erros posteriores.
+Some of these situations would naturally cause errors later.
 
-Caso o extrator futuramente seja utilizado como backend de uma interface gráfica, poderá ser interessante transformar essas condições em validações mais amigáveis.
+If the extractor is used as the backend for a graphical interface in the future, turning these conditions into friendlier validation could be useful.
 
-Por exemplo:
+For example:
 
 ```text
-arquivo enviado
+uploaded file
     ↓
-validação
-    ├── modelo válido?
-    ├── possui subgrafo?
-    ├── operadores suportados?
-    └── quantização compatível?
+validation
+    ├── valid model?
+    ├── has a subgraph?
+    ├── supported operators?
+    └── compatible quantization?
 ```
 
-Mas isso pertence a uma camada futura de robustez da aplicação.
+But this belongs to a future layer of application robustness.
 
-Não é necessário adicionar complexidade agora apenas para a execução local atual.
+There is no need to add complexity now solely for the current local execution.
 
 ---
 
-# 43. Possível evolução futura
+# 43. Possible future evolution
 
-Quando o extrator for transformado em backend, a função poderá receber um arquivo selecionado pelo usuário.
+When the extractor becomes a backend, the function can receive a file selected by the user.
 
-O fluxo poderia tornar-se:
+The flow could become:
 
 ```text
 Angular
    │
    │ upload .tflite
    ▼
-Backend Python
+Python backend
    │
    ▼
 load_model()
    │
    ▼
-validação
+validation
    │
    ▼
-extração
+extraction
    │
    ▼
 WAT/WASM
 ```
 
-A vantagem da implementação atual é que:
+The advantage of the current implementation is that:
 
 ```python
 load_model(model_path)
 ```
 
-já não depende diretamente de uma constante global.
+already does not depend directly on a global constant.
 
-Hoje o `main.py` fornece:
+Today, `main.py` supplies:
 
 ```python
 MODEL_PATH
 ```
 
-Amanhã o backend poderá fornecer:
+In the future, the backend can supply:
 
 ```python
 uploaded_model_path
 ```
 
-sem modificar a função de carregamento.
+without modifying the loading function.
 
 ---
 
-# 44. Decisão de projeto: passagem explícita do caminho
+# 44. Design decision: explicitly passing the path
 
-Observe a diferença entre:
+Notice the difference between:
 
 ```python
 def load_model():
     buf = MODEL_PATH.read_bytes()
 ```
 
-e a implementação escolhida:
+and the chosen implementation:
 
 ```python
 def load_model(model_path):
     buf = Path(model_path).read_bytes()
 ```
 
-A segunda é melhor desacoplada.
+The second is better decoupled.
 
-`config.py` decide:
+`config.py` decides:
 
 ```text
-qual arquivo usar
+which file to use
 ```
 
-enquanto:
+while:
 
 ```text
 model_loader.py
 ```
 
-decide:
+decides:
 
 ```text
-como carregar um arquivo TFLite
+how to load a TFLite file
 ```
 
-Isso segue a separação:
+This follows the separation:
 
 ```text
-configuração
+configuration
      ≠
-implementação
+implementation
 ```
 
 ---
 
-# 45. Resumo das funções
+# 45. Function summary
 
-| Função           | Entrada              | Saída      | Responsabilidade                              |
+| Function | Input | Output | Responsibility |
 | ---------------- | -------------------- | ---------- | --------------------------------------------- |
-| `load_model()`   | Caminho do `.tflite` | `Model`    | Ler o arquivo e criar o objeto raiz TFLite    |
-| `get_subgraph()` | `Model` e índice     | `SubGraph` | Selecionar o subgrafo utilizado pelo extrator |
+| `load_model()` | Path to the `.tflite` | `Model` | Read the file and create the TFLite root object |
+| `get_subgraph()` | `Model` and index | `SubGraph` | Select the subgraph used by the extractor |
 
 ---
 
-# 46. Resumo do módulo
+# 46. Module summary
 
-O `model_loader.py` implementa uma etapa simples, porém essencial:
+`model_loader.py` implements a simple but essential stage:
 
 ```text
-ARQUIVO
+FILE
    │
    ▼
 BYTES
@@ -1701,28 +1703,28 @@ MODEL
 SUBGRAPH
 ```
 
-Sua principal característica arquitetural é não misturar carregamento com interpretação.
+Its main architectural characteristic is keeping loading separate from interpretation.
 
-Ele não precisa saber:
-
-```text
-o que é uma convolução;
-como os pesos serão serializados;
-quantos slots existirão;
-onde os dados ficarão na memória;
-como o WAT executará a rede.
-```
-
-Ele precisa saber apenas:
+It does not need to know:
 
 ```text
-como transformar o arquivo TFLite
-em uma estrutura que os próximos módulos consigam navegar.
+what a convolution is;
+how weights will be serialized;
+how many slots will exist;
+where data will be placed in memory;
+how the WAT will execute the network.
 ```
 
-A partir daí, a responsabilidade passa para os módulos especializados.
+It only needs to know:
 
-O fluxo até este ponto do projeto fica:
+```text
+how to turn the TFLite file
+into a structure that subsequent modules can navigate.
+```
+
+From there, responsibility passes to the specialized modules.
+
+The project flow up to this point is:
 
 ```text
 ┌───────────────────────────────┐
@@ -1746,7 +1748,7 @@ O fluxo até este ponto do projeto fica:
                 │ Model + SubGraph
                 ▼
 ┌───────────────────────────────┐
-│       extração estrutural     │
+│       structural extraction   │
 │                               │
 │ graph.py                      │
 │ tflite_utils.py               │
@@ -1756,4 +1758,4 @@ O fluxo até este ponto do projeto fica:
 └───────────────────────────────┘
 ```
 
-O arquivo é pequeno porque sua responsabilidade também é pequena e bem definida. Isso é desejável: o restante da complexidade do extrator fica dividido entre módulos que possuem conhecimento específico sobre grafo, tensors, quantização, memória e serialização.
+The file is small because its responsibility is also small and clearly defined. This is desirable: the rest of the extractor's complexity is divided among modules with specific knowledge about graphs, tensors, quantization, memory, and serialization.

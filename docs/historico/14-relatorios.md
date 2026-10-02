@@ -1,20 +1,22 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](14-relatorios.md) | [Português (Brasil)](14-relatorios.pt-BR.md)
 
-# 14 — Persistência dos relatórios (`reporting.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 14 — Saving reports (`reporting.py`)
 
-O arquivo `extractor/reporting.py` possui uma responsabilidade única:
+## 1. Module purpose
+
+`extractor/reporting.py` has a single responsibility:
 
 ```text
-receber um texto já pronto
+receive prepared text
         ↓
-garantir que o diretório de destino exista
+ensure the destination directory exists
         ↓
-salvar esse texto em um arquivo UTF-8
+save that text to a UTF-8 file
 ```
 
-Seu código é:
+Its code is:
 
 ```python
 from pathlib import Path
@@ -35,43 +37,43 @@ def save_report(
     )
 ```
 
-Apesar de ser um módulo muito pequeno, ele ajuda a manter uma separação importante no projeto:
+Despite its small size, this module maintains an important separation:
 
 ```text
-módulos de extração/cálculo
+extraction/calculation modules
         ↓
-produzem dados estruturados
+produce structured data
 
-funções *_to_text()
+*_to_text() functions
         ↓
-produzem texto
+produce text
 
 reporting.py
         ↓
-persiste o texto em disco
+save text to disk
 ```
 
 ---
 
-# 2. Responsabilidade exata
+# 2. Exact responsibility
 
-`reporting.py` não decide:
+`reporting.py` does not decide:
 
 ```text
-o que deve aparecer no relatório
+what the report should contain
 
-como formatar pesos
+how to format weights
 
-como mostrar quantização
+how to show quantization
 
-como descrever memória
+how to describe memory
 
-como apresentar LayerParams
+how to present LayerParams
 ```
 
-Essas decisões pertencem aos próprios módulos.
+Those decisions belong to the individual modules.
 
-Por exemplo:
+For example:
 
 ```text
 weights.py
@@ -99,29 +101,29 @@ params_blob.py
 params_blob_to_text()
 ```
 
-`reporting.py` recebe apenas o resultado final dessas funções.
+`reporting.py` receives only the final results of these functions.
 
 ---
 
-# 3. Separação arquitetural
+# 3. Architectural separation
 
-A arquitetura adotada é:
+The adopted architecture is:
 
 ```text
-DADOS
+DATA
   ↓
-estrutura Python
+Python structure
 
-APRESENTAÇÃO
+PRESENTATION
   ↓
 string
 
-PERSISTÊNCIA
+PERSISTENCE
   ↓
-arquivo
+file
 ```
 
-Mais concretamente:
+More concretely:
 
 ```text
 extract_weights_and_bias()
@@ -134,68 +136,68 @@ str
         ↓
 save_report()
         ↓
-arquivo .txt
+.txt file
 ```
 
-Isso evita misturar:
+This avoids mixing:
 
 ```text
-cálculo
-formatação
+calculation
+formatting
 I/O
 ```
 
-na mesma função.
+in the same function.
 
 ---
 
-# 4. Importação de `Path`
+# 4. Importing `Path`
 
-O módulo importa:
+The module imports:
 
 ```python
 from pathlib import Path
 ```
 
-`Path` pertence à biblioteca padrão do Python.
+`Path` belongs to Python's standard library.
 
-Ele fornece uma abstração orientada a objetos para caminhos de arquivos e diretórios.
+It provides an object-oriented abstraction for file and directory paths.
 
 ---
 
-# 5. Por que usar `Path`?
+# 5. Why use `Path`?
 
-Em vez de manipular caminhos como strings:
+Instead of manipulating paths as strings:
 
 ```python
 "reports/weights.txt"
 ```
 
-podemos trabalhar com:
+we can work with:
 
 ```python
 Path("reports/weights.txt")
 ```
 
-Isso permite operações como:
+This allows operations such as:
 
 ```python
 path.parent
 ```
 
-e:
+and:
 
 ```python
 path.write_text(...)
 ```
 
-diretamente.
+directly.
 
 ---
 
-# 6. Exemplo
+# 6. Example
 
-Para:
+For:
 
 ```python
 path = Path(
@@ -203,13 +205,13 @@ path = Path(
 )
 ```
 
-temos:
+we have:
 
 ```python
 path.parent
 ```
 
-igual a:
+equal to:
 
 ```text
 reports
@@ -217,9 +219,9 @@ reports
 
 ---
 
-# 7. Assinatura de `save_report()`
+# 7. Signature of `save_report()`
 
-A função é declarada como:
+The function is declared as:
 
 ```python
 def save_report(
@@ -228,20 +230,20 @@ def save_report(
 ):
 ```
 
-Ela recebe dois argumentos.
+It receives two arguments.
 
 ---
 
 # 8. `path`
 
-O primeiro parâmetro representa:
+The first parameter represents:
 
 ```text
-caminho do arquivo
-que será criado ou sobrescrito
+file path
+that will be created or overwritten
 ```
 
-Exemplo:
+Example:
 
 ```python
 Path(
@@ -253,24 +255,24 @@ Path(
 
 # 9. `content`
 
-O segundo parâmetro contém:
+The second parameter contains:
 
 ```text
-texto completo
-que será escrito no arquivo
+the complete text
+to be written to the file
 ```
 
-Seu type hint é:
+Its type hint is:
 
 ```python
 str
 ```
 
-Portanto a função espera conteúdo textual.
+The function therefore expects textual content.
 
 ---
 
-# 10. Exemplo de chamada
+# 10. Call example
 
 ```python
 save_report(
@@ -281,7 +283,7 @@ save_report(
 )
 ```
 
-O fluxo é:
+The flow is:
 
 ```text
 weights_bias
@@ -297,9 +299,9 @@ reports/weights.txt
 
 ---
 
-# 11. Primeira operação: diretório pai
+# 11. First operation: parent directory
 
-A função começa com:
+The function starts with:
 
 ```python
 path.parent.mkdir(
@@ -312,9 +314,9 @@ path.parent.mkdir(
 
 # 12. `path.parent`
 
-Esse atributo retorna o diretório no qual o arquivo deverá ser salvo.
+This attribute returns the directory where the file will be saved.
 
-Exemplo:
+Example:
 
 ```python
 path = Path(
@@ -322,13 +324,13 @@ path = Path(
 )
 ```
 
-Então:
+Then:
 
 ```python
 path.parent
 ```
 
-representa:
+represents:
 
 ```text
 reports/memory
@@ -338,51 +340,51 @@ reports/memory
 
 # 13. `mkdir()`
 
-O método:
+The method:
 
 ```python
 mkdir()
 ```
 
-cria um diretório.
+creates a directory.
 
-Neste caso, ele é chamado no diretório pai do arquivo.
+Here it is called on the file's parent directory.
 
 ---
 
-# 14. Por que criar o diretório?
+# 14. Why create the directory?
 
-Sem essa etapa, a tentativa de gravar:
+Without this step, attempting to write:
 
 ```text
 reports/memory/final.txt
 ```
 
-falharia caso:
+would fail if:
 
 ```text
 reports/memory/
 ```
 
-ainda não existisse.
+did not already exist.
 
 ---
 
 # 15. `parents=True`
 
-A opção:
+The option:
 
 ```python
 parents=True
 ```
 
-permite criar também diretórios intermediários.
+also allows creating intermediate directories.
 
 ---
 
-# 16. Exemplo
+# 16. Example
 
-Considere:
+Consider:
 
 ```python
 Path(
@@ -390,86 +392,86 @@ Path(
 )
 ```
 
-e suponha que nenhum destes diretórios exista:
+and suppose neither directory exists:
 
 ```text
 reports/
 reports/memory/
 ```
 
-Com:
+With:
 
 ```python
 parents=True
 ```
 
-o Python pode criar:
+Python can create:
 
 ```text
 reports/
     └── memory/
 ```
 
-automaticamente.
+automatically.
 
 ---
 
-# 17. Sem `parents=True`
+# 17. Without `parents=True`
 
-Se apenas:
+If only:
 
 ```text
 reports/
 ```
 
-não existisse, uma tentativa de criar diretamente:
+were absent, directly attempting to create:
 
 ```text
 reports/memory/
 ```
 
-poderia falhar porque seu diretório pai também estaria ausente.
+could fail because its parent directory would also be missing.
 
-A opção resolve essa cadeia.
+This option handles that chain.
 
 ---
 
 # 18. `exist_ok=True`
 
-A segunda opção é:
+The second option is:
 
 ```python
 exist_ok=True
 ```
 
-Isso significa:
+This means:
 
 ```text
-se o diretório já existe,
-não tratar isso como erro
+if the directory already exists,
+do not treat that as an error
 ```
 
 ---
 
-# 19. Exemplo
+# 19. Example
 
-Na primeira execução:
-
-```text
-reports/
-```
-
-pode ser criado.
-
-Na segunda execução:
+On the first run:
 
 ```text
 reports/
 ```
 
-já existe.
+may be created.
 
-Mesmo assim:
+On the second run:
+
+```text
+reports/
+```
+
+already exists.
+
+Even so:
 
 ```python
 mkdir(
@@ -478,25 +480,25 @@ mkdir(
 )
 ```
 
-continua normalmente.
+continues normally.
 
 ---
 
-# 20. Idempotência da criação do diretório
+# 20. Idempotent directory creation
 
-Essa parte da função pode ser executada repetidas vezes sem exigir que o chamador saiba previamente:
+This part of the function can run repeatedly without requiring the caller to know in advance:
 
 ```text
-o diretório existe?
+does the directory exist?
 ```
 
-O próprio helper resolve isso.
+The helper handles this itself.
 
 ---
 
-# 21. Segunda operação: `write_text()`
+# 21. Second operation: `write_text()`
 
-Depois:
+Then:
 
 ```python
 path.write_text(
@@ -505,43 +507,43 @@ path.write_text(
 )
 ```
 
-é utilizado para gravar o conteúdo.
+is used to write the contents.
 
 ---
 
-# 22. O que `write_text()` faz?
+# 22. What does `write_text()` do?
 
-O método escreve uma string em um arquivo de texto.
+The method writes a string into a text file.
 
-Conceitualmente:
+Conceptually:
 
 ```text
 content
    ↓
-codificação UTF-8
+UTF-8 encoding
    ↓
 bytes
    ↓
-arquivo no disco
+file on disk
 ```
 
 ---
 
 # 23. `encoding="utf-8"`
 
-A codificação é explicitamente definida:
+Encoding is explicitly set:
 
 ```python
 encoding="utf-8"
 ```
 
-Isso evita depender da codificação padrão do sistema operacional.
+This avoids depending on the operating system's default encoding.
 
 ---
 
-# 24. Por que isso importa?
+# 24. Why does this matter?
 
-Os relatórios utilizam texto em português e podem conter caracteres como:
+Reports use Portuguese text and may contain characters such as:
 
 ```text
 á
@@ -551,47 +553,47 @@ Os relatórios utilizam texto em português e podem conter caracteres como:
 ó
 ```
 
-Com UTF-8 esses caracteres possuem representação previsível.
+With UTF-8, these characters have a predictable representation.
 
 ---
 
-# 25. Exemplo
+# 25. Example
 
-Uma linha como:
+A line such as:
 
 ```text
 Quantidade de parâmetros de quantização
 ```
 
-pode ser salva corretamente independentemente da configuração regional da máquina.
+can be saved correctly regardless of the machine's regional settings.
 
 ---
 
-# 26. Independência do sistema operacional
+# 26. Operating system independence
 
-Sem codificação explícita, o comportamento poderia depender da configuração padrão do ambiente.
+Without explicit encoding, behavior could depend on environment defaults.
 
-Com:
+With:
 
 ```python
 encoding="utf-8"
 ```
 
-o projeto define explicitamente seu formato textual.
+the project explicitly defines its text format.
 
 ---
 
-# 27. Arquivo existente
+# 27. Existing file
 
-`write_text()` abre o arquivo para escrita.
+`write_text()` opens the file for writing.
 
-Se o arquivo já existir, seu conteúdo anterior é substituído.
+If the file already exists, its previous contents are replaced.
 
 ---
 
-# 28. Consequência
+# 28. Consequence
 
-Executar novamente:
+Running again:
 
 ```python
 save_report(
@@ -600,87 +602,87 @@ save_report(
 )
 ```
 
-atualiza o relatório.
+updates the report.
 
-A função não:
+The function does not:
 
 ```text
-anexa ao arquivo anterior
+append to the previous file
 ```
 
-Ela grava o conteúdo recebido como o conteúdo atual do relatório.
+It writes the supplied content as the report's current contents.
 
 ---
 
-# 29. Isso é adequado aos relatórios gerados
+# 29. Why this suits generated reports
 
-Os arquivos em:
+Files in:
 
 ```text
 reports/
 ```
 
-representam o estado da execução atual do extrator.
+represent the current extractor run's state.
 
-Portanto é coerente que:
+It therefore makes sense that:
 
 ```text
-nova execução
+new run
     ↓
-novo relatório
+new report
     ↓
-substitui relatório anterior
+replaces previous report
 ```
 
 ---
 
-# 30. A função não adiciona newline
+# 30. The function does not add a newline
 
-`save_report()` escreve exatamente:
+`save_report()` writes exactly:
 
 ```python
 content
 ```
 
-Ela não acrescenta automaticamente:
+It does not automatically append:
 
 ```text
 \n
 ```
 
-no final.
+at the end.
 
 ---
 
-# 31. Consequência
+# 31. Consequence
 
-Se o relatório deve terminar com newline, essa decisão pertence à função:
+If a report should end in a newline, that decision belongs to:
 
 ```text
 *_to_text()
 ```
 
-ou ao conteúdo fornecido.
+or to the supplied content.
 
 ---
 
-# 32. A função não altera o texto
+# 32. The function does not modify text
 
-Ela não faz:
+It does not perform:
 
 ```text
 strip()
 
 replace()
 
-formatação
+formatting
 
-conversão de linhas
+line conversion
 
-indentação
+indentation
 ```
 
-O texto recebido é passado diretamente para:
+The received text is passed directly to:
 
 ```python
 write_text()
@@ -688,27 +690,27 @@ write_text()
 
 ---
 
-# 33. Isso preserva a separação de responsabilidades
+# 33. This preserves the separation of responsibilities
 
-A função não precisa entender o conteúdo.
+The function does not need to understand the contents.
 
-Para ela, estas strings são equivalentes:
+To it, these strings are equivalent:
 
 ```text
-relatório de pesos
+weight report
 
-relatório de memória
+memory report
 
-relatório de quantização
+quantization report
 
-qualquer outro texto
+any other text
 ```
 
 ---
 
-# 34. Ela não conhece o modelo
+# 34. It does not know the model
 
-`save_report()` não recebe:
+`save_report()` does not receive:
 
 ```text
 model
@@ -720,13 +722,13 @@ tensor
 operator
 ```
 
-Logo não possui qualquer dependência do TFLite.
+It therefore has no TFLite dependency.
 
 ---
 
-# 35. Ela não conhece a estrutura dos dados
+# 35. It does not know the data structure
 
-Também não recebe:
+It also does not receive:
 
 ```text
 weight_records
@@ -738,11 +740,11 @@ regions
 mul_vals
 ```
 
-A transformação dessas estruturas em texto já aconteceu antes.
+These structures have already been converted into text.
 
 ---
 
-# 36. Exemplo com pesos
+# 36. Weight example
 
 ```text
 weights.py
@@ -757,12 +759,12 @@ str
 
 reporting.py
     ↓
-arquivo
+file
 ```
 
 ---
 
-# 37. Exemplo com quantização
+# 37. Quantization example
 
 ```text
 quantization.py
@@ -777,12 +779,12 @@ str
 
 reporting.py
     ↓
-arquivo
+file
 ```
 
 ---
 
-# 38. Exemplo com memória
+# 38. Memory example
 
 ```text
 memory.py
@@ -797,12 +799,12 @@ str
 
 reporting.py
     ↓
-arquivo
+file
 ```
 
 ---
 
-# 39. Exemplo com `LayerParam`
+# 39. `LayerParam` example
 
 ```text
 layer_params.py
@@ -817,12 +819,12 @@ str
 
 reporting.py
     ↓
-arquivo
+file
 ```
 
 ---
 
-# 40. Exemplo com `params_blob`
+# 40. `params_blob` example
 
 ```text
 params_blob.py
@@ -837,20 +839,20 @@ str
 
 reporting.py
     ↓
-arquivo
+file
 ```
 
 ---
 
-# 41. Papel de `main.py`
+# 41. Role of `main.py`
 
-Normalmente quem combina essas partes é:
+These parts are normally combined by:
 
 ```text
 main.py
 ```
 
-Por exemplo, conceitualmente:
+For example, conceptually:
 
 ```python
 report = weights_bias_to_text(
@@ -865,25 +867,25 @@ save_report(
 
 ---
 
-# 42. Responsabilidade do `main.py`
+# 42. Responsibility of `main.py`
 
-`main.py` decide:
+`main.py` decides:
 
 ```text
-qual relatório gerar
+which report to generate
 
-qual nome de arquivo utilizar
+which filename to use
 
-quando salvá-lo
+when to save it
 ```
 
-`reporting.py` apenas executa a persistência.
+`reporting.py` only performs persistence.
 
 ---
 
-# 43. Relação com `config.py`
+# 43. Relationship with `config.py`
 
-`config.py` possui:
+`config.py` has:
 
 ```python
 REPORTS_DIR = Path(
@@ -891,15 +893,15 @@ REPORTS_DIR = Path(
 )
 ```
 
-Essa configuração pode ser combinada com nomes específicos.
+This configuration can be combined with specific names.
 
-Exemplo:
+Example:
 
 ```python
 REPORTS_DIR / "weights.txt"
 ```
 
-resulta em:
+results in:
 
 ```text
 reports/weights.txt
@@ -907,11 +909,11 @@ reports/weights.txt
 
 ---
 
-# 44. O módulo não importa `REPORTS_DIR`
+# 44. The module does not import `REPORTS_DIR`
 
-Essa é uma decisão importante.
+This is an important decision.
 
-`reporting.py` não faz:
+`reporting.py` does not do:
 
 ```python
 from extractor.config import (
@@ -921,21 +923,21 @@ from extractor.config import (
 
 ---
 
-# 45. Por que isso é bom?
+# 45. Why is this useful?
 
-Porque a função não fica presa a:
+Because the function is not tied to:
 
 ```text
 reports/
 ```
 
-Ela pode salvar em qualquer caminho fornecido pelo chamador.
+It can save to any path supplied by the caller.
 
 ---
 
-# 46. Exemplo
+# 46. Example
 
-A mesma função pode receber:
+The same function can receive:
 
 ```python
 Path(
@@ -943,7 +945,7 @@ Path(
 )
 ```
 
-ou:
+or:
 
 ```python
 Path(
@@ -951,7 +953,7 @@ Path(
 )
 ```
 
-ou:
+or:
 
 ```python
 Path(
@@ -959,146 +961,146 @@ Path(
 )
 ```
 
-desde que o ambiente permita a escrita.
+provided the environment allows writing.
 
 ---
 
-# 47. Configuração fora do helper
+# 47. Configuration outside the helper
 
-Portanto:
+Therefore:
 
 ```text
-onde salvar?
+where to save?
     ↓
-decisão do chamador
+caller's decision
 
-como salvar?
+how to save?
     ↓
 reporting.py
 ```
 
 ---
 
-# 48. Princípio de responsabilidade única
+# 48. Single responsibility principle
 
-Esse módulo é um exemplo muito claro do princípio:
+This module clearly illustrates the principle:
 
 ```text
-uma função
+one function
     ↓
-uma responsabilidade
+one responsibility
 ```
 
-A função faz exatamente duas operações necessárias para persistir o relatório:
+The function performs exactly two operations needed to save a report:
 
 ```text
-1. criar diretório
+1. create directory
 
-2. escrever arquivo
+2. write file
 ```
 
 ---
 
-# 49. Por que essas duas operações pertencem juntas?
+# 49. Why do these two operations belong together?
 
-Porque salvar um arquivo em um caminho arbitrário normalmente exige que seu diretório exista.
+Saving a file to an arbitrary path normally requires its directory to exist.
 
-Assim:
+Thus:
 
 ```text
-garantir destino
+ensure destination exists
 +
-gravar arquivo
+write file
 ```
 
-formam uma única operação conceitual:
+form one conceptual operation:
 
 ```text
-salvar relatório
+save report
 ```
 
 ---
 
-# 50. O que não deveria entrar aqui?
+# 50. What should not go here?
 
-Não seria adequado acrescentar coisas como:
+It would be inappropriate to add things such as:
 
 ```text
-calcular total de pesos
+calculate total weights
 
-formatar tabela de quantização
+format quantization table
 
-determinar maior tensor
+find largest tensor
 
-calcular MEM_PAGES
+calculate MEM_PAGES
 
-converter bytes de parâmetros
+convert parameter bytes
 ```
 
-Essas funções pertencem aos módulos de domínio.
+These functions belong to the domain modules.
 
 ---
 
-# 51. Tampouco deveria gerar WAT
+# 51. It should not generate WAT either
 
-O módulo não possui relação com:
+The module has no relationship with:
 
 ```text
 wat_generator.py
 ```
 
-além de ambos realizarem I/O de arquivos.
+except that both perform file I/O.
 
-O conteúdo e a responsabilidade são diferentes.
+Their contents and responsibilities differ.
 
 ---
 
-# 52. Comparação com `wat_generator.py`
+# 52. Comparison with `wat_generator.py`
 
 `wat_generator.py`:
 
 ```text
-recebe template
-substitui placeholders
-insere blobs
-gera conteúdo WAT
-salva artefato
+receives template
+replaces placeholders
+inserts blobs
+generates WAT contents
+saves artifact
 ```
 
 `reporting.py`:
 
 ```text
-recebe texto pronto
-salva texto
+receives prepared text
+saves text
 ```
 
 ---
 
-# 53. Por que não usar `print()` para tudo?
+# 53. Why not use `print()` for everything?
 
-O projeto separa:
+The project separates:
 
 ```text
-saída resumida de execução
+brief execution output
     ↓
 print()
 ```
 
-de:
+from:
 
 ```text
-informação detalhada de diagnóstico
+detailed diagnostic information
     ↓
 reports/
 ```
 
-Isso evita poluir o terminal com centenas ou milhares de linhas.
+This avoids filling the terminal with hundreds or thousands of lines.
 
 ---
 
-# 54. Exemplo
+# 54. Example
 
-O terminal pode mostrar apenas:
+The terminal may show only:
 
 ```text
 Modelo carregado.
@@ -1106,39 +1108,39 @@ Modelo carregado.
 WAT gerado com sucesso.
 ```
 
-Enquanto os arquivos podem conter:
+While files may contain:
 
 ```text
-todos os tensors
-todos os pesos
-todos os multipliers
-todos os offsets
-todas as LayerParams
+all tensors
+all weights
+all multipliers
+all offsets
+all LayerParams
 ```
 
 ---
 
-# 55. Benefício para o projeto
+# 55. Benefit for the project
 
-Essa divisão torna a execução:
+This division makes execution:
 
 ```text
-legível
+readable
 ```
 
-sem perder:
+without losing:
 
 ```text
-rastreabilidade detalhada
+detailed traceability
 ```
 
 ---
 
-# 56. Relatórios como artefatos de diagnóstico
+# 56. Reports as diagnostic artifacts
 
-Os arquivos salvos por esse módulo não fazem parte diretamente da inferência.
+Files saved by this module are not directly part of inference.
 
-O runtime não lê:
+The runtime does not read:
 
 ```text
 reports/*.txt
@@ -1146,9 +1148,9 @@ reports/*.txt
 
 ---
 
-# 57. Consequência
+# 57. Consequence
 
-Excluir os relatórios depois da geração não altera:
+Deleting reports after generation does not change:
 
 ```text
 weights_raw
@@ -1160,140 +1162,140 @@ model.wat
 model.wasm
 ```
 
-Eles são auxiliares de inspeção.
+They are inspection aids.
 
 ---
 
-# 58. Mas são importantes para validação
+# 58. They remain important for validation
 
-Eles permitem responder:
+They answer:
 
 ```text
-qual tensor determinou SLOT_BYTES?
+which tensor determined SLOT_BYTES?
 
-qual peso começou em determinado offset?
+which weight started at a given offset?
 
-qual multiplier foi calculado?
+which multiplier was calculated?
 
-qual LayerParam recebeu determinado ponteiro?
+which LayerParam received a given pointer?
 
-qual região de memória começa em determinado endereço?
+which memory region starts at a given address?
 ```
 
-Sem precisar inserir debug dentro do WAT.
+Without inserting debug information into WAT.
 
 ---
 
-# 59. Essa separação melhorou o WAT
+# 59. This separation improved WAT
 
-Um dos princípios da refatoração é evitar transformar:
+One refactoring principle is to avoid turning:
 
 ```text
 generated/model.wat
 ```
 
-em um misto de:
+into a mixture of:
 
 ```text
-código
+code
 +
-dump de debug
+debug dump
 +
-relatório
+report
 ```
 
 ---
 
-# 60. Estrutura desejada
+# 60. Desired structure
 
 ```text
 generated/model.wat
     ↓
-artefato executável/textual
+executable/textual artifact
 
 
 reports/
     ↓
-artefatos de diagnóstico
+diagnostic artifacts
 
 
 docs/
     ↓
-explicação da arquitetura
+architecture explanation
 ```
 
 ---
 
-# 61. Três tipos de artefato
+# 61. Three artifact types
 
-É importante distinguir:
+It is important to distinguish:
 
 ### `docs/`
 
-Explica:
+Explains:
 
 ```text
-como o código funciona
+how the code works
 ```
 
 ---
 
 ### `reports/`
 
-Mostra:
+It shows:
 
 ```text
-o que aconteceu
-em uma execução específica
-com um modelo específico
+what happened
+in a particular run
+with a particular model
 ```
 
 ---
 
 ### `generated/`
 
-Contém:
+Contains:
 
 ```text
-artefato gerado
-para execução/compilação
+generated artifact
+for execution/compilation
 ```
 
 ---
 
-# 62. Exemplo da diferença
+# 62. Example of the difference
 
-`docs/09-layout-memoria.md` explica:
+`docs/09-layout-memoria.md` explains:
 
 ```text
-como MEM_PAGES é calculado
+how MEM_PAGES is calculated
 ```
 
-Já um relatório poderia mostrar:
+A report could show:
 
 ```text
 MEM_PAGES = 17
 ```
 
-para um modelo concreto.
+for a concrete model.
 
 ---
 
-# 63. Outro exemplo
+# 63. Another example
 
-`docs/08-quantizacao.md` explica:
+`docs/08-quantizacao.md` explains:
 
 ```text
-como multiplier e shift são calculados
+how multiplier and shift are calculated
 ```
 
-Enquanto:
+While:
 
 ```text
 reports/quantization.txt
 ```
 
-pode mostrar:
+may show:
 
 ```text
 op 12:
@@ -1301,27 +1303,27 @@ multiplier = ...
 shift = ...
 ```
 
-da execução atual.
+from the current run.
 
 ---
 
-# 64. `reporting.py` não mistura essas camadas
+# 64. `reporting.py` does not mix these layers
 
-Ele apenas sabe:
+It only knows:
 
 ```text
-tenho uma string
+I have a string
 
-tenho um destino
+I have a destination
 
-vou salvar
+I will save it
 ```
 
 ---
 
-# 65. Tratamento de erros
+# 65. Error handling
 
-A função não possui:
+The function has no:
 
 ```python
 try:
@@ -1332,73 +1334,73 @@ except:
 
 ---
 
-# 66. Consequência
+# 66. Consequence
 
-Se ocorrer um erro de sistema de arquivos, ele é propagado naturalmente para o chamador.
+Filesystem errors propagate naturally to the caller.
 
-Exemplos:
+Examples:
 
 ```text
-sem permissão de escrita
+no write permission
 
-caminho inválido
+invalid path
 
-disco sem espaço
+disk full
 
-destino incompatível
+incompatible destination
 ```
 
 ---
 
-# 67. Por que isso é razoável?
+# 67. Why is this reasonable?
 
-Se um relatório solicitado não puder ser salvo, esconder o erro poderia dificultar muito o diagnóstico.
+If a requested report cannot be saved, hiding the error would hinder diagnosis.
 
-A implementação atual prefere:
+The current implementation prefers:
 
 ```text
-erro real
+actual error
     ↓
-exceção
+exception
     ↓
-chamador percebe
+caller notices
 ```
 
 ---
 
-# 68. Não existe fallback silencioso
+# 68. No silent fallback
 
-A função não faz:
-
-```text
-falhou ao salvar
-    ↓
-ignora
-```
-
-ou:
+The function does not do:
 
 ```text
-falhou
+failed to save
     ↓
-printa e continua
+ignore
 ```
 
-O erro de I/O permanece visível.
+or:
+
+```text
+failed
+    ↓
+print and continue
+```
+
+The I/O error remains visible.
 
 ---
 
-# 69. Retorno da função
+# 69. Function return value
 
-Não existe:
+There is no:
 
 ```python
 return ...
 ```
 
-explícito.
+explicitly.
 
-Portanto, em Python, o retorno é:
+Thus, in Python, the return value is:
 
 ```python
 None
@@ -1406,49 +1408,49 @@ None
 
 ---
 
-# 70. Por que não retornar o caminho?
+# 70. Why not return the path?
 
-A implementação atual não precisa disso.
+The current implementation does not need it.
 
-O chamador já conhece:
+The caller already knows:
 
 ```python
 path
 ```
 
-porque foi ele quem forneceu o argumento.
+because it supplied the argument.
 
 ---
 
-# 71. Por que não retornar número de bytes?
+# 71. Why not return the byte count?
 
-Também não é necessário para o fluxo atual.
+The current flow does not require it either.
 
-Se futuramente isso for útil, poderia ser acrescentado, mas hoje a função permanece minimalista.
+It could be added if useful later, but the function remains minimal for now.
 
 ---
 
 # 72. Type hints
 
-A assinatura utiliza:
+The signature uses:
 
 ```python
 path: Path
 ```
 
-e:
+and:
 
 ```python
 content: str
 ```
 
-Esses type hints documentam a interface esperada.
+These type hints document the expected interface.
 
 ---
 
-# 73. Type hint não é validação de runtime
+# 73. A type hint is not runtime validation
 
-Python não impede automaticamente:
+Python does not automatically prevent:
 
 ```python
 save_report(
@@ -1457,7 +1459,7 @@ save_report(
 )
 ```
 
-apenas porque o type hint diz:
+just because the type hint says:
 
 ```python
 Path
@@ -1465,55 +1467,55 @@ Path
 
 ---
 
-# 74. Consequência prática
+# 74. Practical consequence
 
-A implementação acessa:
+The implementation accesses:
 
 ```python
 path.parent
 ```
 
-Logo uma string comum:
+An ordinary string:
 
 ```python
 "reports/a.txt"
 ```
 
-não possui essa interface.
+does not have this interface.
 
-No uso atual, espera-se que o chamador forneça um `Path`.
+Current usage expects the caller to provide a `Path`.
 
 ---
 
-# 75. Possível generalização futura
+# 75. Possible future generalization
 
-Seria possível normalizar internamente:
+Internal normalization would be possible:
 
 ```python
 path = Path(path)
 ```
 
-como `wat_generator.py` faz.
+as `wat_generator.py` does.
 
-Mas essa não é a implementação atual.
+That is not the current implementation.
 
 ---
 
-# 76. Portanto a interface atual é deliberadamente simples
+# 76. The current interface is deliberately simple
 
 ```text
-entrada:
+input:
 Path + str
 
-saída:
-arquivo
+output:
+file
 ```
 
 ---
 
-# 77. Exemplo completo
+# 77. Complete example
 
-Suponha:
+Suppose:
 
 ```python
 report_path = Path(
@@ -1526,7 +1528,7 @@ report_content = (
 )
 ```
 
-A chamada:
+The call:
 
 ```python
 save_report(
@@ -1535,59 +1537,59 @@ save_report(
 )
 ```
 
-executa:
+executes:
 
 ```text
 reports/
     ↓
-cria se necessário
+create if needed
 
 reports/memory.txt
     ↓
-escreve UTF-8
+write UTF-8
 ```
 
 ---
 
-# 78. Resultado conceitual
+# 78. Conceptual result
 
 ```text
 reports/
 └── memory.txt
 ```
 
-com:
+with:
 
 ```text
 MEM_END = 1097072
 MEM_PAGES = 17
 ```
 
-Os valores acima são apenas exemplos de conteúdo.
+These values are only example contents.
 
 ---
 
-# 79. Reexecução
+# 79. Running again
 
-Se o arquivo já contiver:
+If the file already contains:
 
 ```text
 MEM_PAGES = 16
 ```
 
-e a função for chamada novamente com:
+and the function is called again with:
 
 ```text
 MEM_PAGES = 17
 ```
 
-o arquivo será substituído.
+the file is replaced.
 
 ---
 
-# 80. Não existe histórico automático
+# 80. No automatic history
 
-A função não cria:
+The function does not create:
 
 ```text
 memory-1.txt
@@ -1597,47 +1599,47 @@ memory-2.txt
 memory-2026-09-27.txt
 ```
 
-automaticamente.
+automatically.
 
-Se houver necessidade de versionar relatórios, o nome do arquivo deve ser decidido pelo chamador.
+If reports need versioning, the caller must decide the filename.
 
 ---
 
-# 81. Isso mantém o helper neutro
+# 81. This keeps the helper neutral
 
-A função não precisa conhecer:
+The function does not need to know:
 
 ```text
-datas
+dates
 
-nomes de modelos
+model names
 
-versões
+versions
 
 runs
 ```
 
-Essas decisões permanecem fora dela.
+These decisions remain outside it.
 
 ---
 
-# 82. Relação com a reprodutibilidade
+# 82. Relationship with reproducibility
 
-Como cada módulo produz texto a partir das estruturas calculadas e `save_report()` grava esse texto sem modificá-lo, os relatórios podem ser usados para comparar execuções.
+Because each module produces text from calculated structures and `save_report()` writes it unchanged, reports can be used to compare runs.
 
-Por exemplo:
+For example:
 
 ```text
-execução A
+run A
     ↓
 quantization.txt
 
-execução B
+run B
     ↓
 quantization.txt
 ```
 
-e então comparar:
+and then compare:
 
 ```text
 offsets
@@ -1648,62 +1650,62 @@ Q6
 
 ---
 
-# 83. Mas o módulo não realiza comparação
+# 83. The module does not perform comparison
 
-Essa atividade está fora de sua responsabilidade.
+That activity is outside its responsibility.
 
-`reporting.py` apenas persiste os resultados.
+`reporting.py` only saves results.
 
 ---
 
-# 84. Relação com testes
+# 84. Relationship with tests
 
-Esse helper é suficientemente simples para que seu comportamento esperado possa ser descrito por três casos principais:
+This helper is simple enough to describe through three main cases:
 
 ```text
-1. diretório não existe
-    → cria e escreve
+1. directory does not exist
+    → create and write
 
-2. diretório existe
-    → apenas escreve
+2. directory exists
+    → just write
 
-3. arquivo existe
-    → sobrescreve
+3. file exists
+    → overwrite
 ```
 
 ---
 
-# 85. Possível teste 1
+# 85. Possible test 1
 
 ```text
 reports_test/
-não existe
+does not exist
 
 save_report(
     reports_test/a.txt,
     "abc"
 )
 
-resultado esperado:
-diretório criado
-arquivo criado
-conteúdo = "abc"
+expected result:
+directory created
+file created
+contents = "abc"
 ```
 
 ---
 
-# 86. Possível teste 2
+# 86. Possible test 2
 
 ```text
-diretório já existe
+directory already exists
 
 save_report(...)
 
-resultado:
-nenhum erro por causa do mkdir
+Result:
+no mkdir error
 ```
 
-graças a:
+thanks to:
 
 ```python
 exist_ok=True
@@ -1711,27 +1713,27 @@ exist_ok=True
 
 ---
 
-# 87. Possível teste 3
+# 87. Possible test 3
 
-Arquivo anterior:
+Previous file:
 
 ```text
 abc
 ```
 
-Nova chamada:
+New call:
 
 ```text
 xyz
 ```
 
-Resultado:
+Result:
 
 ```text
 xyz
 ```
 
-e não:
+rather than:
 
 ```text
 abcxyz
@@ -1739,39 +1741,39 @@ abcxyz
 
 ---
 
-# 88. Não há necessidade de testar lógica de domínio aqui
+# 88. No need to test domain logic here
 
-Não faria sentido testar:
+It would not make sense to test:
 
 ```text
-multiplier correto
+correct multiplier
 
-SLOT_BYTES correto
+correct SLOT_BYTES
 
-offset correto
+correct offset
 ```
 
-em `reporting.py`.
+in `reporting.py`.
 
-Essas verificações pertencem aos respectivos módulos.
+Those checks belong to the respective modules.
 
 ---
 
-# 89. Uma função pequena é desejável
+# 89. A small function is desirable
 
-Não existe problema em possuir um arquivo com apenas:
+There is nothing wrong with a file containing only:
 
 ```text
-uma função
+one function
 ```
 
-quando essa função representa uma responsabilidade arquitetural própria.
+when it represents a distinct architectural responsibility.
 
 ---
 
-# 90. Evitar abstração excessiva
+# 90. Avoiding excessive abstraction
 
-Também não existe necessidade atual de criar:
+There is currently no need to create:
 
 ```text
 ReportManager
@@ -1783,36 +1785,36 @@ ReportFactory
 BaseReport
 ```
 
-A operação necessária é muito simples.
+The required operation is very simple.
 
-A função:
+The function:
 
 ```python
 save_report()
 ```
 
-resolve o problema diretamente.
+solves the problem directly.
 
 ---
 
-# 91. Por que não colocar isso em `main.py`?
+# 91. Why not place this in `main.py`?
 
-Seria possível repetir:
+One could repeat:
 
 ```python
 path.parent.mkdir(...)
 path.write_text(...)
 ```
 
-para cada relatório.
+for every report.
 
-Mas isso geraria duplicação.
+That would introduce duplication.
 
 ---
 
-# 92. Exemplo do problema
+# 92. Problem example
 
-Sem o helper:
+Without the helper:
 
 ```python
 weights_path.parent.mkdir(...)
@@ -1827,9 +1829,9 @@ quant_path.write_text(...)
 
 ---
 
-# 93. Com `save_report()`
+# 93. With `save_report()`
 
-O código do orquestrador fica:
+The orchestrator code becomes:
 
 ```python
 save_report(
@@ -1850,41 +1852,41 @@ save_report(
 
 ---
 
-# 94. Benefício
+# 94. Benefit
 
-A política:
+The policy:
 
 ```text
-criar diretório automaticamente
+create directory automatically
 +
 UTF-8
 ```
 
-fica definida em um único lugar.
+is defined in one place.
 
 ---
 
-# 95. Se a política mudar
+# 95. If the policy changes
 
-Suponha que futuramente todos os relatórios devam usar outra regra de persistência.
+Suppose all reports need a different persistence rule in the future.
 
-A alteração pode ficar centralizada em:
+The change can be centralized in:
 
 ```text
 reporting.py
 ```
 
-sem editar cada módulo.
+without editing each module.
 
 ---
 
-# 96. Porém a formatação continua descentralizada
+# 96. Formatting remains decentralized
 
-Isso é importante.
+This is important.
 
-Centralizar a persistência não significa centralizar todos os relatórios.
+Centralizing persistence does not mean centralizing every report.
 
-Continuamos com:
+We still have:
 
 ```text
 weights_bias_to_text()
@@ -1893,25 +1895,25 @@ layer_params_to_text()
 ...
 ```
 
-junto aos módulos que conhecem seus próprios dados.
+alongside the modules that understand their own data.
 
 ---
 
-# 97. Por que essa divisão é boa?
+# 97. Why is this division useful?
 
-Quem conhece melhor:
+Who best understands:
 
 ```text
 weight_records
 ```
 
-é:
+is:
 
 ```text
 weights.py
 ```
 
-Quem conhece melhor:
+Who best understands:
 
 ```text
 regions
@@ -1919,29 +1921,29 @@ MEM_END
 MEM_PAGES
 ```
 
-é:
+is:
 
 ```text
 memory.py
 ```
 
-Quem conhece melhor:
+Who best understands:
 
 ```text
 LayerParams
 ```
 
-é:
+is:
 
 ```text
 layer_params.py
 ```
 
-Mas nenhum deles precisa conhecer detalhes repetitivos de persistência.
+None of them needs to know repetitive persistence details.
 
 ---
 
-# 98. Fluxo arquitetural de relatórios
+# 98. Report architecture flow
 
 ```text
 ┌───────────────────────────┐
@@ -1977,7 +1979,7 @@ Mas nenhum deles precisa conhecer detalhes repetitivos de persistência.
 
 ---
 
-# 99. Relação com a estrutura do projeto
+# 99. Relationship with project structure
 
 ```text
 master-degree-project/
@@ -1987,22 +1989,22 @@ master-degree-project/
 │   └── ...
 │
 ├── docs/
-│   └── documentação
+│   └── documentation
 │
 ├── reports/
-│   └── resultados textuais
+│   └── textual results
 │
 └── generated/
-    └── artefatos gerados
+    └── generated artifacts
 ```
 
-`reporting.py` é a interface simples entre:
+`reporting.py` is the simple interface between:
 
 ```text
 extractor/
 ```
 
-e:
+and:
 
 ```text
 reports/
@@ -2010,42 +2012,42 @@ reports/
 
 ---
 
-# 100. Princípio central
+# 100. Central principle
 
-O desenho adotado pode ser resumido como:
+The adopted design can be summarized as:
 
 ```text
-dados estruturados são a fonte de verdade
+structured data are the source of truth
 ```
 
-e não:
+rather than:
 
 ```text
-texto do relatório é a fonte de verdade
-```
-
----
-
-# 101. Consequência
-
-Nenhuma etapa posterior deve fazer:
-
-```text
-abrir report.txt
-    ↓
-parsear texto
-    ↓
-recuperar offsets
+report text is the source of truth
 ```
 
 ---
 
-# 102. Fluxo correto
+# 101. Consequence
+
+No subsequent stage should:
 
 ```text
-dict Python
+open report.txt
+    ↓
+parse text
+    ↓
+recover offsets
+```
+
+---
+
+# 102. Correct flow
+
+```text
+Python dict
    │
-   ├──→ próxima etapa do pipeline
+   ├──→ next pipeline stage
    │
    └──→ *_to_text()
             │
@@ -2055,44 +2057,44 @@ dict Python
 
 ---
 
-# 103. Fluxo incorreto
+# 103. Incorrect flow
 
 ```text
 dict
  ↓
-texto
+text
  ↓
-arquivo
+file
  ↓
-ler arquivo
+read file
  ↓
-parsear texto
+parse text
  ↓
-continuar pipeline
+continue pipeline
 ```
 
-Isso transformaria uma representação humana em protocolo interno, o que não é desejável.
+This would turn a human-readable representation into an internal protocol, which is undesirable.
 
 ---
 
-# 104. Relatório é saída lateral
+# 104. A report is a side output
 
-Podemos representar:
+We can represent it as:
 
 ```text
-                  ┌──→ relatório
+                  ┌──→ report
                   │
-dados estruturados│
-                  └──→ próxima etapa
+structured data   │
+                  └──→ next stage
 ```
 
-Ou seja, o relatório é uma saída auxiliar.
+The report is an auxiliary output.
 
-Ele não fica no caminho crítico dos cálculos.
+It is outside the calculation path.
 
 ---
 
-# 105. Exemplo
+# 105. Example
 
 ```text
 weights_bias
@@ -2104,15 +2106,15 @@ weights_bias
        report
 ```
 
-O `memory.py` recebe:
+`memory.py` receives:
 
 ```text
 weights_bias
 ```
 
-diretamente.
+directly.
 
-Ele nunca lê:
+It never reads:
 
 ```text
 weights.txt
@@ -2120,85 +2122,85 @@ weights.txt
 
 ---
 
-# 106. Essa característica aumenta robustez
+# 106. This improves robustness
 
-Formatos de relatório podem mudar:
+Report formats may change:
 
 ```text
-espaçamento
+spacing
 
-cabeçalhos
+headers
 
-nomes
+names
 
-alinhamento visual
+visual alignment
 ```
 
-sem quebrar o pipeline.
+without breaking the pipeline.
 
 ---
 
-# 107. Exemplo
+# 107. Example
 
-Podemos mudar:
+We can change:
 
 ```text
 Total de bytes de pesos: 1234
 ```
 
-para:
+to:
 
 ```text
 Pesos totais = 1234 bytes
 ```
 
-e nenhuma etapa de cálculo é afetada.
+without affecting any calculation stage.
 
 ---
 
-# 108. Isso confirma a função dos relatórios
+# 108. This confirms the role of reports
 
-Eles existem para:
+They exist for:
 
 ```text
-seres humanos
+humans
 ```
 
-não para:
+not for:
 
 ```text
-comunicação interna entre módulos
+internal communication between modules
 ```
 
 ---
 
-# 109. `save_report()` como último passo da ramificação
+# 109. `save_report()` as the last step of the branch
 
-A sequência é:
+The sequence is:
 
 ```text
-dados
+data
  ↓
 to_text()
  ↓
 save_report()
  ↓
-fim
+end
 ```
 
-Nenhuma etapa do pipeline depende do retorno.
+No pipeline stage depends on the return value.
 
 ---
 
-# 110. Dependências mínimas
+# 110. Minimal dependencies
 
-`reporting.py` depende apenas de:
+`reporting.py` depends only on:
 
 ```text
 pathlib
 ```
 
-Não depende de:
+It does not depend on:
 
 ```text
 tflite
@@ -2209,50 +2211,50 @@ struct
 
 re
 
-outros módulos extractor
+other extractor modules
 ```
 
 ---
 
-# 111. Benefício
+# 111. Benefit
 
-Isso torna o helper:
+This makes the helper:
 
 ```text
-simples
+simple
 
-isolado
+isolated
 
-reutilizável
+reusable
 
-fácil de testar
+easy to test
 ```
 
 ---
 
-# 112. Ausência de estado global
+# 112. No global state
 
-Não existem:
+There are no:
 
 ```text
-variáveis globais mutáveis
+mutable global variables
 
 cache
 
-arquivo aberto permanentemente
+permanently open file
 
 singleton
 ```
 
-Cada chamada funciona independentemente.
+Each call works independently.
 
 ---
 
-# 113. Não mantém handles abertos
+# 113. No open handles retained
 
-`Path.write_text()` cuida internamente da abertura e fechamento do arquivo.
+`Path.write_text()` handles opening and closing the file internally.
 
-O módulo não precisa fazer manualmente:
+The module does not need to do this manually:
 
 ```python
 open(...)
@@ -2261,9 +2263,9 @@ close()
 
 ---
 
-# 114. Versão equivalente conceitual
+# 114. Conceptually equivalent version
 
-O código poderia ser escrito aproximadamente como:
+The code could be written approximately as:
 
 ```python
 path.parent.mkdir(
@@ -2278,57 +2280,57 @@ with path.open(
     file.write(content)
 ```
 
-`write_text()` apenas fornece uma forma mais curta para esse caso.
+`write_text()` simply provides a shorter form for this case.
 
 ---
 
-# 115. Por que a versão atual é melhor?
+# 115. Why is the current version better?
 
-Para uma função tão simples:
+For such a simple function:
 
 ```python
 path.write_text(...)
 ```
 
-deixa a intenção imediata:
+makes the intention immediate:
 
 ```text
-escrever este texto neste caminho
+write this text to this path
 ```
 
-sem boilerplate desnecessário.
+without unnecessary boilerplate.
 
 ---
 
-# 116. Ausência de append
+# 116. No append
 
-Também fica evidente que o objetivo é escrever o arquivo completo, e não adicionar fragmentos progressivamente.
+It is also clear that the objective is to write a complete file, rather than progressively add fragments.
 
 ---
 
-# 117. Tamanho dos relatórios
+# 117. Report sizes
 
-Mesmo que determinados relatórios sejam grandes, a função recebe:
+Even if some reports are large, the function receives:
 
 ```text
 content
 ```
 
-inteiro como uma string e então grava tudo.
+as a complete string and then writes everything.
 
 ---
 
-# 118. Consequência
+# 118. Consequence
 
-O design atual pressupõe que os relatórios são pequenos o suficiente para existir em memória como strings completas.
+The current design assumes reports are small enough to exist in memory as complete strings.
 
-Para os relatórios deste projeto isso é coerente com a implementação atual.
+For this project's reports, that is consistent with the current implementation.
 
 ---
 
-# 119. Não é um logger
+# 119. It is not a logger
 
-`save_report()` não deve ser confundido com:
+`save_report()` should not be confused with:
 
 ```text
 logging
@@ -2336,14 +2338,14 @@ logging
 
 ---
 
-# 120. Diferença
+# 120. Difference
 
-Um logger normalmente trabalha com:
+A logger normally handles:
 
 ```text
-mensagens incrementais
+incremental messages
 
-níveis:
+levels:
 INFO
 DEBUG
 WARNING
@@ -2354,17 +2356,17 @@ timestamps
 handlers
 ```
 
-`save_report()` trabalha com:
+`save_report()` handles:
 
 ```text
-documento completo
+a complete document
 ```
 
 ---
 
-# 121. Exemplo
+# 121. Example
 
-Não se espera utilizar:
+It is not intended to use:
 
 ```python
 save_report(
@@ -2373,29 +2375,29 @@ save_report(
 )
 ```
 
-repetidamente durante o loop.
+repeatedly during the loop.
 
-Isso sobrescreveria o arquivo a cada chamada.
+That would overwrite the file on every call.
 
 ---
 
-# 122. Uso pretendido
+# 122. Intended use
 
-O padrão correto é:
+The correct pattern is:
 
 ```text
-processar tudo
+process everything
     ↓
-montar relatório completo
+assemble the complete report
     ↓
-salvar uma vez
+save once
 ```
 
 ---
 
-# 123. Relação com `print()`
+# 123. Relationship with `print()`
 
-Podemos ter simultaneamente:
+We can simultaneously have:
 
 ```python
 print(
@@ -2403,7 +2405,7 @@ print(
 )
 ```
 
-e:
+and:
 
 ```python
 save_report(
@@ -2412,55 +2414,55 @@ save_report(
 )
 ```
 
-As duas saídas têm públicos e níveis de detalhe diferentes.
+The two outputs have different audiences and levels of detail.
 
 ---
 
 # 124. Terminal
 
-Ideal para:
+Ideal for:
 
 ```text
-resumo operacional
+operational summary
 ```
 
 ---
 
-# 125. Relatórios
+# 125. Reports
 
-Ideais para:
+Ideal for:
 
 ```text
-detalhes técnicos
+technical details
 
-auditoria
+auditing
 
-comparação
+comparison
 
 debug
 
-documentação de execução
+execution documentation
 ```
 
 ---
 
-# 126. Não há conflito entre ambos
+# 126. There is no conflict between them
 
-A existência de `reports/` não impede o `main.py` de imprimir um resumo curto.
+The existence of `reports/` does not prevent `main.py` from printing a short summary.
 
-O princípio é apenas evitar:
+The principle is simply to avoid:
 
 ```text
-centenas de linhas
+hundreds of lines
 ```
 
-no terminal.
+in the terminal.
 
 ---
 
-# 127. Tratamento de diretórios
+# 127. Directory handling
 
-A chamada:
+The call:
 
 ```python
 path.parent.mkdir(
@@ -2469,29 +2471,29 @@ path.parent.mkdir(
 )
 ```
 
-também torna cada relatório independente.
+also makes each report independent.
 
-Não é necessário que `main.py` faça previamente:
+`main.py` does not need to perform:
 
 ```python
 REPORTS_DIR.mkdir(...)
 ```
 
-para todos.
+for all reports in advance.
 
 ---
 
-# 128. Mesmo assim, `main.py` poderia fazê-lo
+# 128. `main.py` could still do so
 
-Mas seria redundante.
+But it would be redundant.
 
-Cada chamada de `save_report()` já garante sua própria pré-condição de diretório.
+Each `save_report()` call already ensures its own directory precondition.
 
 ---
 
-# 129. Exemplo com subpastas futuras
+# 129. Example with future subdirectories
 
-Se futuramente o projeto quiser:
+If the project later wants:
 
 ```text
 reports/
@@ -2500,11 +2502,11 @@ reports/
 └── memory/
 ```
 
-a função continua funcionando sem modificação.
+the function continues working without changes.
 
 ---
 
-# 130. Exemplo
+# 130. Example
 
 ```python
 save_report(
@@ -2516,107 +2518,107 @@ save_report(
 )
 ```
 
-cria automaticamente:
+automatically creates:
 
 ```text
 reports/quantization/
 ```
 
-se necessário.
+if needed.
 
 ---
 
-# 131. Essa flexibilidade vem de `parents=True`
+# 131. This flexibility comes from `parents=True`
 
-Portanto o helper não está limitado a um único nível de diretório.
+The helper is therefore not limited to a single directory level.
 
 ---
 
-# 132. Possível melhoria futura: retornar o caminho
+# 132. Possible future improvement: return the path
 
-Poderia ser útil fazer:
+It might be useful to do:
 
 ```python
 return path
 ```
 
-para permitir:
+to allow:
 
 ```python
 saved_path = save_report(...)
 ```
 
-Mas isso não é necessário atualmente porque o chamador já possui esse valor.
+This is not currently needed because the caller already has that value.
 
 ---
 
-# 133. Possível melhoria futura: normalizar `Path`
+# 133. Possible future improvement: normalize `Path`
 
-Também poderia começar com:
+It could also start with:
 
 ```python
 path = Path(path)
 ```
 
-permitindo aceitar:
+allowing it to accept:
 
 ```text
 Path
 
-ou string
+or a string
 ```
 
-Mas a assinatura atual pede explicitamente:
+The current signature explicitly requests:
 
 ```text
 Path
 ```
 
-e a implementação segue essa expectativa.
+and the implementation follows that expectation.
 
 ---
 
-# 134. Possível melhoria futura: gravação atômica
+# 134. Possible future improvement: atomic writing
 
-Para cenários mais críticos, poderia ser feito:
+For more critical scenarios, one could:
 
 ```text
-gravar arquivo temporário
+write temporary file
         ↓
-rename atômico
+atomic rename
         ↓
-arquivo final
+final file
 ```
 
-Isso evitaria arquivos parcialmente escritos em caso de interrupção.
+This would prevent partially written files if interrupted.
 
 ---
 
-# 135. Isso é necessário aqui?
+# 135. Is that needed here?
 
-Para os relatórios diagnósticos atuais, provavelmente seria complexidade desnecessária.
+For current diagnostic reports, it would probably add unnecessary complexity.
 
-A função atual atende bem ao papel simples que possui.
+The current function serves its simple role well.
 
 ---
 
-# 136. Possível melhoria futura: retorno de metadados
+# 136. Possible future improvement: return metadata
 
-Também poderia retornar:
+It could also return:
 
 ```text
 path
 
-bytes gravados
+bytes written
 ```
 
-Mas novamente não existe necessidade atual no pipeline.
+Again, the current pipeline does not require it.
 
 ---
 
-# 137. Possível melhoria futura: formatos diferentes
+# 137. Possible future improvement: different formats
 
-Se futuramente o projeto gerar:
+If the project later generates:
 
 ```text
 JSON
@@ -2626,7 +2628,7 @@ CSV
 Markdown
 ```
 
-`save_report()` ainda poderia salvar qualquer um deles, desde que o conteúdo já venha como:
+`save_report()` could still save any of them, provided the content arrives as:
 
 ```text
 str
@@ -2634,7 +2636,7 @@ str
 
 ---
 
-# 138. Exemplo Markdown
+# 138. Markdown example
 
 ```python
 save_report(
@@ -2645,11 +2647,11 @@ save_report(
 )
 ```
 
-funcionaria sem alterações.
+would work unchanged.
 
 ---
 
-# 139. Exemplo CSV
+# 139. CSV example
 
 ```python
 save_report(
@@ -2660,13 +2662,13 @@ save_report(
 )
 ```
 
-também.
+as well.
 
 ---
 
-# 140. A extensão não é interpretada
+# 140. The extension is not interpreted
 
-A função não verifica:
+The function does not check:
 
 ```text
 .txt
@@ -2676,111 +2678,111 @@ A função não verifica:
 .csv
 ```
 
-O conteúdo e a extensão são responsabilidade do chamador.
+Contents and extension are the caller's responsibility.
 
 ---
 
-# 141. Isso mantém o helper genérico
+# 141. This keeps the helper generic
 
-Seu contrato permanece:
+Its contract remains:
 
 ```text
-Path + texto
+Path + text
     ↓
-arquivo UTF-8
+UTF-8 file
 ```
 
 ---
 
-# 142. Invariantes esperados
+# 142. Expected invariants
 
-Antes da chamada:
+Before the call:
 
 ```text
-path é um Path utilizável
+path is a usable Path
 
-content é uma string
+content is a string
 ```
 
 ---
 
-# 143. Depois de uma chamada bem-sucedida
+# 143. After a successful call
 
-Devemos ter:
+We should have:
 
 ```text
-path.parent existe
+path.parent exists
 
-path existe
+path exists
 
-conteúdo do arquivo
-corresponde a content
+file contents
+match content
 ```
 
-codificado em UTF-8.
+encoded in UTF-8.
 
 ---
 
-# 144. O que a função não garante?
+# 144. What does the function not guarantee?
 
-Ela não garante:
+It does not guarantee:
 
 ```text
-que o conteúdo esteja correto
+contents are correct
 
-que o relatório esteja completo
+the report is complete
 
-que os valores calculados estejam corretos
+calculated values are correct
 
-que o arquivo tenha determinado formato
+the file follows a particular format
 ```
 
-Essas propriedades pertencem às funções que produziram `content`.
+Those properties belong to the functions producing `content`.
 
 ---
 
-# 145. Erro de conteúdo versus erro de persistência
+# 145. Content errors versus persistence errors
 
-É importante separar:
+It is important to separate:
 
 ```text
-multiplier errado no relatório
+incorrect multiplier in the report
     ↓
-problema em quantization.py
+problem in quantization.py
 ```
 
-de:
+from:
 
 ```text
-não foi possível criar quantization.txt
+unable to create quantization.txt
     ↓
-problema de I/O/reporting
+I/O/reporting problem
 ```
 
 ---
 
-# 146. Isso ajuda no diagnóstico
+# 146. This helps diagnosis
 
-Cada módulo possui um domínio de responsabilidade claro.
+Each module has a clear responsibility.
 
 ---
 
-# 147. Fluxo completo do sistema de relatórios
+# 147. Complete reporting flow
 
 ```text
-                       DADOS
+                       DATA
                          │
                          ▼
-              função de processamento
+              processing function
                          │
                          ▼
-                estrutura Python
+                Python structure
                          │
             ┌────────────┴────────────┐
             │                         │
             ▼                         ▼
-      próxima etapa             *_to_text()
-      do pipeline                    │
+      next pipeline             *_to_text()
+      stage                          │
                                      ▼
                                   string
                                      │
@@ -2793,96 +2795,96 @@ Cada módulo possui um domínio de responsabilidade claro.
 
 ---
 
-# 148. Relação com a filosofia geral do projeto
+# 148. Relationship with the project's general approach
 
-A refatoração segue o princípio:
+Refactoring follows the principle:
 
 ```text
-calcular
+calculate
     ↓
-retornar estrutura
+return structure
     ↓
-validar
+validate
     ↓
-serializar
+serialize
     ↓
-gerar artefato
+generate artifact
 ```
 
-Os relatórios acompanham esse fluxo sem controlá-lo.
+Reports accompany this flow without controlling it.
 
 ---
 
-# 149. O relatório não vira fonte de dados
+# 149. Reports do not become a data source
 
-Essa é uma regra arquitetural importante:
+This is an important architectural rule:
 
 ```text
-nunca parsear os relatórios
-para recuperar dados do pipeline
+never parse reports
+to retrieve pipeline data
 ```
 
-A fonte de verdade permanece:
+The source of truth remains:
 
 ```text
-dicionários
+dictionaries
 
-listas
+lists
 
 bytes
 
-objetos estruturados
+structured objects
 ```
 
 ---
 
-# 150. Consequência para manutenção
+# 150. Maintenance consequence
 
-Podemos modificar a apresentação humana sem risco de alterar o comportamento da inferência.
+We can change the human-facing presentation without risking changes to inference behavior.
 
-Isso permite melhorar os relatórios livremente.
+This allows freely improving reports.
 
 ---
 
-# 151. Exemplo
+# 151. Example
 
-Hoje:
+Today:
 
 ```text
 Total de tensors de pesos: 54
 ```
 
-amanhã poderia ser:
+tomorrow it could be:
 
 ```text
 Pesos extraídos: 54 tensors
 ```
 
-sem qualquer impacto no WAT.
+without any impact on WAT.
 
 ---
 
-# 152. Isso também facilita documentação
+# 152. This also helps documentation
 
-Os arquivos em:
+Files in:
 
 ```text
 docs/
 ```
 
-podem explicar o significado dos relatórios.
+can explain report meanings.
 
-Já:
+Whereas:
 
 ```text
 reports/
 ```
 
-mostram os valores concretos.
+show concrete values.
 
 ---
 
-# 153. Visão da estrutura final do projeto
+# 153. Final project structure
 
 ```text
 master-degree-project/
@@ -2914,55 +2916,55 @@ master-degree-project/
 
 ---
 
-# 154. Papel de cada saída
+# 154. Role of each output
 
 ```text
 docs/
     ↓
-explica o sistema
+explains the system
 
 
 reports/
     ↓
-explica uma execução
+explains a run
 
 
 generated/
     ↓
-contém o artefato gerado
+contains the generated artifact
 ```
 
 ---
 
-# 155. O módulo mais simples também ajuda a arquitetura
+# 155. Even the simplest module helps the architecture
 
-Mesmo contendo apenas:
+Despite containing only:
 
 ```text
-uma função de poucas linhas
+one short function
 ```
 
-`reporting.py` elimina duplicação e impede que lógica de sistema de arquivos seja espalhada pelos módulos de domínio.
+`reporting.py` removes duplication and prevents filesystem logic from spreading across domain modules.
 
 ---
 
-# 156. Síntese
+# 156. Summary
 
-`reporting.py` possui uma responsabilidade extremamente pequena e bem definida:
+`reporting.py` has a small, well-defined responsibility:
 
 ```text
-salvar conteúdo textual
-em um arquivo
-de forma previsível
+save textual content
+to a file
+predictably
 ```
 
-A função:
+The function:
 
 ```python
 save_report()
 ```
 
-recebe:
+receives:
 
 ```text
 Path
@@ -2970,7 +2972,7 @@ Path
 str
 ```
 
-garante que o diretório pai exista por meio de:
+ensures the parent directory exists through:
 
 ```python
 path.parent.mkdir(
@@ -2979,7 +2981,7 @@ path.parent.mkdir(
 )
 ```
 
-e grava o conteúdo utilizando:
+and writes the contents using:
 
 ```python
 path.write_text(
@@ -2988,34 +2990,34 @@ path.write_text(
 )
 ```
 
-Ela não gera o relatório, não modifica o conteúdo, não interpreta dados do modelo e não interfere no pipeline de inferência.
+It does not generate reports, modify contents, interpret model data, or interfere with the inference pipeline.
 
-Sua existência permite manter três responsabilidades separadas:
+It keeps three responsibilities separate:
 
 ```text
-PROCESSAMENTO
+PROCESSING
     ↓
-módulos de domínio
+domain modules
 
 
-FORMATAÇÃO
+FORMATTING
     ↓
-funções *_to_text()
+*_to_text() functions
 
 
-PERSISTÊNCIA
+PERSISTENCE
     ↓
 reporting.save_report()
 ```
 
-Essa separação também reforça uma regra arquitetural importante do projeto:
+This separation reinforces an important architectural rule:
 
 ```text
-os dados estruturados são
-a fonte de verdade
+structured data are
+the source of truth
 
-os relatórios são
-representações humanas auxiliares
+reports are
+auxiliary human-readable representations
 ```
 
-Assim, `reporting.py` funciona como o último passo de uma ramificação de diagnóstico do pipeline, sem criar dependência entre os relatórios textuais e a geração efetiva do artefato WebAssembly.
+`reporting.py` thus serves as the final step of a diagnostic branch of the pipeline, without creating a dependency between text reports and generation of the WebAssembly artifact.

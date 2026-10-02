@@ -1,32 +1,34 @@
-# 31 — Serialização e resolução de ponteiros
+[English](31-extractor-params-blob.md) | [Português (Brasil)](31-extractor-params-blob.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/params_blob.py](../extractor/params_blob.py)
+# 31 — Serialization and pointer resolution
 
-## Entrada e posição
+[Index](README.md) · Source: [extractor/params_blob.py](../extractor/params_blob.py)
 
-Recebe LayerParams em dicts, bases dos slots, reserva params_bytes e parameter_layout. Devolve bytes da região PARAMS e registros de diagnóstico. É chamado após construção de camadas e antes do cálculo final da memória. Não escolhe templates nem roda kernels.
+## Input and position
 
-## Helpers de nomes e flags
+Receives LayerParams dicts, slot bases, the params_bytes reservation, and parameter_layout. Returns PARAMS region bytes and diagnostic records. Called after layer construction and before the final memory calculation. It does not choose templates or run kernels.
 
-`op_type_name` mapeia os oito códigos para nomes curtos (CONV, DW, FC etc.), retornando `str(op_type)` no desconhecido. `act_name` faz o mesmo para NONE/RELU/RELU6. `flags_pretty` trata QUANTIZE separadamente: OUTPUT_UINT8 ou OUTPUT_INT8 pelo bit 1 e INPUT_INT8 ou INPUT_UINT8 pelo bit 0. Nas outras operações usa PADDING_SAME e HAS_Q6, ou string 0. Flags da sintética são um endereço e atualmente zero; esse formatter não descreve seu significado sem o contexto do optype.
+## Name and flag helpers
+
+`op_type_name` maps the eight codes to short names (CONV, DW, FC, etc.), returning `str(op_type)` for unknown values. `act_name` does the same for NONE/RELU/RELU6. `flags_pretty` handles QUANTIZE separately: OUTPUT_UINT8 or OUTPUT_INT8 from bit 1 and INPUT_INT8 or INPUT_UINT8 from bit 0. For other operations it uses PADDING_SAME and HAS_Q6, or the string 0. The synthetic layer's flags are an address, currently zero; this formatter does not describe their meaning without optype context.
 
 ## pack_layerparam
 
-Recebe 29 argumentos posicionais na ordem ABI, monta uma lista, verifica comprimento 29 e chama `struct.pack(LP_FMT,*[int(value) ...])`. O teste de comprimento é defensivo, já que a própria assinatura define a quantidade. Retorna 116 bytes. Não restringe campos geométricos a valores positivos nem distingue ponteiros de números; `struct.error` pode ocorrer por overflow de int32.
+Receives 29 positional arguments in ABI order, builds a list, checks length 29, and calls `struct.pack(LP_FMT,*[int(value) ...])`. The length check is defensive because the signature itself defines the count. Returns 116 bytes. It does not restrict geometric fields to positive values or distinguish pointers from numbers; int32 overflow can cause `struct.error`.
 
 ## validate_layer_params
 
-Para todas as camadas verifica faixa de in_slot/out_slot. Em ADD exige duas entradas, que in_slot coincida com a primeira, que pad_t e pad_b sejam as bases dos dois slots e pertençam à lista de bases. Retorna True, ou RuntimeError com contexto. Os slots auxiliares de ADD são usados para indexar a lista antes de uma validação individual de faixa; dados muito malformados podem produzir IndexError. Não verifica capacidade de cada tensor, sobreposição de blobs, validade dos offsets de pesos ou alinhamento de cada ponteiro.
+Checks in_slot/out_slot bounds for every layer. For ADD, requires two inputs, in_slot matching the first, and pad_t and pad_b matching the two slot bases and belonging to the base list. Returns True or RuntimeError with context. ADD's auxiliary slots index the list before individual range validation; badly malformed data may produce IndexError. It does not check each tensor's capacity, blob overlap, weight offset validity, or individual pointer alignment.
 
 ## build_params_blob
 
-Primeiro chama a validação. Para cada camada resolve entrada/saída, pesos, bias e arrays de quantização. Entrada ADD vem de pad_t; nas demais vem de slot_bases[in_slot]. wptr é sempre kernel_base+w_off. bias_ptr só é não zero com has_bias. mul_ptr/shift_ptr só com has_mulq6. q6_ptr só com has_mulq6 **e** act=RELU6. Chama pack_layerparam, exige comprimento LP_SIZE, concatena e cria um record com camada, offset no blob, ponteiros e referência ao dict original.
+First calls validation. For each layer, resolves input/output, weights, bias, and quantization arrays. ADD input comes from pad_t; others use slot_bases[in_slot]. wptr is always kernel_base+w_off. bias_ptr is nonzero only with has_bias. mul_ptr/shift_ptr are enabled only with has_mulq6. q6_ptr requires has_mulq6 **and** act=RELU6. Calls pack_layerparam, requires LP_SIZE length, appends bytes, and creates a record with layer, blob offset, pointers, and a reference to the original dict.
 
 ```text
-offset relativo                 base física
+relative offset                 physical base
        │                             │
        └──────────────┬──────────────┘
-                      ▼ soma
+                      ▼ addition
       ┌──────────────────────────────────────────┐
       │ WEIGHTS_BASE + w_off   → wptr            │
       │ BIAS_BASE + b_off      → bias_ptr        │
@@ -37,24 +39,24 @@ offset relativo                 base física
                          ▼
                  pack_layerparam
                          ▼
-PARAMS: [L0:116][L1:116] ... [Ln:116][padding zero]
+PARAMS: [L0:116][L1:116] ... [Ln:116][zero padding]
 ```
 
-Entram offsets específicos do modelo e bases calculadas. O serializador resolve referências, aplica condições de presença e produz registros consecutivos. Saem bytes e records consumidos por memória/gerador/relatório. O stride 116 e endianness são genéricos; os ponteiros variam por pacote. O desenho mostra as somas apenas quando a condição de presença se aplica, exceto wptr, sempre calculado.
+Inputs are model-specific offsets and calculated bases. The serializer resolves references, applies presence conditions, and produces consecutive records. Outputs are bytes and records consumed by memory/generator/reporting. The 116-byte stride and endianness are generic; pointers vary by package. The diagram shows additions only when the presence condition applies, except wptr, which is always calculated.
 
-Ao final, `used_bytes=len(params_blob)`. Se exceder params_bytes, levanta RuntimeError; caso contrário acrescenta zeros até a reserva exata. Retorna `params_blob,records,layer_count,layer_param_size,used_bytes,padding_bytes,params_bytes`. O padding é somente no final do bloco; não existe alinhamento 16 entre registros. Como 116 é múltiplo de 4, cada registro continua alinhado para i32 quando PARAMS_BASE está alinhado.
+Finally, `used_bytes=len(params_blob)`. If this exceeds params_bytes, it raises RuntimeError; otherwise it appends zeros up to the exact reservation. Returns `params_blob,records,layer_count,layer_param_size,used_bytes,padding_bytes,params_bytes`. Padding occurs only at the block's end; there is no 16-byte alignment between records. Since 116 is a multiple of 4, each record remains aligned for i32 when PARAMS_BASE is aligned.
 
-## Exemplos numéricos
+## Numerical examples
 
-ImageNet tem 67 registros: 67×116=7772; a reserva alinhada é 7776, logo quatro zeros finais. O registro i começa em `PARAMS_BASE+i×116`, e seu out_ptr está 16 bytes adiante. Sonolência tem 68×116=7888 e padding zero. `depth_mult` não aparece após out_w: não há trigésimo inteiro.
+ImageNet has 67 records: 67×116=7772; aligned reservation is 7776, hence four trailing zeros. Record i starts at `PARAMS_BASE+i×116`, with out_ptr 16 bytes further on. Drowsiness has 68×116=7888 and zero padding. `depth_mult` does not appear after out_w: there is no thirtieth integer.
 
-## params_blob_to_text e diagnóstico
+## params_blob_to_text and diagnostics
 
-Emite contagem/tamanho/padding e, para cada record, códigos/nome, flags, slots, ponteiros, parâmetros de quantização e reinterpretações dos campos especiais. Recebe a serialização e retorna string para 10. Essa representação distingue offset relativo de ponteiro absoluto e ajuda a verificar ADD. A presença de um endereço não garante que o kernel o ignore quando ausente: alguns kernels carregam bias_ptr sem checar zero, limitação do runtime registrada separadamente.
+Emits count/size/padding and, for each record, codes/name, flags, slots, pointers, quantization parameters, and reinterpretations of special fields. Receives serialization and returns a string for 10. This representation distinguishes relative offsets from absolute pointers and helps verify ADD. The presence of an address does not guarantee the kernel ignores it when absent: some kernels load bias_ptr without checking zero, a runtime limitation recorded separately.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 import struct
@@ -62,25 +64,25 @@ from extractor.layer_params import LP_FMT, LP_SIZE, OP_CONV, OP_DW, OP_FC, OP_AD
 from extractor.operator_options import ACT_NONE, ACT_RELU, ACT_RELU6
 ```
 
-### `op_type_name` — assinatura
+### `op_type_name` — signature
 
 ```python
 def op_type_name(op_type)
 ```
 
-### `act_name` — assinatura
+### `act_name` — signature
 
 ```python
 def act_name(act)
 ```
 
-### `flags_pretty` — assinatura
+### `flags_pretty` — signature
 
 ```python
 def flags_pretty(flags, optype='')
 ```
 
-### `pack_layerparam` — assinatura
+### `pack_layerparam` — signature
 
 ```python
 def pack_layerparam(
@@ -116,24 +118,24 @@ def pack_layerparam(
 )
 ```
 
-### `validate_layer_params` — assinatura
+### `validate_layer_params` — signature
 
 ```python
 def validate_layer_params(layer_params, *, slot_bases)
 ```
 
-### `build_params_blob` — assinatura
+### `build_params_blob` — signature
 
 ```python
 def build_params_blob(layer_params, *, slot_bases, params_bytes, parameter_layout)
 ```
 
-### `params_blob_to_text` — assinatura
+### `params_blob_to_text` — signature
 
 ```python
 def params_blob_to_text(serialization)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [12-params-blob.md](historico/12-params-blob.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [12-params-blob.md](historico/12-params-blob.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

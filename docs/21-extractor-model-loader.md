@@ -1,59 +1,61 @@
-# 21 — Carregamento do FlatBuffer TFLite
+[English](21-extractor-model-loader.md) | [Português (Brasil)](21-extractor-model-loader.pt-BR.md)
 
-[Índice](README.md) · Fonte: [extractor/model_loader.py](../extractor/model_loader.py)
+# 21 — Loading the TFLite FlatBuffer
 
-## Objetivo, entrada e saída
+[Index](README.md) · Source: [extractor/model_loader.py](../extractor/model_loader.py)
 
-O módulo lê o binário original e devolve objetos de acesso ao schema TFLite. É chamado após discovery dos testes e antes de extrair metadados de entrada/saída. Não usa TensorFlow, não aloca tensores de um interpretador e não executa inferência TFLite.
+## Purpose, input, and output
 
-`load_model(model_path)` lê todos os bytes com `Path.read_bytes`. Tenta `TFLModel.GetRootAsModel(buf,0)`; se não existir, tenta `TFLModel.Model.GetRootAsModel(buf,0)`. Essa dupla forma acomoda diferenças de exposição do binding Python. Se nenhuma existe, levanta `RuntimeError`. Retorna o objeto raiz do FlatBuffer; os acessores subsequentes consultam o buffer carregado.
+The module reads the original binary and returns TFLite schema access objects. It is called after test discovery and before extracting input/output metadata. It does not use TensorFlow, allocate interpreter tensors, or run TFLite inference.
 
-`get_subgraph(model,index=0)` simplesmente retorna `model.Subgraphs(index)`. O pipeline sempre passa zero. Não agrega subgrafos, resolve chamadas entre subgrafos ou oferece seleção na CLI. Um arquivo com vários subgrafos não recebe suporte completo só porque o primeiro pode ser lido.
+`load_model(model_path)` reads all bytes with `Path.read_bytes`. It tries `TFLModel.GetRootAsModel(buf,0)`; if unavailable, it tries `TFLModel.Model.GetRootAsModel(buf,0)`. These two forms accommodate differences in the Python binding's exposed API. If neither exists, it raises `RuntimeError`. It returns the FlatBuffer root object; subsequent accessors query the loaded buffer.
+
+`get_subgraph(model,index=0)` simply returns `model.Subgraphs(index)`. The pipeline always passes zero. It does not combine subgraphs, resolve calls between subgraphs, or offer CLI selection. A file with multiple subgraphs is not fully supported merely because its first subgraph can be read.
 
 ```text
 model.toml: model.tflite
              │ ModelPackage.resolve
              ▼
-          Path do arquivo
+          File path
              │ read_bytes
              ▼
        GetRootAsModel(buf,0)
-             │ objeto schema
+             │ schema object
              ▼
-       Subgraphs(0) ──► grafo / tensores / opções
+       Subgraphs(0) ──► graph / tensors / options
 ```
 
-Entra o caminho específico do pacote. O loader cria uma visão estruturada dos bytes; saem model e subgraph para o extrator. O formato FlatBuffer é comum; operadores e buffers pertencem ao modelo. Não há alteração ou cópia permanente do TFLite em disco.
+The input is the package-specific path. The loader creates a structured view of the bytes; model and subgraph objects go to the extractor. The FlatBuffer format is shared; operators and buffers belong to the model. The TFLite file is neither modified nor permanently copied on disk.
 
-## Validações e erros
+## Validation and errors
 
-O pacote já exige arquivo não vazio, mas `load_model` também pode ser chamado diretamente. Erros de abertura propagam `OSError`; buffer inválido pode falhar no binding ou apenas em acessos posteriores. Não há verificação explícita de magic TFLite, versão do schema, compatibilidade de opcodes ou limites do índice do subgrafo. O método não retorna um relatório; o primeiro arquivo de relatório do pipeline é o grafo 02.
+The package already requires a nonempty file, but `load_model` can also be called directly. Opening errors propagate `OSError`; an invalid buffer may fail in the binding or only during later accesses. There is no explicit check of the TFLite magic identifier, schema version, opcode compatibility, or subgraph index bounds. The method does not return a report; the pipeline's first report file is graph report 02.
 
-## Uso correto
+## Correct use
 
-Mantenha o objeto model e os dados derivados na mesma execução. Não confunda o objeto schema com um interpreter: ele não oferece `invoke()` neste fluxo. A validação de uma entrada/saída e de tipos vem do pipeline/runner, não deste módulo. O nome de arquivo `int8` é irrelevante para a leitura; consulte `tensor.Type()`.
+Keep the model object and derived data within the same run. Do not confuse a schema object with an interpreter: it does not provide `invoke()` in this workflow. Validation of a single input/output and of types belongs to the pipeline/runner, not this module. An `int8` filename has no bearing on loading; inspect `tensor.Type()`.
 
-## Dependências e assinaturas verificadas
+## Verified dependencies and signatures
 
-As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos keyword-only aparecem após `*`. O comportamento está descrito nas seções anteriores; anotações de tipo não substituem validações.
+The signatures below were extracted from the AST of the current file. Keyword-only arguments appear after `*`. Behavior is described in the preceding sections; type annotations do not replace validation.
 
 ```python
 from pathlib import Path
 import tflite.Model as TFLModel
 ```
 
-### `load_model` — assinatura
+### `load_model` — signature
 
 ```python
 def load_model(model_path)
 ```
 
-### `get_subgraph` — assinatura
+### `get_subgraph` — signature
 
 ```python
 def get_subgraph(model, index=0)
 ```
 
-## Material técnico preservado
+## Preserved technical material
 
-A explicação anterior está em [02-carregamento-modelo.md](historico/02-carregamento-modelo.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [02-carregamento-modelo.md](historico/02-carregamento-modelo.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).

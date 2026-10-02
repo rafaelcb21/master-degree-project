@@ -1,12 +1,14 @@
-> **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.md). O corpo original foi mantido.
+[English](06-mapeamento-tensor-slot.md) | [Português (Brasil)](06-mapeamento-tensor-slot.pt-BR.md)
 
-# 06 — Mapeamento de tensors para slots (`tensor_mapping.py`)
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
 
-## 1. Objetivo do módulo
+# 06 — Mapping tensors to slots (`tensor_mapping.py`)
 
-O arquivo `extractor/tensor_mapping.py` cria a associação entre os identificadores de tensors existentes no modelo TFLite e os slots lógicos previamente calculados por `slots.py`.
+## 1. Module purpose
 
-Até a etapa anterior, o projeto possui informações como:
+`extractor/tensor_mapping.py` associates tensor identifiers in the TFLite model with the logical slots previously calculated by `slots.py`.
+
+At the preceding stage, the project has information such as:
 
 ```text
 L0 → SLOT0
@@ -14,19 +16,19 @@ L1 → SLOT1
 L2 → SLOT2
 ```
 
-Porém, o restante da extração frequentemente precisa responder:
+The rest of extraction often needs to answer:
 
 ```text
-em qual slot está o tensor TFLite 37?
+which slot holds TFLite tensor 37?
 ```
 
-Assim, este módulo constrói:
+Thus, this module builds:
 
 ```text
 tensor_id → slot
 ```
 
-Por exemplo:
+For example:
 
 ```python
 {
@@ -37,7 +39,7 @@ Por exemplo:
 }
 ```
 
-A interpretação é:
+The interpretation is:
 
 ```text
 tensor 0  → SLOT0
@@ -48,9 +50,9 @@ tensor 31 → SLOT0
 
 ---
 
-# 2. Código atual
+# 2. Current code
 
-O módulo contém quatro funções principais:
+The module contains four main functions:
 
 ```text
 resolve_slot_from_producer()
@@ -59,40 +61,40 @@ validate_tensor_slot_mapping()
 tensor_mapping_to_text()
 ```
 
-Suas responsabilidades são:
+Their responsibilities are:
 
-| Função                           | Responsabilidade                                          |
+| Function | Responsibility |
 | -------------------------------- | --------------------------------------------------------- |
-| `resolve_slot_from_producer()`   | Resolver recursivamente o slot de um tensor               |
-| `build_tensor_slot_mapping()`    | Construir o mapeamento completo                           |
-| `validate_tensor_slot_mapping()` | Verificar se os operadores úteis possuem tensors mapeados |
-| `tensor_mapping_to_text()`       | Gerar relatório textual                                   |
+| `resolve_slot_from_producer()` | Recursively resolve a tensor's slot |
+| `build_tensor_slot_mapping()` | Build the complete mapping |
+| `validate_tensor_slot_mapping()` | Check that useful operators have mapped tensors |
+| `tensor_mapping_to_text()` | Generate a text report |
 
 ---
 
-# 3. Posição no pipeline
+# 3. Position in the pipeline
 
-O módulo aparece depois de:
+The module comes after:
 
 ```text
 graph.py
    ↓
-dependências entre camadas
+dependencies between layers
 
 slots.py
    ↓
-camada → slot
+layer → slot
 ```
 
-e antes de:
+and before:
 
 ```text
 layer_params.py
    ↓
-tensor → slot → ponteiro
+tensor → slot → pointer
 ```
 
-Fluxo:
+Flow:
 
 ```text
 TFLite
@@ -100,11 +102,11 @@ TFLite
   ▼
 graph.py
   │
-  │ camada → predecessores
+  │ layer → predecessors
   ▼
 slots.py
   │
-  │ camada → slot
+  │ layer → slot
   ▼
 tensor_mapping.py
   │
@@ -112,47 +114,47 @@ tensor_mapping.py
   ▼
 layer_params.py
   │
-  │ slot → endereço
+  │ slot → address
   ▼
 LayerParam
 ```
 
 ---
 
-# 4. Por que esse módulo é necessário?
+# 4. Why is this module needed?
 
-`slots.py` conhece:
+`slots.py` knows:
 
 ```text
 L8 → SLOT2
 ```
 
-Mas uma operação TFLite possui algo semelhante a:
+A TFLite operation has something like:
 
 ```text
 input tensor = 57
 output tensor = 61
 ```
 
-Logo precisamos relacionar:
+We therefore need to relate:
 
 ```text
 tensor 61
     ↓
-foi produzido por L8
+was produced by L8
     ↓
-L8 usa SLOT2
+L8 uses SLOT2
     ↓
 tensor 61 → SLOT2
 ```
 
-É exatamente essa transformação que o módulo realiza.
+This is exactly the transformation performed by the module.
 
 ---
 
-# 5. Importações
+# 5. Imports
 
-O arquivo começa com:
+The file starts with:
 
 ```python
 from extractor.tflite_utils import (
@@ -161,115 +163,115 @@ from extractor.tflite_utils import (
 )
 ```
 
-São necessárias duas informações.
+Two pieces of information are needed.
 
 ### `is_constant_tensor()`
 
-Permite distinguir:
+It distinguishes:
 
 ```text
-ativação intermediária
+intermediate activation
 ```
 
-de:
+from:
 
 ```text
-peso
-bias
-outro tensor constante
+weight
+biases
+another constant tensor
 ```
 
-Somente tensors de dados dinâmicos precisam de slots.
+Only dynamic data tensors need slots.
 
 ### `op_name()`
 
-É usado nas mensagens de erro da etapa de validação.
+It is used in validation error messages.
 
 ---
 
-# 6. Três identidades diferentes
+# 6. Three different identities
 
-Até esta fase existem três formas diferentes de identificar elementos da rede.
+At this stage, there are three ways to identify network elements.
 
-### Operador TFLite
+### TFLite operator
 
 ```text
 op_index = 17
 ```
 
-### Camada lógica
+### Logical layer
 
 ```text
 L15
 ```
 
-### Tensor TFLite
+### TFLite tensor
 
 ```text
 tensor_id = 43
 ```
 
-O módulo precisa navegar entre essas três representações.
+The module must navigate between these three representations.
 
 ---
 
-# 7. Relações disponíveis antes desta etapa
+# 7. Relationships available before this stage
 
-De `graph.py` temos:
+From `graph.py` we have:
 
 ```text
 producer_by_tensor
 ```
 
-que responde:
+which answers:
 
 ```text
-tensor_id → op_index produtor
+tensor_id → producer op_index
 ```
 
-Exemplo:
+Example:
 
 ```python
 producer_by_tensor[43] = 17
 ```
 
-Também temos:
+We also have:
 
 ```text
 old_idx_to_label
 ```
 
-que responde:
+which answers:
 
 ```text
-op_index → camada lógica
+op_index → logical layer
 ```
 
-Exemplo:
+Example:
 
 ```python
 old_idx_to_label[17] = "L15"
 ```
 
-E de `slots.py`:
+And from `slots.py`:
 
 ```text
 layer_output_slot
 ```
 
-que responde:
+which answers:
 
 ```text
-camada → slot
+layer → slot
 ```
 
-Exemplo:
+Example:
 
 ```python
 layer_output_slot["L15"] = 2
 ```
 
-Combinando:
+Combining them:
 
 ```text
 tensor 43
@@ -281,7 +283,7 @@ L15
 SLOT2
 ```
 
-Logo:
+Therefore:
 
 ```text
 tensor 43 → SLOT2
@@ -289,9 +291,9 @@ tensor 43 → SLOT2
 
 ---
 
-# 8. Função `resolve_slot_from_producer()`
+# 8. The `resolve_slot_from_producer()` function
 
-A primeira função é:
+The first function is:
 
 ```python
 def resolve_slot_from_producer(
@@ -307,115 +309,115 @@ def resolve_slot_from_producer(
 ):
 ```
 
-Ela tenta descobrir o slot de um tensor seguindo sua origem.
+It tries to find a tensor's slot by following its origin.
 
-A lógica conceitual é:
+The conceptual logic is:
 
 ```text
 tensor
   ↓
-já possui slot?
+does it already have a slot?
   │
-  ├── sim → retorna
+  ├── yes → return
   │
-  └── não
+  └── no
        ↓
-qual operador o produziu?
+which operator produced it?
        ↓
-produtor está no grafo útil?
+is the producer in the useful graph?
   │
-  ├── sim → usa slot da camada
+  ├── yes → use the layer's slot
   │
-  └── não
+  └── no
        ↓
-segue entradas do produtor
+follow the producer's inputs
        ↓
-tenta encontrar origem com slot
+try to find an origin with a slot
 ```
 
 ---
 
-# 9. Por que a função é recursiva?
+# 9. Why is the function recursive?
 
-Nem todo operador intermediário precisa estar representado diretamente no grafo utilizado pelo extrator.
+Not every intermediate operator needs direct representation in the graph used by the extractor.
 
-Pode existir conceitualmente:
+Conceptually, there may be:
 
 ```text
 L4
  ↓
-operação não representada
+unrepresented operation
  ↓
 tensor X
  ↓
 L5
 ```
 
-Nesse caso, não existe necessariamente:
+In this case, there is not necessarily:
 
 ```text
-operação intermediária → Lx → slot
+intermediate operation → Lx → slot
 ```
 
-Então a função segue a cadeia para trás.
+The function therefore follows the chain backward.
 
 ---
 
-# 10. Exemplo conceitual
+# 10. Conceptual example
 
-Considere:
+Consider:
 
 ```text
 tensor 20
    ↓
-Op 8 útil
+useful Op 8
    ↓
 tensor 21
    ↓
-Op 9 ignorado
+ignored Op 9
    ↓
 tensor 22
 ```
 
-Suponha:
+Suppose:
 
 ```text
 Op8 → L7 → SLOT1
 ```
 
-Mas:
+But:
 
 ```text
 Op9
 ```
 
-não possui label lógico.
+has no logical label.
 
-Quando queremos descobrir:
+When we want to find:
 
 ```text
 tensor 22 → ?
 ```
 
-a função encontra:
+the function finds:
 
 ```text
 tensor 22
    ↓
-produtor = Op9
+producer = Op9
    ↓
-Op9 não possui Lx
+Op9 has no Lx
    ↓
-input de Op9 = tensor 21
+Op9 input = tensor 21
    ↓
-produtor de tensor 21 = Op8
+tensor 21 producer = Op8
    ↓
 Op8 → L7
    ↓
 L7 → SLOT1
 ```
 
-Resultado:
+Result:
 
 ```text
 tensor 22 → SLOT1
@@ -423,28 +425,28 @@ tensor 22 → SLOT1
 
 ---
 
-# 11. Parâmetro `visiting`
+# 11. The `visiting` parameter
 
-A função possui:
+The function has:
 
 ```python
 visiting=None
 ```
 
-Quando nenhuma coleção é fornecida:
+When no collection is supplied:
 
 ```python
 if visiting is None:
     visiting = set()
 ```
 
-Esse conjunto registra quais tensors já estão sendo visitados durante a resolução atual.
+This set tracks which tensors are already being visited during the current resolution.
 
 ---
 
-# 12. Objetivo de `visiting`
+# 12. Purpose of `visiting`
 
-Mesmo que o grafo esperado seja acíclico, uma rotina recursiva defensiva precisa impedir:
+Even if the expected graph is acyclic, a defensive recursive routine must prevent:
 
 ```text
 tensor A
@@ -458,88 +460,88 @@ tensor A
 ...
 ```
 
-caso alguma relação inesperada produza um ciclo durante a busca.
+if an unexpected relationship creates a cycle during the search.
 
 ---
 
-# 13. Detecção de repetição
+# 13. Detecting repetition
 
-O código:
+The code:
 
 ```python
 if tensor_id in visiting:
     return None
 ```
 
-impede repetir indefinidamente a mesma busca.
+prevents repeating the same search indefinitely.
 
-Depois:
+Then:
 
 ```python
 visiting.add(tensor_id)
 ```
 
-marca o tensor atual.
+marks the current tensor.
 
 ---
 
-# 14. Diferença entre o ciclo do grafo e o ciclo da busca
+# 14. Graph cycles versus search cycles
 
-`graph.py` já verifica ciclos na estrutura dos operadores úteis.
+`graph.py` already checks for cycles in the structure of useful operators.
 
-Mas aqui a função pode atravessar:
+Here, however, the function may traverse:
 
 ```text
-operadores não representados
-tensors intermediários
+unrepresented operators
+intermediate tensors
 ```
 
-Portanto existe uma proteção local própria.
+It therefore has its own local protection.
 
 ---
 
-# 15. Primeiro caso: tensor já conhecido
+# 15. First case: known tensor
 
-A primeira tentativa é:
+The first attempt is:
 
 ```python
 if tensor_id in tensor_to_slot:
     return tensor_to_slot[tensor_id]
 ```
 
-Isso funciona como cache.
+This acts as a cache.
 
-Se já sabemos:
+If we already know:
 
 ```python
 tensor_to_slot[43] = 2
 ```
 
-não é necessário refazer toda a cadeia de produtores.
+there is no need to retrace the entire producer chain.
 
 ---
 
-# 16. Benefício do cache
+# 16. Cache benefit
 
-Sem essa verificação, diferentes tensors poderiam provocar repetidas travessias sobre a mesma parte do grafo.
+Without this check, different tensors could trigger repeated traversals of the same graph region.
 
-Com cache:
+With caching:
 
 ```text
-primeira resolução
+first resolution
     ↓
-calcula slot
+calculate slot
     ↓
-grava tensor_to_slot
+store tensor_to_slot
     ↓
-próximas consultas retornam diretamente
+subsequent queries return directly
 ```
 
 ---
 
-# 17. Descobrindo o produtor
+# 17. Finding the producer
 
-Se o tensor ainda não possui slot:
+If the tensor has no slot yet:
 
 ```python
 producer_op_idx = (
@@ -549,51 +551,51 @@ producer_op_idx = (
 )
 ```
 
-Essa estrutura veio de `graph.py`.
+This structure came from `graph.py`.
 
 ---
 
-# 18. Tensor sem produtor
+# 18. Tensor without a producer
 
-Se:
+If:
 
 ```python
 producer_op_idx is None
 ```
 
-a função retorna:
+the function returns:
 
 ```python
 None
 ```
 
-Isso pode ocorrer, por exemplo, quando o tensor é:
+This may occur, for example, when the tensor is:
 
 ```text
-entrada externa
+external input
 ```
 
-e não é produzido por nenhuma operação.
+and is not produced by any operation.
 
-As entradas do grafo são tratadas separadamente em `build_tensor_slot_mapping()`.
+Graph inputs are handled separately in `build_tensor_slot_mapping()`.
 
 ---
 
-# 19. Produtor diretamente representado
+# 19. Directly represented producer
 
-O primeiro cenário útil é:
+The first useful scenario is:
 
 ```python
 if producer_op_idx in old_idx_to_label:
 ```
 
-Isso significa que o operador produtor participa do grafo lógico.
+This means the producer operator belongs to the logical graph.
 
 ---
 
-# 20. Conversão para label
+# 20. Converting to a label
 
-É obtido:
+The following is obtained:
 
 ```python
 layer_name = (
@@ -603,13 +605,13 @@ layer_name = (
 )
 ```
 
-Exemplo:
+Example:
 
 ```text
 producer_op_idx = 17
 ```
 
-torna-se:
+becomes:
 
 ```text
 L15
@@ -617,9 +619,9 @@ L15
 
 ---
 
-# 21. Conversão de label para slot
+# 21. Converting a label to a slot
 
-Depois:
+Then:
 
 ```python
 output_slot = (
@@ -629,13 +631,13 @@ output_slot = (
 )
 ```
 
-Exemplo:
+Example:
 
 ```python
 layer_output_slot["L15"] = 2
 ```
 
-Então:
+Then:
 
 ```text
 output_slot = 2
@@ -643,9 +645,9 @@ output_slot = 2
 
 ---
 
-# 22. Registro no cache
+# 22. Recording in the cache
 
-Se o slot foi encontrado:
+If the slot was found:
 
 ```python
 tensor_to_slot[tensor_id] = (
@@ -653,17 +655,17 @@ tensor_to_slot[tensor_id] = (
 )
 ```
 
-e:
+and:
 
 ```python
 return output_slot
 ```
 
-Assim, aquela relação passa a ser conhecida diretamente.
+That relationship is now directly known.
 
 ---
 
-# 23. Fluxo direto completo
+# 23. Complete direct flow
 
 ```text
 tensor_id
@@ -685,23 +687,23 @@ tensor_to_slot[tensor_id] = slot
 
 ---
 
-# 24. Produtor não representado diretamente
+# 24. Producer not directly represented
 
-Se:
+If:
 
 ```python
 producer_op_idx
 ```
 
-não estiver em:
+is not in:
 
 ```python
 old_idx_to_label
 ```
 
-a função não desiste imediatamente.
+the function does not give up immediately.
 
-Ela recupera o operador:
+It retrieves the operator:
 
 ```python
 producer_op = (
@@ -711,27 +713,27 @@ producer_op = (
 )
 ```
 
-e passa a examinar suas entradas.
+and starts examining its inputs.
 
 ---
 
-# 25. Ideia dessa etapa
+# 25. Idea behind this stage
 
-A hipótese utilizada é:
+The assumption is:
 
 ```text
-se o produtor não possui um slot próprio no grafo lógico,
-talvez seu tensor possa ser associado ao mesmo fluxo
-de uma entrada dinâmica anterior.
+if the producer has no slot of its own in the logical graph,
+its tensor may be associated with the same flow
+as an earlier dynamic input.
 ```
 
-Essa lógica é especialmente útil para operadores que foram atravessados durante a simplificação do grafo.
+This logic is especially useful for operators traversed during graph simplification.
 
 ---
 
-# 26. Percorrendo as entradas
+# 26. Iterating over inputs
 
-O código:
+The code:
 
 ```python
 for j in range(
@@ -739,7 +741,7 @@ for j in range(
 ):
 ```
 
-obtém:
+obtains:
 
 ```python
 input_tensor_id = int(
@@ -749,27 +751,27 @@ input_tensor_id = int(
 
 ---
 
-# 27. Inputs negativos
+# 27. Negative inputs
 
-Se:
+If:
 
 ```python
 input_tensor_id < 0
 ```
 
-o input é ignorado:
+the input is skipped:
 
 ```python
 continue
 ```
 
-Isso mantém o mesmo padrão adotado em outros módulos para IDs inválidos/opcionais.
+This follows the same convention used in other modules for invalid or optional IDs.
 
 ---
 
-# 28. Tensores constantes são ignorados
+# 28. Constant tensors are skipped
 
-A função executa:
+The function executes:
 
 ```python
 if is_constant_tensor(
@@ -780,35 +782,35 @@ if is_constant_tensor(
     continue
 ```
 
-Isso é fundamental.
+This is essential.
 
-Suponha uma operação:
+Consider an operation:
 
 ```text
-entrada dinâmica
+dynamic input
 +
-peso constante
+constant weight
 ```
 
-A busca pelo slot deve seguir:
+The slot search must follow:
 
 ```text
-entrada dinâmica
+dynamic input
 ```
 
-e não:
+rather than:
 
 ```text
-peso
+weight
 ```
 
-porque pesos não vivem nos slots de ativação.
+because weights do not live in activation slots.
 
 ---
 
-# 29. Chamada recursiva
+# 29. Recursive call
 
-Para uma entrada dinâmica:
+For a dynamic input:
 
 ```python
 slot = resolve_slot_from_producer(
@@ -817,49 +819,49 @@ slot = resolve_slot_from_producer(
 )
 ```
 
-A função tenta resolver novamente a cadeia.
+The function tries to resolve the chain again.
 
 ---
 
 # 30. `visiting.copy()`
 
-A chamada utiliza:
+The call uses:
 
 ```python
 visiting=visiting.copy()
 ```
 
-Isso cria uma cópia do conjunto de nós visitados para aquele ramo.
+This copies the visited-node set for that branch.
 
 ---
 
-# 31. Por que copiar?
+# 31. Why copy?
 
-Imagine um operador com duas entradas:
+Imagine an operator with two inputs:
 
 ```text
            input A
           /
-op atual
+current op
           \
            input B
 ```
 
-Cada ramo de busca recebe seu próprio estado derivado.
+Each search branch receives its own derived state.
 
-Assim, visitar determinado tensor no ramo A não bloqueia necessariamente sua análise independente no ramo B.
+Visiting a tensor in branch A thus does not necessarily block its independent analysis in branch B.
 
 ---
 
-# 32. Quando um slot é encontrado
+# 32. When a slot is found
 
-Se:
+If:
 
 ```python
 slot is not None
 ```
 
-o resultado é associado ao tensor original:
+the result is associated with the original tensor:
 
 ```python
 tensor_to_slot[
@@ -867,65 +869,65 @@ tensor_to_slot[
 ] = slot
 ```
 
-e a função retorna imediatamente.
+and the function returns immediately.
 
 ---
 
-# 33. Primeiro caminho resolvível
+# 33. First resolvable path
 
-É importante registrar exatamente o comportamento atual:
+It is important to state the current behavior precisely:
 
 ```text
-a função percorre as entradas do produtor
-e retorna o primeiro slot que conseguir resolver
+the function iterates over the producer's inputs
+and returns the first slot it can resolve
 ```
 
-Ela não compara múltiplos slots.
+It does not compare multiple slots.
 
 ---
 
-# 34. Implicação dessa decisão
+# 34. Implication of this decision
 
-Para operadores intermediários considerados transparentes, isso pode ser adequado.
+For intermediate operators considered transparent, this may be appropriate.
 
-Mas para um operador não representado que combine duas entradas dinâmicas semanticamente diferentes, como:
+For an unrepresented operator that combines two semantically different dynamic inputs, such as:
 
 ```text
-input A em SLOT1
-input B em SLOT2
+input A in SLOT1
+input B in SLOT2
 ```
 
-a função retornaria o primeiro slot resolvido.
+the function would return the first resolved slot.
 
-Logo, a resolução recursiva pressupõe que a travessia por operadores não representados seja semanticamente compatível com essa simplificação.
+Recursive resolution therefore assumes that traversal through unrepresented operators is semantically compatible with this simplification.
 
-Essa é uma característica importante do algoritmo atual.
+This is an important property of the current algorithm.
 
 ---
 
-# 35. Falha de resolução
+# 35. Resolution failure
 
-Se nenhum input permitir descobrir um slot:
+If no input reveals a slot:
 
 ```python
 return None
 ```
 
-Esse tensor permanecerá sem mapeamento.
+This tensor remains unmapped.
 
-Posteriormente será incluído em:
+It will later be included in:
 
 ```text
 unmapped_after
 ```
 
-e, se for necessário por um operador útil, a validação falhará.
+and validation will fail if a useful operator needs it.
 
 ---
 
-# 36. Função `build_tensor_slot_mapping()`
+# 36. The `build_tensor_slot_mapping()` function
 
-Essa é a função principal de construção:
+This is the main construction function:
 
 ```python
 def build_tensor_slot_mapping(
@@ -940,30 +942,30 @@ def build_tensor_slot_mapping(
 ):
 ```
 
-Ela executa quatro etapas:
+It performs four stages:
 
 ```text
-1. mapear outputs das camadas
-2. mapear inputs do subgrafo
-3. resolver intermediários
-4. listar o que permaneceu sem mapeamento
+1. map layer outputs
+2. map subgraph inputs
+3. resolve intermediates
+4. list what remains unmapped
 ```
 
-Essa organização aparece explicitamente no código.
+This organization is explicit in the code.
 
 ---
 
-# 37. Estruturas iniciais
+# 37. Initial structures
 
-No começo:
+Initially:
 
 ```python
 tensor_to_slot = {}
 ```
 
-Essa será a estrutura principal.
+This will be the main structure.
 
-Além dela:
+Alongside it:
 
 ```python
 mapped_from_layers = []
@@ -971,15 +973,15 @@ graph_input_mappings = []
 pending_before_resolution = []
 ```
 
-são mantidas informações adicionais para relatório e diagnóstico.
+additional information is retained for reporting and diagnostics.
 
 ---
 
 # 38. `tensor_to_slot`
 
-Essa é a fonte de verdade.
+This is the source of truth.
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -991,15 +993,15 @@ Exemplo:
 }
 ```
 
-Os módulos posteriores usam esse dicionário para descobrir slots.
+Subsequent modules use this dictionary to find slots.
 
 ---
 
 # 39. `mapped_from_layers`
 
-Essa lista registra os tensors associados diretamente às saídas das camadas.
+This list records tensors directly associated with layer outputs.
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -1010,15 +1012,15 @@ Exemplo:
 }
 ```
 
-Ela é principalmente uma estrutura de rastreabilidade.
+It is primarily a traceability structure.
 
 ---
 
 # 40. `graph_input_mappings`
 
-Registra explicitamente os inputs externos do subgrafo que foram associados ao slot 0.
+It explicitly records the subgraph's external inputs assigned to slot 0.
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -1031,39 +1033,39 @@ Exemplo:
 
 # 41. `pending_before_resolution`
 
-Registra os tensors dinâmicos que inicialmente:
+It records dynamic tensors that initially:
 
 ```text
-não eram saída já mapeada
-não eram constantes
-não eram input do subgrafo
+were not already mapped outputs
+were not constants
+were not subgraph inputs
 ```
 
-Eles serão candidatos à resolução recursiva posterior.
+They become candidates for subsequent recursive resolution.
 
 ---
 
-# 42. Primeira etapa: mapear outputs das camadas
+# 42. First stage: map layer outputs
 
-O código percorre:
+The code iterates over:
 
 ```python
 for alloc in slot_allocation:
 ```
 
-Ou seja, utiliza diretamente o resultado produzido por `slots.py`.
+It directly uses the result produced by `slots.py`.
 
 ---
 
-# 43. Obtendo o label
+# 43. Getting the label
 
-Cada registro possui:
+Each record has:
 
 ```python
 layer_name = alloc["layer"]
 ```
 
-Exemplo:
+Example:
 
 ```text
 L12
@@ -1071,9 +1073,9 @@ L12
 
 ---
 
-# 44. Voltando ao operador TFLite
+# 44. Returning to the TFLite operator
 
-Para descobrir quais tensors a camada produz:
+To find which tensors the layer produces:
 
 ```python
 op_idx = (
@@ -1083,7 +1085,7 @@ op_idx = (
 )
 ```
 
-Exemplo:
+Example:
 
 ```text
 L12 → op_index 14
@@ -1091,25 +1093,25 @@ L12 → op_index 14
 
 ---
 
-# 45. Label sem operador
+# 45. Label without an operator
 
-Se:
+If:
 
 ```python
 op_idx is None
 ```
 
-o registro é ignorado:
+the record is skipped:
 
 ```python
 continue
 ```
 
-No fluxo normal, os labels produzidos por `graph.py` devem ter correspondência.
+In the normal flow, labels produced by `graph.py` should have a corresponding operator.
 
 ---
 
-# 46. Obtendo o operador
+# 46. Getting the operator
 
 ```python
 op = subgraph.Operators(
@@ -1117,13 +1119,13 @@ op = subgraph.Operators(
 )
 ```
 
-Agora é possível consultar seus outputs reais.
+Its actual outputs can now be queried.
 
 ---
 
-# 47. Percorrendo todos os outputs
+# 47. Iterating over all outputs
 
-O código usa:
+The code uses:
 
 ```python
 for j in range(
@@ -1131,13 +1133,13 @@ for j in range(
 ):
 ```
 
-Portanto não pressupõe que uma operação possua necessariamente apenas uma saída.
+It therefore does not assume that an operation necessarily has only one output.
 
 ---
 
-# 48. ID do tensor de saída
+# 48. Output tensor ID
 
-Cada saída é obtida por:
+Each output is obtained through:
 
 ```python
 tensor_id = int(
@@ -1145,13 +1147,13 @@ tensor_id = int(
 )
 ```
 
-IDs negativos são ignorados.
+Negative IDs are skipped.
 
 ---
 
-# 49. Slot da camada
+# 49. Layer slot
 
-O slot vem diretamente da alocação:
+The slot comes directly from the allocation:
 
 ```python
 output_slot = (
@@ -1161,9 +1163,9 @@ output_slot = (
 
 ---
 
-# 50. Associação tensor → slot
+# 50. Associating tensor → slot
 
-Então:
+Then:
 
 ```python
 tensor_to_slot[
@@ -1171,14 +1173,14 @@ tensor_to_slot[
 ] = output_slot
 ```
 
-Exemplo:
+Example:
 
 ```text
 L12 → SLOT2
-L12 produz tensor 48
+L12 produces tensor 48
 ```
 
-resulta em:
+results in:
 
 ```text
 tensor 48 → SLOT2
@@ -1186,9 +1188,9 @@ tensor 48 → SLOT2
 
 ---
 
-# 51. Registro para relatório
+# 51. Recording for the report
 
-Além do mapeamento principal, é guardado:
+In addition to the main mapping, it stores:
 
 ```python
 {
@@ -1199,15 +1201,15 @@ Além do mapeamento principal, é guardado:
 }
 ```
 
-Isso permitirá explicar posteriormente de onde cada relação veio.
+This will help explain the origin of each relationship later.
 
 ---
 
-# 52. Resultado da primeira fase
+# 52. First phase result
 
-Depois dessa etapa, todos os outputs dos operadores úteis devem estar associados aos slots das respectivas camadas.
+After this stage, all useful operator outputs should be associated with their respective layer slots.
 
-Exemplo:
+Example:
 
 ```text
 L0 output tensor 3  → SLOT0
@@ -1218,9 +1220,9 @@ L3 output tensor 21 → SLOT0
 
 ---
 
-# 53. Segunda etapa: entradas do subgrafo
+# 53. Second stage: subgraph inputs
 
-Agora o módulo identifica as entradas externas:
+The module now identifies external inputs:
 
 ```python
 graph_inputs = {
@@ -1233,27 +1235,27 @@ graph_inputs = {
 
 ---
 
-# 54. Por que utilizar um `set`?
+# 54. Why use a `set`?
 
-A operação principal posterior é:
+The main subsequent operation is:
 
 ```python
 if tensor_id in graph_inputs:
 ```
 
-Um conjunto é uma estrutura apropriada para testes de pertencimento.
+A set is appropriate for membership tests.
 
 ---
 
-# 55. Exemplo
+# 55. Example
 
-Se o modelo possuir:
+If the model has:
 
 ```text
 input tensor = 0
 ```
 
-teremos:
+we get:
 
 ```python
 graph_inputs = {
@@ -1263,9 +1265,9 @@ graph_inputs = {
 
 ---
 
-# 56. Varredura de todos os tensors
+# 56. Scanning all tensors
 
-O código percorre:
+The code iterates over:
 
 ```python
 for tensor_id in range(
@@ -1273,51 +1275,51 @@ for tensor_id in range(
 ):
 ```
 
-Ou seja, nesta fase ele examina toda a tabela de tensors.
+At this stage it examines the entire tensor table.
 
 ---
 
-# 57. Tensor já mapeado
+# 57. Already mapped tensor
 
-Se:
+If:
 
 ```python
 tensor_id in tensor_to_slot
 ```
 
-a função executa:
+the function executes:
 
 ```python
 continue
 ```
 
-Isso evita sobrescrever uma associação produzida na primeira fase.
+This avoids overwriting an association created in the first phase.
 
 ---
 
-# 58. Tensor constante
+# 58. Constant tensor
 
-Se:
+If:
 
 ```python
 is_constant_tensor(...)
 ```
 
-retornar `True`, ele também é ignorado.
+returns `True`, it is also skipped.
 
-Pesos e bias não precisam de slot de ativação.
+Weights and biases do not need activation slots.
 
 ---
 
-# 59. Input do subgrafo
+# 59. Subgraph input
 
-Se:
+If:
 
 ```python
 tensor_id in graph_inputs
 ```
 
-o código define:
+the code sets:
 
 ```python
 tensor_to_slot[
@@ -1327,23 +1329,23 @@ tensor_to_slot[
 
 ---
 
-# 60. Por que SLOT0?
+# 60. Why SLOT0?
 
-Na convenção lógica utilizada antes da introdução da camada sintética RGB565→RGB888, o input externo é inicialmente associado ao slot lógico 0.
+Under the logical convention used before introducing the synthetic RGB565→RGB888 layer, external input is initially associated with logical slot 0.
 
-Posteriormente, `layer_params.py` aplica a transformação necessária para o layout efetivamente utilizado pelo runtime.
+Later, `layer_params.py` applies the transformation needed for the layout actually used by the runtime.
 
-Portanto, neste módulo:
+Thus, in this module:
 
 ```text
-input do grafo → SLOT0 lógico
+graph input → logical SLOT0
 ```
 
 ---
 
-# 61. Registro do input
+# 61. Recording the input
 
-Também é inserido:
+The following is also inserted:
 
 ```python
 {
@@ -1352,7 +1354,7 @@ Também é inserido:
 }
 ```
 
-em:
+into:
 
 ```python
 graph_input_mappings
@@ -1360,17 +1362,17 @@ graph_input_mappings
 
 ---
 
-# 62. Tensor não resolvido imediatamente
+# 62. Tensor not immediately resolved
 
-Caso o tensor:
+If the tensor:
 
 ```text
-não esteja mapeado
-não seja constante
-não seja input
+is not mapped
+is not constant
+is not an input
 ```
 
-é adicionado a:
+it is added to:
 
 ```python
 pending_before_resolution
@@ -1378,55 +1380,55 @@ pending_before_resolution
 
 ---
 
-# 63. Significado de “pendente”
+# 63. Meaning of “pending”
 
-Pendente não significa necessariamente erro.
+Pending does not necessarily mean an error.
 
-Significa apenas:
+It only means:
 
 ```text
-esse tensor não pôde ser mapeado pelas duas regras diretas
+this tensor could not be mapped by the two direct rules
 ```
 
-A etapa recursiva ainda tentará resolvê-lo.
+The recursive stage will still try to resolve it.
 
 ---
 
-# 64. Exemplo
+# 64. Example
 
-Considere:
+Consider:
 
 ```text
 L3
  ↓
-operação ignorada
+ignored operation
  ↓
 tensor 27
  ↓
 L4
 ```
 
-O tensor 27:
+Tensor 27:
 
 ```text
-não é output de uma camada Lx diretamente
-não é input do modelo
-não é constante
+is not directly the output of a layer Lx
+is not a model input
+is not constant
 ```
 
-Então inicialmente:
+Initially, therefore:
 
 ```text
-tensor 27 = pendente
+tensor 27 = pending
 ```
 
-Mas a resolução recursiva poderá descobrir que ele pertence ao mesmo fluxo do slot da saída de L3.
+Recursive resolution may discover that it belongs to the same flow as L3's output slot.
 
 ---
 
-# 65. Terceira etapa: fechamento recursivo
+# 65. Third stage: recursive closure
 
-Depois:
+Then:
 
 ```python
 for tensor_id in range(
@@ -1434,31 +1436,31 @@ for tensor_id in range(
 ):
 ```
 
-todos os tensors são novamente percorridos.
+all tensors are traversed again.
 
 ---
 
-# 66. Tensores já conhecidos
+# 66. Already known tensors
 
-Se já estiverem em:
+If they are already in:
 
 ```python
 tensor_to_slot
 ```
 
-são ignorados.
+they are skipped.
 
 ---
 
-# 67. Constantes
+# 67. Constants
 
-Também são novamente ignoradas.
+They are also skipped again.
 
 ---
 
-# 68. Tentativa de resolução
+# 68. Resolution attempt
 
-Para os demais:
+For the others:
 
 ```python
 resolve_slot_from_producer(
@@ -1467,27 +1469,27 @@ resolve_slot_from_producer(
 )
 ```
 
-é executada.
+is executed.
 
 ---
 
-# 69. Por que percorrer todos novamente?
+# 69. Why traverse everything again?
 
-Porque a função recursiva pode adicionar novos mapeamentos ao:
+Because the recursive function may add new mappings to:
 
 ```python
 tensor_to_slot
 ```
 
-durante a busca.
+during the search.
 
-Isso funciona como uma etapa de fechamento das relações ainda faltantes.
+This acts as a closure stage for relationships still missing.
 
 ---
 
-# 70. Exemplo do fechamento
+# 70. Closure example
 
-Antes:
+Before:
 
 ```python
 tensor_to_slot = {
@@ -1496,25 +1498,25 @@ tensor_to_slot = {
 }
 ```
 
-Pendente:
+Pending:
 
 ```text
 tensor 21
 ```
 
-A resolução encontra:
+Resolution finds:
 
 ```text
 tensor 21
  ↓
-produtor ignorado
+ignored producer
  ↓
 input tensor 20
  ↓
 SLOT2
 ```
 
-Depois:
+Then:
 
 ```python
 tensor_to_slot = {
@@ -1526,9 +1528,9 @@ tensor_to_slot = {
 
 ---
 
-# 71. Quarta etapa: encontrar o que restou
+# 71. Fourth stage: finding what remains
 
-Depois da resolução, é criada:
+After resolution, the following is created:
 
 ```python
 unmapped_after = []
@@ -1536,19 +1538,19 @@ unmapped_after = []
 
 ---
 
-# 72. Nova varredura
+# 72. New scan
 
-Todos os tensors são verificados novamente.
+All tensors are checked again.
 
-Constantes são ignoradas.
+Constants are skipped.
 
-Se um tensor dinâmico não estiver em:
+If a dynamic tensor is not in:
 
 ```python
 tensor_to_slot
 ```
 
-ele é adicionado a:
+it is added to:
 
 ```python
 unmapped_after
@@ -1556,23 +1558,23 @@ unmapped_after
 
 ---
 
-# 73. Diferença entre `pending_before_resolution` e `unmapped_after`
+# 73. Difference between `pending_before_resolution` and `unmapped_after`
 
-Essa diferença é importante.
+This difference is important.
 
 ### `pending_before_resolution`
 
-Tensors que não foram resolvidos imediatamente.
+Tensors not immediately resolved.
 
 ### `unmapped_after`
 
-Tensors que continuam sem slot mesmo depois da resolução recursiva.
+Tensors still without a slot after recursive resolution.
 
 ---
 
-# 74. Exemplo
+# 74. Example
 
-Inicialmente:
+Initially:
 
 ```python
 pending_before_resolution = [
@@ -1582,15 +1584,15 @@ pending_before_resolution = [
 ]
 ```
 
-Depois da busca:
+After the search:
 
 ```text
-21 resolvido
-22 resolvido
-30 não resolvido
+21 resolved
+22 resolved
+30 unresolved
 ```
 
-Resultado:
+Result:
 
 ```python
 unmapped_after = [
@@ -1600,37 +1602,37 @@ unmapped_after = [
 
 ---
 
-# 75. Por que manter os dois?
+# 75. Why keep both?
 
-Eles ajudam a responder perguntas diferentes.
+They help answer different questions.
 
 ```text
 pending_before_resolution
 ```
 
-mostra:
+shows:
 
 ```text
-quais tensors exigiram tratamento indireto?
+which tensors needed indirect handling?
 ```
 
-Já:
+Whereas:
 
 ```text
 unmapped_after
 ```
 
-mostra:
+shows:
 
 ```text
-quais tensors continuaram problemáticos?
+which tensors remained problematic?
 ```
 
 ---
 
-# 76. Retorno de `build_tensor_slot_mapping()`
+# 76. Return value of `build_tensor_slot_mapping()`
 
-A função retorna:
+The function returns:
 
 ```python
 {
@@ -1645,59 +1647,59 @@ A função retorna:
 
 ---
 
-# 77. Significado de cada campo
+# 77. Meaning of each field
 
-| Campo                       | Significado                                       |
+| Field | Meaning |
 | --------------------------- | ------------------------------------------------- |
-| `tensor_to_slot`            | Mapeamento principal tensor → slot                |
-| `graph_inputs`              | IDs dos tensors de entrada do subgrafo            |
-| `mapped_from_layers`        | Tensors mapeados diretamente a partir das camadas |
-| `graph_input_mappings`      | Entradas externas associadas ao SLOT0             |
-| `pending_before_resolution` | Tensors que inicialmente não tinham mapeamento    |
-| `unmapped_after`            | Tensors ainda sem slot após a resolução           |
+| `tensor_to_slot` | Main tensor → slot mapping |
+| `graph_inputs` | IDs of subgraph input tensors |
+| `mapped_from_layers` | Tensors mapped directly from layers |
+| `graph_input_mappings` | External inputs associated with SLOT0 |
+| `pending_before_resolution` | Tensors initially without a mapping |
+| `unmapped_after` | Tensors still without a slot after resolution |
 
 ---
 
-# 78. Qual estrutura é usada pelos cálculos?
+# 78. Which structure is used in calculations?
 
-A principal é:
+The main one is:
 
 ```python
 mapping["tensor_to_slot"]
 ```
 
-As demais ajudam principalmente em:
+The others mainly help with:
 
 ```text
-rastreamento
-diagnóstico
-relatórios
+tracking
+diagnostics
+reports
 ```
 
 ---
 
-# 79. Exemplo completo
+# 79. Complete example
 
-Suponha:
+Suppose:
 
 ```text
 input tensor 0
 
-L0 produz tensor 5 → SLOT0
-L1 produz tensor 8 → SLOT1
+L0 produces tensor 5 → SLOT0
+L1 produces tensor 8 → SLOT1
 
-op ignorado recebe tensor 8
-e produz tensor 9
+ignored op receives tensor 8
+and produces tensor 9
 
-L2 recebe tensor 9
-e produz tensor 12 → SLOT2
+L2 receives tensor 9
+and produces tensor 12 → SLOT2
 ```
 
 ---
 
-# 80. Fase 1
+# 80. Phase 1
 
-Outputs das camadas:
+Layer outputs:
 
 ```python
 tensor_to_slot = {
@@ -1709,9 +1711,9 @@ tensor_to_slot = {
 
 ---
 
-# 81. Fase 2
+# 81. Phase 2
 
-Entrada externa:
+External input:
 
 ```python
 tensor_to_slot = {
@@ -1722,7 +1724,7 @@ tensor_to_slot = {
 }
 ```
 
-Tensor 9 entra em:
+Tensor 9 goes into:
 
 ```python
 pending_before_resolution = [
@@ -1732,21 +1734,21 @@ pending_before_resolution = [
 
 ---
 
-# 82. Fase 3
+# 82. Phase 3
 
-Resolver tensor 9:
+Resolve tensor 9:
 
 ```text
 tensor 9
  ↓
-produtor ignorado
+ignored producer
  ↓
 input tensor 8
  ↓
 tensor 8 → SLOT1
 ```
 
-Então:
+Then:
 
 ```python
 tensor_to_slot[9] = 1
@@ -1754,7 +1756,7 @@ tensor_to_slot[9] = 1
 
 ---
 
-# 83. Resultado
+# 83. Result
 
 ```python
 {
@@ -1766,7 +1768,7 @@ tensor_to_slot[9] = 1
 }
 ```
 
-E:
+And:
 
 ```python
 unmapped_after = []
@@ -1774,17 +1776,17 @@ unmapped_after = []
 
 ---
 
-# 84. Função `validate_tensor_slot_mapping()`
+# 84. The `validate_tensor_slot_mapping()` function
 
-Construir o mapeamento não é suficiente.
+Building the mapping is not enough.
 
-O pipeline precisa garantir que todo tensor dinâmico realmente utilizado pelos operadores do grafo tenha slot.
+The pipeline must ensure that every dynamic tensor actually used by graph operators has a slot.
 
-A função de validação começa na linha 289 do arquivo e examina somente os operadores que fazem parte do grafo usado pelo extrator.
+The validation function starts at line 289 of the file and examines only operators belonging to the graph used by the extractor.
 
 ---
 
-# 85. Assinatura
+# 85. Signature
 
 ```python
 def validate_tensor_slot_mapping(
@@ -1796,19 +1798,19 @@ def validate_tensor_slot_mapping(
 ):
 ```
 
-Ela retorna:
+It returns:
 
 ```python
 True
 ```
 
-se todas as verificações passarem.
+if all checks pass.
 
-Caso contrário, lança uma exceção.
+Otherwise it raises an exception.
 
 ---
 
-# 86. Percorrendo os operadores
+# 86. Iterating over operators
 
 ```python
 for op_idx in range(
@@ -1816,41 +1818,41 @@ for op_idx in range(
 ):
 ```
 
-A princípio são visitados todos os operadores.
+Initially, all operators are visited.
 
-Mas existe um filtro importante.
+There is an important filter, however.
 
 ---
 
-# 87. Apenas operadores úteis
+# 87. Only useful operators
 
-O código:
+The code:
 
 ```python
 if op_idx not in old_idx_to_label:
     continue
 ```
 
-significa:
+means:
 
 ```text
-se o operador não participa do grafo lógico,
-não é validado aqui
+if the operator is not part of the logical graph,
+it is not validated here
 ```
 
 ---
 
-# 88. Por que isso faz sentido?
+# 88. Why does this make sense?
 
-Operadores atravessados/ignorados podem possuir tensors que não recebem slots próprios.
+Traversed or ignored operators may have tensors that do not receive their own slots.
 
-O objetivo da validação é garantir que as operações efetivamente representadas para execução possuem todas as entradas dinâmicas necessárias.
+Validation ensures that operations actually represented for execution have all the required dynamic inputs.
 
 ---
 
-# 89. Recuperando o operador
+# 89. Retrieving the operator
 
-Para cada operador útil:
+For each useful operator:
 
 ```python
 op = subgraph.Operators(
@@ -1860,15 +1862,15 @@ op = subgraph.Operators(
 
 ---
 
-# 90. Validação das entradas
+# 90. Validating inputs
 
-A primeira parte percorre:
+The first part iterates over:
 
 ```python
 op.InputsLength()
 ```
 
-e obtém cada:
+and retrieves each:
 
 ```python
 tensor_id
@@ -1876,54 +1878,54 @@ tensor_id
 
 ---
 
-# 91. Input negativo
+# 91. Negative input
 
-Se:
+If:
 
 ```python
 tensor_id < 0
 ```
 
-é ignorado.
+is skipped.
 
 ---
 
-# 92. Input constante
+# 92. Constant input
 
-Se:
+If:
 
 ```python
 is_constant_tensor(...)
 ```
 
-é verdadeiro, também é ignorado.
+is true, it is also skipped.
 
-Isso ocorre porque constantes são acessadas pelos blocos:
+This is because constants are accessed through the blocks:
 
 ```text
 WEIGHTS
 BIAS
 ```
 
-e não pelos slots de ativação.
+rather than activation slots.
 
 ---
 
-# 93. Input dinâmico sem slot
+# 93. Dynamic input without a slot
 
-Se:
+If:
 
 ```python
 tensor_id not in tensor_to_slot
 ```
 
-é gerado:
+the following is raised:
 
 ```python
 RuntimeError
 ```
 
-com uma mensagem do tipo:
+with a message such as:
 
 ```text
 [MAP-ERROR] input tensor sem slot:
@@ -1934,29 +1936,29 @@ op=...
 
 ---
 
-# 94. Por que incluir `op_name()` na mensagem?
+# 94. Why include `op_name()` in the message?
 
-Apenas:
+Just:
 
 ```text
 op_index=37
 ```
 
-pode ser pouco informativo.
+may provide little information.
 
-Adicionar:
+Adding:
 
 ```text
 op=ADD
 ```
 
-facilita localizar semanticamente o problema.
+makes the problem easier to locate semantically.
 
 ---
 
-# 95. Validação das saídas
+# 95. Validating outputs
 
-Depois são percorridas:
+Next, the function iterates over:
 
 ```python
 op.OutputsLength()
@@ -1964,27 +1966,27 @@ op.OutputsLength()
 
 ---
 
-# 96. Output negativo
+# 96. Negative output
 
-IDs negativos são ignorados.
+Negative IDs are skipped.
 
 ---
 
-# 97. Output sem slot
+# 97. Output without a slot
 
-Se:
+If:
 
 ```python
 tensor_id not in tensor_to_slot
 ```
 
-também ocorre:
+the following also occurs:
 
 ```python
 RuntimeError
 ```
 
-com:
+with:
 
 ```text
 [MAP-ERROR] output tensor sem slot
@@ -1992,54 +1994,54 @@ com:
 
 ---
 
-# 98. Diferença no tratamento de inputs e outputs
+# 98. Difference in input and output handling
 
-Para inputs, o código explicitamente ignora constantes.
+For inputs, the code explicitly skips constants.
 
-Para outputs, não existe a mesma chamada a:
+For outputs, there is no equivalent call to:
 
 ```python
 is_constant_tensor()
 ```
 
-O comportamento atual pressupõe que as saídas dos operadores úteis que interessam à execução precisam estar mapeadas.
+The current behavior assumes that useful operator outputs relevant to execution must be mapped.
 
-Essa é a implementação efetiva e deve ser considerada na leitura do código.
+This is the actual implementation and should be considered when reading the code.
 
 ---
 
-# 99. O que essa validação garante?
+# 99. What does this validation guarantee?
 
-Ela garante:
+It guarantees:
 
 ```text
-para cada operador útil:
+for each useful operator:
 
-todo input dinâmico possui slot
+every dynamic input has a slot
 
-todo output válido possui slot
+every valid output has a slot
 ```
 
 ---
 
-# 100. O que ela não garante?
+# 100. What does it not guarantee?
 
-Ela não prova, por si só, que:
+On its own, it does not prove that:
 
 ```text
-o slot escolhido é semanticamente correto
-a vida útil foi calculada perfeitamente
-os ponteiros físicos não se sobrepõem
-os parâmetros de quantização são corretos
+the selected slot is semantically correct
+lifetimes were calculated perfectly
+physical pointers do not overlap
+quantization parameters are correct
 ```
 
-Essas são responsabilidades de outras etapas.
+These are responsibilities of other stages.
 
 ---
 
-# 101. Exemplo de erro detectado
+# 101. Example of a detected error
 
-Considere:
+Consider:
 
 ```text
 L10 ADD
@@ -2048,7 +2050,7 @@ tensor 40
 tensor 55
 ```
 
-Mapeamento:
+Mapping:
 
 ```python
 tensor_to_slot = {
@@ -2056,59 +2058,59 @@ tensor_to_slot = {
 }
 ```
 
-Tensor 55 está ausente.
+Tensor 55 is missing.
 
-A validação produz erro antes que seja criada uma `LayerParam` incorreta.
-
----
-
-# 102. Importância de falhar cedo
-
-Sem essa validação, o erro poderia aparecer muito depois:
-
-```text
-tensor sem slot
-   ↓
-ponteiro inválido
-   ↓
-LayerParam errada
-   ↓
-WAT gerado
-   ↓
-WASM compilado
-   ↓
-inferência errada
-```
-
-A validação transforma isso em:
-
-```text
-tensor sem slot
-   ↓
-erro imediato no extrator
-```
+Validation raises an error before an incorrect `LayerParam` is created.
 
 ---
 
-# 103. Função `tensor_mapping_to_text()`
+# 102. Importance of failing early
 
-A última função transforma o resultado em texto.
-
-Ela é exclusivamente para:
+Without this validation, the error could appear much later:
 
 ```text
-relatório
+tensor without a slot
+   ↓
+invalid pointer
+   ↓
+incorrect LayerParam
+   ↓
+WAT generated
+   ↓
+WASM compiled
+   ↓
+incorrect inference
+```
+
+Validation turns this into:
+
+```text
+tensor without a slot
+   ↓
+immediate extractor error
+```
+
+---
+
+# 103. The `tensor_mapping_to_text()` function
+
+The last function converts the result to text.
+
+It is exclusively for:
+
+```text
+report
 debug
-rastreabilidade
+traceability
 ```
 
-e não participa da lógica do mapeamento.
+and does not participate in mapping logic.
 
 ---
 
-# 104. Tensors mapeados por camadas
+# 104. Tensors mapped from layers
 
-Primeiro são listados:
+First, it lists:
 
 ```python
 mapping[
@@ -2116,7 +2118,7 @@ mapping[
 ]
 ```
 
-Cada entrada gera algo semelhante a:
+Each entry generates something like:
 
 ```text
 tensor 25 (produzido por L8) -> slot 2
@@ -2124,9 +2126,9 @@ tensor 25 (produzido por L8) -> slot 2
 
 ---
 
-# 105. Benefício do formato
+# 105. Format benefit
 
-Esse texto registra três identidades de uma vez:
+This text records three identities at once:
 
 ```text
 tensor 25
@@ -2136,13 +2138,13 @@ L8
 slot 2
 ```
 
-Isso facilita conferir o vínculo entre TFLite, grafo e memória.
+This makes it easier to check the relationship between TFLite, graph, and memory.
 
 ---
 
-# 106. Inputs do subgrafo
+# 106. Subgraph inputs
 
-Depois são listados:
+Next, it lists:
 
 ```python
 mapping[
@@ -2150,7 +2152,7 @@ mapping[
 ]
 ```
 
-Exemplo:
+Example:
 
 ```text
 tensor 0 (input do subgrafo) -> slot 0
@@ -2158,9 +2160,9 @@ tensor 0 (input do subgrafo) -> slot 0
 
 ---
 
-# 107. Tensors inicialmente pendentes
+# 107. Initially pending tensors
 
-A função recupera:
+The function retrieves:
 
 ```python
 pending = mapping[
@@ -2168,7 +2170,7 @@ pending = mapping[
 ]
 ```
 
-Se houver conteúdo:
+If there are entries:
 
 ```text
 Tensores inicialmente pendentes:
@@ -2178,17 +2180,17 @@ Tensores inicialmente pendentes:
 
 ---
 
-# 108. Importante: pendente não significa não resolvido
+# 108. Important: pending does not mean unresolved
 
-Um tensor presente nessa seção pode ter sido resolvido posteriormente.
+A tensor in this section may have been resolved later.
 
-Essa lista representa seu estado **antes** do fechamento recursivo.
+This list represents its state **before** recursive closure.
 
 ---
 
-# 109. Total mapeado
+# 109. Total mapped
 
-Depois:
+Then:
 
 ```python
 len(
@@ -2198,9 +2200,9 @@ len(
 )
 ```
 
-é exibido.
+is displayed.
 
-Exemplo:
+Example:
 
 ```text
 Total de tensores mapeados: 71
@@ -2208,21 +2210,21 @@ Total de tensores mapeados: 71
 
 ---
 
-# 110. Tensors ainda não resolvidos
+# 110. Still unresolved tensors
 
-Se:
+If:
 
 ```python
 unmapped_after
 ```
 
-não estiver vazio:
+is not empty:
 
 ```text
 Tensores sem slot após fechamento: [...]
 ```
 
-Caso contrário:
+Otherwise:
 
 ```text
 Fechamento de mapeamento:
@@ -2231,27 +2233,27 @@ nenhum tensor não-constante pendente.
 
 ---
 
-# 111. Relatório versus validação
+# 111. Report versus validation
 
-É importante distinguir:
+It is important to distinguish:
 
 ```text
 tensor_mapping_to_text()
 ```
 
-de:
+from:
 
 ```text
 validate_tensor_slot_mapping()
 ```
 
-O primeiro apenas informa.
+The first only reports information.
 
-O segundo realmente interrompe o pipeline em caso de inconsistência relevante.
+The second actually stops the pipeline if a relevant inconsistency occurs.
 
 ---
 
-# 112. Exemplo conceitual de relatório
+# 112. Conceptual report example
 
 ```text
 tensor 5 (produzido por L0) -> slot 0
@@ -2273,15 +2275,15 @@ nenhum tensor não-constante pendente.
 
 ---
 
-# 113. Relação com `slots.py`
+# 113. Relationship with `slots.py`
 
-`slots.py` gera:
+`slots.py` generates:
 
 ```text
-camada → slot
+layer → slot
 ```
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -2290,13 +2292,13 @@ Exemplo:
 }
 ```
 
-`tensor_mapping.py` transforma isso em:
+`tensor_mapping.py` transforms this into:
 
 ```text
 tensor → slot
 ```
 
-Exemplo:
+Example:
 
 ```python
 {
@@ -2307,23 +2309,23 @@ Exemplo:
 
 ---
 
-# 114. Relação estrutural
+# 114. Structural relationship
 
 ```text
 L4
  │
- │ produz
+ │ produces
  ▼
 tensor 31
 ```
 
-e:
+and:
 
 ```text
 L4 → SLOT1
 ```
 
-implicam:
+imply:
 
 ```text
 tensor 31 → SLOT1
@@ -2331,73 +2333,73 @@ tensor 31 → SLOT1
 
 ---
 
-# 115. Por que não usar apenas camada → slot?
+# 115. Why not use only layer → slot?
 
-Porque `layer_params.py` analisa diretamente operadores TFLite.
+Because `layer_params.py` analyzes TFLite operators directly.
 
-Quando encontra:
+When it finds:
 
 ```python
 input_ids = [...]
 ```
 
-ele precisa responder:
+it needs to answer:
 
 ```text
-qual slot corresponde ao tensor input_ids[0]?
+which slot corresponds to tensor input_ids[0]?
 ```
 
-Não necessariamente começa com um label de camada.
+It does not necessarily start with a layer label.
 
 ---
 
-# 116. Exemplo no `ADD`
+# 116. `ADD` example
 
-Um `ADD` TFLite pode possuir:
+A TFLite `ADD` may have:
 
 ```text
 input tensor A = 42
 input tensor B = 57
 ```
 
-Para construir a operação no runtime precisamos:
+To build the operation in the runtime, we need:
 
 ```text
 tensor 42 → SLOT1
 tensor 57 → SLOT2
 ```
 
-Não basta saber genericamente que:
+It is not enough to know in general that:
 
 ```text
-L6 e L9
+L6 and L9
 ```
 
-são suas predecessoras.
+are its predecessors.
 
 ---
 
-# 117. Relação com ponteiros físicos
+# 117. Relationship with physical pointers
 
-Depois de descobrir:
+After finding:
 
 ```text
 tensor 42 → SLOT1
 ```
 
-e:
+and:
 
 ```text
 SLOT1_BASE = 703856
 ```
 
-podemos obter:
+we can obtain:
 
 ```text
 input_ptr = 703856
 ```
 
-Portanto:
+Therefore:
 
 ```text
 tensor_id
@@ -2408,14 +2410,14 @@ slot
    ↓
 slot_bases
    ↓
-endereço físico
+physical address
 ```
 
 ---
 
-# 118. Relação com `layer_params.py`
+# 118. Relationship to `layer_params.py`
 
-Esse fluxo é utilizado para construir campos como:
+This flow builds fields such as:
 
 ```text
 in_slot
@@ -2425,21 +2427,21 @@ pad_b
 input_ptrs
 ```
 
-dependendo do tipo de operação.
+depending on the operation type.
 
-Especialmente para:
+Especially for:
 
 ```text
 ADD
 ```
 
-é necessário saber onde estão as duas entradas.
+we need to know where both inputs are.
 
 ---
 
-# 119. Exemplo completo com `ADD`
+# 119. Complete `ADD` example
 
-Suponha:
+Suppose:
 
 ```text
 L6 output
@@ -2449,7 +2451,7 @@ tensor 50
 SLOT1
 ```
 
-e:
+and:
 
 ```text
 L9 output
@@ -2459,20 +2461,20 @@ tensor 61
 SLOT2
 ```
 
-O operador `ADD` possui:
+The `ADD` operator has:
 
 ```text
 inputs = [50, 61]
 ```
 
-O mapeamento fornece:
+The mapping provides:
 
 ```python
 tensor_to_slot[50] = 1
 tensor_to_slot[61] = 2
 ```
 
-Depois:
+Then:
 
 ```text
 slot_bases[1] → input_ptr A
@@ -2481,63 +2483,63 @@ slot_bases[2] → input_ptr B
 
 ---
 
-# 120. Tensors constantes não usam slots
+# 120. Constant tensors do not use slots
 
-Essa é uma separação arquitetural fundamental.
+This is a fundamental architectural separation.
 
-Ativações:
+Activations:
 
 ```text
 tensor → slot
 ```
 
-Pesos:
+Weights:
 
 ```text
-tensor → offset no weights blob
+tensor → offset in the weights blob
 ```
 
 Bias:
 
 ```text
-tensor → offset no bias blob
+tensor → offset in the bias blob
 ```
 
-Logo:
+Therefore:
 
 ```text
 slot memory
 ```
 
-e:
+and:
 
 ```text
 parameter memory
 ```
 
-são sistemas distintos.
+are distinct systems.
 
 ---
 
-# 121. Exemplo de CONV_2D
+# 121. CONV_2D example
 
-Uma convolução pode receber:
+A convolution may receive:
 
 ```text
-input[0] = ativação
-input[1] = pesos
+input[0] = activation
+input[1] = weights
 input[2] = bias
 ```
 
-Somente:
+Only:
 
 ```text
 input[0]
 ```
 
-precisa de slot.
+needs a slot.
 
-Os outros são constantes e são ignorados por:
+The others are constants and are skipped by:
 
 ```python
 is_constant_tensor()
@@ -2545,10 +2547,10 @@ is_constant_tensor()
 
 ---
 
-# 122. Fluxo da CONV
+# 122. CONV flow
 
 ```text
-tensor ativação
+activation tensor
      ↓
 tensor_to_slot
      ↓
@@ -2556,87 +2558,87 @@ SLOT1
      ↓
 in_ptr
 
-tensor pesos
+weight tensor
      ↓
 weight_tensor_off
      ↓
 wptr
 
-tensor bias
+bias tensor
      ↓
 bias_tensor_off
      ↓
 bias_ptr
 ```
 
-Os três inputs são tratados de maneiras diferentes.
+The three inputs are handled differently.
 
 ---
 
-# 123. O módulo como ponte
+# 123. The module as a bridge
 
-Pode-se considerar `tensor_mapping.py` como a ponte entre:
-
-```text
-representação de grafo
-```
-
-e:
+`tensor_mapping.py` can be viewed as the bridge between:
 
 ```text
-representação TFLite concreta
+graph representation
 ```
 
-Porque:
+and:
 
 ```text
-slots.py conhece Lx
+concrete TFLite representation
 ```
 
-enquanto:
+Because:
 
 ```text
-TFLite conhece tensor IDs
+slots.py knows Lx
 ```
 
-Este módulo une os dois universos.
+while:
+
+```text
+TFLite knows tensor IDs
+```
+
+This module connects the two representations.
 
 ---
 
-# 124. Diferença para `producer_by_tensor`
+# 124. Difference from `producer_by_tensor`
 
-Pode parecer que:
+It may seem that:
 
 ```python
 producer_by_tensor
 ```
 
-já resolve tudo.
+already solves everything.
 
-Mas ele apenas fornece:
+It only provides:
 
 ```text
-tensor → operador
+tensor → operator
 ```
 
-Ainda faltam:
+What is still missing:
 
 ```text
-operador → label
+operator → label
 label → slot
 ```
 
-Assim:
+Thus:
 
 ```text
 producer_by_tensor
 ```
 
-é apenas a primeira relação da cadeia.
+is just the first relationship in the chain.
 
 ---
 
-# 125. Cadeia completa
+# 125. Complete chain
 
 ```text
 tensor_id
@@ -2662,9 +2664,9 @@ slot
 
 ---
 
-# 126. Cadeia inversa na fase inicial
+# 126. Reverse chain in the initial phase
 
-Para outputs das camadas, o código faz parcialmente o caminho contrário:
+For layer outputs, the code partly follows the reverse path:
 
 ```text
 layer_name
@@ -2677,16 +2679,16 @@ op.Outputs(...)
    ↓
 tensor_id
    ↓
-associa output_slot
+associate output_slot
 ```
 
-Ou seja, o módulo trabalha nas duas direções.
+The module therefore works in both directions.
 
 ---
 
 # 127. `old_idx_to_label` versus `label_to_op_idx`
 
-Esses dois mapas são inversos.
+These two maps are inverses.
 
 ### `old_idx_to_label`
 
@@ -2694,7 +2696,7 @@ Esses dois mapas são inversos.
 op_index → Lx
 ```
 
-É usado principalmente na resolução do produtor.
+It is mainly used when resolving the producer.
 
 ### `label_to_op_idx`
 
@@ -2702,53 +2704,53 @@ op_index → Lx
 Lx → op_index
 ```
 
-É usado ao mapear os outputs das camadas.
+It is used when mapping layer outputs.
 
 ---
 
-# 128. Por que manter ambos?
+# 128. Why keep both?
 
-Porque evita buscas lineares.
+Because it avoids linear searches.
 
-Sem `label_to_op_idx`, descobrir o operador de:
+Without `label_to_op_idx`, finding the operator for:
 
 ```text
 L17
 ```
 
-exigiria percorrer todo o dicionário contrário.
+would require traversing the entire reverse dictionary.
 
-Com os dois mapas:
+With both maps:
 
 ```text
-conversão em qualquer direção é direta
+conversion in either direction is direct
 ```
 
 ---
 
-# 129. Cache recursivo
+# 129. Recursive cache
 
-Outro detalhe importante é que:
+Another important detail is that:
 
 ```python
 tensor_to_slot
 ```
 
-não é apenas resultado final.
+is not just the final result.
 
-Ele também atua como cache durante:
+It also acts as a cache during:
 
 ```python
 resolve_slot_from_producer()
 ```
 
-Isso significa que a estrutura é construída incrementalmente.
+This means the structure is built incrementally.
 
 ---
 
-# 130. Exemplo de cache
+# 130. Cache example
 
-Resolver tensor 40:
+Resolve tensor 40:
 
 ```text
 40
@@ -2760,7 +2762,7 @@ Resolver tensor 40:
 SLOT2
 ```
 
-Durante o processo podem ser adicionados:
+During this process, the following may be added:
 
 ```python
 tensor_to_slot[38] = 2
@@ -2768,40 +2770,40 @@ tensor_to_slot[39] = 2
 tensor_to_slot[40] = 2
 ```
 
-Depois, resolver outro tensor que dependa de 39 termina imediatamente.
+Later, resolving another tensor that depends on 39 finishes immediately.
 
 ---
 
-# 131. Complexidade prática
+# 131. Practical complexity
 
-A resolução recursiva pode percorrer cadeias de produtores.
+Recursive resolution may traverse producer chains.
 
-Mas o cache reduz bastante a repetição.
+Caching greatly reduces repetition.
 
-Além disso, o modelo utilizado possui uma quantidade relativamente pequena de operadores e tensors.
+The model used also has a relatively small number of operators and tensors.
 
-Logo o custo dessa fase é irrelevante comparado à inferência.
+The cost of this phase is therefore negligible compared with inference.
 
 ---
 
-# 132. Limitação da resolução recursiva
+# 132. Limitation of recursive resolution
 
-A principal suposição conceitual do algoritmo é:
+The algorithm's main conceptual assumption is:
 
 ```text
-um tensor produzido por uma operação não representada
-pode herdar o slot de algum caminho dinâmico de entrada
+a tensor produced by an unrepresented operation
+can inherit the slot of a dynamic input path
 ```
 
-Isso faz sentido para operações tratadas como transparentes pela abstração.
+This makes sense for operations treated as transparent by the abstraction.
 
-Não é uma transformação universalmente válida para qualquer operador.
+It is not a universally valid transformation for every operator.
 
 ---
 
-# 133. Exemplo problemático hipotético
+# 133. Hypothetical problematic example
 
-Suponha um operador ignorado:
+Suppose there is an ignored operator:
 
 ```text
 A ─┐
@@ -2809,62 +2811,62 @@ A ─┐
 B ─┘
 ```
 
-com:
+with:
 
 ```text
 A → SLOT1
 B → SLOT2
 ```
 
-Se `OP_X` combina semanticamente A e B, não existe necessariamente uma resposta correta do tipo:
+If `OP_X` semantically combines A and B, there is not necessarily a correct answer such as:
 
 ```text
 C → SLOT1
 ```
 
-ou:
+or:
 
 ```text
 C → SLOT2
 ```
 
-Mas o algoritmo atual retornaria o primeiro caminho resolvido.
+The current algorithm would nevertheless return the first resolved path.
 
 ---
 
-# 134. Consequência arquitetural
+# 134. Architectural consequence
 
-Portanto, `ignored_types` e esta rotina precisam permanecer coerentes.
+Thus, `ignored_types` and this routine must remain consistent.
 
-Não se deve simplesmente adicionar qualquer operação a:
+One should not simply add any operation to:
 
 ```text
 ignored_types
 ```
 
-sem verificar se ela pode ser atravessada dessa forma.
+without checking whether it can be traversed this way.
 
 ---
 
-# 135. Operação transparente
+# 135. Transparent operation
 
-Um operador conceitualmente transparente para o armazenamento poderia ser algo que:
+An operator conceptually transparent to storage might be one that:
 
 ```text
-não cria necessidade de um novo buffer independente
+does not require a new independent buffer
 ```
 
-ou cuja saída possa ser relacionada ao mesmo fluxo lógico de uma entrada.
+or whose output can be related to the same logical flow as an input.
 
-Mas essa propriedade precisa ser analisada por tipo de operação.
+This property must be analyzed for each operation type.
 
 ---
 
-# 136. Por que registrar essa limitação?
+# 136. Why document this limitation?
 
-Porque futuramente o extrator pode receber modelos diferentes.
+Because the extractor may receive different models in the future.
 
-Se aparecer novo operador:
+If a new operator appears:
 
 ```text
 TRANSPOSE
@@ -2873,31 +2875,31 @@ CONCATENATION
 SPLIT
 ```
 
-não devemos concluir automaticamente que a mesma resolução recursiva é apropriada.
+we should not automatically assume the same recursive resolution is appropriate.
 
 ---
 
-# 137. Relação com portabilidade
+# 137. Relationship with portability
 
-Esse tipo de separação é importante para o objetivo maior do projeto.
+This separation is important to the project's broader objective.
 
-O TFLite descreve o modelo usando seu próprio esquema de tensors e operadores.
+TFLite describes the model using its own tensor and operator schema.
 
-O runtime WASM utiliza:
+The WASM runtime uses:
 
 ```text
 slots
-ponteiros
+pointers
 LayerParams
 ```
 
-O extrator precisa traduzir de uma representação para a outra.
+The extractor must translate between these representations.
 
-`tensor_mapping.py` é uma das etapas dessa tradução.
+`tensor_mapping.py` is one stage in that translation.
 
 ---
 
-# 138. Representações sucessivas
+# 138. Successive representations
 
 ```text
 TFLite:
@@ -2907,7 +2909,7 @@ tensor 57
 operator 18
 
 
-grafo:
+graph:
 
 L12
 L15
@@ -2927,123 +2929,123 @@ tensor 57 → SLOT2
 
 runtime:
 
-tensor 42 → endereço de SLOT1
-tensor 57 → endereço de SLOT2
+tensor 42 → SLOT1 address
+tensor 57 → SLOT2 address
 ```
 
 ---
 
-# 139. Separação entre slot lógico e runtime slot
+# 139. Separating logical slots and runtime slots
 
-Existe ainda uma etapa posterior importante.
+There is another important subsequent stage.
 
-O mapeamento produzido aqui é o:
+The mapping produced here is the:
 
 ```text
-slot lógico original
+original logical slot
 ```
 
-Depois, `layer_params.py` cria um mapeamento de runtime com deslocamento por causa da camada sintética:
+Later, `layer_params.py` creates a runtime mapping with a shift because of the synthetic layer:
 
 ```text
 RGB565_TO_RGB888
 ```
 
-Portanto:
+Therefore:
 
 ```text
 tensor_mapping.py
     ↓
-slot lógico
+logical slot
 
 layer_params.py
     ↓
 runtime slot
 ```
 
-Esses conceitos não devem ser confundidos.
+These concepts should not be confused.
 
 ---
 
-# 140. Exemplo
+# 140. Example
 
-Aqui:
+Here:
 
 ```text
 tensor 10 → SLOT0
 ```
 
-Depois da reorganização para o runtime, ele pode acabar em:
+After runtime reorganization, it may end up in:
 
 ```text
 runtime SLOT1
 ```
 
-porque o SLOT0 físico inicial é reservado para a imagem recebida do host.
+because the initial physical SLOT0 is reserved for the image received from the host.
 
-Essa transformação pertence à etapa posterior.
+This transformation belongs to the subsequent stage.
 
 ---
 
 # 141. `graph_inputs`
 
-O conjunto:
+The set:
 
 ```python
 graph_inputs
 ```
 
-também é retornado porque será reutilizado na construção do mapeamento de runtime.
+is also returned because it will be reused to build the runtime mapping.
 
-Assim não é necessário consultar novamente o subgrafo.
+The subgraph therefore does not need to be queried again.
 
 ---
 
-# 142. Por que retornar metadados adicionais?
+# 142. Why return additional metadata?
 
-Poderíamos retornar somente:
+We could return only:
 
 ```python
 tensor_to_slot
 ```
 
-Mas os campos adicionais fornecem rastreabilidade.
+The additional fields provide traceability.
 
-Isso é útil em um projeto de pesquisa porque permite explicar:
+This is useful in a research project because it explains:
 
 ```text
-como aquele slot foi obtido?
+how was that slot obtained?
 ```
 
 ---
 
-# 143. Exemplo de rastreabilidade
+# 143. Traceability example
 
-Para um tensor:
+For a tensor:
 
 ```text
 tensor 73 → SLOT2
 ```
 
-podemos descobrir se ele foi:
+we can discover whether it was:
 
 ```text
-mapeado diretamente como output de Lx
+mapped directly as an Lx output
 ```
 
-ou se foi:
+or:
 
 ```text
-resolvido indiretamente
+resolved indirectly
 ```
 
-Mesmo que o relatório atual não registre todos os passos recursivos individualmente, as listas ajudam a delimitar o processo.
+Although the current report does not record every recursive step individually, the lists help identify the process.
 
 ---
 
-# 144. Possível evolução futura
+# 144. Possible future development
 
-Uma versão futura poderia registrar uma origem explícita:
+A future version could record an explicit origin:
 
 ```python
 {
@@ -3054,53 +3056,53 @@ Uma versão futura poderia registrar uma origem explícita:
 }
 ```
 
-Isso aumentaria a rastreabilidade.
+This would increase traceability.
 
-Não é necessário para o comportamento atual.
+It is not required for the current behavior.
 
 ---
 
-# 145. Validação versus `unmapped_after`
+# 145. Validation versus `unmapped_after`
 
-Um detalhe importante:
+An important detail:
 
 ```text
-unmapped_after não vazio
+nonempty unmapped_after
 ```
 
-não significa necessariamente que a execução falhará.
+does not necessarily mean execution will fail.
 
-A validação final verifica apenas tensors utilizados pelos operadores úteis.
+Final validation checks only tensors used by useful operators.
 
-Pode existir um tensor não constante no subgrafo que não seja relevante para o grafo considerado.
+A nonconstant subgraph tensor may be irrelevant to the graph under consideration.
 
 ---
 
-# 146. Portanto
+# 146. Therefore
 
 ```text
 unmapped_after
 ```
 
-é uma informação global sobre o subgrafo.
+is global information about the subgraph.
 
-Já:
+Whereas:
 
 ```text
 validate_tensor_slot_mapping()
 ```
 
-responde uma questão mais específica:
+answers a more specific question:
 
 ```text
-todo tensor necessário pelas operações úteis está mapeado?
+is every tensor needed by useful operations mapped?
 ```
 
 ---
 
-# 147. Exemplo
+# 147. Example
 
-Suponha:
+Suppose:
 
 ```python
 unmapped_after = [
@@ -3108,178 +3110,178 @@ unmapped_after = [
 ]
 ```
 
-Mas tensor 99 pertence apenas a um operador ignorado que não alimenta nenhuma operação útil.
+But tensor 99 belongs only to an ignored operator that does not feed any useful operation.
 
-A validação pode ainda passar.
-
----
-
-# 148. Por que isso é útil?
-
-Evita confundir:
-
-```text
-não mapeei absolutamente todos os tensors
-```
-
-com:
-
-```text
-não consigo executar o grafo selecionado
-```
-
-São problemas diferentes.
+Validation may still pass.
 
 ---
 
-# 149. Invariantes esperados
+# 148. Why is this useful?
 
-Após construção e validação, esperamos:
-
-### Inputs externos conhecidos
+It avoids confusing:
 
 ```text
-graph input → SLOT0 lógico
+I have not mapped absolutely every tensor
 ```
 
-### Outputs de operadores úteis conhecidos
+with:
 
 ```text
-output tensor → slot da camada
+I cannot execute the selected graph
 ```
 
-### Inputs dinâmicos de operadores úteis conhecidos
+These are different problems.
+
+---
+
+# 149. Expected invariants
+
+After construction and validation, we expect:
+
+### Known external inputs
 
 ```text
-todo input dinâmico → algum slot
+graph input → logical SLOT0
 ```
 
-### Constantes excluídas
+### Known useful operator outputs
 
 ```text
-peso/bias → não dependem de tensor_to_slot
+output tensor → layer slot
+```
+
+### Known dynamic inputs of useful operators
+
+```text
+every dynamic input → some slot
+```
+
+### Constants excluded
+
+```text
+weights/bias → independent of tensor_to_slot
 ```
 
 ---
 
-# 150. Invariante de intervalo
+# 150. Range invariant
 
-Os slots encontrados devem pertencer ao conjunto configurado:
+The slots found must belong to the configured set:
 
 ```text
 0 <= slot < NUM_SLOTS
 ```
 
-Essa função não verifica explicitamente essa condição porque os valores vêm da alocação anterior.
+This function does not explicitly check this condition because values come from the preceding allocation.
 
-A validade depende portanto de `slots.py`.
+Validity therefore depends on `slots.py`.
 
 ---
 
-# 151. Dependência entre módulos
+# 151. Module dependencies
 
-Essa etapa demonstra uma característica importante da arquitetura modular:
+This stage demonstrates an important feature of the modular architecture:
 
 ```text
 graph.py
 ```
 
-garante produtores e labels.
+provides producers and labels.
 
 ```text
 slots.py
 ```
 
-garante camada → slot.
+provides layer → slot.
 
 ```text
 tensor_mapping.py
 ```
 
-combina as duas estruturas.
+combines the two structures.
 
-Cada módulo possui responsabilidade diferente.
-
----
-
-# 152. Cadeia de erro possível
-
-Se:
-
-```text
-graph.py errar o produtor
-```
-
-então:
-
-```text
-tensor_mapping.py pode apontar para camada errada
-```
-
-Se:
-
-```text
-slots.py errar o slot
-```
-
-então:
-
-```text
-tensor_mapping.py propagará o slot errado
-```
-
-Logo esta etapa depende da correção das anteriores.
+Each module has a different responsibility.
 
 ---
 
-# 153. Porém também funciona como barreira
+# 152. Possible error chain
 
-A função:
+If:
+
+```text
+graph.py gets the producer wrong
+```
+
+then:
+
+```text
+tensor_mapping.py may point to the wrong layer
+```
+
+If:
+
+```text
+slots.py gets the slot wrong
+```
+
+then:
+
+```text
+tensor_mapping.py propagates the incorrect slot
+```
+
+This stage therefore depends on the correctness of previous ones.
+
+---
+
+# 153. It also serves as a check
+
+The function:
 
 ```python
 validate_tensor_slot_mapping()
 ```
 
-introduz uma barreira de consistência.
+introduces a consistency check.
 
-Antes de construir parâmetros de execução:
+Before building execution parameters:
 
 ```text
-todos os tensors necessários devem ter slot
+all required tensors must have slots
 ```
 
-Isso reduz a possibilidade de erros silenciosos.
+This reduces the chance of silent errors.
 
 ---
 
-# 154. O que este módulo não faz
+# 154. What this module does not do
 
-`tensor_mapping.py` não:
+`tensor_mapping.py` does not:
 
 ```text
-calcula endereço dos slots
-calcula tamanho dos slots
-extrai pesos
-extrai bias
-calcula quantização
-serializa LayerParam
-gera WAT
+calculate slot addresses
+calculate slot sizes
+extract weights
+extract bias
+compute quantization
+serialize LayerParam
+generate WAT
 ```
 
-Ele trabalha exclusivamente com:
+It works exclusively with:
 
 ```text
-IDs de tensor
-IDs de operador
-labels de camada
-slots lógicos
+tensor IDs
+operator IDs
+layer labels
+logical slots
 ```
 
 ---
 
-# 155. Por que não calcular endereço aqui?
+# 155. Why not calculate addresses here?
 
-Porque isso criaria dependência de:
+Because this would create a dependency on:
 
 ```text
 params_base
@@ -3288,23 +3290,23 @@ ALIGN
 slot_bases
 ```
 
-Essas informações pertencem ao planejamento físico de memória.
+These details belong to physical memory planning.
 
-Aqui queremos apenas:
+Here we only want:
 
 ```text
 tensor 42 → slot 1
 ```
 
-e não:
+rather than:
 
 ```text
-tensor 42 → endereço 703856
+tensor 42 → address 703856
 ```
 
 ---
 
-# 156. Separação lógica/física
+# 156. Logical/physical separation
 
 ```text
 tensor_mapping.py
@@ -3320,167 +3322,167 @@ layer_params.py
 tensor → SLOT1 → 703856
 ```
 
-Essa divisão reduz o acoplamento.
+This division reduces coupling.
 
 ---
 
-# 157. Relação com o relatório seguinte
+# 157. Relationship with the next report
 
-O arquivo de relatório desta etapa pode ser utilizado para conferir manualmente:
+This stage's report file can be used to manually check:
 
 ```text
-outputs das camadas
-inputs do grafo
-tensors pendentes
-tensors não resolvidos
+layer outputs
+graph inputs
+pending tensors
+unresolved tensors
 ```
 
-Antes de avançar para:
+Before proceeding to:
 
 ```text
-pesos
-quantização
-memória
+weights
+quantization
+memory
 LayerParams
 ```
 
 ---
 
-# 158. Resumo da resolução direta
+# 158. Direct resolution summary
 
 ```text
 tensor
   ↓
 producer
   ↓
-op útil
+useful op
   ↓
 Lx
   ↓
-slot da camada
+layer slot
   ↓
 tensor → slot
 ```
 
 ---
 
-# 159. Resumo da resolução indireta
+# 159. Indirect resolution summary
 
 ```text
 tensor
   ↓
 producer
   ↓
-op não representado
+unrepresented op
   ↓
-input não constante
+nonconstant input
   ↓
-resolver recursivamente
+resolve recursively
   ↓
-slot conhecido
+known slot
   ↓
-tensor → mesmo slot
+tensor → same slot
 ```
 
 ---
 
-# 160. Resumo da construção completa
+# 160. Complete construction summary
 
 ```text
                   slot_allocation
                         │
                         ▼
-          mapear outputs das camadas
+          map layer outputs
                         │
                         ▼
                   tensor_to_slot
                         │
                         ▼
-              mapear graph inputs
+              map graph inputs
                         │
                         ▼
-                 SLOT0 lógico
+                 logical SLOT0
                         │
                         ▼
-             localizar pendentes
+             find pending tensors
                         │
                         ▼
-          resolução recursiva por produtor
+          recursive resolution by producer
                         │
                         ▼
-                 fechamento
+                 closure
                         │
                         ▼
-              listar não mapeados
+              list unmapped tensors
                         │
                         ▼
-                  validação
+                  validation
 ```
 
 ---
 
-# 161. Resumo da validação
+# 161. Validation summary
 
 ```text
-para cada operador útil
+for each useful operator
        │
        ├── inputs
        │     │
-       │     ├── constante → ignora
-       │     └── dinâmico → precisa de slot
+       │     ├── constant → skip
+       │     └── dynamic → needs a slot
        │
        └── outputs
              │
-             └── precisam de slot
+             └── need slots
 ```
 
 ---
 
-# 162. Resumo arquitetural
+# 162. Architectural summary
 
-Neste ponto o projeto já possui três níveis de representação de memória:
+The project now has three levels of memory representation:
 
 ```text
-NÍVEL 1 — GRAFO
+LEVEL 1 — GRAPH
 
 L6 → L9 → L10
 
 
-NÍVEL 2 — SLOT POR CAMADA
+LEVEL 2 — SLOT PER LAYER
 
 L6  → SLOT1
 L9  → SLOT2
 L10 → SLOT0
 
 
-NÍVEL 3 — SLOT POR TENSOR
+LEVEL 3 — SLOT PER TENSOR
 
 tensor 41 → SLOT1
 tensor 52 → SLOT2
 tensor 60 → SLOT0
 ```
 
-Ainda falta:
+Still missing:
 
 ```text
-NÍVEL 4 — ENDEREÇO FÍSICO
+LEVEL 4 — PHYSICAL ADDRESS
 
 SLOT0 → base X
 SLOT1 → base Y
 SLOT2 → base Z
 ```
 
-Essa etapa será resolvida posteriormente pelo planejamento de memória.
+This stage will be resolved later by memory planning.
 
 ---
 
-# 163. Papel no pipeline completo
+# 163. Role in the complete pipeline
 
 ```text
 ┌──────────────────────────────┐
 │          graph.py            │
 │                              │
-│ tensor → produtor            │
+│ tensor → producer            │
 │ op → Lx                      │
 └──────────────┬───────────────┘
                │
@@ -3497,8 +3499,8 @@ Essa etapa será resolvida posteriormente pelo planejamento de memória.
 │                              │
 │ tensor → slot                │
 │                              │
-│ + resolução recursiva        │
-│ + validação                  │
+│ + recursive resolution       │
+│ + validation                 │
 └──────────────┬───────────────┘
                │
                ▼
@@ -3506,66 +3508,66 @@ Essa etapa será resolvida posteriormente pelo planejamento de memória.
 │      layer_params.py         │
 │                              │
 │ tensor → runtime slot        │
-│ runtime slot → ponteiro      │
+│ runtime slot → pointer       │
 └──────────────────────────────┘
 ```
 
 ---
 
-# 164. Síntese
+# 164. Summary
 
-O problema central resolvido por `tensor_mapping.py` é a diferença entre a maneira como o planejamento de memória foi feito e a maneira como o modelo TFLite referencia seus dados.
+The central problem solved by `tensor_mapping.py` is the difference between how memory was planned and how the TFLite model references its data.
 
-O planejamento trabalha com:
+Planning works with:
 
 ```text
-camadas
+layers
 ```
 
-O TFLite trabalha com:
+TFLite works with:
 
 ```text
 tensors
 ```
 
-Logo é necessária a transformação:
+The following transformation is therefore needed:
 
 ```text
-camada
+layer
    ↓
 slot
 
 tensor
    ↓
-produtor
+producer
    ↓
-camada
+layer
    ↓
 slot
 ```
 
-Para outputs diretamente ligados a uma camada útil, essa associação é simples.
+For outputs directly linked to a useful layer, this association is simple.
 
-Para tensors produzidos por operações não representadas diretamente, o módulo tenta preservar a continuidade do fluxo seguindo recursivamente os produtores anteriores.
+For tensors produced by operations not directly represented, the module tries to preserve flow continuity by recursively following earlier producers.
 
-Finalmente, uma validação garante que todos os inputs dinâmicos e outputs exigidos pelos operadores efetivamente utilizados pelo extrator possuam slot conhecido antes que o pipeline avance.
+Finally, validation ensures that all dynamic inputs and outputs required by operators actually used by the extractor have known slots before the pipeline proceeds.
 
-A saída principal:
+The main output:
 
 ```python
 tensor_to_slot
 ```
 
-é, portanto, a conexão fundamental entre:
+is therefore the essential connection between:
 
 ```text
-estrutura TFLite
+TFLite structure
 ```
 
-e:
+and:
 
 ```text
-planejamento lógico de memória
+logical memory planning
 ```
 
-e será utilizada posteriormente para transformar IDs de tensors em slots de runtime e, finalmente, em endereços concretos na memória linear do módulo WebAssembly.
+and will later convert tensor IDs into runtime slots and ultimately into concrete addresses in the WebAssembly module's linear memory.

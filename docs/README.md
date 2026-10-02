@@ -1,48 +1,60 @@
-# Documentação técnica — índice
+# Technical documentation — index
 
-[README principal](../README.md)
+[English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
-Esta é a referência do comportamento atual, baseada no código e nos TFLite presentes. A ordem 00–14 cobre uso e arquitetura; 20–33 cobre cada módulo do extrator. O material anterior permanece em `historico/` com avisos de escopo. Recomendações futuras estão separadas do que já existe.
+[Main README](../README.md)
 
-## Arquitetura, interfaces e operação
+This reference describes the implementation and TFLite files present in the repository. Chapters 00–14 cover use and architecture; 20–33 document individual extractor modules. Earlier material is preserved in historico/ with scope notices. Proposed improvements are distinguished from implemented behavior.
 
-- [00 — Visão geral e arquitetura](00-visao-geral-arquitetura.md)
+## Architecture, interfaces and operation
+
+- [00 — Overview and architecture](00-visao-geral-arquitetura.md)
 - [01 — CLI: main.py](01-cli-main.md)
-- [02 — ModelPackage e resolução de caminhos](02-model-package.md)
-- [03 — ModelConfig e referência de model.toml](03-model-config-manifesto.md)
-- [04 — ModelPipeline: orquestração detalhada](04-model-pipeline.md)
-- [05 — Adapters de teste e registry](05-adapters.md)
-- [06 — Host de inferência Wasmtime](06-inferencia-wasm.md)
-- [07 — Compilação WAT → WASM](07-compilacao-wat-wasm.md)
-- [08 — Contrato binário layerparam-v1](08-contrato-layerparam-v1.md)
-- [09 — Modelos e pacotes presentes](09-modelos-e-pacotes.md)
-- [10 — Tutorial: cadastrar um terceiro modelo](10-como-adicionar-modelo.md)
-- [11 — Testes e alcance da validação](11-testes.md)
-- [12 — Fluxo completo e leitura dos relatórios](12-fluxo-completo.md)
-- [13 — Templates e runtime WebAssembly](13-runtime-wat.md)
-- [14 — Inventário e rastreabilidade](14-inventario-e-rastreabilidade.md)
-- [20 — Constantes compartilhadas do extrator](20-extractor-config.md)
-- [21 — Carregamento do FlatBuffer TFLite](21-extractor-model-loader.md)
-- [22 — Utilitários de tensores e quantização TFLite](22-extractor-tflite-utils.md)
-- [23 — Grafo de operadores e ordenação](23-extractor-graph.md)
-- [24 — Alocação de slots e vida útil](24-extractor-slots.md)
-- [25 — Mapeamento de tensores para slots](25-extractor-tensor-mapping.md)
-- [26 — Extração de pesos e bias](26-extractor-weights.md)
-- [27 — Quantização inteira e blobs por canal](27-extractor-quantization.md)
-- [28 — Planejamento físico da memória](28-extractor-memory.md)
-- [29 — Opções de operadores e geometria](29-extractor-operator-options.md)
-- [30 — Construção das LayerParams e camada sintética](30-extractor-layer-params.md)
-- [31 — Serialização e resolução de ponteiros](31-extractor-params-blob.md)
-- [32 — Materialização WAT e data segments](32-extractor-wat-generator.md)
-- [33 — Persistência dos relatórios](33-extractor-reporting.md)
+- [02 — ModelPackage and path resolution](02-model-package.md)
+- [03 — ModelConfig and model.toml reference](03-model-config-manifesto.md)
+- [04 — ModelPipeline: detailed orchestration](04-model-pipeline.md)
+- [05 — Test adapters and registry](05-adapters.md)
+- [06 — Wasmtime inference host](06-inferencia-wasm.md)
+- [07 — WAT → WASM compilation](07-compilacao-wat-wasm.md)
+- [08 — The layerparam-v1 binary contract](08-contrato-layerparam-v1.md)
+- [09 — Included models and packages](09-modelos-e-pacotes.md)
+- [10 — Tutorial: register a third model](10-como-adicionar-modelo.md)
+- [11 — Tests and validation scope](11-testes.md)
+- [12 — Complete flow and reading reports](12-fluxo-completo.md)
+- [13 — Templates and WebAssembly runtime](13-runtime-wat.md)
+- [14 — Inventory and traceability](14-inventario-e-rastreabilidade.md)
+- [20 — Shared extractor constants](20-extractor-config.md)
+- [21 — Loading the TFLite FlatBuffer](21-extractor-model-loader.md)
+- [22 — TFLite tensor and quantization utilities](22-extractor-tflite-utils.md)
+- [23 — Operator graph and ordering](23-extractor-graph.md)
+- [24 — Slot allocation and lifetimes](24-extractor-slots.md)
+- [25 — Tensor-to-slot mapping](25-extractor-tensor-mapping.md)
+- [26 — Weight and bias extraction](26-extractor-weights.md)
+- [27 — Integer quantization and per-channel blobs](27-extractor-quantization.md)
+- [28 — Physical memory planning](28-extractor-memory.md)
+- [29 — Operator options and geometry](29-extractor-operator-options.md)
+- [30 — Building LayerParams and the synthetic layer](30-extractor-layer-params.md)
+- [31 — Serialization and pointer resolution](31-extractor-params-blob.md)
+- [32 — WAT generation and data segments](32-extractor-wat-generator.md)
+- [33 — Writing reports](33-extractor-reporting.md)
 
-## Pacotes
+## Model packages and ESP32
 
 - [Drowsiness MobileNetV2](../models/drowsiness/README.md)
 - [MobileNetV2 Alpha 0.35 ImageNet](../models/mobilenetv2_alpha035/README.md)
+- [Independent ESP32 host](../ESP32/cnn_webassembly_esp32/README.md)
+- [Host settings and measurements](../ESP32/cnn_webassembly_esp32/HOST.md)
+- [WASM → AOT using WSL](../ESP32/cnn_webassembly_esp32/README_AOT_WSL.md)
 
-## Auditoria e histórico
+## Audit and history
 
-- [Verificação documental](98-verificacao-documental.md)
-- [Inconsistências e limitações](99-inconsistencias-e-limitacoes.md)
-- [Inventário, fontes e documentos preservados](14-inventario-e-rastreabilidade.md)
+- [Documentation verification](98-verificacao-documental.md)
+- [Inconsistencies and limitations](99-inconsistencias-e-limitacoes.md)
+- [Inventory, sources and preserved documents](14-inventario-e-rastreabilidade.md)
+
+## Maintaining translations
+
+Each English .md file has a Brazilian Portuguese .pt-BR.md counterpart. Follow the language links at the top of each page. Update both versions when changing instructions, examples or documented behavior. Keep filenames, identifiers and executable commands consistent. Preserve historical warnings and distinguish earlier observations from checks performed today.
+
+See the [contribution guidelines](../CONTRIBUTING.md).
+
