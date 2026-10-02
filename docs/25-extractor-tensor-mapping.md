@@ -101,4 +101,4 @@ def tensor_mapping_to_text(mapping)
 
 ## Preserved technical material
 
-The previous explanation is in [06-mapeamento-tensor-slot.md](historico/06-mapeamento-tensor-slot.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [06-tensor-slot-mapping.md](historico/06-tensor-slot-mapping.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencies-and-limitations.md).

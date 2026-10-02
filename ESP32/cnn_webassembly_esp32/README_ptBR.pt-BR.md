@@ -1,4 +1,4 @@
-[English](README_ptBR.md) | [Português (Brasil)](README_ptBR.pt-BR.md)
+[English](README_LEGACY.md) | [Português (Brasil)](README_ptBR.pt-BR.md)
 
 > **Guia WASM → AOT no WSL:** [README_AOT_WSL.md](README_AOT_WSL.pt-BR.md).
 > Passo a passo com versões do projeto, LLVM Xtensa, wamrc, firmware e diagnóstico.

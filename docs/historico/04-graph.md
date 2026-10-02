@@ -1,6 +1,6 @@
-[English](04-grafo.md) | [Português (Brasil)](04-grafo.pt-BR.md)
+[English](04-graph.md) | [Português (Brasil)](04-grafo.pt-BR.md)
 
-> **Preserved historical document.** This text describes an earlier architecture and retains useful technical examples. Paths, orchestration in main.py, the mandatory synthetic layer and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original technical examples are preserved.
+> **Preserved historical document.** This text describes an earlier architecture and retains useful technical examples. Paths, orchestration in main.py, the mandatory synthetic layer and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencies-and-limitations.md). The original technical examples are preserved.
 
 # 04 — Building the operator graph (`graph.py`)
 

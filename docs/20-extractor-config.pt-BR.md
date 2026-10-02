@@ -45,4 +45,4 @@ As assinaturas abaixo foram extraídas da AST do arquivo atual. Os argumentos ke
 
 ## Material técnico preservado
 
-A explicação anterior está em [01-configuracao.md](historico/01-configuracao.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [01-configuration.md](historico/01-configuracao.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

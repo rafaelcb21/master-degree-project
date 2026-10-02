@@ -126,19 +126,19 @@ master-degree-project/
 └── __pycache__/                    local cache, also present in modules
 ```
 
-The tree groups repetitive files; the [inventory](docs/14-inventario-e-rastreabilidade.md) lists modules and datasets. Each package provides sources and receives artifacts in its output directories. The current manifest does not read `img_mobilenetv2/`. Git metadata, caches and environments are infrastructure, not part of the generated runtime.
+The tree groups repetitive files; the [inventory](docs/14-inventory-and-traceability.md) lists modules and datasets. Each package provides sources and receives artifacts in its output directories. The current manifest does not read `img_mobilenetv2/`. Git metadata, caches and environments are infrastructure, not part of the generated runtime.
 
 ## Concepts
 
 **TFLite** is the source FlatBuffer of operators and tensors. **WAT** is WebAssembly text generated from a template and extracted data. **WASM** is its compiled binary. The network runs template kernels, not an embedded TFLite interpreter.
 
-**ModelPackage** groups root/config and resolves sources and destinations. **model.toml** declares name, TFLite, contract/template/slots, input format/synthetic layer and test adapter. Current manifests use package-relative paths; the resolver also supports absolute paths. See the [field reference](docs/03-model-config-manifesto.md).
+**ModelPackage** groups root/config and resolves sources and destinations. **model.toml** declares name, TFLite, contract/template/slots, input format/synthetic layer and test adapter. Current manifests use package-relative paths; the resolver also supports absolute paths. See the [field reference](docs/03-model-config-manifest.md).
 
 **Adapters** implement TestAdapter to prepare inputs and interpret outputs. `binary-folders` maps folders to labels and calculates accuracy. `imagenet-topk` swaps BGR→RGB, dequantizes, and reports classes/wnid/scores. The registry selects an adapter through `test.adapter`.
 
-**synthetic_layer** is an extractor-inserted operation absent from the original graph. `rgb565_to_rgb888` inserts a SLOT0→SLOT1 kernel with slot shift 1. `none` inserts no kernel and uses shift 0; input preparation belongs to the adapter. See the [two variants](docs/09-modelos-e-pacotes.md).
+**synthetic_layer** is an extractor-inserted operation absent from the original graph. `rgb565_to_rgb888` inserts a SLOT0→SLOT1 kernel with slot shift 1. `none` inserts no kernel and uses shift 0; input preparation belongs to the adapter. See the [two variants](docs/09-models-and-packages.md).
 
-**layerparam-v1** names the ABI: each layer contains 29 little-endian int32 fields, totaling 116 bytes, read at fixed WAT offsets. Templates must match operation codes, flags, fields and exports. Changing a template path alone does not guarantee compatibility. See the [complete table](docs/08-contrato-layerparam-v1.md).
+**layerparam-v1** names the ABI: each layer contains 29 little-endian int32 fields, totaling 116 bytes, read at fixed WAT offsets. Templates must match operation codes, flags, fields and exports. Changing a template path alone does not guarantee compatibility. See the [complete table](docs/08-layerparam-v1-contract.md).
 
 ## Sources, outputs and reports
 
@@ -161,13 +161,13 @@ These observations do not establish complete TFLite equivalence or performance o
 4. Configure class order or labels by index.
 5. Run `python main.py --model <name>` and inspect reports/intermediates.
 
-The [tutorial](docs/10-como-adicionar-modelo.md) includes a TFLite inspection command, package tree and cases where registration is insufficient. New adapters require implementing and registering a class. New operators also require appropriate extractor, kernel and ABI support.
+The [tutorial](docs/10-how-to-add-a-model.md) includes a TFLite inspection command, package tree and cases where registration is insufficient. New adapters require implementing and registering a class. New operators also require appropriate extractor, kernel and ABI support.
 
 ## Current limitations
 
 The Python flow accepts one 8-bit input/output, NHWC input with batch 1 and three channels, and exactly three slots. Kernels cover CONV_2D, DEPTHWISE_CONV_2D, FULLY_CONNECTED, ADD, MEAN, SOFTMAX, QUANTIZE and synthetic RGB565. Depthwise assumes multiplier 1; MEAN is spatial; ADD lacks broadcasting; some fused activations are not applied. WAT softmax uses a fixed multiplier despite Python extracting model-specific parameters. The builder may skip unknown operators, so compilation success does not prove complete graph coverage.
 
-Seven targeted tests include a real WASM QUANTIZE kernel; there is no full automated comparison against a TFLite interpreter. Training, compressed-image preprocessing, multiple outputs, per-inference timeout and hardware execution integration are outside the Python flow. Read the [limitations](docs/99-inconsistencias-e-limitacoes.md) before extending it.
+Seven targeted tests include a real WASM QUANTIZE kernel; there is no full automated comparison against a TFLite interpreter. Training, compressed-image preprocessing, multiple outputs, per-inference timeout and hardware execution integration are outside the Python flow. Read the [limitations](docs/99-inconsistencies-and-limitations.md) before extending it.
 
 ## Documentation languages
 

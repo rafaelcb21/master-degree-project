@@ -1,4 +1,4 @@
-[English](08-contrato-layerparam-v1.md) | [Português (Brasil)](08-contrato-layerparam-v1.pt-BR.md)
+[English](08-layerparam-v1-contract.md) | [Português (Brasil)](08-contrato-layerparam-v1.pt-BR.md)
 
 # 08 — The layerparam-v1 binary contract
 

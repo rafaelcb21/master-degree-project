@@ -1,6 +1,6 @@
-﻿# 99 — Inconsistencies, limitations, and undetermined information
+# 99 — Inconsistencies, limitations, and undetermined information
 
-[English](99-inconsistencias-e-limitacoes.md) | [Português (Brasil)](99-inconsistencias-e-limitacoes.pt-BR.md)
+[English](99-inconsistencies-and-limitations.md) | [Português (Brasil)](99-inconsistencias-e-limitacoes.pt-BR.md)
 
 [Index](README.md) · Local state reviewed on September 28, 2026.
 

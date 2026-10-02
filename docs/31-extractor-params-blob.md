@@ -138,4 +138,4 @@ def params_blob_to_text(serialization)
 
 ## Preserved technical material
 
-The previous explanation is in [12-params-blob.md](historico/12-params-blob.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [12-params-blob.md](historico/12-params-blob.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencies-and-limitations.md).

@@ -1,6 +1,6 @@
-[English](03-utilitarios-tflite.md) | [Português (Brasil)](03-utilitarios-tflite.pt-BR.md)
+[English](03-tflite-utilities.md) | [Português (Brasil)](03-utilitarios-tflite.pt-BR.md)
 
-> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body is retained in translation.
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencies-and-limitations.md). The original body is retained in translation.
 
 # 03 — Utilities for reading TFLite (`tflite_utils.py`)
 

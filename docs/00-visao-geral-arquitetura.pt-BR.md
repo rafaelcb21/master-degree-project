@@ -1,4 +1,4 @@
-[English](00-visao-geral-arquitetura.md) | [Português (Brasil)](00-visao-geral-arquitetura.pt-BR.md)
+[English](00-architecture-overview.md) | [Português (Brasil)](00-visao-geral-arquitetura.pt-BR.md)
 
 # 00 — Visão geral e arquitetura
 

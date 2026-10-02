@@ -106,4 +106,4 @@ def qparams_np(tensor)
 
 ## Material técnico preservado
 
-A explicação anterior está em [03-utilitarios-tflite.md](historico/03-utilitarios-tflite.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [03-tflite-utilities.md](historico/03-utilitarios-tflite.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

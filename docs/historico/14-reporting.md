@@ -1,6 +1,6 @@
-[English](14-relatorios.md) | [Português (Brasil)](14-relatorios.pt-BR.md)
+[English](14-reporting.md) | [Português (Brasil)](14-relatorios.pt-BR.md)
 
-> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencies-and-limitations.md). The original body has been preserved in the Portuguese edition.
 
 # 14 — Saving reports (`reporting.py`)
 
@@ -1265,7 +1265,7 @@ for execution/compilation
 
 # 62. Example of the difference
 
-`docs/09-layout-memoria.md` explains:
+`docs/09-memory-layout.md` explains:
 
 ```text
 how MEM_PAGES is calculated
@@ -1283,7 +1283,7 @@ for a concrete model.
 
 # 63. Another example
 
-`docs/08-quantizacao.md` explains:
+`docs/08-quantization.md` explains:
 
 ```text
 how multiplier and shift are calculated

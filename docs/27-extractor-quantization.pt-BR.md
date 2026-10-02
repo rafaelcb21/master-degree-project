@@ -101,4 +101,4 @@ def quantization_to_text(extraction)
 
 ## Material técnico preservado
 
-A explicação anterior está em [08-quantizacao.md](historico/08-quantizacao.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [08-quantization.md](historico/08-quantizacao.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

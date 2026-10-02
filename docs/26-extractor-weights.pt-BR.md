@@ -65,4 +65,4 @@ def weights_bias_to_text(extraction)
 
 ## Material técnico preservado
 
-A explicação anterior está em [07-extracao-pesos-bias.md](historico/07-extracao-pesos-bias.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [07-weight-bias-extraction.md](historico/07-extracao-pesos-bias.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

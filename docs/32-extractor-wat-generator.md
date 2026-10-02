@@ -129,4 +129,4 @@ def generate_wat(
 
 ## Preserved technical material
 
-The previous explanation is in [13-geracao-wat.md](historico/13-geracao-wat.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [13-wat-generation.md](historico/13-wat-generation.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencies-and-limitations.md).

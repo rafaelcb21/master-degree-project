@@ -1,4 +1,4 @@
-[English](10-operacoes-opcoes.md) | [Português (Brasil)](10-operacoes-opcoes.pt-BR.md)
+[English](10-operator-options.md) | [Português (Brasil)](10-operacoes-opcoes.pt-BR.md)
 
 > **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.pt-BR.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.pt-BR.md). O corpo original foi mantido.
 

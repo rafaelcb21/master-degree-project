@@ -1,8 +1,8 @@
-[English](10-como-adicionar-modelo.md) | [Português (Brasil)](10-como-adicionar-modelo.pt-BR.md)
+[English](10-how-to-add-a-model.md) | [Português (Brasil)](10-como-adicionar-modelo.pt-BR.md)
 
 # 10 — Tutorial: register a third model
 
-[Index](README.md) · [Manifest reference](03-model-config-manifesto.md) · [Contract](08-contrato-layerparam-v1.md)
+[Index](README.md) · [Manifest reference](03-model-config-manifest.md) · [Contract](08-layerparam-v1-contract.md)
 
 ## Before copying files
 

@@ -1,8 +1,8 @@
-[English](12-fluxo-completo.md) | [Português (Brasil)](12-fluxo-completo.pt-BR.md)
+[English](12-complete-workflow.md) | [Português (Brasil)](12-fluxo-completo.pt-BR.md)
 
 # 12 — Complete flow and reading reports
 
-[Index](README.md) · [Orchestration](04-model-pipeline.md) · [Package comparison](09-modelos-e-pacotes.md)
+[Index](README.md) · [Orchestration](04-model-pipeline.md) · [Package comparison](09-models-and-packages.md)
 
 ## Walkthrough: drowsiness
 

@@ -1,4 +1,4 @@
-[English](11-testes.md) | [Português (Brasil)](11-testes.pt-BR.md)
+[English](11-tests.md) | [Português (Brasil)](11-testes.pt-BR.md)
 
 # 11 — Testes e alcance da validação
 

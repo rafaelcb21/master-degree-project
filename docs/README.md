@@ -8,21 +8,21 @@ This reference describes the implementation and TFLite files present in the repo
 
 ## Architecture, interfaces and operation
 
-- [00 — Overview and architecture](00-visao-geral-arquitetura.md)
+- [00 — Overview and architecture](00-architecture-overview.md)
 - [01 — CLI: main.py](01-cli-main.md)
 - [02 — ModelPackage and path resolution](02-model-package.md)
-- [03 — ModelConfig and model.toml reference](03-model-config-manifesto.md)
+- [03 — ModelConfig and model.toml reference](03-model-config-manifest.md)
 - [04 — ModelPipeline: detailed orchestration](04-model-pipeline.md)
 - [05 — Test adapters and registry](05-adapters.md)
-- [06 — Wasmtime inference host](06-inferencia-wasm.md)
-- [07 — WAT → WASM compilation](07-compilacao-wat-wasm.md)
-- [08 — The layerparam-v1 binary contract](08-contrato-layerparam-v1.md)
-- [09 — Included models and packages](09-modelos-e-pacotes.md)
-- [10 — Tutorial: register a third model](10-como-adicionar-modelo.md)
-- [11 — Tests and validation scope](11-testes.md)
-- [12 — Complete flow and reading reports](12-fluxo-completo.md)
+- [06 — Wasmtime inference host](06-wasm-inference.md)
+- [07 — WAT → WASM compilation](07-wat-wasm-compilation.md)
+- [08 — The layerparam-v1 binary contract](08-layerparam-v1-contract.md)
+- [09 — Included models and packages](09-models-and-packages.md)
+- [10 — Tutorial: register a third model](10-how-to-add-a-model.md)
+- [11 — Tests and validation scope](11-tests.md)
+- [12 — Complete flow and reading reports](12-complete-workflow.md)
 - [13 — Templates and WebAssembly runtime](13-runtime-wat.md)
-- [14 — Inventory and traceability](14-inventario-e-rastreabilidade.md)
+- [14 — Inventory and traceability](14-inventory-and-traceability.md)
 - [20 — Shared extractor constants](20-extractor-config.md)
 - [21 — Loading the TFLite FlatBuffer](21-extractor-model-loader.md)
 - [22 — TFLite tensor and quantization utilities](22-extractor-tflite-utils.md)
@@ -48,9 +48,9 @@ This reference describes the implementation and TFLite files present in the repo
 
 ## Audit and history
 
-- [Documentation verification](98-verificacao-documental.md)
-- [Inconsistencies and limitations](99-inconsistencias-e-limitacoes.md)
-- [Inventory, sources and preserved documents](14-inventario-e-rastreabilidade.md)
+- [Documentation verification](98-documentation-verification.md)
+- [Inconsistencies and limitations](99-inconsistencies-and-limitations.md)
+- [Inventory, sources and preserved documents](14-inventory-and-traceability.md)
 
 ## Maintaining translations
 

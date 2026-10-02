@@ -51,4 +51,4 @@ def save_report(path: Path, content: str)
 
 ## Material técnico preservado
 
-A explicação anterior está em [14-relatorios.md](historico/14-relatorios.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [14-reporting.md](historico/14-relatorios.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

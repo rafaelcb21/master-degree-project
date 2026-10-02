@@ -6,7 +6,7 @@
 
 ## Responsibility and input data
 
-This module bridges TFLite semantics and the ABI. It receives the model/subgraph, runtime slot maps, physical bases, weight/bias offsets, and quantization map per operator. It produces a list of dicts; it does not yet write the 116 bytes. Constants define OP_CONV=1 through OP_RGB565_TO_RGB888=8, flags, and LP_FMT/LP_SIZE. The serialized field table is in the [contract](08-contrato-layerparam-v1.md).
+This module bridges TFLite semantics and the ABI. It receives the model/subgraph, runtime slot maps, physical bases, weight/bias offsets, and quantization map per operator. It produces a list of dicts; it does not yet write the 116 bytes. Constants define OP_CONV=1 through OP_RGB565_TO_RGB888=8, flags, and LP_FMT/LP_SIZE. The serialized field table is in the [contract](08-layerparam-v1-contract.md).
 
 ## Shape, mapping, and memory helpers
 
@@ -243,4 +243,4 @@ def layer_params_to_text(layer_params, *, lp_size, memory_layout, runtime_mappin
 
 ## Preserved technical material
 
-The previous explanation is in [11-layer-params.md](historico/11-layer-params.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [11-layer-params.md](historico/11-layer-params.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencies-and-limitations.md).

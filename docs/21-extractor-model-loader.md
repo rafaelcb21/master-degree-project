@@ -58,4 +58,4 @@ def get_subgraph(model, index=0)
 
 ## Preserved technical material
 
-The previous explanation is in [02-carregamento-modelo.md](historico/02-carregamento-modelo.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [02-model-loading.md](historico/02-model-loading.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencies-and-limitations.md).

@@ -1,4 +1,4 @@
-[English](03-utilitarios-tflite.md) | [Português (Brasil)](03-utilitarios-tflite.pt-BR.md)
+[English](03-tflite-utilities.md) | [Português (Brasil)](03-utilitarios-tflite.pt-BR.md)
 
 > **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.pt-BR.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.pt-BR.md). O corpo original foi mantido.
 

@@ -58,4 +58,4 @@ def get_subgraph(model, index=0)
 
 ## Material técnico preservado
 
-A explicação anterior está em [02-carregamento-modelo.md](historico/02-carregamento-modelo.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [02-model-loading.md](historico/02-carregamento-modelo.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

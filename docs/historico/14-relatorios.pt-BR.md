@@ -1,4 +1,4 @@
-[English](14-relatorios.md) | [Português (Brasil)](14-relatorios.pt-BR.md)
+[English](14-reporting.md) | [Português (Brasil)](14-relatorios.pt-BR.md)
 
 > **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.pt-BR.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.pt-BR.md). O corpo original foi mantido.
 
@@ -1265,7 +1265,7 @@ para execução/compilação
 
 # 62. Exemplo da diferença
 
-`docs/09-layout-memoria.md` explica:
+`docs/09-memory-layout.md` explica:
 
 ```text
 como MEM_PAGES é calculado
@@ -1283,7 +1283,7 @@ para um modelo concreto.
 
 # 63. Outro exemplo
 
-`docs/08-quantizacao.md` explica:
+`docs/08-quantization.md` explica:
 
 ```text
 como multiplier e shift são calculados

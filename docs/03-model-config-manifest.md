@@ -1,4 +1,4 @@
-[English](03-model-config-manifesto.md) | [Português (Brasil)](03-model-config-manifesto.pt-BR.md)
+[English](03-model-config-manifest.md) | [Português (Brasil)](03-model-config-manifesto.pt-BR.md)
 
 # 03 — ModelConfig and model.toml reference
 

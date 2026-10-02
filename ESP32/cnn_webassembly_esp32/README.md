@@ -1,4 +1,4 @@
-﻿# ESP32-CAM project with WebAssembly (WAMR)
+# ESP32-CAM project with WebAssembly (WAMR)
 
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
@@ -6,7 +6,7 @@
 > Step-by-step instructions covering project versions, Xtensa LLVM, wamrc, firmware, and troubleshooting.
 > Configure the host and image list with [HOST.md](HOST.md).
 > The current host downloads RAW files from Cloudinary; the camera sections below describe the historical setup.
-> The longer [legacy guide](README_ptBR.md) retains its original filename and is also available in English.
+> The longer [legacy guide](README_LEGACY.md) is also available in English.
 
 This project aims to configure and run custom firmware on the **ESP32-CAM** board, integrating image capture with WebAssembly module execution through **WASM-Micro-Runtime (WAMR)**.
 

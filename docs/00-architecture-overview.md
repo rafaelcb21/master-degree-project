@@ -1,8 +1,8 @@
-[English](00-visao-geral-arquitetura.md) | [Português (Brasil)](00-visao-geral-arquitetura.pt-BR.md)
+[English](00-architecture-overview.md) | [Português (Brasil)](00-visao-geral-arquitetura.pt-BR.md)
 
 # 00 — Overview and architecture
 
-[Index](README.md) · [Complete flow](12-fluxo-completo.md) · [Limitations](99-inconsistencias-e-limitacoes.md)
+[Index](README.md) · [Complete flow](12-complete-workflow.md) · [Limitations](99-inconsistencies-and-limitations.md)
 
 ## Scope and evidence
 
@@ -96,7 +96,7 @@ master-degree-project/
 └── __pycache__/                    local cache, also present in modules
 ```
 
-The tree groups repetitive files; the [inventory](14-inventario-e-rastreabilidade.md) lists modules and datasets. Each models/ directory supplies configuration/sources and receives files in generated/ and reports/. The current manifest does not read img_mobilenetv2/. Git metadata, caches and environments are local infrastructure, not part of the generated runtime.
+The tree groups repetitive files; the [inventory](14-inventory-and-traceability.md) lists modules and datasets. Each models/ directory supplies configuration/sources and receives files in generated/ and reports/. The current manifest does not read img_mobilenetv2/. Git metadata, caches and environments are local infrastructure, not part of the generated runtime.
 
 ## Responsibilities and boundaries
 

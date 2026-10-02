@@ -1,4 +1,4 @@
-[English](07-compilacao-wat-wasm.md) | [Português (Brasil)](07-compilacao-wat-wasm.pt-BR.md)
+[English](07-wat-wasm-compilation.md) | [Português (Brasil)](07-compilacao-wat-wasm.pt-BR.md)
 
 # 07 — Compilação WAT → WASM
 

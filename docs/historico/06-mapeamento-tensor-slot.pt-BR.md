@@ -1,4 +1,4 @@
-[English](06-mapeamento-tensor-slot.md) | [Português (Brasil)](06-mapeamento-tensor-slot.pt-BR.md)
+[English](06-tensor-slot-mapping.md) | [Português (Brasil)](06-mapeamento-tensor-slot.pt-BR.md)
 
 > **Documento histórico preservado.** Este texto pertence à arquitetura anterior e conserva exemplos técnicos úteis. Caminhos, orquestração em `main.py`, camada sintética obrigatória e descrições do runtime podem estar desatualizados. Para o comportamento atual, consulte o [índice](../README.pt-BR.md) e as [inconsistências verificadas](../99-inconsistencias-e-limitacoes.pt-BR.md). O corpo original foi mantido.
 

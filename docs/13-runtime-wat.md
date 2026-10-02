@@ -2,7 +2,7 @@
 
 # 13 — WebAssembly templates and runtime
 
-[Index](README.md) · [ABI](08-contrato-layerparam-v1.md) · [Generator](32-extractor-wat-generator.md)
+[Index](README.md) · [ABI](08-layerparam-v1-contract.md) · [Generator](32-extractor-wat-generator.md)
 
 ## Files and actual selection
 
@@ -109,5 +109,5 @@ There are also `_2` variants, exported functions without suffixes, and `multiply
 
 ## Contract versus implementation limitations
 
-The 29 fields can describe more cases than the kernels actually implement. Bias_ptr=0 does not safely represent optional bias in every kernel because loads occur without presence checks. Kernels do not validate each pointer against slot size. WASM may trap on access outside all memory, but does not detect reads from a wrong region still inside it. These restrictions are recorded in [99](99-inconsistencias-e-limitacoes.md); none was fixed in this documentation task.
+The 29 fields can describe more cases than the kernels actually implement. Bias_ptr=0 does not safely represent optional bias in every kernel because loads occur without presence checks. Kernels do not validate each pointer against slot size. WASM may trap on access outside all memory, but does not detect reads from a wrong region still inside it. These restrictions are recorded in [99](99-inconsistencies-and-limitations.md); none was fixed in this documentation task.
 

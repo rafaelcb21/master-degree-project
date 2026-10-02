@@ -1,13 +1,13 @@
-﻿# ESP32-CAM project with WebAssembly (WAMR) — legacy guide
+# ESP32-CAM project with WebAssembly (WAMR) — legacy guide
 
-[English](README_ptBR.md) | [Português (Brasil)](README_ptBR.pt-BR.md)
+[English](README_LEGACY.md) | [Português (Brasil)](README_ptBR.pt-BR.md)
 
 > **WASM → AOT in WSL:** [README_AOT_WSL.md](README_AOT_WSL.md).
 > Step-by-step instructions covering project versions, Xtensa LLVM, wamrc, firmware, and troubleshooting.
 > Configure the host and image list with [HOST.md](HOST.md).
 > The current host downloads RAW files from Cloudinary; older camera sections are historical.
 >
-> This is the complete English translation of the longer legacy Portuguese guide. Its original filename, `README_ptBR.md`, is retained to preserve references. The historical module names, measurements, and memory explanations below describe that earlier implementation; use HOST.md and README_AOT_WSL.md for the current host.
+> This is the complete English translation of the longer legacy Portuguese guide. Its English filename is `README_LEGACY.md`; the Portuguese edition retains its original filename. The historical module names, measurements, and memory explanations below describe that earlier implementation; use HOST.md and README_AOT_WSL.md for the current host.
 
 This project aims to configure and run custom firmware on the **ESP32-CAM**, integrating image capture with WebAssembly module execution through **WASM-Micro-Runtime (WAMR)**.
 

@@ -1,6 +1,6 @@
-[English](08-quantizacao.md) | [Português (Brasil)](08-quantizacao.pt-BR.md)
+[English](08-quantization.md) | [Português (Brasil)](08-quantizacao.pt-BR.md)
 
-> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencies-and-limitations.md). The original body has been preserved in the Portuguese edition.
 
 # 08 — Extracting and preparing quantization parameters (`quantization.py`)
 

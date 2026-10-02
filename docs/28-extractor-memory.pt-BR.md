@@ -143,4 +143,4 @@ def final_memory_layout_to_text(memory_layout)
 
 ## Material técnico preservado
 
-A explicação anterior está em [09-layout-memoria.md](historico/09-layout-memoria.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [09-memory-layout.md](historico/09-layout-memoria.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

@@ -1,8 +1,8 @@
-﻿# 98 — Documentation verification
+# 98 — Documentation verification
 
-[English](98-verificacao-documental.md) | [Português (Brasil)](98-verificacao-documental.pt-BR.md)
+[English](98-documentation-verification.md) | [Português (Brasil)](98-verificacao-documental.pt-BR.md)
 
-[Index](README.md) · [Limitations and discrepancies](99-inconsistencias-e-limitacoes.md)
+[Index](README.md) · [Limitations and discrepancies](99-inconsistencies-and-limitations.md)
 
 ## Review scope
 
@@ -26,7 +26,7 @@ Analysis began on September 28, 2026, and the final review was completed on Sept
 .venv-models/Scripts/python.exe -X utf8 -m unittest discover -s tests -v
 ```
 
-Result: **7 tests, all passed**. The suite includes the WASM QUANTIZE kernel and tests of the contract, paths, synthetic layer, BGR conversion, INT8 interpretation, stable ranking, and binary classification. [Chapter 11](11-testes.md) explains the exact scope of each assertion.
+Result: **7 tests, all passed**. The suite includes the WASM QUANTIZE kernel and tests of the contract, paths, synthetic layer, BGR conversion, INT8 interpretation, stable ranking, and binary classification. [Chapter 11](11-tests.md) explains the exact scope of each assertion.
 
 Regenerating WAT/WASM or rerunning the 2,000 images was unnecessary for this documentation task. README metrics were read from existing reports, and model metadata was inspected directly. Tests create their own temporary files when needed.
 

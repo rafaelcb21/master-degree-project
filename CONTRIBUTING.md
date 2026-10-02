@@ -4,7 +4,7 @@
 
 ## Update both languages together
 
-Author-owned documentation has an English `name.md` and a Brazilian Portuguese `name.pt-BR.md` counterpart in the same directory. The canonical README is English.
+Author-owned documentation has an English `.md` file with an English filename and a Brazilian Portuguese `.pt-BR.md` counterpart in the same directory. The canonical README is English.
 
 When changing instructions or documented behavior:
 
@@ -30,5 +30,5 @@ This convention applies to repository-authored documentation, including model pa
 
 Do not translate or edit installed dependency documentation, virtual environments, Git metadata, or build-generated files. Preserve executable source code and generated artifacts unless a separate implementation task calls for changes.
 
-Some legacy filenames contain Portuguese words or `ptBR`. Their names remain stable to preserve existing links; the language switch identifies the English canonical page and its Portuguese counterpart.
+English filenames use English terms. Portuguese filenames retain their existing names and the `.pt-BR.md` suffix. Use the language links to identify each pair; the base filenames may differ.
 

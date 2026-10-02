@@ -1,4 +1,4 @@
-[English](98-verificacao-documental.md) | [Português (Brasil)](98-verificacao-documental.pt-BR.md)
+[English](98-documentation-verification.md) | [Português (Brasil)](98-verificacao-documental.pt-BR.md)
 
 # 98 — Verificação da documentação
 

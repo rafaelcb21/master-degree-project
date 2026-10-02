@@ -1,8 +1,8 @@
-﻿# MobileNetV2 Alpha 0.35 ImageNet
+# MobileNetV2 Alpha 0.35 ImageNet
 
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
-[Main documentation](../../README.md) · [Package comparison](../../docs/09-modelos-e-pacotes.md)
+[Main documentation](../../README.md) · [Package comparison](../../docs/09-models-and-packages.md)
 
 ## Purpose
 
@@ -169,7 +169,7 @@ top_k = 15
 labels = "labels/imagenet_class_index.json"
 ```
 
-Paths are resolved from this folder. The meaning and validation of each field are in the [TOML reference](../../docs/03-model-config-manifesto.md).
+Paths are resolved from this folder. The meaning and validation of each field are in the [TOML reference](../../docs/03-model-config-manifest.md).
 
 ## Architecture found in the FlatBuffer
 
@@ -246,5 +246,5 @@ With valid sources/dependencies, a full run recreates and overwrites them; extra
 
 ## Limitations and provenance
 
-The network's purpose is indicated by its name/configuration and confirmed by the output shape; the repository does not provide the complete training history, RAW origin/license, or original conversion script. The current test does not prove full TFLite equivalence. See the [verified limitations](../../docs/99-inconsistencias-e-limitacoes.md), especially fixed softmax, specialized kernels, and test coverage.
+The network's purpose is indicated by its name/configuration and confirmed by the output shape; the repository does not provide the complete training history, RAW origin/license, or original conversion script. The current test does not prove full TFLite equivalence. See the [verified limitations](../../docs/99-inconsistencies-and-limitations.md), especially fixed softmax, specialized kernels, and test coverage.
 

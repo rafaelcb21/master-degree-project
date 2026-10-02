@@ -93,4 +93,4 @@ def same_padding(in_h, in_w, kernel_h, kernel_w, stride_h, stride_w, dil_h=1, di
 
 ## Material técnico preservado
 
-A explicação anterior está em [10-operacoes-opcoes.md](historico/10-operacoes-opcoes.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [10-operator-options.md](historico/10-operacoes-opcoes.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

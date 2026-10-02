@@ -1,4 +1,4 @@
-[English](06-inferencia-wasm.md) | [Português (Brasil)](06-inferencia-wasm.pt-BR.md)
+[English](06-wasm-inference.md) | [Português (Brasil)](06-inferencia-wasm.pt-BR.md)
 
 # 06 — Host de inferência Wasmtime
 

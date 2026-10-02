@@ -85,4 +85,4 @@ def build_graph(model, subgraph, ignored_types=None)
 
 ## Material técnico preservado
 
-A explicação anterior está em [04-grafo.md](historico/04-grafo.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).
+A explicação anterior está em [04-graph.md](historico/04-grafo.pt-BR.md). Ela conserva exemplos e derivações úteis, mas não é a referência para caminhos, CLI e variantes atuais. Em divergências, use este capítulo e o [registro de limitações](99-inconsistencias-e-limitacoes.pt-BR.md).

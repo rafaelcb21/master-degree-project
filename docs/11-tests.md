@@ -1,4 +1,4 @@
-[English](11-testes.md) | [Português (Brasil)](11-testes.pt-BR.md)
+[English](11-tests.md) | [Português (Brasil)](11-testes.pt-BR.md)
 
 # 11 — Tests and validation scope
 
@@ -40,7 +40,7 @@ Inputs are a template and artificial parameters, not a TFLite. The real kernel i
 
 ## Results and gaps
 
-The original documentation review ran all seven tests; see [verification](98-verificacao-documental.md). This translation does not represent a new test run. Existing package reports supply additional evidence but are not assertions in this suite.
+The original documentation review ran all seven tests; see [verification](98-documentation-verification.md). This translation does not represent a new test run. Existing package reports supply additional evidence but are not assertions in this suite.
 
 There are no current tests for complete TFLite/WASM equivalence, every isolated kernel, liveness on arbitrary graphs, a trap followed by another image, malformed JSON, broadcasting ADD, MEAN axes, softmax across scales or adapter INT8 normalization. Dataset provenance/licensing and statistical evaluation are also not tested. Do not describe these as existing coverage.
 

@@ -1,6 +1,6 @@
-﻿[English](12-params-blob.md) | [Português (Brasil)](12-params-blob.pt-BR.md)
+[English](12-params-blob.md) | [Português (Brasil)](12-params-blob.pt-BR.md)
 
-> **Preserved historical document.** This text describes the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in Portuguese and translated here.
+> **Preserved historical document.** This text describes the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencies-and-limitations.md). The original body has been preserved in Portuguese and translated here.
 
 # 12 — LayerParam serialization (`params_blob.py`)
 

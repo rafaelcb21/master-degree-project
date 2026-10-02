@@ -1,4 +1,4 @@
-[English](14-inventario-e-rastreabilidade.md) | [Português (Brasil)](14-inventario-e-rastreabilidade.pt-BR.md)
+[English](14-inventory-and-traceability.md) | [Português (Brasil)](14-inventario-e-rastreabilidade.pt-BR.md)
 
 # 14 — Inventário e rastreabilidade
 
@@ -29,17 +29,17 @@ Inventário dos arquivos relevantes presentes, com conjuntos repetitivos de RAWs
 | [extractor/wat_generator.py](../extractor/wat_generator.py) | `_as_bytes`, `wat_data_from_bytes`, `build_data_segments`, `generate_wat` | [32-extractor-wat-generator.md](32-extractor-wat-generator.pt-BR.md) |
 | [extractor/weights.py](../extractor/weights.py) | `extract_weights_and_bias`, `weights_bias_to_text` | [26-extractor-weights.md](26-extractor-weights.pt-BR.md) |
 | [pipeline/__init__.py](../pipeline/__init__.py) | Sem funções/classes; inicialização ou constantes | [33-extractor-reporting.md](33-extractor-reporting.pt-BR.md) |
-| [pipeline/model_config.py](../pipeline/model_config.py) | `ModelConfig`, `synthetic_layer_count`, `load` | [03-model-config-manifesto.md](03-model-config-manifesto.pt-BR.md) |
+| [pipeline/model_config.py](../pipeline/model_config.py) | `ModelConfig`, `synthetic_layer_count`, `load` | [03-model-config-manifest.md](03-model-config-manifesto.pt-BR.md) |
 | [pipeline/model_package.py](../pipeline/model_package.py) | `ModelPackage`, `load`, `resolve`, `reports_dir`, `wat_path`, `wasm_path`, `validate_sources`, `available` | [02-model-package.md](02-model-package.pt-BR.md) |
 | [pipeline/model_pipeline.py](../pipeline/model_pipeline.py) | `ModelPipeline`, `__init__`, `run` | [04-model-pipeline.md](04-model-pipeline.pt-BR.md) |
-| [pipeline/wasm_compiler.py](../pipeline/wasm_compiler.py) | `compile_wat_to_wasm` | [07-compilacao-wat-wasm.md](07-compilacao-wat-wasm.pt-BR.md) |
+| [pipeline/wasm_compiler.py](../pipeline/wasm_compiler.py) | `compile_wat_to_wasm` | [07-wat-wasm-compilation.md](07-compilacao-wat-wasm.pt-BR.md) |
 | [adapters/__init__.py](../adapters/__init__.py) | Sem funções/classes; inicialização ou constantes | [05-adapters.md](05-adapters.pt-BR.md) |
 | [adapters/base.py](../adapters/base.py) | `TestCase`, `TestAdapter`, `decode_output`, `__init__`, `raw_files`, `discover_cases`, `prepare_input`, `evaluate_output`, `build_report` | [05-adapters.md](05-adapters.pt-BR.md) |
 | [adapters/binary_folders.py](../adapters/binary_folders.py) | `BinaryFoldersAdapter`, `discover_cases`, `prepare_input`, `evaluate_output`, `build_report` | [05-adapters.md](05-adapters.pt-BR.md) |
 | [adapters/imagenet_topk.py](../adapters/imagenet_topk.py) | `ImageNetTopKAdapter`, `discover_cases`, `prepare_input`, `evaluate_output`, `build_report` | [05-adapters.md](05-adapters.pt-BR.md) |
 | [adapters/registry.py](../adapters/registry.py) | `create_adapter` | [05-adapters.md](05-adapters.pt-BR.md) |
-| [inference/wasm_inference.py](../inference/wasm_inference.py) | `_instantiate_wasm`, `tensor_info`, `run_wasm_inference` | [06-inferencia-wasm.md](06-inferencia-wasm.pt-BR.md) |
-| [tests/test_model_packages.py](../tests/test_model_packages.py) | `ModelPackagesTests`, `test_wasm_quantize_uses_output_type_at_any_layer_index`, `test_paths_are_relative_to_package`, `test_unknown_contract_rejected`, `test_synthetic_layer_optional`, `test_bgr_conversion_and_invalid_size`, `test_signed_output_and_stable_topk`, `test_binary_class_order_and_ties` | [11-testes.md](11-testes.pt-BR.md) |
+| [inference/wasm_inference.py](../inference/wasm_inference.py) | `_instantiate_wasm`, `tensor_info`, `run_wasm_inference` | [06-wasm-inference.md](06-inferencia-wasm.pt-BR.md) |
+| [tests/test_model_packages.py](../tests/test_model_packages.py) | `ModelPackagesTests`, `test_wasm_quantize_uses_output_type_at_any_layer_index`, `test_paths_are_relative_to_package`, `test_unknown_contract_rejected`, `test_synthetic_layer_optional`, `test_bgr_conversion_and_invalid_size`, `test_signed_output_and_stable_topk`, `test_binary_class_order_and_ties` | [11-tests.md](11-testes.pt-BR.md) |
 
 ## Dados, fontes e artefatos
 
@@ -77,17 +77,17 @@ O arquivo antigo `extractor/wasm_inference.py` está ausente: os imports atuais 
 
 Os 14 documentos numerados anteriores foram mantidos em `historico/`, com seus corpos preservados e um aviso de escopo. Não são exigidos para executar o projeto. Os capítulos atuais substituem suas afirmações sobre arquitetura/caminhos e registram diferenças do runtime.
 
-- [01-configuracao.md](historico/01-configuracao.pt-BR.md)
-- [02-carregamento-modelo.md](historico/02-carregamento-modelo.pt-BR.md)
-- [03-utilitarios-tflite.md](historico/03-utilitarios-tflite.pt-BR.md)
-- [04-grafo.md](historico/04-grafo.pt-BR.md)
-- [05-alocacao-slots.md](historico/05-alocacao-slots.pt-BR.md)
-- [06-mapeamento-tensor-slot.md](historico/06-mapeamento-tensor-slot.pt-BR.md)
-- [07-extracao-pesos-bias.md](historico/07-extracao-pesos-bias.pt-BR.md)
-- [08-quantizacao.md](historico/08-quantizacao.pt-BR.md)
-- [09-layout-memoria.md](historico/09-layout-memoria.pt-BR.md)
-- [10-operacoes-opcoes.md](historico/10-operacoes-opcoes.pt-BR.md)
+- [01-configuration.md](historico/01-configuracao.pt-BR.md)
+- [02-model-loading.md](historico/02-carregamento-modelo.pt-BR.md)
+- [03-tflite-utilities.md](historico/03-utilitarios-tflite.pt-BR.md)
+- [04-graph.md](historico/04-grafo.pt-BR.md)
+- [05-slot-allocation.md](historico/05-alocacao-slots.pt-BR.md)
+- [06-tensor-slot-mapping.md](historico/06-mapeamento-tensor-slot.pt-BR.md)
+- [07-weight-bias-extraction.md](historico/07-extracao-pesos-bias.pt-BR.md)
+- [08-quantization.md](historico/08-quantizacao.pt-BR.md)
+- [09-memory-layout.md](historico/09-layout-memoria.pt-BR.md)
+- [10-operator-options.md](historico/10-operacoes-opcoes.pt-BR.md)
 - [11-layer-params.md](historico/11-layer-params.pt-BR.md)
 - [12-params-blob.md](historico/12-params-blob.pt-BR.md)
-- [13-geracao-wat.md](historico/13-geracao-wat.pt-BR.md)
-- [14-relatorios.md](historico/14-relatorios.pt-BR.md)
+- [13-wat-generation.md](historico/13-geracao-wat.pt-BR.md)
+- [14-reporting.md](historico/14-relatorios.pt-BR.md)

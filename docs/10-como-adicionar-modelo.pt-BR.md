@@ -1,4 +1,4 @@
-[English](10-como-adicionar-modelo.md) | [Português (Brasil)](10-como-adicionar-modelo.pt-BR.md)
+[English](10-how-to-add-a-model.md) | [Português (Brasil)](10-como-adicionar-modelo.pt-BR.md)
 
 # 10 — Tutorial: cadastrar um terceiro modelo
 

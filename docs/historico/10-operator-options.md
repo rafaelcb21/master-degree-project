@@ -1,6 +1,6 @@
-[English](10-operacoes-opcoes.md) | [Português (Brasil)](10-operacoes-opcoes.pt-BR.md)
+[English](10-operator-options.md) | [Português (Brasil)](10-operacoes-opcoes.pt-BR.md)
 
-> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencias-e-limitacoes.md). The original body has been preserved in the Portuguese edition.
+> **Preserved historical document.** This text belongs to the previous architecture and retains useful technical examples. Paths, orchestration in `main.py`, the mandatory synthetic layer, and runtime descriptions may be outdated. For current behavior, see the [index](../README.md) and [verified inconsistencies](../99-inconsistencies-and-limitations.md). The original body has been preserved in the Portuguese edition.
 
 # 10 — Reading operator options (`operator_operations.py`)
 

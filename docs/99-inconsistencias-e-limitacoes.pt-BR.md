@@ -1,4 +1,4 @@
-[English](99-inconsistencias-e-limitacoes.md) | [Português (Brasil)](99-inconsistencias-e-limitacoes.pt-BR.md)
+[English](99-inconsistencies-and-limitations.md) | [Português (Brasil)](99-inconsistencias-e-limitacoes.pt-BR.md)
 
 # 99 — Inconsistências, limitações e informações não determinadas
 

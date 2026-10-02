@@ -45,4 +45,4 @@ The signatures below were extracted from the AST of the current file. Keyword-on
 
 ## Preserved technical material
 
-The previous explanation is in [01-configuracao.md](historico/01-configuracao.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencias-e-limitacoes.md).
+The previous explanation is in [01-configuration.md](historico/01-configuration.md). It preserves useful examples and derivations, but is not the reference for current paths, CLI, and variants. Where they differ, use this chapter and the [limitations register](99-inconsistencies-and-limitations.md).
