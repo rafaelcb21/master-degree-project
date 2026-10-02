@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Research Explorer · WebAssembly</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Pular para o conteúdo</a>
+  <aside id="sidebar" class="sidebar" aria-label="Navegação principal"></aside>
+  <div class="workspace">
+    <header class="topbar">
+      <button class="menu-button" id="menu" aria-label="Abrir navegação" aria-expanded="false" aria-controls="sidebar">☰</button>
+      <div class="breadcrumb">Workspace <span>/</span> <strong id="page-label">Visão geral</strong></div>
+      <div class="topbar-actions"><span class="local-indicator"><i></i> Ambiente local</span><button class="button subtle" id="ui-language" aria-label="Switch site to English" title="English">EN</button><button class="button subtle" id="refresh">↻ <span>Atualizar índice</span></button></div>
+    </header>
+    <main id="main" tabindex="-1"><div class="loading">Carregando a biblioteca do projeto…</div></main>
+    <footer>RESEARCH EXPLORER <span>Documentação e resultados, em um só lugar.</span></footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

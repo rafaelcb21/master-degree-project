@@ -1,0 +1,20 @@
+{
+  "name": "wasm-research-explorer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/app.ts --bundle --minify --format=esm --outfile=public/app.js",
+    "watch": "esbuild src/app.ts --bundle --format=esm --outfile=public/app.js --watch",
+    "test:ui": "node tests/browser.mjs"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.16",
+    "marked": "^18.0.14"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

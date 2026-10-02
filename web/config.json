@@ -1,0 +1,7 @@
+{
+  "port": 8000,
+  "excluded_directories": [".git", ".agents", ".codex", "build", "dist", "node_modules", "managed_components", "__pycache__", "venv", "env", ".venv", ".venv-models", ".pytest_cache", "test-results"],
+  "report_directories": ["reports", "report", "relatorios", "relatórios"],
+  "report_extensions": [".txt", ".csv", ".json", ".log"],
+  "max_file_bytes": 16777216
+}

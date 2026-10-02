@@ -2,11 +2,37 @@
 
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
+## From model to device
+
+Explore a quantized neural network from its TFLite representation to WebAssembly execution, inspect its results and study embedded inference on ESP32. This repository brings together a Python pipeline, two model packages, an independent ESP32 host and a local website for browsing documentation and measurements.
+
+[![Research Explorer: project overview, reports and documentation](docs/assets/research-explorer.png)](web/README.md)
+
+*Research Explorer brings the projects together in one local library. The counts shown are a snapshot of the repository.*
+
+## What each project offers
+
+| Project | What you can do | Start here |
+|---|---|---|
+| Python · TFLite → WAT/WASM | Extract supported graphs, weights and quantization; inspect memory allocation; generate and compile WAT; run RAW images with Wasmtime and produce reports. | [Complete workflow](docs/12-complete-workflow.md) |
+| Drowsiness | Study binary classification with RGB565 input, inspect predictions and compare them with known labels. | [Model package](models/drowsiness/README.md) |
+| MobileNetV2 Alpha 0.35 | Explore ImageNet classification with BGR888 input and inspect the Top-15 classes for the included example. | [Model package](models/mobilenetv2_alpha035/README.md) |
+| ESP32 host | Run a compatible WASM/AOT module, download input images from Cloudinary and collect predictions, inference/download times and memory measurements in a CSV report. | [Host guide](ESP32/cnn_webassembly_esp32/README.md) · [AOT with WSL](ESP32/cnn_webassembly_esp32/README_AOT_WSL.md) |
+| Research Explorer | Browse projects, read Portuguese/English Markdown, search and sort report tables, inspect timing/memory charts and download original files. | [Website guide](web/README.md) |
+
+The ESP32 host is configured and compiled independently of the Python pipeline. The website reads existing files; it does not run inference or fetch reports from the device. Supported operators and the host/module contract determine which models can run.
+
+## About the pipeline
+
 This project extracts supported quantized TFLite networks, organizes their graphs, weights, quantization and memory, fills a WAT template, and compiles a WASM module. It then runs RAW images with Wasmtime and writes results for each model. It is intended for studying translation into a custom WebAssembly runtime, including slot reuse and the binary contract between Python and the kernels.
 
 Two packages are included: **drowsiness** (binary classification with RGB565 RAW input) and **mobilenetv2_alpha035** (ImageNet Top-15 classification with BGR888 RAW input). Each has its own manifest, TFLite file, tests and output directories. This is not a universal TFLite converter.
 
 Start with the [technical index](docs/README.md). Earlier documentation is preserved in `docs/historico/`. The [ESP32 host](ESP32/cnn_webassembly_esp32/README.md) is independent of the Python pipeline; see its [AOT guide](ESP32/cnn_webassembly_esp32/README_AOT_WSL.md) and [configuration reference](ESP32/cnn_webassembly_esp32/HOST.md).
+
+## Browse documentation and reports
+
+Run `python web/server/app.py` from the repository root and open **http://127.0.0.1:8000**. The local [Research Explorer](web/README.md) organizes Markdown and reports by project, with charts, searchable tables and language navigation. Python 3.10+ is sufficient; inference dependencies are not required.
 
 ## Installation
 
