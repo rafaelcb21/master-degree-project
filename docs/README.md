@@ -4,7 +4,7 @@
 
 [Main README](../README.md)
 
-This reference describes the implementation and TFLite files present in the repository. Chapters 00–14 cover use and architecture; 20–33 document individual extractor modules. Earlier material is preserved in historico/ with scope notices. Proposed improvements are distinguished from implemented behavior.
+This reference describes the implementation and TFLite files present in the repository. Chapters 00–15 cover use and architecture; 20–33 document individual extractor modules. Earlier material is preserved in historico/ with scope notices. Proposed improvements are distinguished from implemented behavior.
 
 ## Architecture, interfaces and operation
 
@@ -23,6 +23,7 @@ This reference describes the implementation and TFLite files present in the repo
 - [12 — Complete flow and reading reports](12-complete-workflow.md)
 - [13 — Templates and WebAssembly runtime](13-runtime-wat.md)
 - [14 — Inventory and traceability](14-inventory-and-traceability.md)
+- [15 — Execute original TFLite models for comparison](15-tflite-baseline.md)
 - [20 — Shared extractor constants](20-extractor-config.md)
 - [21 — Loading the TFLite FlatBuffer](21-extractor-model-loader.md)
 - [22 — TFLite tensor and quantization utilities](22-extractor-tflite-utils.md)

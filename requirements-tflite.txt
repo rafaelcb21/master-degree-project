@@ -1,0 +1,4 @@
+# Separate runtime for executing the original models (Python 3.11 recommended).
+tensorflow==2.20.0
+numpy==2.2.6
+tomli>=2,<3; python_version < "3.11"

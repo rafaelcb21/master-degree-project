@@ -4,7 +4,7 @@
 
 [README principal](../README.pt-BR.md)
 
-Esta é a referência do comportamento atual, baseada no código e nos TFLite presentes. A ordem 00–14 cobre uso e arquitetura; 20–33 cobre cada módulo do extrator. O material anterior permanece em `historico/` com avisos de escopo. Recomendações futuras estão separadas do que já existe.
+Esta é a referência do comportamento atual, baseada no código e nos TFLite presentes. A ordem 00–15 cobre uso e arquitetura; 20–33 cobre cada módulo do extrator. O material anterior permanece em `historico/` com avisos de escopo. Recomendações futuras estão separadas do que já existe.
 
 ## Arquitetura, interfaces e operação
 
@@ -23,6 +23,7 @@ Esta é a referência do comportamento atual, baseada no código e nos TFLite pr
 - [12 — Fluxo completo e leitura dos relatórios](12-fluxo-completo.pt-BR.md)
 - [13 — Templates e runtime WebAssembly](13-runtime-wat.pt-BR.md)
 - [14 — Inventário e rastreabilidade](14-inventario-e-rastreabilidade.pt-BR.md)
+- [15 — Executar os modelos TFLite originais para comparação](15-referencia-tflite.pt-BR.md)
 - [20 — Constantes compartilhadas do extrator](20-extractor-config.pt-BR.md)
 - [21 — Carregamento do FlatBuffer TFLite](21-extractor-model-loader.pt-BR.md)
 - [22 — Utilitários de tensores e quantização TFLite](22-extractor-tflite-utils.pt-BR.md)

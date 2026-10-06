@@ -1,0 +1,10 @@
+rafael@DESKTOP-VBPL22R:~/wasm-micro-runtime/wamr-compiler/build$ ./wamrc --target=xtensa --target-abi=ilp32 --cpu=esp32 -o /mnt/c/Users/User/Downloads/main.aot /mnt/c/Users/User/Downloads/main.wasm
+Create AoT compiler with:
+  target:        xtensa
+  target cpu:    esp32
+  target triple: xtensa-pc-linux-ilp32
+  cpu features:
+  opt level:     3
+  size level:    3
+  output format: AoT file
+Compile success, file /mnt/c/Users/User/Downloads/main.aot was generated.

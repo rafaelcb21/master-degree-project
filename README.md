@@ -36,6 +36,8 @@ Run `python web/server/app.py` from the repository root and open **http://127.0.
 
 ## Installation
 
+To execute the original TFLite models for comparison with WASM, use the separate [TFLite runner](docs/15-tflite-baseline.md): install `requirements-tflite.txt` in a dedicated environment and run `python run_tflite.py`. Reports are saved under `models/<model>/reports_tflite/<timestamp>/` without replacing WASM reports.
+
 Requires a working Python 3.10+ installation. From the repository root in PowerShell:
 
 ```powershell

@@ -3,6 +3,7 @@
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
+.venv-tflite/
 __pycache__/
 *.py[cod]
 *$py.class
