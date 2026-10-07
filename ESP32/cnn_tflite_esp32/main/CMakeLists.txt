@@ -1,22 +1,22 @@
-set(MODEL_MODULE_FILE "main.wasm")
-set(MODEL_MODULE_IS_AOT 0)
-set(MODEL_MODULE_KIND "WASM")
-
-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/main.aot")
-    set(MODEL_MODULE_FILE "main.aot")
-    set(MODEL_MODULE_IS_AOT 1)
-    set(MODEL_MODULE_KIND "AOT")
-endif()
-
 idf_component_register(
-    SRCS "main.c"
-    EMBED_FILES "${MODEL_MODULE_FILE}"
+    SRCS "main.c" "tflite_runtime.cpp" "${CMAKE_CURRENT_BINARY_DIR}/model_data.S"
     INCLUDE_DIRS "."
-    PRIV_INCLUDE_DIRS .
-    REQUIRES esp_wifi esp_event esp_netif nvs_flash esp_psram esp_http_server esp_http_client spiffs mbedtls esp-tls
+    REQUIRES esp_wifi esp_event esp_netif nvs_flash esp_psram esp_http_server esp_http_client
+             mbedtls esp-tls esp_timer esp_system esp-tflite-micro
 )
 
-target_compile_definitions(${COMPONENT_LIB} PRIVATE
-    MODEL_MODULE_IS_AOT=${MODEL_MODULE_IS_AOT}
-    MODEL_MODULE_KIND="${MODEL_MODULE_KIND}"
-)
+set(TFLITE_MODEL_FILE "${CMAKE_CURRENT_LIST_DIR}/../model_int8_esp32.tflite" CACHE FILEPATH "TFLite model embedded in firmware")
+get_filename_component(TFLITE_MODEL_FILE "${TFLITE_MODEL_FILE}" ABSOLUTE)
+if(NOT EXISTS "${TFLITE_MODEL_FILE}")
+    message(FATAL_ERROR "TFLite model not found: ${TFLITE_MODEL_FILE}")
+endif()
+file(TO_CMAKE_PATH "${TFLITE_MODEL_FILE}" TFLITE_MODEL_ASM_PATH)
+file(SHA256 "${TFLITE_MODEL_FILE}" TFLITE_MODEL_SHA256)
+file(SHA256 "${CMAKE_CURRENT_LIST_DIR}/image_list.h" IMAGE_LIST_SHA256)
+configure_file("${CMAKE_CURRENT_LIST_DIR}/model_data.S.in" "${CMAKE_CURRENT_BINARY_DIR}/model_data.S" @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${TFLITE_MODEL_FILE}")
+set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/model_data.S" PROPERTIES OBJECT_DEPENDS "${TFLITE_MODEL_FILE}")
+
+target_compile_definitions(${COMPONENT_LIB} PRIVATE TFLITE_MODEL_SHA256="${TFLITE_MODEL_SHA256}")
+target_compile_definitions(${COMPONENT_LIB} PRIVATE IMAGE_LIST_SHA256="${IMAGE_LIST_SHA256}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/image_list.h")

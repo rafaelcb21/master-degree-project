@@ -1,35 +1,35 @@
 dependencies:
-  espressif/esp32-camera:
-    component_hash: c3eb05fbeeae884a23bed9b17d48d5f0da8872beadae0c0e747d2fbea6094f06
-    dependencies: []
-    source:
-      registry_url: https://components.espressif.com/
-      type: service
-    version: 2.0.15
-  espressif/wasm-micro-runtime:
-    component_hash: 3c293f91ea03b469937b97ea9044cbae85e2b08ff17454b82910493d6723e3ed
+  espressif/esp-nn:
+    component_hash: 3b3411b0e4ad1717a72870fde9f9b67cef6f3f97491cc64fcfc1910a8fd8a246
     dependencies:
     - name: idf
+      require: private
+      version: '>=5.1'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.4.1
+  espressif/esp-tflite-micro:
+    component_hash: 57aa3889d3c7b7a513f716c2cb8707476a5bf42971d63a6f6d38a5616d862e57
+    dependencies:
+    - name: espressif/esp-nn
       registry_url: https://components.espressif.com
       require: private
-      version: '>=4.4'
+      version: '>=1.1.1'
+    - name: idf
+      require: private
+      version: '>=5.0'
     source:
       registry_url: https://components.espressif.com/
       type: service
-    targets:
-    - esp32
-    - esp32s3
-    - esp32c3
-    - esp32c6
-    version: 1.3.2~2
+    version: 1.3.5
   idf:
     source:
       type: idf
     version: 5.3.1
 direct_dependencies:
-- espressif/esp32-camera
-- espressif/wasm-micro-runtime
+- espressif/esp-tflite-micro
 - idf
-manifest_hash: 875c1b797c319b639dacc1dde367c0e024e1e014a101a6a31d142f03fddc8287
+manifest_hash: abe24f779ea6f02a2a28efae669eaa309a10e9c23ce13fb16c1f20ff94f8543e
 target: esp32
 version: 2.0.0

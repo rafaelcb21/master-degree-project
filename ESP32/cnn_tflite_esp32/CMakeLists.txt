@@ -1,4 +1,4 @@
-set(COMPONENTS main)
+﻿set(COMPONENTS main)
 cmake_minimum_required(VERSION 3.5)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(cnn_webassembly_esp32)
+project(cnn_tflite_esp32)

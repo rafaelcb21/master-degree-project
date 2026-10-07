@@ -1,73 +1,44 @@
-﻿# ESP32 host for WASM/AOT benchmarks
+﻿# TFLite host settings and measurements
 
 [English](HOST.md) | [Português (Brasil)](HOST.pt-BR.md)
 
-This project is independent of Python. The host downloads RAW files from Cloudinary, copies the input into module memory, runs inference, and records results and measurements.
+[Build and run](README.md)
 
-## Files to edit
+## Editable files
 
-- `main/host_config.h`: Wi-Fi, input dimensions and size, format flag, WASM exports, handshake, output type and count, labels, timeouts, stack sizes, and the HTTP report address.
-- `main/image_list.h`: Cloudinary URLs and labels in execution order. The previous 2,000 entries have been preserved. Use `-1` as the label to run and measure without evaluating accuracy.
-
-Wi-Fi credentials are placeholders: fill them in in `host_config.h`.
-Changes to these files require rebuilding and flashing the firmware.
-
-Example list entry:
-
-```c
-{ "https://res.cloudinary.com/SEU_CLOUD/raw/upload/imagem.raw", 0 },
-```
-
-`CLASS_LABELS` maps output tensor order to the labels in the list.
-The initial value `{ 1, 0 }` preserves the previous model's mapping.
-For a model with three classes labeled 0 through 2, use `NUM_CLASSES 3`
-and `CLASS_LABELS { 0, 1, 2 }`.
-
-## Module contract
-
-The host supports modules that follow this interface. Export names are configurable, but their signatures must be `() -> i32`:
-
-| Setting | Expected return value |
+| File | Purpose |
 |---|---|
-| `WASM_READY_EXPORT` | 1 when ready to receive an image; 0 when busy |
-| `WASM_INPUT_PTR_EXPORT` | Input buffer offset |
-| `WASM_RUN_EXPORT` | `INFERENCE_SUCCESS_CODE` on successful completion |
-| `WASM_OUTPUT_PTR_EXPORT` | Contiguous output tensor offset |
+| `main/host_config.h` | Wi-Fi, HTTP, RAW layout, labels, PSRAM arena and task settings |
+| `main/image_list.h` | Cloudinary RAW URLs and labels, in execution order |
+| `main/CMakeLists.txt` / `TFLITE_MODEL_FILE` | Embedded original model |
+| `sdkconfig` / `sdkconfig.defaults` | Board, PSRAM, flash, CPU and TLS settings |
 
-The initial names preserve the existing modules' exports, including `run_mobilenetv2`. This name does not determine which model the host runs.
-`USE_READY_HANDSHAKE 0` allows modules without a readiness export.
-Execution is sequential and synchronous. A timeout or error aborts that image.
-An internal failure may leave the module unavailable for subsequent images; the host does not clear the flag or force recovery of the model state.
+Default class order is `{1, 0}`: output 0 means label 1 and output 1 means label 0. This must agree with the model and the image list. `CLASS_LABELS_ARE_INDICES=1` uses output indices directly. A tied maximum gives `result=-1`; unknown reference labels give `right=-1`. Ties remain successful inference rows (`ok=1`) and count as incorrect when labeled. This is the ESP32 WASM host's rule; the Python binary adapter additionally rejects nonpositive summed scores.
 
-The RAW file must contain exactly `INPUT_BYTES` bytes in the order and encoding expected by the module. The host does not resize, normalize, or swap channels.
-The initial setting uses 128 × 128 RGB565 pixels (32,768 bytes).
-For RGB888/BGR888, set `INPUT_BYTES_PER_PIXEL` to 3 and configure `WRITE_FORMAT_FLAG` according to the module contract. Disable this write when the module does not use the format flag.
+## CSV fields
 
-The output may be `OUTPUT_UINT8`, `OUTPUT_INT8`, or `OUTPUT_FLOAT32`.
-`NUM_CLASSES` must match the number of output elements. The host validates linear memory bounds, but cannot infer tensor capacity: sizes and format must match the module.
-The result is the label of the largest element; a tie produces `-1`.
-For quantized outputs, this comparison assumes a common positive scale and zero point across classes. Raw values are not converted to percentages.
-Models with multiple outputs, detection, or other postprocessing need an adapted contract.
+| Fields | Meaning |
+|---|---|
+| `name_image` | URL basename, matching the copied WASM image list |
+| `ok` | 1 only after successful download, preparation, Invoke and output reading |
+| `class_N_raw` | Raw output tensor element, in model order; failed rows are blank |
+| `result`, `label`, `right` | Predicted mapped label, reference label, correctness (1/0 or -1 when unavailable) |
+| `download_ms` | HTTP client request duration |
+| `preprocess_ms` | RAW decoding/channel ordering/normalization and tensor writes |
+| `invoke_ms` | TFLite Micro Invoke duration |
+| `inference_ms` | `preprocess_ms + invoke_ms`; excludes network, hashing and reading output |
+| `heap_before`, `heap_after`, `heap_used` | Free heap across capabilities before/after preparation + Invoke; positive decrease, clipped at zero |
+| `psram_before`, `psram_after`, `psram_used` | The same measurements restricted to PSRAM |
+| `stack_min_free_bytes` | Lifetime minimum free task stack, not per-image stack allocation |
+| `arena_reserved_bytes`, `arena_used_bytes` | Configured allocation and TFLite Micro's used arena size |
+| `input_sha256` | Hash of the downloaded RAW bytes, before preprocessing |
 
-## Embedded module
+The interpreter and arena are created before collecting per-image deltas, so `heap_used=0` does **not** mean the model uses no memory. Do not add heap and PSRAM figures: the total heap may already include PSRAM. CSV storage grows after each sample and affects subsequent free-memory values.
 
-Place `main.aot` or `main.wasm` in `main/`. The existing CMake rule gives `main.aot` priority when present. To use interpreted WASM, remove that AOT from the folder before reconfiguring/building the project.
-The host does not generate these files. The AOT must match the target and WAMR used in the firmware.
+The report is immutable once served. If report allocation fails, `/report` returns an error instead of presenting a partial report as complete. Rows for failed images have `ok=0`; summaries appear in the serial log and `/metadata`, not as fake CSV data rows. HTTP endpoints start after the benchmark and remain available while the board is powered.
 
-## Measurements and CSV
+## Metadata and reproducibility
 
-After the benchmark, the server serves the CSV at `http://<esp32-ip>:80/report` (the port and path are configurable).
-It starts after data collection to serve a complete, immutable report.
+`/metadata` includes model and image-list SHA-256, runtime/component version, IDF version, output dtype/scale/zero point, CPU frequency, arena sizes and summary counts. Dequantize output as `(raw - output_zero_point) * output_scale`; float output is already real-valued. Keep `dependencies.lock`, `host_config.h` and `sdkconfig` with a reproducible experiment. Espressif's component enables ESP-NN kernels; these are different implementations from the desktop TFLite and custom WASM kernels.
 
-Each image produces `ok`, `class_0_raw` through `class_N_raw`, the result, label, correctness, download time, inference time, heap and PSRAM before/after inference, memory differences, and the lowest observed free task stack space.
-`right=-1` means no evaluation (failure or unknown label).
-On failure, outputs are blank; measurements that were not taken remain zero.
-Time averages and accuracy only include successfully processed images; accuracy excludes unlabeled images. Ties count as classification errors for labeled images.
-
-Inference time measures the export call, including lookup and entry into WAMR; download and input copying are outside this interval.
-Heap/PSRAM differences do not represent peak memory use during inference.
-Historical minima in the summary include other tasks and initialization.
-
-The accumulated CSV resides in PSRAM; many images/classes may exhaust this space. In that case, the host logs the failure and the endpoint returns an HTTP error rather than presenting a partial CSV as complete.
-One image buffer and one result structure are reused throughout the benchmark.
-
+Use identical model hashes and downloaded bytes to compare predictions. The old WASM CSV lacks input hashes; validate the Cloudinary sources separately. Keep download and inference times separate, match CPU/PSRAM settings, and record that there is no warm-up. The default 1 MiB arena is a starting allocation; only execution on the board establishes whether this model fits and runs correctly.

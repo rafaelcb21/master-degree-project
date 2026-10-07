@@ -1,5 +1,7 @@
 # Diretórios de build e dependências
 /build/*
+/build-tflite/
+sdkconfig.old
 /managed_components/
 
 # Configurações de IDEs

@@ -4,15 +4,15 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <pthread.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "bh_platform.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "esp_heap_caps.h"
-#include "wasm_export.h"
+#include "tflite_runtime.h"
+#include "mbedtls/sha256.h"
 #include "esp_event.h"
+#include "esp_netif.h"
 #include "nvs_flash.h"
 #include "freertos/event_groups.h"
 #include "esp_http_server.h"
@@ -38,14 +38,16 @@
 #include "host_config.h"
 #include "image_list.h"
 
-#define TAG "wasm_benchmark"
+#define TAG "tflite_benchmark"
 #define TAG_HTTP "HTTP_SERVER"
 #define WIFI_TAG "wi-fi"
 static EventGroupHandle_t wifi_event_group;
 static const int WIFI_CONNECTED_BIT = BIT0;
+#if !CLASS_LABELS_ARE_INDICES
 static const int CLASS_LABEL_MAP[] = CLASS_LABELS;
 _Static_assert(sizeof(CLASS_LABEL_MAP) / sizeof(CLASS_LABEL_MAP[0]) == NUM_CLASSES,
                "CLASS_LABELS deve ter NUM_CLASSES rotulos");
+#endif
 /* ============================================================
  * Linha do relatório (equivalente a uma linha do SQLite no JS)
  * ============================================================ */
@@ -58,6 +60,9 @@ typedef struct {
     double output[NUM_CLASSES];
     int64_t download_us;
     int64_t inference_us;
+    int64_t preprocess_us;
+    int64_t invoke_us;
+    char input_sha256[65];
     size_t heap_before;
     size_t heap_after;
     size_t psram_before;
@@ -70,6 +75,7 @@ static char *g_report_text = NULL;
 static size_t g_report_len = 0;
 static size_t g_report_cap = 0;
 static bool g_report_failed = false;
+static size_t g_success, g_errors, g_labeled, g_correct, g_invalid;
 
 static void report_append(const char *fmt, ...) {
     if (g_report_failed) return;
@@ -121,107 +127,10 @@ static void report_csv_string(const char *value) {
     }
     report_append("\"");
 }
-/* ============================================================
- * WASM runtime
- * ============================================================ */
-static wasm_module_inst_t module_inst = NULL;
-static wasm_exec_env_t    exec_env    = NULL;
-static wasm_module_t      module_handle = NULL;
-static uint8_t           *g_wasm_file_buf = NULL;
-
-#if MODEL_MODULE_IS_AOT
-extern const uint8_t model_aot_start[] asm("_binary_main_aot_start");
-extern const uint8_t model_aot_end[] asm("_binary_main_aot_end");
-#else
-extern const uint8_t model_wasm_start[] asm("_binary_main_wasm_start");
-extern const uint8_t model_wasm_end[] asm("_binary_main_wasm_end");
-#endif
-
-/* ============================================================
- * Alocador customizado do WAMR: força a memória linear do WASM
- * (pesos, biases, slots, params — ~1,1MB) a vir da PSRAM,
- * em vez de depender do malloc() padrão (que prioriza a SRAM
- * interna, pequena e disputada com Wi-Fi/HTTP/etc).
- *
- * OBS: se compilar com uma versão do WAMR onde os nomes dos
- * campos de MemAllocOption.allocator forem diferentes (ex.:
- * "alloc"/"realloc"/"free" em vez de "malloc_func"/...),
- * confira o wasm_export.h da sua versão e ajuste os nomes.
- * ============================================================ */
-static void *psram_malloc(unsigned int size) {
-    void *ptr = heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
-    if (!ptr) {
-        ESP_LOGW(TAG, "PSRAM sem espaco para %u bytes, caindo para heap interna", size);
-        ptr = malloc(size);
-    }
-    return ptr;
-}
-
-static void *psram_realloc(void *ptr, unsigned int size) {
-    void *new_ptr = heap_caps_realloc(ptr, size, MALLOC_CAP_SPIRAM);
-    if (!new_ptr) {
-        ESP_LOGW(TAG, "PSRAM sem espaco para realloc de %u bytes, caindo para heap interna", size);
-        new_ptr = realloc(ptr, size);
-    }
-    return new_ptr;
-}
-
-static void psram_free(void *ptr) {
-    /* heap_caps_free funciona tanto para ponteiros vindos de heap_caps_malloc
-     * quanto de malloc() comum, pois o alocador do ESP-IDF é unificado por baixo. */
-    heap_caps_free(ptr);
-}
-
-/* Chama uma função WASM exportada sem parâmetros, que retorna i32.
- * Reaproveita o mesmo exec_env (chamadas sequenciais, sem concorrência). */
-static int32_t call_wasm_i32(const char *fname) {
-    wasm_function_inst_t func = wasm_runtime_lookup_function(module_inst, fname, NULL);
-    if (!func) {
-        ESP_LOGE(TAG, "Funcao WASM nao encontrada: %s (recompilou o .wasm?)", fname);
-        return -1;
-    }
-    uint32_t argv[1] = {0};
-    if (!wasm_runtime_call_wasm(exec_env, func, 0, argv)) {
-        const char *exception = wasm_runtime_get_exception(module_inst);
-        ESP_LOGE(TAG, "Erro ao chamar %s: %s", fname, exception ? exception : "sem detalhes");
-        return -1;
-    }
-    return (int32_t)argv[0];
-}
-
-static bool require_wasm_export(const char *fname) {
-    wasm_function_inst_t func = wasm_runtime_lookup_function(module_inst, fname, NULL);
-    if (!func) {
-        ESP_LOGE(TAG, "Export WASM obrigatorio ausente: %s", fname);
-        return false;
-    }
-    return true;
-}
-
-static void destroy_wasm_runtime(void) {
-    if (exec_env) {
-        wasm_runtime_destroy_exec_env(exec_env);
-        exec_env = NULL;
-    }
-    if (module_inst) {
-        wasm_runtime_deinstantiate(module_inst);
-        module_inst = NULL;
-    }
-    if (module_handle) {
-        wasm_runtime_unload(module_handle);
-        module_handle = NULL;
-    }
-    if (g_wasm_file_buf) {
-        heap_caps_free(g_wasm_file_buf);
-        g_wasm_file_buf = NULL;
-    }
-    wasm_runtime_destroy();
-}
-
 static void extend_task_wdt_for_benchmark(void) {
     const esp_task_wdt_config_t twdt_config = {
         .timeout_ms = BENCHMARK_WDT_TIMEOUT_MS,
-        /* O benchmark monopoliza o core onde a pthread do WAMR roda por
+        /* O benchmark monopoliza o core onde a tarefa TFLite roda por
          * periodos longos. Se mantivermos o IDLE1 monitorado, o TWDT
          * dispara mesmo com a inferencia funcionando corretamente.
          * Mantemos o monitoramento do core 0, onde ficam Wi-Fi e demais
@@ -242,92 +151,6 @@ static void extend_task_wdt_for_benchmark(void) {
     }
 }
 
-static bool initialize_wasm_runtime(void) {
-#if MODEL_MODULE_IS_AOT
-    const uint8_t *wasm_file_flash = model_aot_start;
-    uint32_t wasm_file_size = (uint32_t)(model_aot_end - model_aot_start);
-#else
-    const uint8_t *wasm_file_flash = model_wasm_start;
-    uint32_t wasm_file_size = (uint32_t)(model_wasm_end - model_wasm_start);
-#endif
-    char error_buf[WASM_ERROR_BUFFER_BYTES];
-
-    RuntimeInitArgs init_args;
-    memset(&init_args, 0, sizeof(RuntimeInitArgs));
-
-    ESP_LOGI(TAG, "PSRAM total: %u bytes | PSRAM livre antes de instanciar o WASM: %u bytes",
-             (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM),
-             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-    ESP_LOGI(TAG, "Artefato embutido selecionado no build: %s", MODEL_MODULE_KIND);
-
-    init_args.mem_alloc_type = Alloc_With_Allocator;
-    init_args.mem_alloc_option.allocator.malloc_func  = (void *)psram_malloc;
-    init_args.mem_alloc_option.allocator.realloc_func = (void *)psram_realloc;
-    init_args.mem_alloc_option.allocator.free_func    = (void *)psram_free;
-
-    if (!wasm_runtime_full_init(&init_args)) {
-        ESP_LOGE(TAG, "Falha ao inicializar o runtime WASM");
-        return false;
-    }
-
-    g_wasm_file_buf = (uint8_t *)heap_caps_malloc(wasm_file_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    if (!g_wasm_file_buf) {
-        ESP_LOGW(TAG, "Falha ao alocar buffer do WASM na PSRAM; tentando heap interna");
-        g_wasm_file_buf = (uint8_t *)malloc(wasm_file_size);
-    }
-    if (!g_wasm_file_buf) {
-        ESP_LOGE(TAG, "Falha ao alocar %u bytes para copiar o modulo WASM", (unsigned)wasm_file_size);
-        wasm_runtime_destroy();
-        return false;
-    }
-
-    memcpy(g_wasm_file_buf, wasm_file_flash, wasm_file_size);
-
-    module_handle = wasm_runtime_load(g_wasm_file_buf, wasm_file_size, error_buf, sizeof(error_buf));
-    if (!module_handle) {
-        ESP_LOGE(TAG, "Falha ao carregar o modulo WASM: %s", error_buf);
-        destroy_wasm_runtime();
-        return false;
-    }
-
-    /* Nao libere g_wasm_file_buf aqui.
-     * O WAMR mantem referencias a partes do binario carregado
-     * (nomes de import/export e outros metadados). Se o buffer
-     * for liberado neste ponto, o lookup de funcoes pode falhar
-     * mesmo com o export existindo no .wasm. */
-    /* O modulo usa memoria linear/exportada para pesos, slots e saida.
-     * Nao precisamos reservar app heap do WAMR aqui.
-     * Isso evita o erro "init app heap failed" causado pelo alinhamento
-     * do pool do app heap dentro da memoria linear do modulo. */
-    module_inst = wasm_runtime_instantiate(module_handle, WASM_MODULE_STACK_BYTES, WASM_APP_HEAP_BYTES, error_buf, sizeof(error_buf));
-    if (!module_inst) {
-        ESP_LOGE(TAG, "Falha ao instanciar o modulo WASM: %s", error_buf);
-        destroy_wasm_runtime();
-        return false;
-    }
-
-    ESP_LOGI(TAG, "WASM instanciado. PSRAM livre apos instanciar: %u bytes (consumo aprox: memoria linear + heap/stack do modulo)",
-             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-
-    exec_env = wasm_runtime_create_exec_env(module_inst, WASM_EXEC_STACK_BYTES);
-    if (!exec_env) {
-        ESP_LOGE(TAG, "Falha ao criar exec_env WASM");
-        destroy_wasm_runtime();
-        return false;
-    }
-
-    if ((USE_READY_HANDSHAKE && !require_wasm_export(WASM_READY_EXPORT))
-        || !require_wasm_export(WASM_INPUT_PTR_EXPORT)
-        || !require_wasm_export(WASM_RUN_EXPORT)
-        || !require_wasm_export(WASM_OUTPUT_PTR_EXPORT)) {
-        ESP_LOGE(TAG, "O modulo WASM embutido nao corresponde a interface esperada pelo firmware");
-        destroy_wasm_runtime();
-        return false;
-    }
-
-    return true;
-}
-
 /* ============================================================
  * Wi-Fi
  * ============================================================ */
@@ -338,6 +161,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *)event_data;
         ESP_LOGW(WIFI_TAG, "Wi-Fi desconectado. reason=%d. Tentando reconectar...", event ? event->reason : -1);
+        xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
         esp_wifi_connect();
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
@@ -416,6 +240,7 @@ static bool download_image(const char *url, uint8_t *out_buf, size_t expected_le
         .event_handler = http_event_handler,
         .user_data = &ctx,
         .timeout_ms = HTTP_DOWNLOAD_TIMEOUT_MS,
+        .is_async = true, /* Cloudinary URLs are HTTPS. */
         .crt_bundle_attach = esp_crt_bundle_attach, // necessário para https://
         .keep_alive_enable = HTTP_KEEP_ALIVE_ENABLE,
     };
@@ -427,7 +252,27 @@ static bool download_image(const char *url, uint8_t *out_buf, size_t expected_le
     }
 
     int64_t t0 = esp_timer_get_time();
-    esp_err_t err = esp_http_client_perform(client);
+    esp_err_t err;
+    int64_t next_progress = t0 + (int64_t)HTTP_PROGRESS_INTERVAL_MS * 1000;
+    do {
+        err = esp_http_client_perform(client);
+        int64_t now = esp_timer_get_time();
+        if (ctx.overflow) { err = ESP_ERR_INVALID_SIZE; break; }
+        if (now - t0 >= (int64_t)HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS * 1000) {
+            ESP_LOGE(TAG_HTTP, "Download excedeu limite total: %u/%u bytes", (unsigned)ctx.len, (unsigned)expected_len);
+            err = ESP_ERR_TIMEOUT;
+            break;
+        }
+        if (err == ESP_ERR_HTTP_EAGAIN) {
+            if (now >= next_progress) {
+                ESP_LOGW(TAG_HTTP, "Download em andamento: %u/%u bytes, %.1f s, status=%d",
+                         (unsigned)ctx.len, (unsigned)expected_len, (now - t0) / 1000000.0,
+                         esp_http_client_get_status_code(client));
+                next_progress = now + (int64_t)HTTP_PROGRESS_INTERVAL_MS * 1000;
+            }
+            vTaskDelay(pdMS_TO_TICKS(10) + 1);
+        }
+    } while (err == ESP_ERR_HTTP_EAGAIN);
     int64_t t1 = esp_timer_get_time();
     if (download_us) *download_us = t1 - t0;
 
@@ -459,8 +304,8 @@ static void filename_from_url(const char *url, char *out, size_t out_size) {
 }
 
 /* ============================================================
- * Processa uma imagem: baixa, aguarda o WASM ficar pronto,
- * escreve na memoria, roda a inferencia e coleta metricas.
+ * Processa uma imagem: download, preparacao RGB, Invoke e metricas.
+ * Execucao sincrona: a proxima imagem so entra apos Invoke retornar.
  * ============================================================ */
 static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t *img_buf) {
     memset(row, 0, sizeof(*row));
@@ -469,69 +314,37 @@ static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t
     row->result = -1;
     row->right = -1;
     if (!download_image(entry->url, img_buf, INPUT_BYTES, &row->download_us)) return;
+    ESP_LOGI(TAG, "Download concluido: %s (%u bytes); calculando SHA256", row->name_image, (unsigned)INPUT_BYTES);
 
-    if (USE_READY_HANDSHAKE) {
-        int64_t deadline = esp_timer_get_time() + (int64_t)READY_TIMEOUT_MS * 1000;
-        for (;;) {
-            int32_t ready = call_wasm_i32(WASM_READY_EXPORT);
-            if (ready == 1) break;
-            if (ready < 0 || esp_timer_get_time() >= deadline) {
-                ESP_LOGE(TAG, "Falha/timeout aguardando modulo pronto; imagem descartada");
-                return;
-            }
-            TickType_t ticks = pdMS_TO_TICKS(READY_POLL_MS);
-            vTaskDelay(ticks ? ticks : 1);
-        }
-    }
-
-    int32_t input_ptr = call_wasm_i32(WASM_INPUT_PTR_EXPORT);
-    if (input_ptr < 0 || !wasm_runtime_validate_app_addr(module_inst, (uint32_t)input_ptr, INPUT_BYTES)) {
-        ESP_LOGE(TAG, "Regiao de entrada invalida");
-        return;
-    }
-    uint8_t *input = wasm_runtime_addr_app_to_native(module_inst, (uint32_t)input_ptr);
-    if (!input) return;
-    memcpy(input, img_buf, INPUT_BYTES);
-#if WRITE_FORMAT_FLAG
-    if (!wasm_runtime_validate_app_addr(module_inst, FORMAT_FLAG_ADDR, 1)) return;
-    uint8_t *format = wasm_runtime_addr_app_to_native(module_inst, FORMAT_FLAG_ADDR);
-    if (!format) return;
-    *format = INPUT_FORMAT_VALUE;
-#endif
-
+    uint8_t digest[32];
+    if (mbedtls_sha256(img_buf, INPUT_BYTES, digest, 0) != 0) return;
+    for (size_t i = 0; i < sizeof(digest); ++i) snprintf(row->input_sha256 + 2 * i, 3, "%02x", digest[i]);
+    ESP_LOGI(TAG, "Iniciando preparacao + Invoke: %s | heap=%u PSRAM=%u maior_bloco_PSRAM=%u",
+             row->name_image, (unsigned)esp_get_free_heap_size(),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
     row->heap_before = esp_get_free_heap_size();
     row->psram_before = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
     int64_t t0 = esp_timer_get_time();
-    int32_t status = call_wasm_i32(WASM_RUN_EXPORT);
-    row->inference_us = esp_timer_get_time() - t0;
+    bool prepared = model_prepare_input(img_buf, INPUT_BYTES);
+    int64_t t1 = esp_timer_get_time();
+    bool invoked = prepared && model_invoke();
+    int64_t t2 = esp_timer_get_time();
+    row->preprocess_us = t1 - t0;
+    row->invoke_us = t2 - t1;
+    row->inference_us = t2 - t0; /* Includes RGB conversion, as the WASM run does. */
     row->heap_after = esp_get_free_heap_size();
     row->psram_after = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-    /* ESP-IDF informa o high-water mark em bytes. */
+    ESP_LOGI(TAG, "Invoke retornou: %s | sucesso=%d | preprocess=%.3f ms invoke=%.3f ms",
+             row->name_image, invoked, row->preprocess_us / 1000.0, row->invoke_us / 1000.0);
     row->stack_min_free_bytes = uxTaskGetStackHighWaterMark(NULL);
-    if (status != INFERENCE_SUCCESS_CODE) {
-        ESP_LOGE(TAG, "Inferencia falhou: status=%" PRId32, status);
+    if (!invoked || !model_read_output(row->output, NUM_CLASSES)) {
+        ESP_LOGE(TAG, "TFLite preparation/Invoke/output failed");
         return;
     }
-
-    int32_t output_ptr = call_wasm_i32(WASM_OUTPUT_PTR_EXPORT);
-    if (output_ptr < 0 || !wasm_runtime_validate_app_addr(module_inst, (uint32_t)output_ptr, OUTPUT_BYTES)) {
-        ESP_LOGE(TAG, "Regiao de saida invalida");
-        return;
-    }
-    const uint8_t *output = wasm_runtime_addr_app_to_native(module_inst, (uint32_t)output_ptr);
-    if (!output) return;
     int best = 0;
     bool tied = false;
     for (int c = 0; c < NUM_CLASSES; ++c) {
-#if OUTPUT_TYPE == OUTPUT_FLOAT32
-        float value;
-        memcpy(&value, output + c * OUTPUT_ELEMENT_BYTES, sizeof(value));
-        row->output[c] = value;
-#elif OUTPUT_TYPE == OUTPUT_INT8
-        row->output[c] = (int8_t)output[c];
-#else
-        row->output[c] = output[c];
-#endif
         if (!isfinite(row->output[c])) {
             ESP_LOGE(TAG, "Saida nao finita na classe %d", c);
             return;
@@ -543,7 +356,11 @@ static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t
             tied = true;
         }
     }
+#if CLASS_LABELS_ARE_INDICES
+    row->result = tied ? -1 : best;
+#else
     row->result = tied ? -1 : CLASS_LABEL_MAP[best];
+#endif
     row->right = entry->label < 0 ? -1 : (!tied && row->result == entry->label);
     row->ok = 1;
 }
@@ -552,6 +369,7 @@ static void run_benchmark(void) {
     uint8_t *img_buf = heap_caps_malloc(INPUT_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     report_row_t *row = heap_caps_malloc(sizeof(*row), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!img_buf || !row) {
+        g_report_failed = true;
         ESP_LOGE(TAG, "Sem memoria para buffers do benchmark");
         heap_caps_free(img_buf);
         heap_caps_free(row);
@@ -560,7 +378,7 @@ static void run_benchmark(void) {
     report_append("name_image,ok");
     for (int c = 0; c < NUM_CLASSES; ++c) report_append(",class_%d_raw", c);
     report_append(",result,label,right,download_ms,inference_ms,heap_before,heap_after,"
-                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes\n");
+                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes,preprocess_ms,invoke_ms,arena_reserved_bytes,arena_used_bytes,input_sha256\n");
 
     size_t success = 0, errors = 0, labeled = 0, correct = 0, invalid = 0;
     int64_t sum_us = 0, min_us = INT64_MAX, max_us = 0, sum_download_us = 0;
@@ -575,12 +393,15 @@ static void run_benchmark(void) {
         }
         size_t heap_used = row->heap_before > row->heap_after ? row->heap_before - row->heap_after : 0;
         size_t psram_used = row->psram_before > row->psram_after ? row->psram_before - row->psram_after : 0;
-        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u\n",
+        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%u,%u,%s\n",
                       row->result, row->label, row->right,
                       row->download_us / 1000.0, row->inference_us / 1000.0,
                       (unsigned)row->heap_before, (unsigned)row->heap_after, (unsigned)heap_used,
                       (unsigned)row->psram_before, (unsigned)row->psram_after, (unsigned)psram_used,
-                      (unsigned)row->stack_min_free_bytes);
+                      (unsigned)row->stack_min_free_bytes, row->preprocess_us / 1000.0, row->invoke_us / 1000.0,
+                      (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), row->input_sha256);
+        if (g_report_failed) break;
+        vTaskDelay(pdMS_TO_TICKS(BENCHMARK_YIELD_MS) + 1);
         if (!row->ok) {
             ++errors;
             ESP_LOGE(TAG, "Falha: %s", row->name_image);
@@ -600,20 +421,21 @@ static void run_benchmark(void) {
                  row->name_image, row->result, row->label, row->right,
                  row->download_us / 1000.0, row->inference_us / 1000.0);
     }
-    report_append("\n# total=%u sucesso=%u erros=%u empates=%u\n",
+    ESP_LOGI(TAG, "total=%u sucesso=%u erros=%u empates=%u",
                   (unsigned)NUM_IMAGES, (unsigned)success, (unsigned)errors, (unsigned)invalid);
-    report_append("# rotuladas_com_sucesso=%u acertos=%u\n", (unsigned)labeled, (unsigned)correct);
-    if (labeled) report_append("# accuracy_pct=%.3f\n", 100.0 * correct / labeled);
-    report_append("# inference_avg_ms=%.3f inference_min_ms=%.3f inference_max_ms=%.3f\n",
+    ESP_LOGI(TAG, "rotuladas_com_sucesso=%u acertos=%u", (unsigned)labeled, (unsigned)correct);
+    if (labeled) ESP_LOGI(TAG, "accuracy_pct=%.3f", 100.0 * correct / labeled);
+    ESP_LOGI(TAG, "inference_avg_ms=%.3f inference_min_ms=%.3f inference_max_ms=%.3f",
                   success ? sum_us / (double)success / 1000.0 : 0.0,
                   success ? min_us / 1000.0 : 0.0, max_us / 1000.0);
-    report_append("# download_avg_ms=%.3f\n", success ? sum_download_us / (double)success / 1000.0 : 0.0);
-    report_append("# heap_min_free_bytes=%u psram_min_free_bytes=%u psram_total_bytes=%u\n",
+    ESP_LOGI(TAG, "download_avg_ms=%.3f", success ? sum_download_us / (double)success / 1000.0 : 0.0);
+    ESP_LOGI(TAG, "heap_min_free_bytes=%u psram_min_free_bytes=%u psram_total_bytes=%u",
                   (unsigned)esp_get_minimum_free_heap_size(),
                   (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM),
                   (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
     ESP_LOGI(TAG, "Benchmark concluido: sucesso=%u erros=%u; CSV em http://<ip>:%d%s",
              (unsigned)success, (unsigned)errors, REPORT_HTTP_PORT, REPORT_HTTP_URI);
+    g_success = success; g_errors = errors; g_labeled = labeled; g_correct = correct; g_invalid = invalid;
     heap_caps_free(row);
     heap_caps_free(img_buf);
 }
@@ -628,12 +450,40 @@ static esp_err_t report_handler(httpd_req_t *req) {
                                    "Relatorio indisponivel ou incompleto");
     }
     httpd_resp_set_type(req, "text/csv; charset=utf-8");
+    httpd_resp_set_hdr(req, "Content-Disposition", "attachment; filename=report-tflite.csv");
     return httpd_resp_send(req, g_report_text, g_report_len);
+}
+
+static esp_err_t metadata_handler(httpd_req_t *req) {
+    if (g_report_failed || !g_report_text) {
+        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Benchmark incomplete");
+    }
+    /* This server runs synchronous handlers serially. Keep the response off
+     * the httpd task stack; httpd_resp_send consumes it before returning. */
+    static char json[2048];
+    int n = snprintf(json, sizeof(json),
+        "{\"runtime\":\"TensorFlow Lite Micro\",\"component_version\":\"1.3.5\",\"kernels\":\"ESP-NN enabled\","
+        "\"model_sha256\":\"%s\",\"image_list_sha256\":\"%s\",\"idf_version\":\"%s\","
+        "\"input_format\":%d,\"width\":%d,\"height\":%d,\"classes\":%d,"
+        "\"output_type\":\"%s\",\"output_scale\":%.9g,\"output_zero_point\":%d,"
+        "\"arena_reserved_bytes\":%u,\"arena_used_bytes\":%u,\"cpu_mhz\":%d,"
+        "\"total\":%u,\"success\":%u,\"errors\":%u,\"labeled\":%u,\"correct\":%u,\"ties\":%u,"
+        "\"warmup_runs\":0,\"inference_ms_scope\":\"prepare_input + Invoke; download and output reading excluded\","
+        "\"heap_scope\":\"free heap across capabilities; PSRAM also reported separately\"}",
+        model_sha256(), IMAGE_LIST_SHA256, esp_get_idf_version(), INPUT_FORMAT, IMG_W, IMG_H, NUM_CLASSES,
+        model_output_type(), model_output_scale(), model_output_zero_point(),
+        (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ,
+        (unsigned)NUM_IMAGES, (unsigned)g_success, (unsigned)g_errors, (unsigned)g_labeled,
+        (unsigned)g_correct, (unsigned)g_invalid);
+    if (n < 0 || (size_t)n >= sizeof(json)) return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Metadata too large");
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_send(req, json, n);
 }
 
 static void start_file_server(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = REPORT_HTTP_PORT;
+    config.stack_size = REPORT_HTTP_STACK_BYTES;
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) == ESP_OK) {
         httpd_uri_t report_uri = {
@@ -643,6 +493,14 @@ static void start_file_server(void) {
             .user_ctx = NULL
         };
         httpd_register_uri_handler(server, &report_uri);
+        const httpd_uri_t metadata_uri = { .uri = "/metadata", .method = HTTP_GET, .handler = metadata_handler };
+        httpd_register_uri_handler(server, &metadata_uri);
+        esp_netif_ip_info_t ip;
+        esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+        if (netif && esp_netif_get_ip_info(netif, &ip) == ESP_OK) {
+            ESP_LOGI(TAG_HTTP, "Download CSV: http://" IPSTR ":%d%s", IP2STR(&ip.ip), REPORT_HTTP_PORT, REPORT_HTTP_URI);
+            ESP_LOGI(TAG_HTTP, "Metadata: http://" IPSTR ":%d/metadata", IP2STR(&ip.ip), REPORT_HTTP_PORT);
+        }
         ESP_LOGI(TAG_HTTP, "Servidor HTTP iniciado. Relatorio em: http://<ip_do_esp32>:%d%s",
                  REPORT_HTTP_PORT, REPORT_HTTP_URI);
     } else {
@@ -650,68 +508,42 @@ static void start_file_server(void) {
     }
 }
 
-static void *benchmark_thread_main(void *arg) {
+static void benchmark_task(void *arg) {
     (void)arg;
-
-    if (!wasm_runtime_init_thread_env()) {
-        ESP_LOGE(TAG, "Falha ao inicializar thread env do WAMR");
-        return NULL;
-    }
-
-    if (!initialize_wasm_runtime()) {
-        ESP_LOGE(TAG, "Falha na inicializacao do WASM, saindo...");
-        wasm_runtime_destroy_thread_env();
-        return NULL;
-    }
-
-
     extend_task_wdt_for_benchmark();
-
-    ESP_LOGI(TAG, "Heap (interna) livre antes do benchmark: %u bytes", (unsigned)esp_get_free_heap_size());
-    ESP_LOGI(TAG, "PSRAM total: %u bytes | PSRAM livre antes do benchmark: %u bytes",
-             (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM),
-             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+#if !CLASS_LABELS_ARE_INDICES
+    for (int i = 0; i < NUM_CLASSES; ++i) {
+        if (CLASS_LABEL_MAP[i] < 0) { ESP_LOGE(TAG, "Negative class label"); vTaskDelete(NULL); return; }
+        for (int j = 0; j < i; ++j) {
+            if (CLASS_LABEL_MAP[i] == CLASS_LABEL_MAP[j]) { ESP_LOGE(TAG, "Duplicate class label"); vTaskDelete(NULL); return; }
+        }
+    }
+#endif
+    if (!model_initialize()) {
+        ESP_LOGE(TAG, "TFLite initialization failed; no benchmark was executed");
+        vTaskDelete(NULL);
+        return;
+    }
     run_benchmark();
     start_file_server();
-
-    while (1) {
-        vTaskDelay(pdMS_TO_TICKS(IDLE_DELAY_MS));
-    }
-
-    return NULL;
+    vTaskDelete(NULL);
 }
 
-/* ============================================================
- * main
- * ============================================================ */
 void app_main(void) {
-    pthread_t benchmark_thread;
-    pthread_attr_t thread_attr;
-    int pthread_res;
-
     wifi_init_sta();
-    EventBits_t wifi_bits = xEventGroupWaitBits(
-        wifi_event_group,
-        WIFI_CONNECTED_BIT,
-        pdFALSE,
-        pdTRUE,
-        pdMS_TO_TICKS(WIFI_CONNECT_TIMEOUT_MS));
-    if ((wifi_bits & WIFI_CONNECTED_BIT) == 0) {
-        ESP_LOGE(WIFI_TAG, "Timeout aguardando conexao Wi-Fi. Verifique SSID/senha e o motivo de desconexao nos logs.");
+    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE,
+                                          pdMS_TO_TICKS(WIFI_CONNECT_TIMEOUT_MS));
+    if (!(bits & WIFI_CONNECTED_BIT)) {
+        ESP_LOGE(WIFI_TAG, "Wi-Fi timeout: check host_config.h");
         return;
     }
-    ESP_LOGI(WIFI_TAG, "Wi-Fi conectado.");
-
-    pthread_attr_init(&thread_attr);
-    pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE);
-    pthread_attr_setstacksize(&thread_attr, BENCHMARK_THREAD_STACK_BYTES);
-
-    pthread_res = pthread_create(&benchmark_thread, &thread_attr, benchmark_thread_main, NULL);
-    pthread_attr_destroy(&thread_attr);
-    if (pthread_res != 0) {
-        ESP_LOGE(TAG, "Falha ao criar pthread do benchmark/WASM: %d", pthread_res);
-        return;
+#if CONFIG_FREERTOS_UNICORE
+    const int core = 0;
+#else
+    const int core = BENCHMARK_TASK_CORE;
+#endif
+    if (xTaskCreatePinnedToCore(benchmark_task, "tflite_benchmark", BENCHMARK_THREAD_STACK_BYTES,
+                               NULL, BENCHMARK_TASK_PRIORITY, NULL, core) != pdPASS) {
+        ESP_LOGE(TAG, "Could not create benchmark task");
     }
-
-    pthread_join(benchmark_thread, NULL);
 }

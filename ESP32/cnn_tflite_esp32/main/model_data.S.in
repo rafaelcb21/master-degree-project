@@ -1,0 +1,8 @@
+/* Aligned flash-mapped FlatBuffer; no extra model copy in PSRAM. */
+.section .rodata.tflite_model,"a"
+.balign 16
+.global tflite_model_start
+tflite_model_start:
+.incbin "@TFLITE_MODEL_ASM_PATH@"
+.global tflite_model_end
+tflite_model_end:

@@ -1,136 +1,115 @@
-﻿# Projeto ESP32-CAM com WebAssembly (WAMR)
+# Benchmark TFLite Micro no ESP32
 
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
-> **WASM → AOT no WSL:** [README_AOT_WSL.pt-BR.md](README_AOT_WSL.pt-BR.md).
-> Passo a passo com versões do projeto, LLVM Xtensa, wamrc, firmware e diagnóstico.
-> Configure o host e a lista de imagens com [HOST.pt-BR.md](HOST.pt-BR.md).
-> O host atual baixa arquivos RAW do Cloudinary; as seções sobre câmera abaixo descrevem a configuração histórica.
-> O [guia histórico completo](README_ptBR.pt-BR.md) mantém seu nome original e também possui versão em inglês.
+Este projeto ESP-IDF independente executa o próprio `.tflite` no ESP32 com **TensorFlow Lite Micro**, baixa entradas RAW do Cloudinary e disponibiliza resultados CSV para comparar com o [host WASM/AOT](../cnn_webassembly_esp32/README.pt-BR.md). O modelo padrão é o Drowsiness, com entrada RGB 128×128 e duas classes de saída.
 
-Este projeto tem como objetivo configurar e executar um firmware personalizado na placa **ESP32-CAM**, integrando a captura de imagens com a execução de módulos WebAssembly pelo **WASM-Micro-Runtime (WAMR)**.
+## O que mudou em relação à cópia
 
-## 1. Instalação e configuração do ambiente ESP32-CAM
+- `main/main.c`: Wi-Fi, downloads, benchmark sequencial, medições e endpoints HTTP.
+- `main/tflite_runtime.cpp`: TensorFlow Lite Micro, validação do modelo, conversão da entrada e `Invoke()`.
+- `main/host_config.h`: configurações editáveis, dimensões, formato, rótulos e tamanho da arena.
+- `main/image_list.h`: lista preservada de URLs Cloudinary e rótulos esperados.
+- `model_int8_esp32.tflite`: modelo original incorporado na flash com alinhamento; não há conversão para WAT, WASM ou AOT.
+- `main/idf_component.yml`: TFLite Micro 1.3.5 da Espressif; a versão resolvida de ESP-NN está em `dependencies.lock`.
+- `legacy_wasm/`: artefatos WASM e guias antigos copiados. Seu CSV **não** é uma medição TFLite.
 
-### Instalar o ESP-IDF
+O projeto original `cnn_webassembly_esp32` permanece intacto. As pastas `build/` copiadas não são usadas; este guia usa a pasta nova `build-tflite/`.
 
-- Baixe o ESP-IDF no site da [Espressif](https://dl.espressif.com/dl/esp-idf/).
-- Adicione `idf.py.exe` à variável de ambiente **PATH**:
+## 1. Configurar
+
+Abra um **terminal ESP-IDF 5.3**. A configuração conferida é para ESP32 clássico com PSRAM e flash de 4 MiB. Confirme o modo/frequência da PSRAM e o tamanho da flash da sua placa no `menuconfig`; essas características não vêm do modelo.
+
+Edite `main/host_config.h`:
+
+```c
+#define WIFI_SSID "sua-rede"
+#define WIFI_PASS "sua-senha"
+#define INPUT_FORMAT INPUT_RGB565_LE
+#define IMG_W 128
+#define IMG_H 128
+#define NUM_CLASSES 2
+#define CLASS_LABELS_ARE_INDICES 0
+#define CLASS_LABELS { 1, 0 }
+#define TENSOR_ARENA_BYTES (1024 * 1024)
+```
+
+Edite as URLs em `main/image_list.h`. Cada download deve conter exatamente 32.768 bytes RGB565 little-endian na configuração padrão. São bytes RAW, não arquivos PNG/JPEG. O rótulo `-1` indica ausência de referência. A lista é executada na ordem, uma vez a cada inicialização.
+
+O host expande RGB565 para RGB888 com a mesma replicação de bits do WASM e coloca os bytes na entrada uint8 do TFLite. A camada QUANTIZE original do modelo é executada pelo TFLite Micro. A imagem seguinte só entra após o retorno síncrono de `Invoke()`; não há handshake WASM.
+
+## 2. Compilar e gravar
+
+Na pasta deste projeto:
+
+```powershell
+idf.py -B build-tflite fullclean
+idf.py -B build-tflite reconfigure
+idf.py -B build-tflite menuconfig
+idf.py -B build-tflite build
+idf.py -B build-tflite -p COM3 flash monitor
+```
+
+Substitua `COM3` pela porta da placa. A primeira configuração baixa os componentes gerenciados. Mantenha `-B build-tflite` nos comandos seguintes. Saia do monitor com `Ctrl+]`.
+
+O firmware valida schema, disponibilidade de operadores, tipos, dimensões e quantidade de classes. Modelo incompatível ou arena insuficiente interrompem o benchmark com uma mensagem no log. Aumente a arena somente se houver PSRAM para ela, a imagem baixada e o CSV acumulado. Novos operadores exigem registrar seus kernels em `tflite_runtime.cpp` e confirmar o suporte aos tipos usados pelo modelo.
+
+## 3. Baixar os resultados
+
+Procure `Conectado ao Wi-Fi. IP:` no monitor serial. Esse é o endereço do ESP32, não o do computador. Ao concluir o benchmark, o host imprime as URLs completas:
 
 ```text
-C:\Espressif\tools\idf-exe\1.0.3
+http://<IP-DO-ESP32>:80/report
+http://<IP-DO-ESP32>:80/metadata
 ```
 
-### Criar o projeto
+CSV e metadados ficam disponíveis depois de processar a lista. Mantenha a placa ligada: o CSV fica na RAM e se perde ao reiniciar. Em um computador na mesma rede, salve os dois arquivos em uma pasta nova:
 
-- Use o [projeto de exemplo oficial do ESP-IDF](https://github.com/espressif/esp-idf/tree/master/tools/templates/sample_project).
-- Execute a compilação inicial para gerar o `sdkconfig`:
-
-```bash
-idf.py build
+```powershell
+$runDir = Join-Path 'reports' (Get-Date -Format 'yyyyMMdd-HHmmss')
+New-Item -ItemType Directory -Path $runDir -Force
+Invoke-WebRequest 'http://192.168.0.50:80/report' -OutFile (Join-Path $runDir 'report-tflite.csv')
+Invoke-WebRequest 'http://192.168.0.50:80/metadata' -OutFile (Join-Path $runDir 'metadata.json')
 ```
 
-### Habilitar PSRAM
+Troque o IP de exemplo pelo endereço mostrado pela placa. No Research Explorer, atualize o índice e abra a pasta `reports/` deste projeto. Esta adaptação não inclui medições da placa: elas precisam ser geradas gravando e executando o firmware no seu dispositivo.
 
-Ative manualmente no `sdkconfig`:
+## Se parar depois da validação do certificado
 
-```text
-CONFIG_SPIRAM=y
+Se aparecer `A stack overflow in task httpd has been detected` ao abrir os resultados, grave o firmware atualizado: o buffer JSON de `/metadata` fica fora da pilha e `REPORT_HTTP_STACK_BYTES`, em `main/host_config.h`, reserva 8 KiB para o servidor. Essa falha ocorre no servidor HTTP, após as inferências, e um reinício perde os relatórios mantidos na RAM.
+
+`Certificate validated` confirma apenas a verificação do certificado TLS. Observe os próximos logs: `Download concluido`, `Iniciando preparacao + Invoke` e `Invoke retornou`. Eles permitem distinguir atrasos de rede de travamentos na preparação ou inferência.
+
+Os downloads HTTPS do Cloudinary usam consultas assíncronas. Em `main/host_config.h`, `HTTP_DOWNLOAD_TIMEOUT_MS` define o timeout de rede (15 segundos), `HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS` define o limite total verificado entre consultas (45 segundos) e `HTTP_PROGRESS_INTERVAL_MS` controla os logs de progresso (5 segundos). Um download com falha gera uma linha `ok=0` e o processamento segue para a próxima imagem. Essas verificações não interrompem uma inferência travada ou uma chamada interna do driver.
+
+Recompile e grave o firmware para aplicar as mudanças. Reiniciar descarta o relatório mantido na RAM e recomeça a lista de imagens; `/report` fica disponível após o término do benchmark.
+
+## Comparar resultados
+
+Consulte as [definições das medições](HOST.pt-BR.md). O CSV preserva os nomes das colunas do host WASM e acrescenta:
+
+- `preprocess_ms`: conversão RAW e preenchimento da entrada do modelo.
+- `invoke_ms`: apenas `Invoke()` do TFLite Micro.
+- `inference_ms`: preparação + Invoke. A chamada WASM inclui a conversão RGB sintética, portanto este escopo é mais próximo para comparar os hosts embarcados; cada implementação ainda tem custos próprios.
+- `arena_reserved_bytes`, `arena_used_bytes`: memória persistente da arena dos tensores.
+- `input_sha256`: SHA-256 dos bytes RAW baixados.
+
+`/metadata` registra runtime, hashes do modelo e da lista, quantização da saída, frequência da CPU e contagens. Guarde os metadados com cada CSV. Compare o mesmo modelo, bytes de imagem, dimensões, mapeamento de classes e configurações da placa. A variação de heap não representa toda a memória usada pelo modelo. Os tempos excluem download HTTP e interpretação da saída; não há inferência de aquecimento.
+
+## Usar outro modelo
+
+### Validação desta adaptação
+
+O firmware padrão compilou com ESP-IDF 5.3.1 para `esp32`: 2.009.392 bytes, dentro da partição de aplicação de 2 MiB (4% livres). Foram conferidos o alinhamento de 16 bytes do modelo incorporado e a preservação da lista de imagens. Isso valida a compilação, não a execução física. O tamanho da arena, os downloads e os resultados de inferência ainda precisam ser confirmados na placa. Um modelo maior pode exigir uma partição de aplicação maior.
+
+Selecione o arquivo durante a configuração:
+
+```powershell
+idf.py -B build-tflite -D TFLITE_MODEL_FILE=C:/caminho/modelo.tflite reconfigure
 ```
 
-Ou use o `menuconfig`:
+Ajuste dimensões, formato, classes e rótulos em `host_config.h` e substitua a lista Cloudinary por imagens RAW compatíveis. Para o MobileNetV2 ImageNet incluído no repositório: 224×224, `INPUT_BGR888`, 1.000 classes, `CLASS_LABELS_ARE_INDICES=1`, rótulos desconhecidos `-1`. Seu CSV contém as 1.000 saídas brutas; comece com poucas imagens para não esgotar a RAM do relatório. As necessidades de flash e arena desse modelo devem ser verificadas separadamente.
 
-```bash
-idf.py menuconfig
-```
+O host aceita saídas uint8/int8 com quantização por tensor ou float32. A entrada uint8 recebe os bytes RGB diretamente, como nos dois pacotes atuais. Para modelos int8/float, confira `INPUT_REAL_MULTIPLIER` e `INPUT_REAL_OFFSET` conforme o pré-processamento do modelo. São parâmetros configuráveis, não uma regra universal.
 
-```text
-Component config → ESP PSRAM → [*] Support for external SPI-connected RAM
-```
-
-### Tabela de partições personalizada
-
-No `menuconfig`, selecione:
-
-```text
-Partition Table → Partition Table → Custom partition table CSV
-```
-
-Insira o seguinte no arquivo `partitions.csv` da raiz:
-
-```csv
-# Name, Type, SubType, Offset, Size, Flags
-nvs,data,nvs,0x9000,24K,
-phy_init,data,phy,0xf000,4K,
-factory,app,factory,0x10000,2M,
-spiffs,data,spiffs,0x210000,0x100000,
-```
-
-## 2. Adicionar o WAMR
-
-Adicione ao `idf_component.yml`:
-
-```yaml
-dependencies:
-  wasm-micro-runtime:
-    version: "^1"
-  idf:
-    version: ">=4.4"
-  espressif/esp32-camera:
-    version: "*"
-```
-
-O ESP-IDF obtém as dependências automaticamente durante a compilação.
-Não é necessário clonar o WAMR manualmente.
-
-## 3. Compilar, gravar e monitorar o firmware
-
-Execute em um terminal do ESP-IDF:
-
-```bash
-idf.py set-target esp32
-idf.py fullclean
-idf.py build
-idf.py flash monitor
-```
-
-O comando `monitor` exibe a saída da placa em tempo real.
-
-## Requisitos
-
-- **Placa:** ESP32-CAM com PSRAM.
-- **Sistema:** Windows (recomendado).
-- **Ferramentas:** Git, Python 3.8+ e `idf.py` no PATH.
-
-## Comandos wat2wasm e xxd
-
-- Baixe o [WABT](https://github.com/WebAssembly/wabt/releases) para usar `wat2wasm`.
-- Baixe o [xxd para Windows](https://sourceforge.net/projects/xxd-for-windows/).
-- Adicione ambos ao PATH do sistema.
-
-Converta `.wat` para `.wasm`:
-
-```sh
-wat2wasm .\hello_word.wat -o .\hello_word.wasm
-```
-
-Converta `.wasm` em um array C (método histórico):
-
-```sh
-xxd -i hello_word.wasm > test_wasm.h
-```
-
-## Variáveis de ambiente
-
-```sh
-IDF_PATH: C:\Espressif\frameworks\esp-idf-v5.3.1\
-PATH:
-    C:\Espressif\tools\idf-exe\1.0.3\
-    C:\xxd
-    C:\Program Files (x86)\WABT\bin
-```
-
-## Observação
-
-Este projeto pressupõe que o firmware tenha suporte à execução de WebAssembly pelo WAMR.
-No fluxo histórico com câmera, o código WebAssembly deve processar os buffers das imagens capturadas. Para o host atual com Cloudinary, consulte [HOST.pt-BR.md](HOST.pt-BR.md).
+Fontes: [TFLite Micro da Espressif](https://components.espressif.com/components/espressif/esp-tflite-micro/versions/1.3.5) e [gerenciamento de memória do TFLite Micro](https://github.com/tensorflow/tflite-micro/blob/main/tensorflow/lite/micro/docs/memory_management.md).
