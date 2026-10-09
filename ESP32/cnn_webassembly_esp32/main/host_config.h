@@ -2,8 +2,8 @@
 #define HOST_CONFIG_H
 
 /* Configuracao manual do host. Nao depende do pipeline Python. */
-#define WIFI_SSID "Contabil2025"
-#define WIFI_PASS "Reservalagos36@"
+#define WIFI_SSID "<SSID>"
+#define WIFI_PASS "<PASSWORD>"
 #define WIFI_CONNECT_TIMEOUT_MS 30000
 #define WIFI_MIN_AUTHMODE WIFI_AUTH_WPA2_PSK
 #define HTTP_DOWNLOAD_TIMEOUT_MS 15000
