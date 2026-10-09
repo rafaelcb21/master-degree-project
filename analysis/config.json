@@ -1,0 +1,16 @@
+{
+  "esp32_projects": {
+    "cnn_tflite_esp32": {
+      "model": "drowsiness",
+      "type": "tflite",
+      "output_scale": 0.00390625,
+      "output_zero_point": 0
+    },
+    "cnn_webassembly_esp32": {
+      "model": "drowsiness",
+      "type": "wasm",
+      "output_scale": 0.00390625,
+      "output_zero_point": 0
+    }
+  }
+}

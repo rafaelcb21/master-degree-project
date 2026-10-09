@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from extractor.config import BATCH, ALIGN, KERNEL_BASE_HINT
 from extractor.wat_generator import (
     generate_wat,
@@ -72,6 +74,9 @@ class ModelPipeline:
         package = self.package
         config = package.config
         package.validate_sources()
+        reports_dir = package.reports_dir / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        reports_dir.mkdir(parents=True, exist_ok=False)
+        print(f"Relatórios desta execução: {reports_dir}")
         adapter = create_adapter(package)
         cases = list(adapter.discover_cases())
 
@@ -107,7 +112,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir / "02-grafo.txt",
+            reports_dir / "02-grafo.txt",
             graph["data"],
         )
 
@@ -130,7 +135,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "03-alocacao-slots.txt",
             slots_report,
         )
@@ -188,7 +193,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "04-mapeamento-tensor-slot.txt",
             mapping_report,
         )
@@ -211,7 +216,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "05-pesos-bias.txt",
             weights_bias_report,
         )
@@ -234,7 +239,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "06-quantizacao.txt",
             quantization_report,
         )
@@ -259,7 +264,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "07-slot-bytes.txt",
             slot_memory_report,
         )
@@ -305,7 +310,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "08-layout-parametros.txt",
             parameter_layout_report,
         )
@@ -422,7 +427,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "09-layer-params.txt",
             layer_params_report,
         )
@@ -456,7 +461,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "10-params-blob.txt",
             params_blob_report,
         )
@@ -498,7 +503,7 @@ class ModelPipeline:
         )
 
         save_report(
-            package.reports_dir
+            reports_dir
             / "11-layout-final-memoria.txt",
             final_memory_report,
         )
@@ -604,9 +609,9 @@ class ModelPipeline:
         report = adapter.build_report(inference)
         report += f"\nErros de processamento: {len(inference['errors'])}\n"
         report += "\n".join(f"{e['file']} | {e['error']}" for e in inference["errors"])
-        save_report(package.reports_dir / "12-inferencia-wasm.txt", report)
+        save_report(reports_dir / "12-inferencia-wasm.txt", report)
         print(f"Inferências: {inference['processed']}; erros: {len(inference['errors'])}")
-        print(f"Relatórios: {package.reports_dir}")
+        print(f"Relatórios: {reports_dir}")
         if inference["errors"]:
             raise RuntimeError("Inferência concluída com erros; consulte 12-inferencia-wasm.txt.")
         return inference

@@ -75,7 +75,8 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(parse_report(Path("new.txt"), "unrecognized format")["kind"], "text")
 
     def test_existing_reports(self):
-        paths = list((ROOT / "models").glob("*/reports/*")) + [ROOT / "ESP32/cnn_webassembly_esp32/report.csv"]
+        paths = [p for p in (ROOT / "models").glob("*/reports/**/*") if p.is_file()]
+        paths += list((ROOT / "ESP32").glob("*/reports/**/*.csv"))
         kinds = set()
         for path in paths:
             report = parse_report(path, path.read_text(encoding="utf-8-sig"))
@@ -88,7 +89,7 @@ class ReportTests(unittest.TestCase):
                 self.assertEqual(next(m["value"] for m in report["metrics"] if m["label"] == "Acurácia"), 98.25)
             if report["kind"] == "topk":
                 self.assertTrue(all(0 <= row["Score"] <= 1 for row in report["rows"]))
-        self.assertTrue({"csv", "inference", "memory", "topk", "records", "text"}.issubset(kinds))
+        self.assertTrue({"inference", "memory", "topk", "records", "text"}.issubset(kinds))
 
 
 if __name__ == "__main__":

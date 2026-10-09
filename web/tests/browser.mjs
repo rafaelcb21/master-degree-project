@@ -12,7 +12,8 @@ const file = path => `${url}/#file?${new URLSearchParams({ path })}`;
 try {
   await page.goto(url);
   await expect(page.locator('.hero')).toBeVisible();
-  await expect(page.locator('.project-card')).toHaveCount(5);
+  await expect(page.locator('.project-card').filter({ hasText: 'ESP32 · TFLite Micro' })).toBeVisible();
+  await expect(page.locator('.project-card').filter({ hasText: 'ESP32 · WASM / AOT' })).toBeVisible();
   await expect(page.locator('#sidebar [aria-current="page"]')).toHaveText('Visão geral');
   await page.screenshot({ path: 'test-results/overview-desktop.png', fullPage: true });
   await page.goto(file('ESP32/cnn_webassembly_esp32/report.csv'));

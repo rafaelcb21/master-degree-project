@@ -1,0 +1,2270 @@
+LAYER PARAMS
+================================================================================
+LayerParam size: 116 bytes
+Numero de layers: 67
+Params bytes: 7776
+Slot bases: [1800544, 2402656, 3004768]
+Runtime slot shift: 0
+
+CONVENCAO DE SHIFT
+================================================================================
+shift > 0: LEFT SHIFT (multiplicacao por 2^shift)
+shift < 0: RIGHT SHIFT (divisao por 2^(-shift))
+
+MAPEAMENTO DE CAMPOS PARA OPERACOES ESPECIAIS
+================================================================================
+
+ADD (op_type=4)
+  kh       = mul0
+  kw       = shift0
+  stride_h = mul1
+  stride_w = shift1
+  dil_h    = out_mul
+  dil_w    = out_shift
+  pad_t    = input_ptr[0]
+  pad_b    = input_ptr[1]
+  pad_l    = zero_point input A
+  pad_r    = zero_point input B
+
+MEAN (op_type=5)
+  kh       = multiplier
+  kw       = shift
+  stride_h = in_h * in_w
+  pad_t    = input_ptr
+
+SOFTMAX (op_type=6)
+  kh       = input_beta_mul
+  kw       = input_beta_left_shift
+  stride_h = diff_min
+  stride_w = input_left_shift
+  pad_t    = input_ptr
+
+QUANTIZE (op_type=7)
+  flags bit 0: 0 = input UINT8, 1 = input INT8
+  flags bit 1: 0 = output INT8, 1 = output UINT8
+  flags = 0 -> input UINT8 / output INT8
+  flags = 1 -> input INT8  / output INT8
+  flags = 2 -> input UINT8 / output UINT8
+  flags = 3 -> input INT8  / output UINT8
+  kh       = multiplier
+  kw       = shift
+  pad_t    = input_ptr
+  zx       = zero_point input
+  zy       = zero_point output
+
+RGB565_TO_RGB888 (op_type=8)
+  input slot  = SLOT0
+  output slot = SLOT1
+  kh          = 65 para RGB565
+
+MAPEAMENTO DE SLOTS DE RUNTIME
+================================================================================
+tensor= 108 layer=L0    slot_original=0 slot_runtime=0
+tensor= 109 layer=L1    slot_original=1 slot_runtime=1
+tensor= 110 layer=L2    slot_original=2 slot_runtime=2
+tensor= 111 layer=L3    slot_original=0 slot_runtime=0
+tensor= 112 layer=L4    slot_original=1 slot_runtime=1
+tensor= 113 layer=L5    slot_original=2 slot_runtime=2
+tensor= 114 layer=L6    slot_original=0 slot_runtime=0
+tensor= 115 layer=L7    slot_original=1 slot_runtime=1
+tensor= 116 layer=L8    slot_original=2 slot_runtime=2
+tensor= 117 layer=L9    slot_original=1 slot_runtime=1
+tensor= 118 layer=L10   slot_original=2 slot_runtime=2
+tensor= 119 layer=L11   slot_original=0 slot_runtime=0
+tensor= 120 layer=L12   slot_original=1 slot_runtime=1
+tensor= 121 layer=L13   slot_original=2 slot_runtime=2
+tensor= 122 layer=L14   slot_original=0 slot_runtime=0
+tensor= 123 layer=L15   slot_original=1 slot_runtime=1
+tensor= 124 layer=L16   slot_original=0 slot_runtime=0
+tensor= 125 layer=L17   slot_original=1 slot_runtime=1
+tensor= 126 layer=L18   slot_original=2 slot_runtime=2
+tensor= 127 layer=L19   slot_original=0 slot_runtime=0
+tensor= 128 layer=L20   slot_original=2 slot_runtime=2
+tensor= 129 layer=L21   slot_original=0 slot_runtime=0
+tensor= 130 layer=L22   slot_original=1 slot_runtime=1
+tensor= 131 layer=L23   slot_original=2 slot_runtime=2
+tensor= 132 layer=L24   slot_original=0 slot_runtime=0
+tensor= 133 layer=L25   slot_original=1 slot_runtime=1
+tensor= 134 layer=L26   slot_original=2 slot_runtime=2
+tensor= 135 layer=L27   slot_original=1 slot_runtime=1
+tensor= 136 layer=L28   slot_original=2 slot_runtime=2
+tensor= 137 layer=L29   slot_original=0 slot_runtime=0
+tensor= 138 layer=L30   slot_original=1 slot_runtime=1
+tensor= 139 layer=L31   slot_original=0 slot_runtime=0
+tensor= 140 layer=L32   slot_original=1 slot_runtime=1
+tensor= 141 layer=L33   slot_original=2 slot_runtime=2
+tensor= 142 layer=L34   slot_original=0 slot_runtime=0
+tensor= 143 layer=L35   slot_original=2 slot_runtime=2
+tensor= 144 layer=L36   slot_original=0 slot_runtime=0
+tensor= 145 layer=L37   slot_original=1 slot_runtime=1
+tensor= 146 layer=L38   slot_original=2 slot_runtime=2
+tensor= 147 layer=L39   slot_original=0 slot_runtime=0
+tensor= 148 layer=L40   slot_original=1 slot_runtime=1
+tensor= 149 layer=L41   slot_original=2 slot_runtime=2
+tensor= 150 layer=L42   slot_original=1 slot_runtime=1
+tensor= 151 layer=L43   slot_original=2 slot_runtime=2
+tensor= 152 layer=L44   slot_original=0 slot_runtime=0
+tensor= 153 layer=L45   slot_original=1 slot_runtime=1
+tensor= 154 layer=L46   slot_original=0 slot_runtime=0
+tensor= 155 layer=L47   slot_original=1 slot_runtime=1
+tensor= 156 layer=L48   slot_original=2 slot_runtime=2
+tensor= 157 layer=L49   slot_original=0 slot_runtime=0
+tensor= 158 layer=L50   slot_original=1 slot_runtime=1
+tensor= 159 layer=L51   slot_original=2 slot_runtime=2
+tensor= 160 layer=L52   slot_original=0 slot_runtime=0
+tensor= 161 layer=L53   slot_original=2 slot_runtime=2
+tensor= 162 layer=L54   slot_original=0 slot_runtime=0
+tensor= 163 layer=L55   slot_original=1 slot_runtime=1
+tensor= 164 layer=L56   slot_original=2 slot_runtime=2
+tensor= 165 layer=L57   slot_original=1 slot_runtime=1
+tensor= 166 layer=L58   slot_original=2 slot_runtime=2
+tensor= 167 layer=L59   slot_original=0 slot_runtime=0
+tensor= 168 layer=L60   slot_original=1 slot_runtime=1
+tensor= 169 layer=L61   slot_original=2 slot_runtime=2
+tensor= 170 layer=L62   slot_original=0 slot_runtime=0
+tensor= 171 layer=L63   slot_original=1 slot_runtime=1
+tensor= 172 layer=L64   slot_original=2 slot_runtime=2
+tensor= 173 layer=L65   slot_original=0 slot_runtime=0
+tensor= 174 layer=L66   slot_original=0 slot_runtime=0
+
+FULL LAYER DUMP
+================================================================================
+
+================================================================================
+L0
+================================================================================
+op_index          : 0
+label             : L0
+optype            : QUANTIZE
+op_type           : 7
+act               : 0
+flags             : 0
+in_slot/out_slot  : 0 -> 0
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 224 x 224
+cin/cout          : 3 -> 3
+kh/kw             : 1073741824 x 1
+stride_h/stride_w : 0 x 0
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1800544 0 0 0
+out_h/out_w       : 224 x 224
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : 127 / 0 / -1
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  scale_in                : 0.007843137718737125
+  scale_out               : 0.007843137718737125
+  zp_in                   : 127
+  zp_out                  : -1
+  ratio                   : 1.0
+  mul                     : 1073741824
+  shift                   : 1
+  input_dtype             : uint8
+  input_dtype_code        : 3
+
+================================================================================
+L1
+================================================================================
+op_index          : 1
+label             : L1
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 224 x 224
+cin/cout          : 3 -> 16
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 112 x 112
+w_off             : 0
+has_bias          : True
+b_off             : 0
+has_mulq6         : True
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : -1 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L2
+================================================================================
+op_index          : 2
+label             : L2
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 112 x 112
+cin/cout          : 16 -> 16
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 112 x 112
+w_off             : 432
+has_bias          : True
+b_off             : 64
+has_mulq6         : True
+mul_off           : 64
+shift_off         : 64
+q6_off            : 64
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L3
+================================================================================
+op_index          : 3
+label             : L3
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 112 x 112
+cin/cout          : 16 -> 8
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 112 x 112
+w_off             : 576
+has_bias          : True
+b_off             : 128
+has_mulq6         : True
+mul_off           : 128
+shift_off         : 128
+q6_off            : 128
+zx/zw/zy          : -128 / 0 / -24
+depth_mult        : 1
+
+================================================================================
+L4
+================================================================================
+op_index          : 4
+label             : L4
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 112 x 112
+cin/cout          : 8 -> 48
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 112 x 112
+w_off             : 704
+has_bias          : True
+b_off             : 160
+has_mulq6         : True
+mul_off           : 160
+shift_off         : 160
+q6_off            : 160
+zx/zw/zy          : -24 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L5
+================================================================================
+op_index          : 5
+label             : L5
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 112 x 112
+cin/cout          : 48 -> 48
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 56 x 56
+w_off             : 1088
+has_bias          : True
+b_off             : 352
+has_mulq6         : True
+mul_off           : 352
+shift_off         : 352
+q6_off            : 352
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L6
+================================================================================
+op_index          : 6
+label             : L6
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 8
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+w_off             : 1520
+has_bias          : True
+b_off             : 544
+has_mulq6         : True
+mul_off           : 544
+shift_off         : 544
+q6_off            : 544
+zx/zw/zy          : -128 / 0 / -3
+depth_mult        : 1
+
+================================================================================
+L7
+================================================================================
+op_index          : 7
+label             : L7
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 56 x 56
+cin/cout          : 8 -> 48
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+w_off             : 1904
+has_bias          : True
+b_off             : 576
+has_mulq6         : True
+mul_off           : 576
+shift_off         : 576
+q6_off            : 576
+zx/zw/zy          : -3 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L8
+================================================================================
+op_index          : 8
+label             : L8
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 48
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 56 x 56
+w_off             : 2288
+has_bias          : True
+b_off             : 768
+has_mulq6         : True
+mul_off           : 768
+shift_off         : 768
+q6_off            : 768
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L9
+================================================================================
+op_index          : 9
+label             : L9
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 1
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 8
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+w_off             : 2720
+has_bias          : True
+b_off             : 960
+has_mulq6         : True
+mul_off           : 960
+shift_off         : 960
+q6_off            : 960
+zx/zw/zy          : -128 / 0 / -11
+depth_mult        : 1
+
+================================================================================
+L10
+================================================================================
+op_index          : 10
+label             : L10
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 0 -> 2
+input_slots       : [0, 1]
+input_ptrs        : [1800544, 2402656]
+in_h/in_w         : 56 x 56
+cin/cout          : 8 -> 8
+kh/kw             : 1400234221 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 1800544 2402656 -3 -11
+out_h/out_w       : 56 x 56
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : -3 / -11 / -11
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.3762907087802887
+  sB                      : 0.5771021246910095
+  sY                      : 0.5771021246910095
+  zA                      : -3
+  zB                      : -11
+  zY                      : -11
+  mul0                    : 1400234221
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 1.154204249382019
+
+================================================================================
+L11
+================================================================================
+op_index          : 11
+label             : L11
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 56 x 56
+cin/cout          : 8 -> 48
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+w_off             : 3104
+has_bias          : True
+b_off             : 992
+has_mulq6         : True
+mul_off           : 992
+shift_off         : 992
+q6_off            : 992
+zx/zw/zy          : -11 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L12
+================================================================================
+op_index          : 12
+label             : L12
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 48
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 28 x 28
+w_off             : 3488
+has_bias          : True
+b_off             : 1184
+has_mulq6         : True
+mul_off           : 1184
+shift_off         : 1184
+q6_off            : 1184
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L13
+================================================================================
+op_index          : 13
+label             : L13
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 28 x 28
+cin/cout          : 48 -> 16
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+w_off             : 3920
+has_bias          : True
+b_off             : 1376
+has_mulq6         : True
+mul_off           : 1376
+shift_off         : 1376
+q6_off            : 1376
+zx/zw/zy          : -128 / 0 / -4
+depth_mult        : 1
+
+================================================================================
+L14
+================================================================================
+op_index          : 14
+label             : L14
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 96
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+w_off             : 4688
+has_bias          : True
+b_off             : 1440
+has_mulq6         : True
+mul_off           : 1440
+shift_off         : 1440
+q6_off            : 1440
+zx/zw/zy          : -4 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L15
+================================================================================
+op_index          : 15
+label             : L15
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 96
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 28 x 28
+w_off             : 6224
+has_bias          : True
+b_off             : 1824
+has_mulq6         : True
+mul_off           : 1824
+shift_off         : 1824
+q6_off            : 1824
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L16
+================================================================================
+op_index          : 16
+label             : L16
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 1 -> 0
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 16
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+w_off             : 7088
+has_bias          : True
+b_off             : 2208
+has_mulq6         : True
+mul_off           : 2208
+shift_off         : 2208
+q6_off            : 2208
+zx/zw/zy          : -128 / 0 / 16
+depth_mult        : 1
+
+================================================================================
+L17
+================================================================================
+op_index          : 17
+label             : L17
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 2 -> 1
+input_slots       : [2, 0]
+input_ptrs        : [3004768, 1800544]
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 16
+kh/kw             : 1236272340 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 3004768 1800544 -4 16
+out_h/out_w       : 28 x 28
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : -4 / 16 / 16
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.3157298266887665
+  sB                      : 0.5484427809715271
+  sY                      : 0.5484427809715271
+  zA                      : -4
+  zB                      : 16
+  zY                      : 16
+  mul0                    : 1236272340
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 1.0968855619430542
+
+================================================================================
+L18
+================================================================================
+op_index          : 18
+label             : L18
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 96
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+w_off             : 8624
+has_bias          : True
+b_off             : 2272
+has_mulq6         : True
+mul_off           : 2272
+shift_off         : 2272
+q6_off            : 2272
+zx/zw/zy          : 16 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L19
+================================================================================
+op_index          : 19
+label             : L19
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 96
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 28 x 28
+w_off             : 10160
+has_bias          : True
+b_off             : 2656
+has_mulq6         : True
+mul_off           : 2656
+shift_off         : 2656
+q6_off            : 2656
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L20
+================================================================================
+op_index          : 20
+label             : L20
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 0 -> 2
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 16
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+w_off             : 11024
+has_bias          : True
+b_off             : 3040
+has_mulq6         : True
+mul_off           : 3040
+shift_off         : 3040
+q6_off            : 3040
+zx/zw/zy          : -128 / 0 / 0
+depth_mult        : 1
+
+================================================================================
+L21
+================================================================================
+op_index          : 21
+label             : L21
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 1 -> 0
+input_slots       : [1, 2]
+input_ptrs        : [2402656, 3004768]
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 16
+kh/kw             : 1073741824 x 0
+stride_h/stride_w : 1949897661 x -1
+dil_h/dil_w       : 1182545656 x 2
+pad t/b/l/r       : 2402656 3004768 16 0
+out_h/out_w       : 28 x 28
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : 16 / 0 / 0
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.5484427809715271
+  sB                      : 0.49798157811164856
+  sY                      : 0.49798157811164856
+  zA                      : 16
+  zB                      : 0
+  zY                      : 0
+  mul0                    : 1073741824
+  shift0                  : 0
+  mul1                    : 1949897661
+  shift1                  : -1
+  out_mul                 : 1182545656
+  out_shift               : 2
+  s_common                : 1.0968855619430542
+
+================================================================================
+L22
+================================================================================
+op_index          : 22
+label             : L22
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 96
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+w_off             : 12560
+has_bias          : True
+b_off             : 3104
+has_mulq6         : True
+mul_off           : 3104
+shift_off         : 3104
+q6_off            : 3104
+zx/zw/zy          : 0 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L23
+================================================================================
+op_index          : 23
+label             : L23
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 96
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 14 x 14
+w_off             : 14096
+has_bias          : True
+b_off             : 3488
+has_mulq6         : True
+mul_off           : 3488
+shift_off         : 3488
+q6_off            : 3488
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L24
+================================================================================
+op_index          : 24
+label             : L24
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 96 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 14960
+has_bias          : True
+b_off             : 3872
+has_mulq6         : True
+mul_off           : 3872
+shift_off         : 3872
+q6_off            : 3872
+zx/zw/zy          : -128 / 0 / 4
+depth_mult        : 1
+
+================================================================================
+L25
+================================================================================
+op_index          : 25
+label             : L25
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 17264
+has_bias          : True
+b_off             : 3968
+has_mulq6         : True
+mul_off           : 3968
+shift_off         : 3968
+q6_off            : 3968
+zx/zw/zy          : 4 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L26
+================================================================================
+op_index          : 26
+label             : L26
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+w_off             : 20720
+has_bias          : True
+b_off             : 4544
+has_mulq6         : True
+mul_off           : 4544
+shift_off         : 4544
+q6_off            : 4544
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L27
+================================================================================
+op_index          : 27
+label             : L27
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 1
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 22016
+has_bias          : True
+b_off             : 5120
+has_mulq6         : True
+mul_off           : 5120
+shift_off         : 5120
+q6_off            : 5120
+zx/zw/zy          : -128 / 0 / -4
+depth_mult        : 1
+
+================================================================================
+L28
+================================================================================
+op_index          : 28
+label             : L28
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 0 -> 2
+input_slots       : [0, 1]
+input_ptrs        : [1800544, 2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 24
+kh/kw             : 1907633024 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 1800544 2402656 4 -4
+out_h/out_w       : 14 x 14
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : 4 / -4 / -4
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.2258613109588623
+  sB                      : 0.254259318113327
+  sY                      : 0.254259318113327
+  zA                      : 4
+  zB                      : -4
+  zY                      : -4
+  mul0                    : 1907633024
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 0.508518636226654
+
+================================================================================
+L29
+================================================================================
+op_index          : 29
+label             : L29
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 25472
+has_bias          : True
+b_off             : 5216
+has_mulq6         : True
+mul_off           : 5216
+shift_off         : 5216
+q6_off            : 5216
+zx/zw/zy          : -4 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L30
+================================================================================
+op_index          : 30
+label             : L30
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+w_off             : 28928
+has_bias          : True
+b_off             : 5792
+has_mulq6         : True
+mul_off           : 5792
+shift_off         : 5792
+q6_off            : 5792
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L31
+================================================================================
+op_index          : 31
+label             : L31
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 1 -> 0
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 30224
+has_bias          : True
+b_off             : 6368
+has_mulq6         : True
+mul_off           : 6368
+shift_off         : 6368
+q6_off            : 6368
+zx/zw/zy          : -128 / 0 / 9
+depth_mult        : 1
+
+================================================================================
+L32
+================================================================================
+op_index          : 32
+label             : L32
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 2 -> 1
+input_slots       : [2, 0]
+input_ptrs        : [3004768, 1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 24
+kh/kw             : 1639054756 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 3004768 1800544 -4 9
+out_h/out_w       : 14 x 14
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : -4 / 9 / 9
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.254259318113327
+  sB                      : 0.3331296443939209
+  sY                      : 0.3331296443939209
+  zA                      : -4
+  zB                      : 9
+  zY                      : 9
+  mul0                    : 1639054756
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 0.6662592887878418
+
+================================================================================
+L33
+================================================================================
+op_index          : 33
+label             : L33
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 33680
+has_bias          : True
+b_off             : 6464
+has_mulq6         : True
+mul_off           : 6464
+shift_off         : 6464
+q6_off            : 6464
+zx/zw/zy          : 9 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L34
+================================================================================
+op_index          : 34
+label             : L34
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+w_off             : 37136
+has_bias          : True
+b_off             : 7040
+has_mulq6         : True
+mul_off           : 7040
+shift_off         : 7040
+q6_off            : 7040
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L35
+================================================================================
+op_index          : 35
+label             : L35
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 0 -> 2
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 38432
+has_bias          : True
+b_off             : 7616
+has_mulq6         : True
+mul_off           : 7616
+shift_off         : 7616
+q6_off            : 7616
+zx/zw/zy          : -128 / 0 / -16
+depth_mult        : 1
+
+================================================================================
+L36
+================================================================================
+op_index          : 36
+label             : L36
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 1 -> 0
+input_slots       : [1, 2]
+input_ptrs        : [2402656, 3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 24
+kh/kw             : 2034665758 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 2402656 3004768 9 -16
+out_h/out_w       : 14 x 14
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : 9 / -16 / -16
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.3331296443939209
+  sB                      : 0.3516009747982025
+  sY                      : 0.3516009747982025
+  zA                      : 9
+  zB                      : -16
+  zY                      : -16
+  mul0                    : 2034665758
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 0.703201949596405
+
+================================================================================
+L37
+================================================================================
+op_index          : 37
+label             : L37
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 41888
+has_bias          : True
+b_off             : 7712
+has_mulq6         : True
+mul_off           : 7712
+shift_off         : 7712
+q6_off            : 7712
+zx/zw/zy          : -16 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L38
+================================================================================
+op_index          : 38
+label             : L38
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+w_off             : 45344
+has_bias          : True
+b_off             : 8288
+has_mulq6         : True
+mul_off           : 8288
+shift_off         : 8288
+q6_off            : 8288
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L39
+================================================================================
+op_index          : 39
+label             : L39
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 32
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 46640
+has_bias          : True
+b_off             : 8864
+has_mulq6         : True
+mul_off           : 8864
+shift_off         : 8864
+q6_off            : 8864
+zx/zw/zy          : -128 / 0 / -2
+depth_mult        : 1
+
+================================================================================
+L40
+================================================================================
+op_index          : 40
+label             : L40
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 192
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 51248
+has_bias          : True
+b_off             : 8992
+has_mulq6         : True
+mul_off           : 8992
+shift_off         : 8992
+q6_off            : 8992
+zx/zw/zy          : -2 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L41
+================================================================================
+op_index          : 41
+label             : L41
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 192
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+w_off             : 57392
+has_bias          : True
+b_off             : 9760
+has_mulq6         : True
+mul_off           : 9760
+shift_off         : 9760
+q6_off            : 9760
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L42
+================================================================================
+op_index          : 42
+label             : L42
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 1
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 32
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 59120
+has_bias          : True
+b_off             : 10528
+has_mulq6         : True
+mul_off           : 10528
+shift_off         : 10528
+q6_off            : 10528
+zx/zw/zy          : -128 / 0 / 4
+depth_mult        : 1
+
+================================================================================
+L43
+================================================================================
+op_index          : 43
+label             : L43
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 0 -> 2
+input_slots       : [0, 1]
+input_ptrs        : [1800544, 2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 32
+kh/kw             : 1764131504 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 1800544 2402656 -2 4
+out_h/out_w       : 14 x 14
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : -2 / 4 / 4
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.22274534404277802
+  sB                      : 0.2711487114429474
+  sY                      : 0.2711487114429474
+  zA                      : -2
+  zB                      : 4
+  zY                      : 4
+  mul0                    : 1764131504
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 0.5422974228858948
+
+================================================================================
+L44
+================================================================================
+op_index          : 44
+label             : L44
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 192
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 65264
+has_bias          : True
+b_off             : 10656
+has_mulq6         : True
+mul_off           : 10656
+shift_off         : 10656
+q6_off            : 10656
+zx/zw/zy          : 4 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L45
+================================================================================
+op_index          : 45
+label             : L45
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 192
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+w_off             : 71408
+has_bias          : True
+b_off             : 11424
+has_mulq6         : True
+mul_off           : 11424
+shift_off         : 11424
+q6_off            : 11424
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L46
+================================================================================
+op_index          : 46
+label             : L46
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 1 -> 0
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 32
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 73136
+has_bias          : True
+b_off             : 12192
+has_mulq6         : True
+mul_off           : 12192
+shift_off         : 12192
+q6_off            : 12192
+zx/zw/zy          : -128 / 0 / 27
+depth_mult        : 1
+
+================================================================================
+L47
+================================================================================
+op_index          : 47
+label             : L47
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 2 -> 1
+input_slots       : [2, 0]
+input_ptrs        : [3004768, 1800544]
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 32
+kh/kw             : 1527013599 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 3004768 1800544 4 27
+out_h/out_w       : 14 x 14
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : 4 / 27 / 27
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.2711487114429474
+  sB                      : 0.38132432103157043
+  sY                      : 0.38132432103157043
+  zA                      : 4
+  zB                      : 27
+  zY                      : 27
+  mul0                    : 1527013599
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 0.7626486420631409
+
+================================================================================
+L48
+================================================================================
+op_index          : 48
+label             : L48
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 192
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+w_off             : 79280
+has_bias          : True
+b_off             : 12320
+has_mulq6         : True
+mul_off           : 12320
+shift_off         : 12320
+q6_off            : 12320
+zx/zw/zy          : 27 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L49
+================================================================================
+op_index          : 49
+label             : L49
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 192
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 7 x 7
+w_off             : 85424
+has_bias          : True
+b_off             : 13088
+has_mulq6         : True
+mul_off           : 13088
+shift_off         : 13088
+q6_off            : 13088
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L50
+================================================================================
+op_index          : 50
+label             : L50
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 7 x 7
+cin/cout          : 192 -> 56
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 87152
+has_bias          : True
+b_off             : 13856
+has_mulq6         : True
+mul_off           : 13856
+shift_off         : 13856
+q6_off            : 13856
+zx/zw/zy          : -128 / 0 / 10
+depth_mult        : 1
+
+================================================================================
+L51
+================================================================================
+op_index          : 51
+label             : L51
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 336
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 97904
+has_bias          : True
+b_off             : 14080
+has_mulq6         : True
+mul_off           : 14080
+shift_off         : 14080
+q6_off            : 14080
+zx/zw/zy          : 10 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L52
+================================================================================
+op_index          : 52
+label             : L52
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 336
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 7 x 7
+w_off             : 116720
+has_bias          : True
+b_off             : 15424
+has_mulq6         : True
+mul_off           : 15424
+shift_off         : 15424
+q6_off            : 15424
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L53
+================================================================================
+op_index          : 53
+label             : L53
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 0 -> 2
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 56
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 119744
+has_bias          : True
+b_off             : 16768
+has_mulq6         : True
+mul_off           : 16768
+shift_off         : 16768
+q6_off            : 16768
+zx/zw/zy          : -128 / 0 / 16
+depth_mult        : 1
+
+================================================================================
+L54
+================================================================================
+op_index          : 54
+label             : L54
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 1 -> 0
+input_slots       : [1, 2]
+input_ptrs        : [2402656, 3004768]
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 56
+kh/kw             : 1906957932 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 2402656 3004768 10 16
+out_h/out_w       : 7 x 7
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : 10 / 16 / 16
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.1961820423603058
+  sB                      : 0.22092659771442413
+  sY                      : 0.22092659771442413
+  zA                      : 10
+  zB                      : 16
+  zY                      : 16
+  mul0                    : 1906957932
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 0.44185319542884827
+
+================================================================================
+L55
+================================================================================
+op_index          : 55
+label             : L55
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 336
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 138560
+has_bias          : True
+b_off             : 16992
+has_mulq6         : True
+mul_off           : 16992
+shift_off         : 16992
+q6_off            : 16992
+zx/zw/zy          : 16 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L56
+================================================================================
+op_index          : 56
+label             : L56
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 336
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 7 x 7
+w_off             : 157376
+has_bias          : True
+b_off             : 18336
+has_mulq6         : True
+mul_off           : 18336
+shift_off         : 18336
+q6_off            : 18336
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L57
+================================================================================
+op_index          : 57
+label             : L57
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 2 -> 1
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 56
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 160400
+has_bias          : True
+b_off             : 19680
+has_mulq6         : True
+mul_off           : 19680
+shift_off         : 19680
+q6_off            : 19680
+zx/zw/zy          : -128 / 0 / -9
+depth_mult        : 1
+
+================================================================================
+L58
+================================================================================
+op_index          : 58
+label             : L58
+optype            : ADD
+op_type           : 4
+act               : 0
+flags             : 0
+in_slot/out_slot  : 0 -> 2
+input_slots       : [0, 1]
+input_ptrs        : [1800544, 2402656]
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 56
+kh/kw             : 1686210495 x -1
+stride_h/stride_w : 1073741824 x 0
+dil_h/dil_w       : 1073741824 x 2
+pad t/b/l/r       : 1800544 2402656 16 -9
+out_h/out_w       : 7 x 7
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : 16 / -9 / -9
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sA                      : 0.22092659771442413
+  sB                      : 0.2813624143600464
+  sY                      : 0.2813624143600464
+  zA                      : 16
+  zB                      : -9
+  zY                      : -9
+  mul0                    : 1686210495
+  shift0                  : -1
+  mul1                    : 1073741824
+  shift1                  : 0
+  out_mul                 : 1073741824
+  out_shift               : 2
+  s_common                : 0.5627248287200928
+
+================================================================================
+L59
+================================================================================
+op_index          : 59
+label             : L59
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 3
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 336
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 179216
+has_bias          : True
+b_off             : 19904
+has_mulq6         : True
+mul_off           : 19904
+shift_off         : 19904
+q6_off            : 19904
+zx/zw/zy          : -9 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L60
+================================================================================
+op_index          : 60
+label             : L60
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2
+act               : 3
+flags             : 3
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 336
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 7 x 7
+w_off             : 198032
+has_bias          : True
+b_off             : 21248
+has_mulq6         : True
+mul_off           : 21248
+shift_off         : 21248
+q6_off            : 21248
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L61
+================================================================================
+op_index          : 61
+label             : L61
+optype            : CONV_2D
+op_type           : 1
+act               : 0
+flags             : 1
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 112
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 201056
+has_bias          : True
+b_off             : 22592
+has_mulq6         : True
+mul_off           : 22592
+shift_off         : 22592
+q6_off            : 22592
+zx/zw/zy          : -128 / 0 / -21
+depth_mult        : 1
+
+================================================================================
+L62
+================================================================================
+op_index          : 62
+label             : L62
+optype            : CONV_2D
+op_type           : 1
+act               : 3
+flags             : 2
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 7 x 7
+cin/cout          : 112 -> 1280
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+w_off             : 238688
+has_bias          : True
+b_off             : 23040
+has_mulq6         : True
+mul_off           : 23040
+shift_off         : 23040
+q6_off            : 23040
+zx/zw/zy          : -21 / 0 / -128
+depth_mult        : 1
+
+================================================================================
+L63
+================================================================================
+op_index          : 63
+label             : L63
+optype            : MEAN
+op_type           : 5
+act               : 0
+flags             : 0
+in_slot/out_slot  : 0 -> 1
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 7 x 7
+cin/cout          : 1280 -> 1280
+kh/kw             : 1079542796 x 1
+stride_h/stride_w : 49 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1800544 0 0 0
+out_h/out_w       : 1 x 1
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : -128 / 0 / -128
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sX                      : 0.0235294122248888
+  sY                      : 0.023402975872159004
+  zX                      : -128
+  zY                      : -128
+  ratio                   : 1.0054025758698582
+  mul                     : 1079542796
+  shift                   : 1
+  spatial_size            : 49
+
+================================================================================
+L64
+================================================================================
+op_index          : 64
+label             : L64
+optype            : FULLY_CONNECTED
+op_type           : 3
+act               : 0
+flags             : 0
+in_slot/out_slot  : 1 -> 2
+input_slots       : [1]
+input_ptrs        : [2402656]
+in_h/in_w         : 1 x 1
+cin/cout          : 1280 -> 1000
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 1 x 1
+w_off             : 382048
+has_bias          : True
+b_off             : 28160
+has_mulq6         : True
+mul_off           : 28160
+shift_off         : 28160
+q6_off            : 28160
+zx/zw/zy          : -128 / 0 / -45
+depth_mult        : 1
+
+================================================================================
+L65
+================================================================================
+op_index          : 65
+label             : L65
+optype            : SOFTMAX
+op_type           : 6
+act               : 0
+flags             : 0
+in_slot/out_slot  : 2 -> 0
+input_slots       : [2]
+input_ptrs        : [3004768]
+in_h/in_w         : 1 x 1
+cin/cout          : 1000 -> 1000
+kh/kw             : 1318294144 x -3
+stride_h/stride_w : -128 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 3004768 0 0 0
+out_h/out_w       : 1 x 1
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : True
+mul_off           : 32160
+shift_off         : 32160
+q6_off            : 0
+zx/zw/zy          : -45 / 0 / -128
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  sX                      : 0.07673481851816177
+  sY                      : 0.00390625
+  zX                      : -45
+  zY                      : -128
+  beta                    : 1.0
+  integer_bits            : 5
+  internal_scale          : 0.03125
+  real_multiplier         : 0.07673481851816177
+  input_beta_mul          : 1318294144
+  input_beta_left_shift   : -3
+  input_left_shift        : 1
+  diff_min                : -128
+
+================================================================================
+L66
+================================================================================
+op_index          : 66
+label             : L66
+optype            : QUANTIZE
+op_type           : 7
+act               : 0
+flags             : 3
+in_slot/out_slot  : 0 -> 0
+input_slots       : [0]
+input_ptrs        : [1800544]
+in_h/in_w         : 1 x 1
+cin/cout          : 1000 -> 1000
+kh/kw             : 1073741824 x 1
+stride_h/stride_w : 0 x 0
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1800544 0 0 0
+out_h/out_w       : 1 x 1
+w_off             : 0
+has_bias          : False
+b_off             : 0
+has_mulq6         : False
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+zx/zw/zy          : -128 / 0 / 0
+depth_mult        : 1
+
+QUANTIZATION PARAMETERS
+  scale_in                : 0.00390625
+  scale_out               : 0.00390625
+  zp_in                   : -128
+  zp_out                  : 0
+  ratio                   : 1.0
+  mul                     : 1073741824
+  shift                   : 1
+  input_dtype             : int8
+  input_dtype_code        : 9

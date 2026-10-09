@@ -1,0 +1,2212 @@
+PARAMS BLOB
+================================================================================
+LayerParam size : 116 bytes
+Layers          : 67
+Bytes usados    : 7772
+Padding         : 4
+Params bytes    : 7776
+
+================================================================================
+L0
+================================================================================
+blob_offset       : 0
+op_index          : 0
+optype            : QUANTIZE
+op_type           : 7 (QUANTIZE)
+act               : 0 (NONE)
+flags             : 0 (OUTPUT_INT8|INPUT_UINT8)
+in_slot/out_slot  : 0 -> 0
+in_ptr/out_ptr    : 1800544 -> 1800544
+
+QUANTIZE PARAMETERS
+  input_dtype : uint8
+  scale_in/out: 0.007843 / 0.007843
+  zp_in/out   : 127 / -1
+  ratio       : 1.000000
+  mul/shift   : 1073741824 / 1
+
+in_h/in_w         : 224 x 224
+cin/cout          : 3 -> 3
+kh/kw (mul/shift): 1073741824 / 1
+pad_t input_ptr  : 1800544
+out_h/out_w       : 224 x 224
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : 127 / 0 / -1
+
+================================================================================
+L1
+================================================================================
+blob_offset       : 116
+op_index          : 1
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 224 x 224
+cin/cout          : 3 -> 16
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 112 x 112
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 1664096
+mul_ptr           : 1696256
+shift_ptr         : 1728432
+q6_ptr            : 1760608
+zx/zw/zy          : -1 / 0 / -128
+
+================================================================================
+L2
+================================================================================
+blob_offset       : 232
+op_index          : 2
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 112 x 112
+cin/cout          : 16 -> 16
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 112 x 112
+depth_mult        : 1
+
+w_off/b_off       : 432 / 64
+mul_off           : 64
+shift_off         : 64
+q6_off            : 64
+wptr              : 2480
+bias_ptr          : 1664160
+mul_ptr           : 1696320
+shift_ptr         : 1728496
+q6_ptr            : 1760672
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L3
+================================================================================
+blob_offset       : 348
+op_index          : 3
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 112 x 112
+cin/cout          : 16 -> 8
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 112 x 112
+
+w_off/b_off       : 576 / 128
+mul_off           : 128
+shift_off         : 128
+q6_off            : 128
+wptr              : 2624
+bias_ptr          : 1664224
+mul_ptr           : 1696384
+shift_ptr         : 1728560
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -24
+
+================================================================================
+L4
+================================================================================
+blob_offset       : 464
+op_index          : 4
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 112 x 112
+cin/cout          : 8 -> 48
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 112 x 112
+
+w_off/b_off       : 704 / 160
+mul_off           : 160
+shift_off         : 160
+q6_off            : 160
+wptr              : 2752
+bias_ptr          : 1664256
+mul_ptr           : 1696416
+shift_ptr         : 1728592
+q6_ptr            : 1760768
+zx/zw/zy          : -24 / 0 / -128
+
+================================================================================
+L5
+================================================================================
+blob_offset       : 580
+op_index          : 5
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 112 x 112
+cin/cout          : 48 -> 48
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 56 x 56
+depth_mult        : 1
+
+w_off/b_off       : 1088 / 352
+mul_off           : 352
+shift_off         : 352
+q6_off            : 352
+wptr              : 3136
+bias_ptr          : 1664448
+mul_ptr           : 1696608
+shift_ptr         : 1728784
+q6_ptr            : 1760960
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L6
+================================================================================
+blob_offset       : 696
+op_index          : 6
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 8
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+
+w_off/b_off       : 1520 / 544
+mul_off           : 544
+shift_off         : 544
+q6_off            : 544
+wptr              : 3568
+bias_ptr          : 1664640
+mul_ptr           : 1696800
+shift_ptr         : 1728976
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -3
+
+================================================================================
+L7
+================================================================================
+blob_offset       : 812
+op_index          : 7
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 56 x 56
+cin/cout          : 8 -> 48
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+
+w_off/b_off       : 1904 / 576
+mul_off           : 576
+shift_off         : 576
+q6_off            : 576
+wptr              : 3952
+bias_ptr          : 1664672
+mul_ptr           : 1696832
+shift_ptr         : 1729008
+q6_ptr            : 1761184
+zx/zw/zy          : -3 / 0 / -128
+
+================================================================================
+L8
+================================================================================
+blob_offset       : 928
+op_index          : 8
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 48
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 56 x 56
+depth_mult        : 1
+
+w_off/b_off       : 2288 / 768
+mul_off           : 768
+shift_off         : 768
+q6_off            : 768
+wptr              : 4336
+bias_ptr          : 1664864
+mul_ptr           : 1697024
+shift_ptr         : 1729200
+q6_ptr            : 1761376
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L9
+================================================================================
+blob_offset       : 1044
+op_index          : 9
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 1
+in_ptr/out_ptr    : 3004768 -> 2402656
+
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 8
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+
+w_off/b_off       : 2720 / 960
+mul_off           : 960
+shift_off         : 960
+q6_off            : 960
+wptr              : 4768
+bias_ptr          : 1665056
+mul_ptr           : 1697216
+shift_ptr         : 1729392
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -11
+
+================================================================================
+L10
+================================================================================
+blob_offset       : 1160
+op_index          : 10
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [0, 1] -> 2
+in_ptr/out_ptr    : 1800544 -> 3004768
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.376291 / 0.577102 / 0.577102
+  zA/zB/zY          : -3 / -11 / -11
+  s_common          : 1.154204
+  mul0/shift0       : 1400234221 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 56 x 56
+cin/cout          : 8 -> 8
+kh/kw (mul0/sh0) : 1400234221 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 1800544 / 2402656
+pad_l/r (zA/zB)  : -3 / -11
+out_h/out_w       : 56 x 56
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : -3 / -11 / -11
+
+================================================================================
+L11
+================================================================================
+blob_offset       : 1276
+op_index          : 11
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 56 x 56
+cin/cout          : 8 -> 48
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 56 x 56
+
+w_off/b_off       : 3104 / 992
+mul_off           : 992
+shift_off         : 992
+q6_off            : 992
+wptr              : 5152
+bias_ptr          : 1665088
+mul_ptr           : 1697248
+shift_ptr         : 1729424
+q6_ptr            : 1761600
+zx/zw/zy          : -11 / 0 / -128
+
+================================================================================
+L12
+================================================================================
+blob_offset       : 1392
+op_index          : 12
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 56 x 56
+cin/cout          : 48 -> 48
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 28 x 28
+depth_mult        : 1
+
+w_off/b_off       : 3488 / 1184
+mul_off           : 1184
+shift_off         : 1184
+q6_off            : 1184
+wptr              : 5536
+bias_ptr          : 1665280
+mul_ptr           : 1697440
+shift_ptr         : 1729616
+q6_ptr            : 1761792
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L13
+================================================================================
+blob_offset       : 1508
+op_index          : 13
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 28 x 28
+cin/cout          : 48 -> 16
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 3920 / 1376
+mul_off           : 1376
+shift_off         : 1376
+q6_off            : 1376
+wptr              : 5968
+bias_ptr          : 1665472
+mul_ptr           : 1697632
+shift_ptr         : 1729808
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -4
+
+================================================================================
+L14
+================================================================================
+blob_offset       : 1624
+op_index          : 14
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 96
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 4688 / 1440
+mul_off           : 1440
+shift_off         : 1440
+q6_off            : 1440
+wptr              : 6736
+bias_ptr          : 1665536
+mul_ptr           : 1697696
+shift_ptr         : 1729872
+q6_ptr            : 1762048
+zx/zw/zy          : -4 / 0 / -128
+
+================================================================================
+L15
+================================================================================
+blob_offset       : 1740
+op_index          : 15
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 96
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 28 x 28
+depth_mult        : 1
+
+w_off/b_off       : 6224 / 1824
+mul_off           : 1824
+shift_off         : 1824
+q6_off            : 1824
+wptr              : 8272
+bias_ptr          : 1665920
+mul_ptr           : 1698080
+shift_ptr         : 1730256
+q6_ptr            : 1762432
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L16
+================================================================================
+blob_offset       : 1856
+op_index          : 16
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 1 -> 0
+in_ptr/out_ptr    : 2402656 -> 1800544
+
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 16
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 7088 / 2208
+mul_off           : 2208
+shift_off         : 2208
+q6_off            : 2208
+wptr              : 9136
+bias_ptr          : 1666304
+mul_ptr           : 1698464
+shift_ptr         : 1730640
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 16
+
+================================================================================
+L17
+================================================================================
+blob_offset       : 1972
+op_index          : 17
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [2, 0] -> 1
+in_ptr/out_ptr    : 3004768 -> 2402656
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.315730 / 0.548443 / 0.548443
+  zA/zB/zY          : -4 / 16 / 16
+  s_common          : 1.096886
+  mul0/shift0       : 1236272340 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 16
+kh/kw (mul0/sh0) : 1236272340 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 3004768 / 1800544
+pad_l/r (zA/zB)  : -4 / 16
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : -4 / 16 / 16
+
+================================================================================
+L18
+================================================================================
+blob_offset       : 2088
+op_index          : 18
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 96
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 8624 / 2272
+mul_off           : 2272
+shift_off         : 2272
+q6_off            : 2272
+wptr              : 10672
+bias_ptr          : 1666368
+mul_ptr           : 1698528
+shift_ptr         : 1730704
+q6_ptr            : 1762880
+zx/zw/zy          : 16 / 0 / -128
+
+================================================================================
+L19
+================================================================================
+blob_offset       : 2204
+op_index          : 19
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 96
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 28 x 28
+depth_mult        : 1
+
+w_off/b_off       : 10160 / 2656
+mul_off           : 2656
+shift_off         : 2656
+q6_off            : 2656
+wptr              : 12208
+bias_ptr          : 1666752
+mul_ptr           : 1698912
+shift_ptr         : 1731088
+q6_ptr            : 1763264
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L20
+================================================================================
+blob_offset       : 2320
+op_index          : 20
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 0 -> 2
+in_ptr/out_ptr    : 1800544 -> 3004768
+
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 16
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 11024 / 3040
+mul_off           : 3040
+shift_off         : 3040
+q6_off            : 3040
+wptr              : 13072
+bias_ptr          : 1667136
+mul_ptr           : 1699296
+shift_ptr         : 1731472
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 0
+
+================================================================================
+L21
+================================================================================
+blob_offset       : 2436
+op_index          : 21
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [1, 2] -> 0
+in_ptr/out_ptr    : 2402656 -> 1800544
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.548443 / 0.497982 / 0.497982
+  zA/zB/zY          : 16 / 0 / 0
+  s_common          : 1.096886
+  mul0/shift0       : 1073741824 / 0
+  mul1/shift1       : 1949897661 / -1
+  out_mul/out_shift : 1182545656 / 2
+
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 16
+kh/kw (mul0/sh0) : 1073741824 / 0
+stride (mul1/sh1): 1949897661 / -1
+dil (outM/outSh) : 1182545656 / 2
+pad_t/b (inPtr)  : 2402656 / 3004768
+pad_l/r (zA/zB)  : 16 / 0
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : 16 / 0 / 0
+
+================================================================================
+L22
+================================================================================
+blob_offset       : 2552
+op_index          : 22
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 28 x 28
+cin/cout          : 16 -> 96
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 28 x 28
+
+w_off/b_off       : 12560 / 3104
+mul_off           : 3104
+shift_off         : 3104
+q6_off            : 3104
+wptr              : 14608
+bias_ptr          : 1667200
+mul_ptr           : 1699360
+shift_ptr         : 1731536
+q6_ptr            : 1763712
+zx/zw/zy          : 0 / 0 / -128
+
+================================================================================
+L23
+================================================================================
+blob_offset       : 2668
+op_index          : 23
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 28 x 28
+cin/cout          : 96 -> 96
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 14 x 14
+depth_mult        : 1
+
+w_off/b_off       : 14096 / 3488
+mul_off           : 3488
+shift_off         : 3488
+q6_off            : 3488
+wptr              : 16144
+bias_ptr          : 1667584
+mul_ptr           : 1699744
+shift_ptr         : 1731920
+q6_ptr            : 1764096
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L24
+================================================================================
+blob_offset       : 2784
+op_index          : 24
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 96 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 14960 / 3872
+mul_off           : 3872
+shift_off         : 3872
+q6_off            : 3872
+wptr              : 17008
+bias_ptr          : 1667968
+mul_ptr           : 1700128
+shift_ptr         : 1732304
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 4
+
+================================================================================
+L25
+================================================================================
+blob_offset       : 2900
+op_index          : 25
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 17264 / 3968
+mul_off           : 3968
+shift_off         : 3968
+q6_off            : 3968
+wptr              : 19312
+bias_ptr          : 1668064
+mul_ptr           : 1700224
+shift_ptr         : 1732400
+q6_ptr            : 1764576
+zx/zw/zy          : 4 / 0 / -128
+
+================================================================================
+L26
+================================================================================
+blob_offset       : 3016
+op_index          : 26
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+depth_mult        : 1
+
+w_off/b_off       : 20720 / 4544
+mul_off           : 4544
+shift_off         : 4544
+q6_off            : 4544
+wptr              : 22768
+bias_ptr          : 1668640
+mul_ptr           : 1700800
+shift_ptr         : 1732976
+q6_ptr            : 1765152
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L27
+================================================================================
+blob_offset       : 3132
+op_index          : 27
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 1
+in_ptr/out_ptr    : 3004768 -> 2402656
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 22016 / 5120
+mul_off           : 5120
+shift_off         : 5120
+q6_off            : 5120
+wptr              : 24064
+bias_ptr          : 1669216
+mul_ptr           : 1701376
+shift_ptr         : 1733552
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -4
+
+================================================================================
+L28
+================================================================================
+blob_offset       : 3248
+op_index          : 28
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [0, 1] -> 2
+in_ptr/out_ptr    : 1800544 -> 3004768
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.225861 / 0.254259 / 0.254259
+  zA/zB/zY          : 4 / -4 / -4
+  s_common          : 0.508519
+  mul0/shift0       : 1907633024 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 24
+kh/kw (mul0/sh0) : 1907633024 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 1800544 / 2402656
+pad_l/r (zA/zB)  : 4 / -4
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : 4 / -4 / -4
+
+================================================================================
+L29
+================================================================================
+blob_offset       : 3364
+op_index          : 29
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 25472 / 5216
+mul_off           : 5216
+shift_off         : 5216
+q6_off            : 5216
+wptr              : 27520
+bias_ptr          : 1669312
+mul_ptr           : 1701472
+shift_ptr         : 1733648
+q6_ptr            : 1765824
+zx/zw/zy          : -4 / 0 / -128
+
+================================================================================
+L30
+================================================================================
+blob_offset       : 3480
+op_index          : 30
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+depth_mult        : 1
+
+w_off/b_off       : 28928 / 5792
+mul_off           : 5792
+shift_off         : 5792
+q6_off            : 5792
+wptr              : 30976
+bias_ptr          : 1669888
+mul_ptr           : 1702048
+shift_ptr         : 1734224
+q6_ptr            : 1766400
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L31
+================================================================================
+blob_offset       : 3596
+op_index          : 31
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 1 -> 0
+in_ptr/out_ptr    : 2402656 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 30224 / 6368
+mul_off           : 6368
+shift_off         : 6368
+q6_off            : 6368
+wptr              : 32272
+bias_ptr          : 1670464
+mul_ptr           : 1702624
+shift_ptr         : 1734800
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 9
+
+================================================================================
+L32
+================================================================================
+blob_offset       : 3712
+op_index          : 32
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [2, 0] -> 1
+in_ptr/out_ptr    : 3004768 -> 2402656
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.254259 / 0.333130 / 0.333130
+  zA/zB/zY          : -4 / 9 / 9
+  s_common          : 0.666259
+  mul0/shift0       : 1639054756 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 24
+kh/kw (mul0/sh0) : 1639054756 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 3004768 / 1800544
+pad_l/r (zA/zB)  : -4 / 9
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : -4 / 9 / 9
+
+================================================================================
+L33
+================================================================================
+blob_offset       : 3828
+op_index          : 33
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 33680 / 6464
+mul_off           : 6464
+shift_off         : 6464
+q6_off            : 6464
+wptr              : 35728
+bias_ptr          : 1670560
+mul_ptr           : 1702720
+shift_ptr         : 1734896
+q6_ptr            : 1767072
+zx/zw/zy          : 9 / 0 / -128
+
+================================================================================
+L34
+================================================================================
+blob_offset       : 3944
+op_index          : 34
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+depth_mult        : 1
+
+w_off/b_off       : 37136 / 7040
+mul_off           : 7040
+shift_off         : 7040
+q6_off            : 7040
+wptr              : 39184
+bias_ptr          : 1671136
+mul_ptr           : 1703296
+shift_ptr         : 1735472
+q6_ptr            : 1767648
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L35
+================================================================================
+blob_offset       : 4060
+op_index          : 35
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 0 -> 2
+in_ptr/out_ptr    : 1800544 -> 3004768
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 24
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 38432 / 7616
+mul_off           : 7616
+shift_off         : 7616
+q6_off            : 7616
+wptr              : 40480
+bias_ptr          : 1671712
+mul_ptr           : 1703872
+shift_ptr         : 1736048
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -16
+
+================================================================================
+L36
+================================================================================
+blob_offset       : 4176
+op_index          : 36
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [1, 2] -> 0
+in_ptr/out_ptr    : 2402656 -> 1800544
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.333130 / 0.351601 / 0.351601
+  zA/zB/zY          : 9 / -16 / -16
+  s_common          : 0.703202
+  mul0/shift0       : 2034665758 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 24
+kh/kw (mul0/sh0) : 2034665758 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 2402656 / 3004768
+pad_l/r (zA/zB)  : 9 / -16
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : 9 / -16 / -16
+
+================================================================================
+L37
+================================================================================
+blob_offset       : 4292
+op_index          : 37
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 14 x 14
+cin/cout          : 24 -> 144
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 41888 / 7712
+mul_off           : 7712
+shift_off         : 7712
+q6_off            : 7712
+wptr              : 43936
+bias_ptr          : 1671808
+mul_ptr           : 1703968
+shift_ptr         : 1736144
+q6_ptr            : 1768320
+zx/zw/zy          : -16 / 0 / -128
+
+================================================================================
+L38
+================================================================================
+blob_offset       : 4408
+op_index          : 38
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 144
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+depth_mult        : 1
+
+w_off/b_off       : 45344 / 8288
+mul_off           : 8288
+shift_off         : 8288
+q6_off            : 8288
+wptr              : 47392
+bias_ptr          : 1672384
+mul_ptr           : 1704544
+shift_ptr         : 1736720
+q6_ptr            : 1768896
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L39
+================================================================================
+blob_offset       : 4524
+op_index          : 39
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 144 -> 32
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 46640 / 8864
+mul_off           : 8864
+shift_off         : 8864
+q6_off            : 8864
+wptr              : 48688
+bias_ptr          : 1672960
+mul_ptr           : 1705120
+shift_ptr         : 1737296
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -2
+
+================================================================================
+L40
+================================================================================
+blob_offset       : 4640
+op_index          : 40
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 192
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 51248 / 8992
+mul_off           : 8992
+shift_off         : 8992
+q6_off            : 8992
+wptr              : 53296
+bias_ptr          : 1673088
+mul_ptr           : 1705248
+shift_ptr         : 1737424
+q6_ptr            : 1769600
+zx/zw/zy          : -2 / 0 / -128
+
+================================================================================
+L41
+================================================================================
+blob_offset       : 4756
+op_index          : 41
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 192
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+depth_mult        : 1
+
+w_off/b_off       : 57392 / 9760
+mul_off           : 9760
+shift_off         : 9760
+q6_off            : 9760
+wptr              : 59440
+bias_ptr          : 1673856
+mul_ptr           : 1706016
+shift_ptr         : 1738192
+q6_ptr            : 1770368
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L42
+================================================================================
+blob_offset       : 4872
+op_index          : 42
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 1
+in_ptr/out_ptr    : 3004768 -> 2402656
+
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 32
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 59120 / 10528
+mul_off           : 10528
+shift_off         : 10528
+q6_off            : 10528
+wptr              : 61168
+bias_ptr          : 1674624
+mul_ptr           : 1706784
+shift_ptr         : 1738960
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 4
+
+================================================================================
+L43
+================================================================================
+blob_offset       : 4988
+op_index          : 43
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [0, 1] -> 2
+in_ptr/out_ptr    : 1800544 -> 3004768
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.222745 / 0.271149 / 0.271149
+  zA/zB/zY          : -2 / 4 / 4
+  s_common          : 0.542297
+  mul0/shift0       : 1764131504 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 32
+kh/kw (mul0/sh0) : 1764131504 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 1800544 / 2402656
+pad_l/r (zA/zB)  : -2 / 4
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : -2 / 4 / 4
+
+================================================================================
+L44
+================================================================================
+blob_offset       : 5104
+op_index          : 44
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 192
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 65264 / 10656
+mul_off           : 10656
+shift_off         : 10656
+q6_off            : 10656
+wptr              : 67312
+bias_ptr          : 1674752
+mul_ptr           : 1706912
+shift_ptr         : 1739088
+q6_ptr            : 1771264
+zx/zw/zy          : 4 / 0 / -128
+
+================================================================================
+L45
+================================================================================
+blob_offset       : 5220
+op_index          : 45
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 192
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 14 x 14
+depth_mult        : 1
+
+w_off/b_off       : 71408 / 11424
+mul_off           : 11424
+shift_off         : 11424
+q6_off            : 11424
+wptr              : 73456
+bias_ptr          : 1675520
+mul_ptr           : 1707680
+shift_ptr         : 1739856
+q6_ptr            : 1772032
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L46
+================================================================================
+blob_offset       : 5336
+op_index          : 46
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 1 -> 0
+in_ptr/out_ptr    : 2402656 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 32
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 73136 / 12192
+mul_off           : 12192
+shift_off         : 12192
+q6_off            : 12192
+wptr              : 75184
+bias_ptr          : 1676288
+mul_ptr           : 1708448
+shift_ptr         : 1740624
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 27
+
+================================================================================
+L47
+================================================================================
+blob_offset       : 5452
+op_index          : 47
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [2, 0] -> 1
+in_ptr/out_ptr    : 3004768 -> 2402656
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.271149 / 0.381324 / 0.381324
+  zA/zB/zY          : 4 / 27 / 27
+  s_common          : 0.762649
+  mul0/shift0       : 1527013599 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 32
+kh/kw (mul0/sh0) : 1527013599 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 3004768 / 1800544
+pad_l/r (zA/zB)  : 4 / 27
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : 4 / 27 / 27
+
+================================================================================
+L48
+================================================================================
+blob_offset       : 5568
+op_index          : 48
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 14 x 14
+cin/cout          : 32 -> 192
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 14 x 14
+
+w_off/b_off       : 79280 / 12320
+mul_off           : 12320
+shift_off         : 12320
+q6_off            : 12320
+wptr              : 81328
+bias_ptr          : 1676416
+mul_ptr           : 1708576
+shift_ptr         : 1740752
+q6_ptr            : 1772928
+zx/zw/zy          : 27 / 0 / -128
+
+================================================================================
+L49
+================================================================================
+blob_offset       : 5684
+op_index          : 49
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 14 x 14
+cin/cout          : 192 -> 192
+kh/kw             : 3 x 3
+stride_h/stride_w : 2 x 2
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 1 0 1
+out_h/out_w       : 7 x 7
+depth_mult        : 1
+
+w_off/b_off       : 85424 / 13088
+mul_off           : 13088
+shift_off         : 13088
+q6_off            : 13088
+wptr              : 87472
+bias_ptr          : 1677184
+mul_ptr           : 1709344
+shift_ptr         : 1741520
+q6_ptr            : 1773696
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L50
+================================================================================
+blob_offset       : 5800
+op_index          : 50
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 7 x 7
+cin/cout          : 192 -> 56
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 87152 / 13856
+mul_off           : 13856
+shift_off         : 13856
+q6_off            : 13856
+wptr              : 89200
+bias_ptr          : 1677952
+mul_ptr           : 1710112
+shift_ptr         : 1742288
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 10
+
+================================================================================
+L51
+================================================================================
+blob_offset       : 5916
+op_index          : 51
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 336
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 97904 / 14080
+mul_off           : 14080
+shift_off         : 14080
+q6_off            : 14080
+wptr              : 99952
+bias_ptr          : 1678176
+mul_ptr           : 1710336
+shift_ptr         : 1742512
+q6_ptr            : 1774688
+zx/zw/zy          : 10 / 0 / -128
+
+================================================================================
+L52
+================================================================================
+blob_offset       : 6032
+op_index          : 52
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 336
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 7 x 7
+depth_mult        : 1
+
+w_off/b_off       : 116720 / 15424
+mul_off           : 15424
+shift_off         : 15424
+q6_off            : 15424
+wptr              : 118768
+bias_ptr          : 1679520
+mul_ptr           : 1711680
+shift_ptr         : 1743856
+q6_ptr            : 1776032
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L53
+================================================================================
+blob_offset       : 6148
+op_index          : 53
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 0 -> 2
+in_ptr/out_ptr    : 1800544 -> 3004768
+
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 56
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 119744 / 16768
+mul_off           : 16768
+shift_off         : 16768
+q6_off            : 16768
+wptr              : 121792
+bias_ptr          : 1680864
+mul_ptr           : 1713024
+shift_ptr         : 1745200
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 16
+
+================================================================================
+L54
+================================================================================
+blob_offset       : 6264
+op_index          : 54
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [1, 2] -> 0
+in_ptr/out_ptr    : 2402656 -> 1800544
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.196182 / 0.220927 / 0.220927
+  zA/zB/zY          : 10 / 16 / 16
+  s_common          : 0.441853
+  mul0/shift0       : 1906957932 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 56
+kh/kw (mul0/sh0) : 1906957932 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 2402656 / 3004768
+pad_l/r (zA/zB)  : 10 / 16
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : 10 / 16 / 16
+
+================================================================================
+L55
+================================================================================
+blob_offset       : 6380
+op_index          : 55
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 336
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 138560 / 16992
+mul_off           : 16992
+shift_off         : 16992
+q6_off            : 16992
+wptr              : 140608
+bias_ptr          : 1681088
+mul_ptr           : 1713248
+shift_ptr         : 1745424
+q6_ptr            : 1777600
+zx/zw/zy          : 16 / 0 / -128
+
+================================================================================
+L56
+================================================================================
+blob_offset       : 6496
+op_index          : 56
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 336
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 7 x 7
+depth_mult        : 1
+
+w_off/b_off       : 157376 / 18336
+mul_off           : 18336
+shift_off         : 18336
+q6_off            : 18336
+wptr              : 159424
+bias_ptr          : 1682432
+mul_ptr           : 1714592
+shift_ptr         : 1746768
+q6_ptr            : 1778944
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L57
+================================================================================
+blob_offset       : 6612
+op_index          : 57
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 2 -> 1
+in_ptr/out_ptr    : 3004768 -> 2402656
+
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 56
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 160400 / 19680
+mul_off           : 19680
+shift_off         : 19680
+q6_off            : 19680
+wptr              : 162448
+bias_ptr          : 1683776
+mul_ptr           : 1715936
+shift_ptr         : 1748112
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -9
+
+================================================================================
+L58
+================================================================================
+blob_offset       : 6728
+op_index          : 58
+optype            : ADD
+op_type           : 4 (ADD)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slots/out_slot : [0, 1] -> 2
+in_ptr/out_ptr    : 1800544 -> 3004768
+
+ADD QUANTIZATION
+  sA/sB/sY          : 0.220927 / 0.281362 / 0.281362
+  zA/zB/zY          : 16 / -9 / -9
+  s_common          : 0.562725
+  mul0/shift0       : 1686210495 / -1
+  mul1/shift1       : 1073741824 / 0
+  out_mul/out_shift : 1073741824 / 2
+
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 56
+kh/kw (mul0/sh0) : 1686210495 / -1
+stride (mul1/sh1): 1073741824 / 0
+dil (outM/outSh) : 1073741824 / 2
+pad_t/b (inPtr)  : 1800544 / 2402656
+pad_l/r (zA/zB)  : 16 / -9
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : 16 / -9 / -9
+
+================================================================================
+L59
+================================================================================
+blob_offset       : 6844
+op_index          : 59
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 7 x 7
+cin/cout          : 56 -> 336
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 179216 / 19904
+mul_off           : 19904
+shift_off         : 19904
+q6_off            : 19904
+wptr              : 181264
+bias_ptr          : 1684000
+mul_ptr           : 1716160
+shift_ptr         : 1748336
+q6_ptr            : 1780512
+zx/zw/zy          : -9 / 0 / -128
+
+================================================================================
+L60
+================================================================================
+blob_offset       : 6960
+op_index          : 60
+optype            : DEPTHWISE_CONV_2D
+op_type           : 2 (DW)
+act               : 3 (RELU6)
+flags             : 3 (PADDING_SAME|HAS_Q6)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 336
+kh/kw             : 3 x 3
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 1 1 1 1
+out_h/out_w       : 7 x 7
+depth_mult        : 1
+
+w_off/b_off       : 198032 / 21248
+mul_off           : 21248
+shift_off         : 21248
+q6_off            : 21248
+wptr              : 200080
+bias_ptr          : 1685344
+mul_ptr           : 1717504
+shift_ptr         : 1749680
+q6_ptr            : 1781856
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L61
+================================================================================
+blob_offset       : 7076
+op_index          : 61
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 0 (NONE)
+flags             : 1 (PADDING_SAME)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 7 x 7
+cin/cout          : 336 -> 112
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 201056 / 22592
+mul_off           : 22592
+shift_off         : 22592
+q6_off            : 22592
+wptr              : 203104
+bias_ptr          : 1686688
+mul_ptr           : 1718848
+shift_ptr         : 1751024
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -21
+
+================================================================================
+L62
+================================================================================
+blob_offset       : 7192
+op_index          : 62
+optype            : CONV_2D
+op_type           : 1 (CONV)
+act               : 3 (RELU6)
+flags             : 2 (HAS_Q6)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+in_h/in_w         : 7 x 7
+cin/cout          : 112 -> 1280
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 7 x 7
+
+w_off/b_off       : 238688 / 23040
+mul_off           : 23040
+shift_off         : 23040
+q6_off            : 23040
+wptr              : 240736
+bias_ptr          : 1687136
+mul_ptr           : 1719296
+shift_ptr         : 1751472
+q6_ptr            : 1783648
+zx/zw/zy          : -21 / 0 / -128
+
+================================================================================
+L63
+================================================================================
+blob_offset       : 7308
+op_index          : 63
+optype            : MEAN
+op_type           : 5 (MEAN)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slot/out_slot  : 0 -> 1
+in_ptr/out_ptr    : 1800544 -> 2402656
+
+
+in_h/in_w         : 7 x 7
+cin/cout          : 1280 -> 1280
+kh/kw (mul/shift): 1079542796 / 1
+stride_h spatial : 49
+pad_t input_ptr  : 1800544
+out_h/out_w       : 1 x 1
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -128
+
+================================================================================
+L64
+================================================================================
+blob_offset       : 7424
+op_index          : 64
+optype            : FULLY_CONNECTED
+op_type           : 3 (FC)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slot/out_slot  : 1 -> 2
+in_ptr/out_ptr    : 2402656 -> 3004768
+
+in_h/in_w         : 1 x 1
+cin/cout          : 1280 -> 1000
+kh/kw             : 1 x 1
+stride_h/stride_w : 1 x 1
+dil_h/dil_w       : 1 x 1
+pad t/b/l/r       : 0 0 0 0
+out_h/out_w       : 1 x 1
+
+w_off/b_off       : 382048 / 28160
+mul_off           : 28160
+shift_off         : 28160
+q6_off            : 28160
+wptr              : 384096
+bias_ptr          : 1692256
+mul_ptr           : 1724416
+shift_ptr         : 1756592
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / -45
+
+================================================================================
+L65
+================================================================================
+blob_offset       : 7540
+op_index          : 65
+optype            : SOFTMAX
+op_type           : 6 (SOFTMAX)
+act               : 0 (NONE)
+flags             : 0 (0)
+in_slot/out_slot  : 2 -> 0
+in_ptr/out_ptr    : 3004768 -> 1800544
+
+SOFTMAX QUANTIZATION
+  sX/sY                : 0.076735 / 0.003906
+  zX/zY                : -45 / -128
+  beta                 : 1.000000
+  integer_bits         : 5
+  internal_scale       : 0.031250
+  input_beta_mul       : 1318294144
+  input_beta_left_shift: -3
+  input_left_shift     : 1
+  diff_min             : -128
+
+in_h/in_w         : 1 x 1
+cin/cout          : 1000 -> 1000
+kh/kw beta       : 1318294144 / -3
+stride_h diff_min: -128
+stride_w input_left_shift: 1
+pad_t input_ptr  : 3004768
+out_h/out_w       : 1 x 1
+
+w_off/b_off       : 0 / 0
+mul_off           : 32160
+shift_off         : 32160
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 1728416
+shift_ptr         : 1760592
+q6_ptr            : 0
+zx/zw/zy          : -45 / 0 / -128
+
+================================================================================
+L66
+================================================================================
+blob_offset       : 7656
+op_index          : 66
+optype            : QUANTIZE
+op_type           : 7 (QUANTIZE)
+act               : 0 (NONE)
+flags             : 3 (OUTPUT_UINT8|INPUT_INT8)
+in_slot/out_slot  : 0 -> 0
+in_ptr/out_ptr    : 1800544 -> 1800544
+
+QUANTIZE PARAMETERS
+  input_dtype : int8
+  scale_in/out: 0.003906 / 0.003906
+  zp_in/out   : -128 / 0
+  ratio       : 1.000000
+  mul/shift   : 1073741824 / 1
+
+in_h/in_w         : 1 x 1
+cin/cout          : 1000 -> 1000
+kh/kw (mul/shift): 1073741824 / 1
+pad_t input_ptr  : 1800544
+out_h/out_w       : 1 x 1
+
+w_off/b_off       : 0 / 0
+mul_off           : 0
+shift_off         : 0
+q6_off            : 0
+wptr              : 2048
+bias_ptr          : 0
+mul_ptr           : 0
+shift_ptr         : 0
+q6_ptr            : 0
+zx/zw/zy          : -128 / 0 / 0

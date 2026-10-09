@@ -1,6 +1,11 @@
 {
   "port": 8000,
-  "excluded_directories": [".git", ".agents", ".codex", "build", "dist", "node_modules", "managed_components", "__pycache__", "venv", "env", ".venv", ".venv-models", ".pytest_cache", "test-results"],
+  "esp32": {
+    "idf_root": "C:/Espressif/frameworks/esp-idf-v5.3.1",
+    "python": "C:/Espressif/python_env/idf5.3_py3.11_env/Scripts/python.exe",
+    "tools": "C:/Espressif"
+  },
+  "excluded_directories": [".git", ".agents", ".codex", "build", "build-tflite", "dist", "node_modules", "managed_components", "__pycache__", "venv", "env", ".venv", ".venv-models", ".pytest_cache", "test-results"],
   "report_directories": ["reports", "report", "relatorios", "relatórios"],
   "report_extensions": [".txt", ".csv", ".json", ".log"],
   "max_file_bytes": 16777216

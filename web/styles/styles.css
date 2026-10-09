@@ -1847,3 +1847,16 @@ input[type=checkbox]
     scroll-behavior:auto!important
   }
 }
+:root #esp32-dialog { width: min(560px, calc(100vw - 32px)); padding: 28px; border: 1px solid #cbd8d1; border-radius: 16px; color: #243d35; background: #fafcfb; box-shadow: 0 24px 80px #102c3340; }
+#esp32-dialog::backdrop { background: #102c3380; }
+#esp32-dialog label { display: block; margin: 18px 0 8px; font-weight: 600; }
+#esp32-dialog input, #esp32-dialog select { width: 100%; padding: 12px; border: 1px solid #cbd8d1; border-radius: 8px; background: white; color: inherit; font: inherit; }
+#esp32-dialog p { line-height: 1.6; }
+#esp32-status { overflow-wrap: anywhere; }
+@media (max-width: 700px) { .topbar-actions { flex-wrap: wrap; } #import-esp32 { padding: 8px; font-size: 12px; } }
+.execution-panel { padding: 24px; margin-bottom: 24px; }
+.execution-panel label { display: grid; gap: 8px; }
+.execution-panel .toolbar { align-items: end; }
+.execution-log { max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+#execution-reports { overflow-wrap: anywhere; }
+#execution-error { color: #9b3030; }

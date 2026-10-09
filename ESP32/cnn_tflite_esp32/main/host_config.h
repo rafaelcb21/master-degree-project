@@ -6,8 +6,12 @@
 #define WIFI_CONNECT_TIMEOUT_MS 30000
 #define WIFI_MIN_AUTHMODE WIFI_AUTH_WPA2_PSK
 #define HTTP_DOWNLOAD_TIMEOUT_MS 15000
-/* HTTPS is polled asynchronously so a stalled transfer can be abandoned. */
+/* Streaming download: total budget per attempt, short body reads, one retry. */
 #define HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS 45000
+#define HTTP_READ_TIMEOUT_MS 3000
+#define HTTP_READ_CHUNK_BYTES 1024
+#define HTTP_DOWNLOAD_MAX_ATTEMPTS 2
+#define HTTP_RETRY_DELAY_MS 1000
 #define HTTP_PROGRESS_INTERVAL_MS 5000
 #define HTTP_KEEP_ALIVE_ENABLE 0
 #define REPORT_HTTP_PORT 80
@@ -45,7 +49,14 @@
 #define BENCHMARK_THREAD_STACK_BYTES (32 * 1024)
 #define BENCHMARK_TASK_CORE 1
 #define BENCHMARK_TASK_PRIORITY 5
-#define BENCHMARK_WDT_TIMEOUT_MS 300000
+#define BENCHMARK_WDT_TIMEOUT_MS 120000
+/* Increment to deliberately start a new persistent experiment. */
+#define BENCHMARK_RUN_ID 2
+#define RECOVERY_MAX_ATTEMPTS 2
+#define CHECKPOINT_PARTITION_LABEL "spiffs"
+#if RECOVERY_MAX_ATTEMPTS < 1
+#error "RECOVERY_MAX_ATTEMPTS must be positive"
+#endif
 #define BENCHMARK_WDT_IDLE_CORE_MASK BIT0
 #define IMAGE_NAME_BYTES 128
 #define REPORT_INITIAL_BYTES 4096

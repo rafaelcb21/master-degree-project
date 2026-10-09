@@ -1,0 +1,64 @@
+INFERÊNCIA TFLITE — ImageNet Top-K
+test/img/aviao_uint8.raw
+ 1. [404] airliner
+    wnid=n02690373
+    q=141
+    score=0.55078125
+ 2. [812] space_shuttle
+    wnid=n04266014
+    q=28
+    score=0.10937500
+ 3. [908] wing
+    wnid=n04592741
+    q=15
+    score=0.05859375
+ 4. [473] can_opener
+    wnid=n02951585
+    q=8
+    score=0.03125000
+ 5. [405] airship
+    wnid=n02692877
+    q=7
+    score=0.02734375
+ 6. [895] warplane
+    wnid=n04552348
+    q=6
+    score=0.02343750
+ 7. [744] projectile
+    wnid=n04008634
+    q=3
+    score=0.01171875
+ 8. [657] missile
+    wnid=n03773504
+    q=2
+    score=0.00781250
+ 9. [478] carton
+    wnid=n02971356
+    q=1
+    score=0.00390625
+10. [499] cleaver
+    wnid=n03041632
+    q=1
+    score=0.00390625
+11. [512] corkscrew
+    wnid=n03109150
+    q=1
+    score=0.00390625
+12. [587] hammer
+    wnid=n03481172
+    q=1
+    score=0.00390625
+13. [589] hand_blower
+    wnid=n03483316
+    q=1
+    score=0.00390625
+14. [623] letter_opener
+    wnid=n03658185
+    q=1
+    score=0.00390625
+15. [626] lighter
+    wnid=n03666591
+    q=1
+    score=0.00390625
+Erros de processamento: 0
+

@@ -34,6 +34,8 @@ O [host ESP32](ESP32/cnn_webassembly_esp32/README.pt-BR.md) é independente do p
 
 ## Consultar documentação e relatórios
 
+O [host TFLite Micro no ESP32](ESP32/cnn_tflite_esp32/README.pt-BR.md) executa o modelo original na placa e exporta medições CSV para comparar com o firmware WASM/AOT separado.
+
 Execute `python web/server/app.py` na raiz e abra **http://127.0.0.1:8000**. O [Research Explorer](web/README.pt-BR.md) organiza Markdown e relatórios por projeto, com gráficos, tabelas pesquisáveis e navegação entre idiomas. Basta Python 3.10+; não precisa instalar as dependências de inferência.
 
 ## Instalação
@@ -117,7 +119,7 @@ Sem `--model`, executa drowsiness. A listagem mostra nome da pasta e descrição
                                ▼
                     build_report + lista de erros
                                ▼
-                models/X/reports/12-inferencia-wasm.txt
+                models/X/reports/<timestamp>/12-inferencia-wasm.txt
 ```
 
 Entram o nome do pacote, suas fontes e os testes. `ModelPipeline` transforma os dados do TFLite em estruturas do runtime e coordena os dois ramos. Saem WAT, WASM e relatórios. Caminhos, classes, formato e pesos são específicos do modelo; serialização, alocação e protocolo de execução são compartilhados. Os relatórios 02–11 são gravados durante a extração, antes da inferência; a posição de `reports/` ao final não significa uma gravação única.
@@ -178,7 +180,7 @@ Esta árvore agrupa arquivos repetitivos; o [inventário](docs/14-inventario-e-r
 
 ## Saídas, relatórios e fontes
 
-O pipeline escreve `models/<nome>/generated/model.wat`, `model.wasm` e os relatórios 02–12 em `models/<nome>/reports/`. Fontes são código, manifest, TFLite original, template, labels e RAWs; artefatos são generated e reports. Uma execução completa pode recriá-los, mas não apaga arquivos extras, não mantém histórico e não é atômica. Falhas podem deixar arquivos de diferentes execuções juntos.
+O pipeline escreve `models/<nome>/generated/model.wat` e `model.wasm`. Cada execução salva todos os relatórios 02–12 em uma nova pasta, `models/<nome>/reports/<timestamp>/`, por exemplo `20261006T234046384562Z` (UTC, com microssegundos). Os relatórios anteriores são preservados. Execuções com falha podem deixar uma pasta de relatórios incompleta. Os arquivos WAT/WASM em `generated/` continuam sendo substituídos a cada execução.
 
 Templates ativos: `wat/templates/mobilenet_int8_v1.wat` para sonolência e `models/mobilenetv2_alpha035/wat/model_template.wat` para ImageNet. O arquivo `wat/templates/model_template.wat` é legado, não selecionado pelos manifests e com comportamento antigo de QUANTIZE.
 

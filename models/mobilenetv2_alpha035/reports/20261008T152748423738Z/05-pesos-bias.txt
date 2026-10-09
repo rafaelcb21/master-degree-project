@@ -1,0 +1,118 @@
+PESOS
+================================================================================
+op=  1 CONV_2D                   tensor= 107 offset=       0 bytes=     432 shape=[16, 3, 3, 3] dtype=int8
+op=  2 DEPTHWISE_CONV_2D         tensor= 105 offset=     432 bytes=     144 shape=[1, 3, 3, 16] dtype=int8
+op=  3 CONV_2D                   tensor= 103 offset=     576 bytes=     128 shape=[8, 1, 1, 16] dtype=int8
+op=  4 CONV_2D                   tensor= 101 offset=     704 bytes=     384 shape=[48, 1, 1, 8] dtype=int8
+op=  5 DEPTHWISE_CONV_2D         tensor=  99 offset=    1088 bytes=     432 shape=[1, 3, 3, 48] dtype=int8
+op=  6 CONV_2D                   tensor=  97 offset=    1520 bytes=     384 shape=[8, 1, 1, 48] dtype=int8
+op=  7 CONV_2D                   tensor=  95 offset=    1904 bytes=     384 shape=[48, 1, 1, 8] dtype=int8
+op=  8 DEPTHWISE_CONV_2D         tensor=  93 offset=    2288 bytes=     432 shape=[1, 3, 3, 48] dtype=int8
+op=  9 CONV_2D                   tensor=  91 offset=    2720 bytes=     384 shape=[8, 1, 1, 48] dtype=int8
+op= 11 CONV_2D                   tensor=  89 offset=    3104 bytes=     384 shape=[48, 1, 1, 8] dtype=int8
+op= 12 DEPTHWISE_CONV_2D         tensor=  87 offset=    3488 bytes=     432 shape=[1, 3, 3, 48] dtype=int8
+op= 13 CONV_2D                   tensor=  85 offset=    3920 bytes=     768 shape=[16, 1, 1, 48] dtype=int8
+op= 14 CONV_2D                   tensor=  83 offset=    4688 bytes=    1536 shape=[96, 1, 1, 16] dtype=int8
+op= 15 DEPTHWISE_CONV_2D         tensor=  81 offset=    6224 bytes=     864 shape=[1, 3, 3, 96] dtype=int8
+op= 16 CONV_2D                   tensor=  79 offset=    7088 bytes=    1536 shape=[16, 1, 1, 96] dtype=int8
+op= 18 CONV_2D                   tensor=  77 offset=    8624 bytes=    1536 shape=[96, 1, 1, 16] dtype=int8
+op= 19 DEPTHWISE_CONV_2D         tensor=  75 offset=   10160 bytes=     864 shape=[1, 3, 3, 96] dtype=int8
+op= 20 CONV_2D                   tensor=  73 offset=   11024 bytes=    1536 shape=[16, 1, 1, 96] dtype=int8
+op= 22 CONV_2D                   tensor=  71 offset=   12560 bytes=    1536 shape=[96, 1, 1, 16] dtype=int8
+op= 23 DEPTHWISE_CONV_2D         tensor=  69 offset=   14096 bytes=     864 shape=[1, 3, 3, 96] dtype=int8
+op= 24 CONV_2D                   tensor=  67 offset=   14960 bytes=    2304 shape=[24, 1, 1, 96] dtype=int8
+op= 25 CONV_2D                   tensor=  65 offset=   17264 bytes=    3456 shape=[144, 1, 1, 24] dtype=int8
+op= 26 DEPTHWISE_CONV_2D         tensor=  63 offset=   20720 bytes=    1296 shape=[1, 3, 3, 144] dtype=int8
+op= 27 CONV_2D                   tensor=  61 offset=   22016 bytes=    3456 shape=[24, 1, 1, 144] dtype=int8
+op= 29 CONV_2D                   tensor=  59 offset=   25472 bytes=    3456 shape=[144, 1, 1, 24] dtype=int8
+op= 30 DEPTHWISE_CONV_2D         tensor=  57 offset=   28928 bytes=    1296 shape=[1, 3, 3, 144] dtype=int8
+op= 31 CONV_2D                   tensor=  55 offset=   30224 bytes=    3456 shape=[24, 1, 1, 144] dtype=int8
+op= 33 CONV_2D                   tensor=  53 offset=   33680 bytes=    3456 shape=[144, 1, 1, 24] dtype=int8
+op= 34 DEPTHWISE_CONV_2D         tensor=  51 offset=   37136 bytes=    1296 shape=[1, 3, 3, 144] dtype=int8
+op= 35 CONV_2D                   tensor=  49 offset=   38432 bytes=    3456 shape=[24, 1, 1, 144] dtype=int8
+op= 37 CONV_2D                   tensor=  47 offset=   41888 bytes=    3456 shape=[144, 1, 1, 24] dtype=int8
+op= 38 DEPTHWISE_CONV_2D         tensor=  45 offset=   45344 bytes=    1296 shape=[1, 3, 3, 144] dtype=int8
+op= 39 CONV_2D                   tensor=  43 offset=   46640 bytes=    4608 shape=[32, 1, 1, 144] dtype=int8
+op= 40 CONV_2D                   tensor=  41 offset=   51248 bytes=    6144 shape=[192, 1, 1, 32] dtype=int8
+op= 41 DEPTHWISE_CONV_2D         tensor=  39 offset=   57392 bytes=    1728 shape=[1, 3, 3, 192] dtype=int8
+op= 42 CONV_2D                   tensor=  37 offset=   59120 bytes=    6144 shape=[32, 1, 1, 192] dtype=int8
+op= 44 CONV_2D                   tensor=  35 offset=   65264 bytes=    6144 shape=[192, 1, 1, 32] dtype=int8
+op= 45 DEPTHWISE_CONV_2D         tensor=  33 offset=   71408 bytes=    1728 shape=[1, 3, 3, 192] dtype=int8
+op= 46 CONV_2D                   tensor=  31 offset=   73136 bytes=    6144 shape=[32, 1, 1, 192] dtype=int8
+op= 48 CONV_2D                   tensor=  29 offset=   79280 bytes=    6144 shape=[192, 1, 1, 32] dtype=int8
+op= 49 DEPTHWISE_CONV_2D         tensor=  27 offset=   85424 bytes=    1728 shape=[1, 3, 3, 192] dtype=int8
+op= 50 CONV_2D                   tensor=  25 offset=   87152 bytes=   10752 shape=[56, 1, 1, 192] dtype=int8
+op= 51 CONV_2D                   tensor=  23 offset=   97904 bytes=   18816 shape=[336, 1, 1, 56] dtype=int8
+op= 52 DEPTHWISE_CONV_2D         tensor=  21 offset=  116720 bytes=    3024 shape=[1, 3, 3, 336] dtype=int8
+op= 53 CONV_2D                   tensor=  19 offset=  119744 bytes=   18816 shape=[56, 1, 1, 336] dtype=int8
+op= 55 CONV_2D                   tensor=  17 offset=  138560 bytes=   18816 shape=[336, 1, 1, 56] dtype=int8
+op= 56 DEPTHWISE_CONV_2D         tensor=  15 offset=  157376 bytes=    3024 shape=[1, 3, 3, 336] dtype=int8
+op= 57 CONV_2D                   tensor=  13 offset=  160400 bytes=   18816 shape=[56, 1, 1, 336] dtype=int8
+op= 59 CONV_2D                   tensor=  11 offset=  179216 bytes=   18816 shape=[336, 1, 1, 56] dtype=int8
+op= 60 DEPTHWISE_CONV_2D         tensor=   9 offset=  198032 bytes=    3024 shape=[1, 3, 3, 336] dtype=int8
+op= 61 CONV_2D                   tensor=   7 offset=  201056 bytes=   37632 shape=[112, 1, 1, 336] dtype=int8
+op= 62 CONV_2D                   tensor=   5 offset=  238688 bytes=  143360 shape=[1280, 1, 1, 112] dtype=int8
+op= 64 FULLY_CONNECTED           tensor=   3 offset=  382048 bytes= 1280000 shape=[1000, 1280] dtype=int8
+
+BIAS
+================================================================================
+op=  1 CONV_2D                   tensor= 106 offset=       0 bytes=      64 shape=[16] dtype=int32
+op=  2 DEPTHWISE_CONV_2D         tensor= 104 offset=      64 bytes=      64 shape=[16] dtype=int32
+op=  3 CONV_2D                   tensor= 102 offset=     128 bytes=      32 shape=[8] dtype=int32
+op=  4 CONV_2D                   tensor= 100 offset=     160 bytes=     192 shape=[48] dtype=int32
+op=  5 DEPTHWISE_CONV_2D         tensor=  98 offset=     352 bytes=     192 shape=[48] dtype=int32
+op=  6 CONV_2D                   tensor=  96 offset=     544 bytes=      32 shape=[8] dtype=int32
+op=  7 CONV_2D                   tensor=  94 offset=     576 bytes=     192 shape=[48] dtype=int32
+op=  8 DEPTHWISE_CONV_2D         tensor=  92 offset=     768 bytes=     192 shape=[48] dtype=int32
+op=  9 CONV_2D                   tensor=  90 offset=     960 bytes=      32 shape=[8] dtype=int32
+op= 11 CONV_2D                   tensor=  88 offset=     992 bytes=     192 shape=[48] dtype=int32
+op= 12 DEPTHWISE_CONV_2D         tensor=  86 offset=    1184 bytes=     192 shape=[48] dtype=int32
+op= 13 CONV_2D                   tensor=  84 offset=    1376 bytes=      64 shape=[16] dtype=int32
+op= 14 CONV_2D                   tensor=  82 offset=    1440 bytes=     384 shape=[96] dtype=int32
+op= 15 DEPTHWISE_CONV_2D         tensor=  80 offset=    1824 bytes=     384 shape=[96] dtype=int32
+op= 16 CONV_2D                   tensor=  78 offset=    2208 bytes=      64 shape=[16] dtype=int32
+op= 18 CONV_2D                   tensor=  76 offset=    2272 bytes=     384 shape=[96] dtype=int32
+op= 19 DEPTHWISE_CONV_2D         tensor=  74 offset=    2656 bytes=     384 shape=[96] dtype=int32
+op= 20 CONV_2D                   tensor=  72 offset=    3040 bytes=      64 shape=[16] dtype=int32
+op= 22 CONV_2D                   tensor=  70 offset=    3104 bytes=     384 shape=[96] dtype=int32
+op= 23 DEPTHWISE_CONV_2D         tensor=  68 offset=    3488 bytes=     384 shape=[96] dtype=int32
+op= 24 CONV_2D                   tensor=  66 offset=    3872 bytes=      96 shape=[24] dtype=int32
+op= 25 CONV_2D                   tensor=  64 offset=    3968 bytes=     576 shape=[144] dtype=int32
+op= 26 DEPTHWISE_CONV_2D         tensor=  62 offset=    4544 bytes=     576 shape=[144] dtype=int32
+op= 27 CONV_2D                   tensor=  60 offset=    5120 bytes=      96 shape=[24] dtype=int32
+op= 29 CONV_2D                   tensor=  58 offset=    5216 bytes=     576 shape=[144] dtype=int32
+op= 30 DEPTHWISE_CONV_2D         tensor=  56 offset=    5792 bytes=     576 shape=[144] dtype=int32
+op= 31 CONV_2D                   tensor=  54 offset=    6368 bytes=      96 shape=[24] dtype=int32
+op= 33 CONV_2D                   tensor=  52 offset=    6464 bytes=     576 shape=[144] dtype=int32
+op= 34 DEPTHWISE_CONV_2D         tensor=  50 offset=    7040 bytes=     576 shape=[144] dtype=int32
+op= 35 CONV_2D                   tensor=  48 offset=    7616 bytes=      96 shape=[24] dtype=int32
+op= 37 CONV_2D                   tensor=  46 offset=    7712 bytes=     576 shape=[144] dtype=int32
+op= 38 DEPTHWISE_CONV_2D         tensor=  44 offset=    8288 bytes=     576 shape=[144] dtype=int32
+op= 39 CONV_2D                   tensor=  42 offset=    8864 bytes=     128 shape=[32] dtype=int32
+op= 40 CONV_2D                   tensor=  40 offset=    8992 bytes=     768 shape=[192] dtype=int32
+op= 41 DEPTHWISE_CONV_2D         tensor=  38 offset=    9760 bytes=     768 shape=[192] dtype=int32
+op= 42 CONV_2D                   tensor=  36 offset=   10528 bytes=     128 shape=[32] dtype=int32
+op= 44 CONV_2D                   tensor=  34 offset=   10656 bytes=     768 shape=[192] dtype=int32
+op= 45 DEPTHWISE_CONV_2D         tensor=  32 offset=   11424 bytes=     768 shape=[192] dtype=int32
+op= 46 CONV_2D                   tensor=  30 offset=   12192 bytes=     128 shape=[32] dtype=int32
+op= 48 CONV_2D                   tensor=  28 offset=   12320 bytes=     768 shape=[192] dtype=int32
+op= 49 DEPTHWISE_CONV_2D         tensor=  26 offset=   13088 bytes=     768 shape=[192] dtype=int32
+op= 50 CONV_2D                   tensor=  24 offset=   13856 bytes=     224 shape=[56] dtype=int32
+op= 51 CONV_2D                   tensor=  22 offset=   14080 bytes=    1344 shape=[336] dtype=int32
+op= 52 DEPTHWISE_CONV_2D         tensor=  20 offset=   15424 bytes=    1344 shape=[336] dtype=int32
+op= 53 CONV_2D                   tensor=  18 offset=   16768 bytes=     224 shape=[56] dtype=int32
+op= 55 CONV_2D                   tensor=  16 offset=   16992 bytes=    1344 shape=[336] dtype=int32
+op= 56 DEPTHWISE_CONV_2D         tensor=  14 offset=   18336 bytes=    1344 shape=[336] dtype=int32
+op= 57 CONV_2D                   tensor=  12 offset=   19680 bytes=     224 shape=[56] dtype=int32
+op= 59 CONV_2D                   tensor=  10 offset=   19904 bytes=    1344 shape=[336] dtype=int32
+op= 60 DEPTHWISE_CONV_2D         tensor=   8 offset=   21248 bytes=    1344 shape=[336] dtype=int32
+op= 61 CONV_2D                   tensor=   6 offset=   22592 bytes=     448 shape=[112] dtype=int32
+op= 62 CONV_2D                   tensor=   4 offset=   23040 bytes=    5120 shape=[1280] dtype=int32
+op= 64 FULLY_CONNECTED           tensor=   2 offset=   28160 bytes=    4000 shape=[1000] dtype=int32
+
+RESUMO
+================================================================================
+Total de tensors de pesos: 53
+Total de bytes de pesos: 1662048
+Total de tensors de bias: 53
+Total de bytes de bias: 32160

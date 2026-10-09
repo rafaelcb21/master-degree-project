@@ -14,6 +14,9 @@
 #include "esp_event.h"
 #include "esp_netif.h"
 #include "nvs_flash.h"
+#include "nvs.h"
+#include "esp_partition.h"
+#include <stddef.h>
 #include "freertos/event_groups.h"
 #include "esp_http_server.h"
 #include "esp_http_client.h"
@@ -68,6 +71,8 @@ typedef struct {
     size_t psram_before;
     size_t psram_after;
     size_t stack_min_free_bytes;
+    unsigned recovery_attempts;
+    int recovery_skipped;
 } report_row_t;
 
 /* O servidor inicia depois do benchmark: o CSV servido e imutavel. */
@@ -76,6 +81,7 @@ static size_t g_report_len = 0;
 static size_t g_report_cap = 0;
 static bool g_report_failed = false;
 static size_t g_success, g_errors, g_labeled, g_correct, g_invalid;
+static size_t g_processed, g_resumed, g_recovery_skipped;
 
 static void report_append(const char *fmt, ...) {
     if (g_report_failed) return;
@@ -136,14 +142,12 @@ static void extend_task_wdt_for_benchmark(void) {
          * Mantemos o monitoramento do core 0, onde ficam Wi-Fi e demais
          * tarefas do sistema, e liberamos o core da inferencia. */
         .idle_core_mask = BENCHMARK_WDT_IDLE_CORE_MASK,
-#if CONFIG_ESP_TASK_WDT_PANIC
         .trigger_panic = true,
-#else
-        .trigger_panic = false,
-#endif
     };
 
     esp_err_t err = esp_task_wdt_reconfigure(&twdt_config);
+    if (err == ESP_ERR_INVALID_STATE) err = esp_task_wdt_init(&twdt_config);
+    ESP_ERROR_CHECK(err);
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "Task WDT reconfigurado para %u ms durante o benchmark", (unsigned)BENCHMARK_WDT_TIMEOUT_MS);
     } else {
@@ -209,93 +213,8 @@ static void wifi_init_sta(void) {
 /* ============================================================
  * Download de imagem via HTTP(S) direto para um buffer fixo
  * ============================================================ */
-typedef struct {
-    uint8_t *buf;
-    size_t   capacity;
-    size_t   len;
-    bool overflow;
-} http_download_ctx_t;
+#include "download_http.inc"
 
-static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
-    http_download_ctx_t *ctx = (http_download_ctx_t *)evt->user_data;
-    if (evt->event_id == HTTP_EVENT_ON_DATA) {
-        if (evt->data_len >= 0 && (size_t)evt->data_len <= ctx->capacity - ctx->len) {
-            memcpy(ctx->buf + ctx->len, evt->data, evt->data_len);
-            ctx->len += evt->data_len;
-        } else {
-            ctx->overflow = true;
-            ESP_LOGE(TAG_HTTP, "Buffer estourado ao baixar imagem (%u + %u > %u)",
-                     (unsigned)ctx->len, (unsigned)evt->data_len, (unsigned)ctx->capacity);
-        }
-    }
-    return ESP_OK;
-}
-
-/* Baixa a imagem crua (raw) da URL para out_buf. Retorna true em sucesso. */
-static bool download_image(const char *url, uint8_t *out_buf, size_t expected_len, int64_t *download_us) {
-    http_download_ctx_t ctx = { .buf = out_buf, .capacity = expected_len, .len = 0 };
-
-    esp_http_client_config_t config = {
-        .url = url,
-        .event_handler = http_event_handler,
-        .user_data = &ctx,
-        .timeout_ms = HTTP_DOWNLOAD_TIMEOUT_MS,
-        .is_async = true, /* Cloudinary URLs are HTTPS. */
-        .crt_bundle_attach = esp_crt_bundle_attach, // necessário para https://
-        .keep_alive_enable = HTTP_KEEP_ALIVE_ENABLE,
-    };
-
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    if (!client) {
-        ESP_LOGE(TAG_HTTP, "Falha ao iniciar cliente HTTP");
-        return false;
-    }
-
-    int64_t t0 = esp_timer_get_time();
-    esp_err_t err;
-    int64_t next_progress = t0 + (int64_t)HTTP_PROGRESS_INTERVAL_MS * 1000;
-    do {
-        err = esp_http_client_perform(client);
-        int64_t now = esp_timer_get_time();
-        if (ctx.overflow) { err = ESP_ERR_INVALID_SIZE; break; }
-        if (now - t0 >= (int64_t)HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS * 1000) {
-            ESP_LOGE(TAG_HTTP, "Download excedeu limite total: %u/%u bytes", (unsigned)ctx.len, (unsigned)expected_len);
-            err = ESP_ERR_TIMEOUT;
-            break;
-        }
-        if (err == ESP_ERR_HTTP_EAGAIN) {
-            if (now >= next_progress) {
-                ESP_LOGW(TAG_HTTP, "Download em andamento: %u/%u bytes, %.1f s, status=%d",
-                         (unsigned)ctx.len, (unsigned)expected_len, (now - t0) / 1000000.0,
-                         esp_http_client_get_status_code(client));
-                next_progress = now + (int64_t)HTTP_PROGRESS_INTERVAL_MS * 1000;
-            }
-            vTaskDelay(pdMS_TO_TICKS(10) + 1);
-        }
-    } while (err == ESP_ERR_HTTP_EAGAIN);
-    int64_t t1 = esp_timer_get_time();
-    if (download_us) *download_us = t1 - t0;
-
-    int status = esp_http_client_get_status_code(client);
-    esp_http_client_cleanup(client);
-
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG_HTTP, "Erro HTTP ao baixar %s: %s", url, esp_err_to_name(err));
-        return false;
-    }
-    if (status != 200) {
-        ESP_LOGE(TAG_HTTP, "Status HTTP %d ao baixar %s", status, url);
-        return false;
-    }
-    if (ctx.overflow || ctx.len != expected_len) {
-        ESP_LOGE(TAG_HTTP, "Tamanho inesperado: esperado=%u recebido=%u (%s)",
-                 (unsigned)expected_len, (unsigned)ctx.len, url);
-        return false;
-    }
-    return true;
-}
-
-/* Extrai um "nome de arquivo" simples a partir da URL, só para o relatório */
 static void filename_from_url(const char *url, char *out, size_t out_size) {
     const char *slash = strrchr(url, '/');
     const char *name  = slash ? slash + 1 : url;
@@ -314,6 +233,7 @@ static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t
     row->result = -1;
     row->right = -1;
     if (!download_image(entry->url, img_buf, INPUT_BYTES, &row->download_us)) return;
+    ESP_ERROR_CHECK(esp_task_wdt_reset());
     ESP_LOGI(TAG, "Download concluido: %s (%u bytes); calculando SHA256", row->name_image, (unsigned)INPUT_BYTES);
 
     uint8_t digest[32];
@@ -365,6 +285,8 @@ static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t
     row->ok = 1;
 }
 
+#include "checkpoint.inc"
+
 static void run_benchmark(void) {
     uint8_t *img_buf = heap_caps_malloc(INPUT_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     report_row_t *row = heap_caps_malloc(sizeof(*row), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -378,13 +300,46 @@ static void run_benchmark(void) {
     report_append("name_image,ok");
     for (int c = 0; c < NUM_CLASSES; ++c) report_append(",class_%d_raw", c);
     report_append(",result,label,right,download_ms,inference_ms,heap_before,heap_after,"
-                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes,preprocess_ms,invoke_ms,arena_reserved_bytes,arena_used_bytes,input_sha256\n");
+                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes,preprocess_ms,invoke_ms,arena_reserved_bytes,arena_used_bytes,input_sha256,recovery_attempts,recovery_skipped\n");
 
     size_t success = 0, errors = 0, labeled = 0, correct = 0, invalid = 0;
     int64_t sum_us = 0, min_us = INT64_MAX, max_us = 0, sum_download_us = 0;
+    if (!checkpoint_open()) {
+        g_report_failed = true;
+        ESP_LOGE(TAG, "Checkpoint indisponivel; benchmark interrompido para preservar resultados");
+        heap_caps_free(img_buf); heap_caps_free(row);
+        return;
+    }
     for (size_t i = 0; i < NUM_IMAGES; ++i) {
-        ESP_LOGI(TAG, "Processando [%u/%u]: %s", (unsigned)(i + 1), (unsigned)NUM_IMAGES, IMAGES[i].url);
-        process_image(&IMAGES[i], row, img_buf);
+        ESP_ERROR_CHECK(esp_task_wdt_reset());
+        int restored = checkpoint_read(row);
+        if (restored < 0) { g_report_failed = true; break; }
+        if (restored) {
+            ++g_resumed;
+        } else {
+            if (i == g_resumed) ESP_LOGI(TAG, "Retomada: %u resultados restaurados; proxima imagem=%u", (unsigned)g_resumed, (unsigned)(i + 1));
+            while (!(xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, pdMS_TO_TICKS(10000)) & WIFI_CONNECTED_BIT)) {
+                ESP_ERROR_CHECK(esp_task_wdt_reset());
+                ESP_LOGW(TAG, "Aguardando Wi-Fi; progresso preservado");
+            }
+            unsigned attempts = 0;
+            bool skip = false;
+            if (!checkpoint_attempt(i, &attempts, &skip)) { g_report_failed = true; break; }
+            ESP_ERROR_CHECK(esp_task_wdt_reset());
+            if (skip) {
+                memset(row, 0, sizeof(*row));
+                filename_from_url(IMAGES[i].url, row->name_image, sizeof(row->name_image));
+                row->label = IMAGES[i].label; row->result = -1; row->right = -1;
+                row->recovery_skipped = 1;
+                ESP_LOGE(TAG, "Imagem %u interrompida %u vezes; registrando erro e avancando", (unsigned)(i + 1), attempts);
+            } else {
+                ESP_LOGI(TAG, "Processando [%u/%u], tentativa persistente %u: %s", (unsigned)(i + 1), (unsigned)NUM_IMAGES, attempts, IMAGES[i].url);
+                process_image(&IMAGES[i], row, img_buf);
+            }
+            row->recovery_attempts = attempts;
+            ESP_ERROR_CHECK(esp_task_wdt_reset());
+            if (!checkpoint_append(i, row)) { g_report_failed = true; break; }
+        }
         report_csv_string(row->name_image);
         report_append(",%d", row->ok);
         for (int c = 0; c < NUM_CLASSES; ++c) {
@@ -393,14 +348,16 @@ static void run_benchmark(void) {
         }
         size_t heap_used = row->heap_before > row->heap_after ? row->heap_before - row->heap_after : 0;
         size_t psram_used = row->psram_before > row->psram_after ? row->psram_before - row->psram_after : 0;
-        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%u,%u,%s\n",
+        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%u,%u,%s,%u,%d\n",
                       row->result, row->label, row->right,
                       row->download_us / 1000.0, row->inference_us / 1000.0,
                       (unsigned)row->heap_before, (unsigned)row->heap_after, (unsigned)heap_used,
                       (unsigned)row->psram_before, (unsigned)row->psram_after, (unsigned)psram_used,
                       (unsigned)row->stack_min_free_bytes, row->preprocess_us / 1000.0, row->invoke_us / 1000.0,
-                      (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), row->input_sha256);
+                      (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), row->input_sha256, row->recovery_attempts, row->recovery_skipped);
         if (g_report_failed) break;
+        ++g_processed;
+        g_recovery_skipped += row->recovery_skipped;
         vTaskDelay(pdMS_TO_TICKS(BENCHMARK_YIELD_MS) + 1);
         if (!row->ok) {
             ++errors;
@@ -433,11 +390,15 @@ static void run_benchmark(void) {
                   (unsigned)esp_get_minimum_free_heap_size(),
                   (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM),
                   (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
-    ESP_LOGI(TAG, "Benchmark concluido: sucesso=%u erros=%u; CSV em http://<ip>:%d%s",
+    ESP_LOGI(TAG, "Checkpoint: confirmados=%u/%u restaurados=%u", (unsigned)cp_next, (unsigned)NUM_IMAGES, (unsigned)g_resumed);
+    if (g_report_failed) ESP_LOGE(TAG, "Benchmark incompleto; resultados confirmados permanecem na flash");
+    else ESP_LOGI(TAG, "Benchmark concluido: sucesso=%u erros=%u; CSV em http://<ip>:%d%s",
              (unsigned)success, (unsigned)errors, REPORT_HTTP_PORT, REPORT_HTTP_URI);
     g_success = success; g_errors = errors; g_labeled = labeled; g_correct = correct; g_invalid = invalid;
     heap_caps_free(row);
     heap_caps_free(img_buf);
+    heap_caps_free(cp_record);
+    nvs_close(cp_nvs);
 }
 /* ============================================================
  * Endpoint HTTP para baixar o relatorio (mais confiavel que
@@ -468,13 +429,14 @@ static esp_err_t metadata_handler(httpd_req_t *req) {
         "\"output_type\":\"%s\",\"output_scale\":%.9g,\"output_zero_point\":%d,"
         "\"arena_reserved_bytes\":%u,\"arena_used_bytes\":%u,\"cpu_mhz\":%d,"
         "\"total\":%u,\"success\":%u,\"errors\":%u,\"labeled\":%u,\"correct\":%u,\"ties\":%u,"
-        "\"warmup_runs\":0,\"inference_ms_scope\":\"prepare_input + Invoke; download and output reading excluded\","
+        "\"processed\":%u,\"resumed\":%u,\"recovery_skipped\":%u,\"checkpoint_run_id\":%u,"
+        "\"warmup_runs\":0,\"inference_ms_scope\":\"prepare_input + Invoke; download, checkpoint and output reading excluded\","
         "\"heap_scope\":\"free heap across capabilities; PSRAM also reported separately\"}",
         model_sha256(), IMAGE_LIST_SHA256, esp_get_idf_version(), INPUT_FORMAT, IMG_W, IMG_H, NUM_CLASSES,
         model_output_type(), model_output_scale(), model_output_zero_point(),
         (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ,
         (unsigned)NUM_IMAGES, (unsigned)g_success, (unsigned)g_errors, (unsigned)g_labeled,
-        (unsigned)g_correct, (unsigned)g_invalid);
+        (unsigned)g_correct, (unsigned)g_invalid, (unsigned)g_processed, (unsigned)g_resumed, (unsigned)g_recovery_skipped, (unsigned)BENCHMARK_RUN_ID);
     if (n < 0 || (size_t)n >= sizeof(json)) return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Metadata too large");
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_send(req, json, n);
@@ -524,7 +486,10 @@ static void benchmark_task(void *arg) {
         vTaskDelete(NULL);
         return;
     }
+    ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+    ESP_ERROR_CHECK(esp_task_wdt_reset());
     run_benchmark();
+    ESP_ERROR_CHECK(esp_task_wdt_delete(NULL));
     start_file_server();
     vTaskDelete(NULL);
 }
@@ -534,7 +499,8 @@ void app_main(void) {
     EventBits_t bits = xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE,
                                           pdMS_TO_TICKS(WIFI_CONNECT_TIMEOUT_MS));
     if (!(bits & WIFI_CONNECTED_BIT)) {
-        ESP_LOGE(WIFI_TAG, "Wi-Fi timeout: check host_config.h");
+        ESP_LOGE(WIFI_TAG, "Wi-Fi timeout; reiniciando com progresso preservado");
+        esp_restart();
         return;
     }
 #if CONFIG_FREERTOS_UNICORE

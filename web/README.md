@@ -26,6 +26,28 @@ Then open http://127.0.0.1:8001. The server listens only on the local computer.
 
 ## Navigation
 
+### ESP32 over USB (Windows / ESP-IDF 5.3.1)
+
+1. Connect the ESP32 using a USB data cable. Close ESP-IDF Monitor or other programs using its COM port.
+2. Open **ESP32 · USB** and click **Check connection**. Select the port and the TFLite Micro or WASM/AOT project. No actions are enabled without a detected port; the server checks again when starting and uses esptool to confirm a classic ESP32 chip before building/flashing. Serial adapters are not assumed to be ESP32 boards.
+3. **Build and flash** activates ESP-IDF, builds the selected project (`build-tflite` for TFLite, `build` for WASM), checks the chip again, and flashes it. **Restart benchmark** skips compilation and flashing, and runs the firmware already on the board. Select the matching project. TFLite with checkpoints resumes the current experiment; increment `BENCHMARK_RUN_ID` and rebuild to start from image 1. Firmware without persistence loses reports held only in RAM after reset.
+4. Follow build output and serial logs on the page. Keep the server running and USB connected while flashing. **Close monitor** releases the serial port without deliberately resetting the board; it does not stop inference. The button is disabled during build/flash. Closing the server terminates its child processes, so do not close it during flashing.
+5. With automatic import enabled, the site reads the IP from serial logs and downloads reports when the firmware announces its HTTP server. The computer and board still need network connectivity. Failed imports can be retried with **Import from ESP32**. The serial monitor must remain open for automatic import.
+
+Configure `esp32.idf_root`, `esp32.python`, and `esp32.tools` in `web/config.json` for your ESP-IDF installation. The supplied values use `C:/Espressif` and ESP-IDF 5.3.1. No manual ESP-IDF terminal is required. The server runs PowerShell's `export.ps1` and `idf.py` in the same child environment. This controls the existing firmware projects; model, Wi-Fi and preprocessing settings still come from their source/configuration files. USB boot/reset requires the board's automatic reset circuit; if esptool cannot identify it, the operation fails with logs instead of proceeding. Desktop and USB executions cannot start concurrently within the same server.
+
+### Run desktop models
+
+Open **Run models** in the sidebar. Select Drowsiness or MobileNetV2 Alpha 0.35, then WASM or TFLite and click **Run**. The page shows live logs (the latest 1,500 lines), status and links to the run's reports. Only one execution is allowed at a time per server. Navigation and page reloads do not stop it; keep the server running. Stopping the server terminates its active process. Execution status is held in memory; report folders remain on disk.
+
+WASM runs `main.py --model <model>` with `.venv-models`, including extraction, WAT/WASM generation and inference. TFLite runs `run_tflite.py --model <model>` with `.venv-tflite`. The complete configured dataset is used. Environments must already have their dependencies installed. To use other Python environments, add `"runner_python": {"wasm": "path/to/python.exe", "tflite": "path/to/python.exe"}` to `web/config.json` (paths relative to the repository root or absolute). Restart the server after changing configuration. Reports use separate UTC folders; WASM files in `generated/` are replaced. Do not launch another benchmark manually while collecting timings.
+
+### Import ESP32 results
+
+Click **Import from ESP32**, select the firmware (TFLite Micro or WebAssembly / AOT), and enter the board's IP address, for example `192.168.0.18`. Wait until the benchmark finishes; the computer must be able to reach the board on port 80.
+
+The local server downloads `/report` into `ESP32/cnn_tflite_esp32/reports/<UTC timestamp>/report.csv` or `ESP32/cnn_webassembly_esp32/reports/<UTC timestamp>/report.csv`. TFLite also downloads `/metadata` as `metadata.json`. Each import creates a new folder such as `20261006T234046384562Z`. If metadata fails, the CSV is kept and a warning appears. The site refreshes its index and offers a link to the imported report. Opening the board's `/report` directly still uses the browser's download folder. Restart the local server after updating the site.
+
 - **EN / PT:** switches the entire interface language, including menus, filters, metrics, dates and numbers. Your preference is saved in the browser. It also selects the library language and opens the current document's translation when available. Original report contents and downloaded files remain unchanged.
 - **Visão geral (Overview):** projects, counts and recently modified reports.
 - **Relatórios (Reports):** files grouped by folder, with title/path search and project filtering.

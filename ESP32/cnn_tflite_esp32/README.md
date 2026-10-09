@@ -62,7 +62,7 @@ http://<ESP32-IP>:80/report
 http://<ESP32-IP>:80/metadata
 ```
 
-The CSV and metadata become available after processing the image list. Keep the board powered; the CSV is stored in RAM and is lost on reset. From a computer on the same network, save both files into a new folder:
+The CSV and metadata become available after processing the image list or restoring a completed experiment from flash. Keep the board powered while downloading. From a computer on the same network, save both files into a new folder:
 
 ```powershell
 $runDir = Join-Path 'reports' (Get-Date -Format 'yyyyMMdd-HHmmss')
@@ -75,15 +75,25 @@ Replace the example IP with the address printed by your board. In Research Explo
 
 ## If processing stops after certificate validation
 
-If opening results causes `A stack overflow in task httpd has been detected`, flash the updated firmware: the `/metadata` JSON buffer is stored outside the stack, and `REPORT_HTTP_STACK_BYTES` in `main/host_config.h` reserves 8 KiB for the server. This failure occurs in the HTTP server after inference; restarting loses reports held in RAM.
+If opening results causes `A stack overflow in task httpd has been detected`, flash the updated firmware: the `/metadata` JSON buffer is stored outside the stack, and `REPORT_HTTP_STACK_BYTES` in `main/host_config.h` reserves 8 KiB for the server. This failure occurs in the HTTP server after inference; the current firmware restores committed results from flash after restarting.
 
 `Certificate validated` confirms only the TLS certificate check. Follow the next stage logs: `Download concluido`, `Iniciando preparacao + Invoke`, and `Invoke retornou`. These distinguish network delays from preprocessing or inference stalls.
 
-Cloudinary HTTPS downloads use asynchronous polling. In `main/host_config.h`, `HTTP_DOWNLOAD_TIMEOUT_MS` sets the network timeout (15 seconds), `HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS` sets the overall deadline checked between polls (45 seconds), and `HTTP_PROGRESS_INTERVAL_MS` controls progress logging (5 seconds). A failed download produces an `ok=0` row and processing continues with the next image. These checks do not interrupt a stuck inference or an internal driver call.
+Cloudinary HTTPS downloads use explicit open/header/body reads in `main/download_http.inc`, included by `main.c`. They no longer use asynchronous `esp_http_client_perform()`. In `main/host_config.h`, `HTTP_DOWNLOAD_TIMEOUT_MS` sets the connection/header timeout (15 seconds), `HTTP_READ_TIMEOUT_MS` sets the body-read timeout (3 seconds), and `HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS` sets the per-attempt deadline checked between calls (45 seconds). Reads are limited to `HTTP_READ_CHUNK_BYTES` (1,024 bytes), with progress logging every `HTTP_PROGRESS_INTERVAL_MS` (5 seconds). `HTTP_DOWNLOAD_MAX_ATTEMPTS=2` allows one retry, with `HTTP_RETRY_DELAY_MS=1000` between attempts. Each attempt uses a fresh connection and validates HTTP status, exact byte count and response completion. After both attempts fail, the image produces `ok=0` and processing continues. `download_ms` includes attempts, retry waits and connection cleanup. Logs identify connection, headers, body and cleanup stages. These checks do not forcibly interrupt an internal driver call or a stuck inference.
 
-Rebuild and flash the firmware to apply changes. Restarting discards the report held in RAM and starts the image list again; `/report` becomes available after the benchmark finishes.
+The firmware build passed, and `tests/test_download.py` verifies the actual downloader with a fake HTTP transport across 12 success/error scenarios, including truncation, timeout, overflow and retry. This does not reproduce TLS faults on the physical ESP32. In the website, close the serial monitor and choose **Build and flash** to install this change; **Restart benchmark** alone runs the old firmware.
+
+Rebuild and flash the firmware to apply changes. Restarting resumes the current experiment from flash; `/report` becomes available after the benchmark finishes or a completed report is restored.
 
 ## Comparing results
+
+### Automatic recovery and persistent results
+
+The host uses the existing 1 MiB partition named `spiffs` as a raw checkpoint journal (not a mounted filesystem). Before each new image it atomically records its attempt in NVS; after processing it writes the result, its checksum, and a final commit marker to flash. Only committed records are restored. Interrupted writes consume an unused slot and do not overwrite earlier results. Storage errors stop processing rather than silently discarding the journal. The host checks that the partition can hold all configured samples before starting; larger outputs/datasets may require a larger partition.
+
+The benchmark task is registered with the task watchdog. `BENCHMARK_WDT_TIMEOUT_MS=120000` triggers a panic/reboot if it stops making progress. After reboot, the CSV and totals are reconstructed from flash and processing resumes at the first uncommitted image. `RECOVERY_MAX_ATTEMPTS=2` limits interrupted executions per image; after two interruptions, the next boot records that image as an error and continues. Manual resets/power loss during an image also count as interruptions. CSV fields `recovery_attempts` and `recovery_skipped` expose this recovery; metadata includes `processed`, `resumed`, `recovery_skipped`, and `checkpoint_run_id`.
+
+The first installation starts at image 1. A completed experiment remains available through `/report` and `/metadata` after reboot, without rerunning inference. To deliberately start another experiment, increment `BENCHMARK_RUN_ID` in `main/host_config.h` and rebuild/flash. Changes to model, image list, host sources or configuration also start a new journal to avoid mixing experiments. Save the previous report before making such changes. `fullclean` only cleans desktop build files; it does not erase board checkpoints. Flash writes occur outside measured inference time. This recovers progress after a hang; it does not establish or fix the underlying cause of an inference hang.
 
 See [measurement definitions](HOST.md). The CSV preserves the WASM host's original column names and adds:
 
@@ -99,7 +109,7 @@ See [measurement definitions](HOST.md). The CSV preserves the WASM host's origin
 
 ### Validation of this adaptation
 
-The default firmware was built successfully with ESP-IDF 5.3.1 for `esp32`: 2,009,392 bytes, within the 2 MiB app partition (4% free). The embedded model's 16-byte alignment and the unchanged image list were checked. This verifies compilation, not execution on a physical board. Arena sizing, network downloads and inference results still require a device run. A larger model may require a larger app partition.
+The default firmware was built successfully with ESP-IDF 5.3.1 for `esp32`: 2,012,544 bytes, within the 2 MiB app partition (4% free). The embedded model's 16-byte alignment and the unchanged image list were checked. This verifies compilation, not execution on a physical board. Arena sizing, network downloads and inference results still require a device run. A larger model may require a larger app partition.
 
 Choose the model during configuration:
 

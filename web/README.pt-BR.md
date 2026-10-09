@@ -1,5 +1,27 @@
 # Research Explorer
 
+## ESP32 pela USB (Windows / ESP-IDF 5.3.1)
+
+1. Conecte o ESP32 por um cabo USB de dados. Feche o ESP-IDF Monitor e outros programas que usem a porta COM.
+2. Abra **ESP32 · USB** e clique em **Verificar conexão**. Selecione a porta e o projeto TFLite Micro ou WASM/AOT. Os botões ficam bloqueados sem uma porta detectada; o servidor verifica novamente ao iniciar e usa o esptool para confirmar um chip ESP32 clássico antes de compilar/gravar. Um adaptador serial não é considerado automaticamente uma placa ESP32.
+3. **Compilar e gravar** ativa o ESP-IDF, compila o projeto (`build-tflite` para TFLite, `build` para WASM), verifica novamente o chip e grava. **Reiniciar benchmark** executa o firmware já gravado, sem recompilar; selecione o projeto correspondente. O TFLite com checkpoints retoma o experimento atual; incremente `BENCHMARK_RUN_ID` e compile para começar da imagem 1. Firmwares sem persistência perdem os relatórios mantidos apenas na RAM ao reiniciar.
+4. Acompanhe a compilação e o monitor serial pela página. Mantenha o servidor aberto e o USB conectado durante a gravação. **Fechar monitor** libera a porta sem reiniciar deliberadamente a placa; não interrompe a inferência. Esse botão fica bloqueado durante compilação/gravação. Encerrar o servidor termina seus processos filhos, portanto não o feche durante a gravação.
+5. Com a importação automática habilitada, o site lê o IP nos logs e baixa os relatórios quando o firmware anuncia o servidor HTTP. Computador e placa ainda precisam se comunicar pela rede. Se a importação falhar, use **Importar do ESP32** para tentar novamente. Mantenha o monitor aberto para a importação automática funcionar.
+
+Os caminhos `esp32.idf_root`, `esp32.python` e `esp32.tools` em `web/config.json` indicam a instalação ESP-IDF. Os valores fornecidos usam `C:/Espressif` e ESP-IDF 5.3.1. Não é preciso abrir o terminal ESP-IDF: o servidor executa `export.ps1` e `idf.py` no mesmo ambiente filho do PowerShell. A página controla os projetos existentes; modelo, Wi-Fi e pré-processamento continuam definidos nos arquivos de cada firmware. A inicialização/reset pela USB depende do circuito de reset automático da placa; se o esptool não conseguir identificá-la, a operação falha com logs. O mesmo servidor bloqueia execuções desktop e USB simultâneas.
+
+## Executar modelos no desktop
+
+Abra **Executar modelos** no menu lateral. Escolha Drowsiness ou MobileNetV2 Alpha 0.35, selecione WASM ou TFLite e clique em **Executar**. A página mostra os logs ao vivo (últimas 1.500 linhas), o status e links para os relatórios. Cada servidor permite uma execução por vez. Navegar ou recarregar a página não interrompe o processo; mantenha o servidor aberto. Encerrar o servidor termina seu processo ativo. O status fica na memória; os relatórios permanecem no disco.
+
+WASM executa `main.py --model <modelo>` com `.venv-models`, incluindo extração, geração WAT/WASM e inferência. TFLite executa `run_tflite.py --model <modelo>` com `.venv-tflite`. Todo o conjunto de imagens configurado é utilizado. Os ambientes precisam ter as dependências instaladas. Para usar outros ambientes Python, adicione `"runner_python": {"wasm": "caminho/python.exe", "tflite": "caminho/python.exe"}` em `web/config.json` (caminhos relativos à raiz do repositório ou absolutos). Reinicie o servidor após alterar a configuração. Os relatórios usam pastas UTC separadas; os arquivos WASM em `generated/` são substituídos. Evite iniciar outro benchmark manualmente durante as medições.
+
+## Importar resultados do ESP32
+
+Clique em **Importar do ESP32**, selecione o firmware (TFLite Micro ou WebAssembly / AOT) e informe o IP da placa, por exemplo `192.168.0.18`. Aguarde o benchmark terminar; o computador precisa acessar a placa pela porta 80.
+
+O servidor local baixa `/report` para `ESP32/cnn_tflite_esp32/reports/<horário UTC>/report.csv` ou `ESP32/cnn_webassembly_esp32/reports/<horário UTC>/report.csv`. No TFLite, também baixa `/metadata` como `metadata.json`. Cada importação cria uma nova pasta, como `20261006T234046384562Z`. Se o metadata falhar, o CSV é preservado e um aviso aparece. O site atualiza o índice e oferece um link para abrir o relatório importado. Abrir `/report` diretamente na placa continua usando a pasta de downloads do navegador. Reinicie o servidor local após atualizar o site.
+
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
 Site local para navegar pela documentação e pelos relatórios de todo o repositório, incluindo os modelos e o ESP32. A interface usa HTML, CSS e TypeScript; um servidor pequeno em Python descobre e lê os arquivos.

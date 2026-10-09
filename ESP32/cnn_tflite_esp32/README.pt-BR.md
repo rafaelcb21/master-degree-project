@@ -63,7 +63,7 @@ http://<IP-DO-ESP32>:80/report
 http://<IP-DO-ESP32>:80/metadata
 ```
 
-CSV e metadados ficam disponíveis depois de processar a lista. Mantenha a placa ligada: o CSV fica na RAM e se perde ao reiniciar. Em um computador na mesma rede, salve os dois arquivos em uma pasta nova:
+CSV e metadados ficam disponíveis depois de processar a lista ou restaurar um experimento concluído da flash. Mantenha a placa ligada durante o download. Em um computador na mesma rede, salve os dois arquivos em uma pasta nova:
 
 ```powershell
 $runDir = Join-Path 'reports' (Get-Date -Format 'yyyyMMdd-HHmmss')
@@ -76,15 +76,25 @@ Troque o IP de exemplo pelo endereço mostrado pela placa. No Research Explorer,
 
 ## Se parar depois da validação do certificado
 
-Se aparecer `A stack overflow in task httpd has been detected` ao abrir os resultados, grave o firmware atualizado: o buffer JSON de `/metadata` fica fora da pilha e `REPORT_HTTP_STACK_BYTES`, em `main/host_config.h`, reserva 8 KiB para o servidor. Essa falha ocorre no servidor HTTP, após as inferências, e um reinício perde os relatórios mantidos na RAM.
+Se aparecer `A stack overflow in task httpd has been detected` ao abrir os resultados, grave o firmware atualizado: o buffer JSON de `/metadata` fica fora da pilha e `REPORT_HTTP_STACK_BYTES`, em `main/host_config.h`, reserva 8 KiB para o servidor. Essa falha ocorre no servidor HTTP, após as inferências, e o firmware atual restaura os resultados confirmados na flash após reiniciar.
 
 `Certificate validated` confirma apenas a verificação do certificado TLS. Observe os próximos logs: `Download concluido`, `Iniciando preparacao + Invoke` e `Invoke retornou`. Eles permitem distinguir atrasos de rede de travamentos na preparação ou inferência.
 
-Os downloads HTTPS do Cloudinary usam consultas assíncronas. Em `main/host_config.h`, `HTTP_DOWNLOAD_TIMEOUT_MS` define o timeout de rede (15 segundos), `HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS` define o limite total verificado entre consultas (45 segundos) e `HTTP_PROGRESS_INTERVAL_MS` controla os logs de progresso (5 segundos). Um download com falha gera uma linha `ok=0` e o processamento segue para a próxima imagem. Essas verificações não interrompem uma inferência travada ou uma chamada interna do driver.
+Os downloads HTTPS do Cloudinary usam abertura, cabeçalho e leitura do corpo explícitos em `main/download_http.inc`, incluído pelo `main.c`. O fluxo não usa mais `esp_http_client_perform()` assíncrono. Em `main/host_config.h`, `HTTP_DOWNLOAD_TIMEOUT_MS` define o timeout de conexão/cabeçalho (15 segundos), `HTTP_READ_TIMEOUT_MS` define o timeout de leitura do corpo (3 segundos) e `HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS` define o limite por tentativa verificado entre chamadas (45 segundos). As leituras têm no máximo `HTTP_READ_CHUNK_BYTES` (1.024 bytes), com progresso a cada `HTTP_PROGRESS_INTERVAL_MS` (5 segundos). `HTTP_DOWNLOAD_MAX_ATTEMPTS=2` permite uma nova tentativa, com `HTTP_RETRY_DELAY_MS=1000` entre elas. Cada tentativa usa uma conexão nova e valida status HTTP, tamanho exato e conclusão da resposta. Se ambas falharem, a imagem gera `ok=0` e o processamento continua. `download_ms` inclui tentativas, espera entre elas e liberação da conexão. Os logs identificam conexão, cabeçalho, corpo e fechamento. Essas verificações não interrompem à força uma chamada interna do driver ou uma inferência travada.
 
-Recompile e grave o firmware para aplicar as mudanças. Reiniciar descarta o relatório mantido na RAM e recomeça a lista de imagens; `/report` fica disponível após o término do benchmark.
+O firmware compilou e `tests/test_download.py` verificou o código real do downloader com transporte HTTP simulado em 12 cenários, incluindo resposta truncada, timeout, excesso de bytes e nova tentativa. Isso não reproduz falhas TLS na placa física. No site, feche o monitor serial e escolha **Compilar e gravar** para instalar esta mudança; apenas **Reiniciar benchmark** executa o firmware antigo.
+
+Recompile e grave o firmware para aplicar as mudanças. Reiniciar retoma o experimento atual da flash; `/report` fica disponível ao concluir o benchmark ou restaurar um relatório concluído.
 
 ## Comparar resultados
+
+### Recuperação automática e resultados persistentes
+
+O host usa a partição existente de 1 MiB chamada `spiffs` como um registro bruto de checkpoints, sem montar um sistema de arquivos. Antes de cada imagem nova, grava a tentativa atomicamente na NVS; depois do processamento, grava o resultado, seu checksum e um marcador final de confirmação na flash. Apenas registros confirmados são restaurados. Gravações interrompidas ocupam um espaço livre e não sobrescrevem resultados anteriores. Erros de armazenamento interrompem o processamento sem descartar silenciosamente o histórico. O host verifica se a partição comporta todas as amostras antes de começar; mais classes/imagens podem exigir uma partição maior.
+
+A tarefa do benchmark está registrada no watchdog. `BENCHMARK_WDT_TIMEOUT_MS=120000` provoca panic/reinício se ela deixar de avançar. Após reiniciar, o CSV e os totais são reconstruídos da flash e o processamento retoma na primeira imagem sem resultado confirmado. `RECOVERY_MAX_ATTEMPTS=2` limita execuções interrompidas por imagem; após duas interrupções, o próximo boot registra essa imagem como erro e continua. Reset manual ou falta de energia durante uma imagem também contam como interrupção. As colunas `recovery_attempts` e `recovery_skipped` identificam a recuperação; o metadata inclui `processed`, `resumed`, `recovery_skipped` e `checkpoint_run_id`.
+
+A primeira instalação começa na imagem 1. Um experimento concluído continua disponível em `/report` e `/metadata` após reiniciar, sem repetir inferências. Para iniciar outro experimento, incremente `BENCHMARK_RUN_ID` em `main/host_config.h` e compile/grave. Mudanças no modelo, lista de imagens, fontes do host ou configuração também iniciam um histórico novo para não misturar experimentos. Salve o relatório anterior antes dessas alterações. `fullclean` limpa apenas os arquivos de compilação do computador; não apaga checkpoints da placa. As gravações na flash ficam fora do tempo medido de inferência. Isso recupera o progresso após uma parada; não identifica nem corrige a causa original de um travamento na inferência.
 
 Consulte as [definições das medições](HOST.pt-BR.md). O CSV preserva os nomes das colunas do host WASM e acrescenta:
 
@@ -100,7 +110,7 @@ Consulte as [definições das medições](HOST.pt-BR.md). O CSV preserva os nome
 
 ### Validação desta adaptação
 
-O firmware padrão compilou com ESP-IDF 5.3.1 para `esp32`: 2.009.392 bytes, dentro da partição de aplicação de 2 MiB (4% livres). Foram conferidos o alinhamento de 16 bytes do modelo incorporado e a preservação da lista de imagens. Isso valida a compilação, não a execução física. O tamanho da arena, os downloads e os resultados de inferência ainda precisam ser confirmados na placa. Um modelo maior pode exigir uma partição de aplicação maior.
+O firmware padrão compilou com ESP-IDF 5.3.1 para `esp32`: 2.012.544 bytes, dentro da partição de aplicação de 2 MiB (4% livres). Foram conferidos o alinhamento de 16 bytes do modelo incorporado e a preservação da lista de imagens. Isso valida a compilação, não a execução física. O tamanho da arena, os downloads e os resultados de inferência ainda precisam ser confirmados na placa. Um modelo maior pode exigir uma partição de aplicação maior.
 
 Selecione o arquivo durante a configuração:
 

@@ -32,6 +32,8 @@ Start with the [technical index](docs/README.md). Earlier documentation is prese
 
 ## Browse documentation and reports
 
+The [ESP32 TFLite Micro host](ESP32/cnn_tflite_esp32/README.md) runs the original model on the board and exports CSV measurements for comparison with the separate WASM/AOT firmware.
+
 Run `python web/server/app.py` from the repository root and open **http://127.0.0.1:8000**. The local [Research Explorer](web/README.md) organizes Markdown and reports by project, with charts, searchable tables and language navigation. Python 3.10+ is sufficient; inference dependencies are not required.
 
 ## Installation
@@ -108,7 +110,7 @@ inference/wasm_inference.py + adapter
 evaluate_output → build_report + errors
         │
         ▼
-models/X/reports/12-inferencia-wasm.txt
+models/X/reports/<timestamp>/12-inferencia-wasm.txt
 ```
 
 The inputs are the package name, sources and tests. The pipeline converts TFLite data into runtime structures and coordinates extraction and testing. Outputs are WAT, WASM and reports. Paths, classes, formats and weights are model-specific; serialization, allocation and the execution protocol are shared. Reports 02–11 are written during extraction, before inference.
@@ -170,7 +172,7 @@ The tree groups repetitive files; the [inventory](docs/14-inventory-and-traceabi
 
 ## Sources, outputs and reports
 
-The pipeline writes `models/<name>/generated/model.wat`, `model.wasm` and reports 02–12 under `models/<name>/reports/`. Code, manifests, original TFLite, templates, labels and RAW files are sources. Generated modules and reports are artifacts. A full run regenerates them but does not delete extra files, retain history or write atomically. Failures can leave files from different runs together.
+The pipeline writes `models/<name>/generated/model.wat` and `model.wasm`. Each run saves all reports 02–12 in a new folder, `models/<name>/reports/<timestamp>/`, for example `20261006T234046384562Z` (UTC, with microseconds). Previous reports are preserved. Failed runs may leave an incomplete report folder. Generated WAT/WASM files are still replaced on each run.
 
 Active templates are `wat/templates/mobilenet_int8_v1.wat` for drowsiness and `models/mobilenetv2_alpha035/wat/model_template.wat` for ImageNet. The legacy `wat/templates/model_template.wat` is unused by manifests and has older QUANTIZE behavior.
 

@@ -1,0 +1,63 @@
+INFERÊNCIA WASM — ImageNet Top-K
+C:\Users\rafae\Downloads\master-degree-project\models\mobilenetv2_alpha035\test\img\aviao_uint8.raw
+ 1. [404] airliner
+    wnid=n02690373
+    q=226
+    score=0.88281250
+ 2. [812] space_shuttle
+    wnid=n04266014
+    q=11
+    score=0.04296875
+ 3. [908] wing
+    wnid=n04592741
+    q=11
+    score=0.04296875
+ 4. [895] warplane
+    wnid=n04552348
+    q=4
+    score=0.01562500
+ 5. [405] airship
+    wnid=n02692877
+    q=1
+    score=0.00390625
+ 6. [0] tench
+    wnid=n01440764
+    q=0
+    score=0.00000000
+ 7. [1] goldfish
+    wnid=n01443537
+    q=0
+    score=0.00000000
+ 8. [2] great_white_shark
+    wnid=n01484850
+    q=0
+    score=0.00000000
+ 9. [3] tiger_shark
+    wnid=n01491361
+    q=0
+    score=0.00000000
+10. [4] hammerhead
+    wnid=n01494475
+    q=0
+    score=0.00000000
+11. [5] electric_ray
+    wnid=n01496331
+    q=0
+    score=0.00000000
+12. [6] stingray
+    wnid=n01498041
+    q=0
+    score=0.00000000
+13. [7] cock
+    wnid=n01514668
+    q=0
+    score=0.00000000
+14. [8] hen
+    wnid=n01514859
+    q=0
+    score=0.00000000
+15. [9] ostrich
+    wnid=n01518878
+    q=0
+    score=0.00000000
+Erros de processamento: 0

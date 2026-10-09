@@ -1,5 +1,6 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { esp32View } from './esp32-view';
 import { language as uiLanguage, locale, setLanguage, t, localize } from './i18n';
 
 type Entry = { path: string; name: string; title: string; kind: 'document' | 'report'; project: string; folder: string; language: string; historical: boolean; size: number; modified: string; counterpart: string | null };
@@ -29,7 +30,7 @@ const icon = (name: string) => `<svg class="icon" viewBox="0 0 24 24" fill="none
 const route = (view: string, params: Record<string, string> = {}) => `#${view}${Object.keys(params).length ? '?' + new URLSearchParams(params) : ''}`;
 const fileRoute = (path: string, anchor = '') => route('file', { path, ...(anchor ? { anchor } : {}) });
 const human = (s: string) => s.replace(/^\d+[-_]/, '').replace(/[-_]/g, ' ');
-const projectName = (id: string) => id === 'repository' ? 'Projeto & arquitetura' : id === 'web' ? 'Research Explorer' : id.startsWith('ESP32/') ? 'ESP32 · Host embarcado' : id.split('/').at(-1) === 'mobilenetv2_alpha035' ? 'MobileNetV2 · α 0.35' : id.split('/').at(-1) === 'drowsiness' ? 'Drowsiness' : human(id.split('/').at(-1)!);
+const projectName = (id: string) => id === 'repository' ? 'Projeto & arquitetura' : id === 'web' ? 'Research Explorer' : id === 'ESP32/cnn_tflite_esp32' ? 'ESP32 · TFLite Micro' : id.startsWith('ESP32/') ? 'ESP32 · WASM / AOT' : id.split('/').at(-1) === 'mobilenetv2_alpha035' ? 'MobileNetV2 · α 0.35' : id.split('/').at(-1) === 'drowsiness' ? 'Drowsiness' : human(id.split('/').at(-1)!);
 const projectDescription = (id: string) => id === 'repository' ? 'Arquitetura, guias e histórico do projeto.' : id.startsWith('ESP32/') ? 'Execução embarcada e medições do host.' : id === 'web' ? 'Uso e manutenção desta biblioteca local.' : 'Documentação do modelo e relatórios do pipeline.';
 let catalog: Catalog = { entries: [], scannedAt: '', repository: '' };
 let generation = 0;
@@ -56,9 +57,72 @@ function sidebar(view: string, selected = '') {
     <div class="sidebar-caption">PROJETOS <span>${projects().length}</span></div>
     <nav class="project-nav">${projects().map(id => `<a class="nav-item ${selected === id ? 'selected' : ''}" href="${route(id === 'repository' || id === 'web' ? 'documents' : 'reports', { project: id })}"><span class="project-dot ${id.startsWith('ESP32') ? 'amber' : ''}"></span>${e(projectName(id))}</a>`).join('')}</nav>
     <div class="sidebar-bottom"><div class="side-note">${icon('folder')}<span>Um projeto.<br><strong>Todas as descobertas.</strong></span></div><p>Python · WebAssembly · ESP32</p><div class="index-status"><i></i> Índice local atualizado</div></div>`;
+  $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'execute' ? 'active' : ''}" href="#execute" ${view === 'execute' ? 'aria-current="page"' : ''}>${icon('chip')}${uiLanguage === 'en' ? 'Run models' : 'Executar modelos'}</a>`);
+  $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'esp32' ? 'active' : ''}" href="#esp32" ${view === 'esp32' ? 'aria-current="page"' : ''}>${icon('chip')}ESP32 · USB</a>`);
 }
 function title(eyebrow: string, heading: string, sub: string, right = '') {
   return `<div class="page-heading"><div><div class="eyebrow">${e(eyebrow)}</div><h1>${e(heading)}</h1><p>${e(t(sub))}</p></div>${right}</div>`;
+}
+type DesktopRun = { model: string; runtime: string; status: string; startedAt: string; finishedAt: string | null; exitCode: number | null; reports: string[]; logs: string[] };
+function executionView(token: number) {
+  const en = uiLanguage === 'en';
+  const label = en ? 'Run models' : 'Executar modelos';
+  $('#page-label').textContent = label;
+  $('#main').innerHTML = title('DESKTOP', label, en ? 'Run a local benchmark and follow its results.' : 'Execute um benchmark local e acompanhe seus resultados.') +
+    `<section class="panel execution-panel"><form id="execution-form" class="toolbar">
+    <label>${en ? 'Model' : 'Modelo'}<select id="execution-model"><option value="drowsiness">Drowsiness</option><option value="mobilenetv2_alpha035">MobileNetV2 Alpha 0.35</option></select></label>
+    <label>Runtime<select id="execution-runtime"><option value="wasm">WebAssembly</option><option value="tflite">TensorFlow Lite</option></select></label>
+    <button class="button primary" id="execution-start" disabled>${en ? 'Run' : 'Executar'}</button></form>
+    <p class="muted">${en ? 'WASM extracts the model, generates WAT/WASM and runs inference. TFLite runs the original model. Each run processes the configured dataset and saves reports in a new UTC folder.' : 'WASM extrai o modelo, gera WAT/WASM e executa a inferência. TFLite executa o modelo original. Cada execução processa o conjunto de imagens configurado e salva os relatórios em uma nova pasta UTC.'}</p>
+    <p>${en ? 'One run at a time. You can navigate away and return; keep the local server running.' : 'Uma execução por vez. Você pode navegar e voltar; mantenha o servidor local aberto.'}</p>
+    <div id="execution-status" role="status" aria-live="polite"></div><div id="execution-error" role="alert"></div></section>
+    <section class="panel execution-panel"><h2>${en ? 'Execution log' : 'Log da execução'}</h2><pre id="execution-log" class="raw-text execution-log"></pre><div id="execution-reports"></div></section>`;
+  const button = $<HTMLButtonElement>('#execution-start');
+  let submitting = false, indexed = '';
+  const show = async (run: DesktopRun | null) => {
+    if (generation !== token) return;
+    const busy = submitting || run?.status === 'running';
+    if (run?.status === 'running') {
+      $<HTMLSelectElement>('#execution-model').value = run.model;
+      $<HTMLSelectElement>('#execution-runtime').value = run.runtime;
+    }
+    button.disabled = busy;
+    $<HTMLSelectElement>('#execution-model').disabled = busy;
+    $<HTMLSelectElement>('#execution-runtime').disabled = busy;
+    const states: Record<string, string> = en ? { running: 'Running', completed: 'Completed', failed: 'Failed' } : { running: 'Em execução', completed: 'Concluído', failed: 'Falhou' };
+    $('#execution-status').textContent = run ? `${states[run.status]} · ${run.model} · ${run.runtime.toUpperCase()} · ${date(run.startedAt)}${run.exitCode !== null ? ` · exit ${run.exitCode}` : ''}` : (en ? 'Ready to start.' : 'Pronto para iniciar.');
+    const log = $('#execution-log');
+    const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+    log.textContent = run?.logs.join('\n') || (en ? 'Waiting for output…' : 'Aguardando saída…');
+    if (atEnd) log.scrollTop = log.scrollHeight;
+    if (run && run.status !== 'running' && indexed !== run.startedAt) {
+      catalog = await api<Catalog>('/api/index');
+      if (generation !== token) return;
+      indexed = run.startedAt;
+    }
+    $('#execution-reports').innerHTML = run?.reports.length ? `<h3>${en ? 'Reports (may be incomplete if the run failed)' : 'Relatórios (podem estar incompletos se a execução falhou)'}</h3><ul>${run.reports.map(path => `<li><a class="text-link" href="${fileRoute(path)}">${e(path)}</a></li>`).join('')}</ul>` : '';
+  };
+  const poll = async () => {
+    if (generation !== token) return;
+    try { const result = await api<{run: DesktopRun | null}>('/api/executions'); await show(result.run); }
+    catch { if (generation === token) $('#execution-error').textContent = en ? 'Cannot reach the server. Retrying…' : 'Servidor indisponível. Tentando novamente…'; }
+    if (generation === token) window.setTimeout(() => void poll(), 1500);
+  };
+  $('#execution-form').onsubmit = async event => {
+    event.preventDefault(); submitting = true; button.disabled = true; $('#execution-error').textContent = '';
+    try {
+      const response = await fetch('/api/executions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: $<HTMLSelectElement>('#execution-model').value, runtime: $<HTMLSelectElement>('#execution-runtime').value }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      submitting = false; await show(result.run);
+    } catch (error) {
+      if (generation !== token) return;
+      const code = (error as Error).message;
+      $('#execution-error').textContent = code === 'execution_busy' ? (en ? 'Another execution is already running.' : 'Já existe uma execução em andamento.') : code === 'python_environment_missing' ? (en ? 'Python environment missing. Check runner_python in web/config.json.' : 'Ambiente Python ausente. Confira runner_python em web/config.json.') : (en ? 'Could not start. Check the server and try again.' : 'Não foi possível iniciar. Confira o servidor e tente novamente.');
+      submitting = false; button.disabled = false;
+    }
+  };
+  void poll();
 }
 function metricCards(metrics: Metric[]) {
   return `<div class="metrics">${metrics.map(m => `<div class="metric"><span>${e(m.label)}</span><strong>${fmt(m.value, 3)}<small>${e(m.unit ?? '')}</small></strong></div>`).join('')}</div>`;
@@ -221,6 +285,8 @@ async function render() {
   try {
     if (view === 'file') { $('#main').innerHTML = `<div class="loading">${t('Abrindo arquivo…')}</div>`; localize(); await openFile(params.get('path') ?? '', params.get('anchor') ?? '', token); }
     else if (view === 'reports' || view === 'documents') library(view, project);
+    else if (view === 'execute') executionView(token);
+    else if (view === 'esp32') esp32View(() => generation === token, async () => { catalog = await api<Catalog>('/api/index'); });
     else overview();
   } catch (error) {
     if (token === generation) $('#main').innerHTML = `<div class="empty panel"><h2>Não foi possível abrir</h2><p>${e((error as Error).message)}</p><a class="button primary" href="#overview">Voltar ao início</a></div>`;
@@ -234,6 +300,7 @@ async function refresh() {
   finally { button.disabled = false; localize(); }
 }
 function languageButton() {
+  $('#import-esp32').textContent = uiLanguage === 'pt-BR' ? 'Importar do ESP32' : 'Import from ESP32';
   $('#ui-language').textContent = uiLanguage === 'pt-BR' ? 'EN' : 'PT';
   $('#ui-language').setAttribute('aria-label', uiLanguage === 'pt-BR' ? 'Switch site to English' : 'Mudar site para português');
   $('#ui-language').setAttribute('title', uiLanguage === 'pt-BR' ? 'English' : 'Português');
@@ -248,6 +315,44 @@ $('#ui-language').onclick = () => {
     location.hash = fileRoute(current.counterpart);
   } else void render();
   localize();
+};
+const importButton = document.createElement('button');
+importButton.id = 'import-esp32';
+importButton.className = 'button subtle';
+$('.topbar-actions').prepend(importButton);
+importButton.onclick = () => {
+  const en = uiLanguage === 'en';
+  const dialog = $<HTMLDialogElement>('#esp32-dialog');
+  dialog.innerHTML = `<form id="esp32-form"><h2 id="esp32-title">${en ? 'Import from ESP32' : 'Importar do ESP32'}</h2>
+    <p>${en ? 'Wait for the benchmark to finish. Connect this computer to the same network as the board.' : 'Aguarde o benchmark terminar. Conecte este computador à mesma rede da placa.'}</p>
+    <label for="esp32-runtime">${en ? 'Firmware running on the board' : 'Firmware em execução na placa'}</label>
+    <select id="esp32-runtime"><option value="tflite">TFLite Micro</option><option value="wasm">WebAssembly / AOT</option></select>
+    <label for="esp32-ip">${en ? 'Board IP address' : 'IP da placa'}</label>
+    <input id="esp32-ip" placeholder="192.168.0.18" required autocomplete="off" inputmode="decimal">
+    <p class="muted">${en ? 'Saved to the selected project’s reports folder, in a new UTC timestamp folder. TFLite also imports metadata.' : 'Salva em reports do projeto selecionado, em uma nova pasta com horário UTC. No TFLite, importa também o metadata.'}</p>
+    <div id="esp32-status" role="status" aria-live="polite"></div>
+    <div class="hero-actions"><button class="button primary" id="esp32-submit" type="submit">${en ? 'Import reports' : 'Importar relatórios'}</button><button class="button subtle" id="esp32-close" type="button">${en ? 'Close' : 'Fechar'}</button></div></form>`;
+  $('#esp32-close').onclick = () => dialog.close();
+  $('#esp32-form').onsubmit = async event => {
+    event.preventDefault();
+    const button = $<HTMLButtonElement>('#esp32-submit');
+    button.disabled = true;
+    $('#esp32-status').textContent = en ? 'Downloading from the board…' : 'Baixando da placa…';
+    try {
+      const response = await fetch('/api/esp32/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: $<HTMLInputElement>('#esp32-ip').value.trim(), runtime: $<HTMLSelectElement>('#esp32-runtime').value }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      await refresh();
+      $('#esp32-status').innerHTML = `<p>${en ? 'Saved to' : 'Salvo em'} <code>${e(result.folder)}</code></p>${result.warnings.length ? `<p>${en ? 'CSV saved. Metadata could not be downloaded; check the board’s serial monitor.' : 'CSV salvo. Não foi possível baixar o metadata; confira o monitor serial da placa.'}</p>` : ''}<a class="text-link" id="esp32-open" href="${fileRoute(result.files[0])}">${en ? 'Open imported report' : 'Abrir relatório importado'} →</a>`;
+      $('#esp32-open').onclick = () => dialog.close();
+    } catch (error) {
+      const invalid = (error as Error).message === 'invalid_ip';
+      $('#esp32-status').textContent = invalid
+        ? (en ? 'Enter a local IPv4 address, without http:// or /report.' : 'Informe um IPv4 local, sem http:// ou /report.')
+        : (en ? 'Import failed. Check the IP, selected firmware and whether /report is available. You can try again.' : 'Falha ao importar. Confira o IP, o firmware selecionado e se /report está disponível. Você pode tentar novamente.');
+    } finally { button.disabled = false; }
+  };
+  dialog.showModal();
 };
 languageButton();
 localize();

@@ -10,6 +10,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit, quote
 
 from reports import parse_report
+from esp32_import import import_reports
+from executions import Executions
+from esp32_execution import ESP32Executions
 
 WEB = Path(__file__).resolve().parents[1]
 ROOT = WEB.parent
@@ -81,9 +84,52 @@ class Catalog:
 
 
 CATALOG = Catalog()
+EXECUTIONS = Executions(ROOT, CONFIG)
+ESP32 = ESP32Executions(ROOT, CONFIG)
+START_LOCK = threading.Lock()
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop"):
+            self.json(404, {"error": "not_found"})
+            return
+        origin = self.headers.get("Origin")
+        if (origin and origin != "http://" + self.headers.get("Host", "")) or self.headers.get("Sec-Fetch-Site") == "cross-site":
+            self.json(403, {"error": "invalid_origin"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 2048 or self.headers.get_content_type() != "application/json":
+                raise ValueError("invalid_request")
+            data = json.loads(self.rfile.read(length))
+            if not isinstance(data, dict):
+                raise ValueError("invalid_request")
+            if self.path == "/api/executions":
+                with START_LOCK:
+                    if ESP32.busy():
+                        raise RuntimeError("execution_busy")
+                    result = EXECUTIONS.start(data.get("model"), data.get("runtime"))
+                self.json(202, result)
+            elif self.path == "/api/esp32/start":
+                with START_LOCK:
+                    desktop = EXECUTIONS.snapshot()["run"]
+                    if desktop and desktop["status"] == "running":
+                        raise RuntimeError("execution_busy")
+                    result = ESP32.start(data.get("runtime"), data.get("port"), data.get("action"), data.get("autoImport") is True)
+                self.json(202, result)
+            elif self.path == "/api/esp32/stop":
+                self.json(200, ESP32.stop_monitor())
+            else:
+                result = import_reports(CATALOG.root, data.get("ip", ""), data.get("runtime", ""))
+                self.json(201, result)
+        except RuntimeError as error:
+            self.json(409, {"error": str(error)})
+        except (ValueError, TypeError) as error:
+            self.json(400, {"error": str(error)})
+        except OSError:
+            self.json(502, {"error": "import_failed"})
+
     def send(self, status, data, content_type, filename=None):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
@@ -105,6 +151,15 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if url.path == "/api/index":
                 self.json(200, CATALOG.scan())
+            elif url.path == "/api/executions":
+                self.json(200, EXECUTIONS.snapshot())
+            elif url.path == "/api/esp32/status":
+                self.json(200, ESP32.snapshot())
+            elif url.path == "/api/esp32/ports":
+                try:
+                    self.json(200, {"ports": ESP32.ports()})
+                except (OSError, ValueError, TimeoutError) as error:
+                    self.json(200, {"ports": [], "error": str(error)})
             elif url.path == "/api/file":
                 entry, data = CATALOG.read(args.get("path", [""])[0])
                 if args.get("download") == ["1"]:
@@ -142,6 +197,8 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        EXECUTIONS.close()
+        ESP32.close()
         server.server_close()
 
 
