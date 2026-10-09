@@ -1,5 +1,9 @@
 # Research Explorer
 
+## Análise consolidada
+
+Abra **Análise consolidada** no menu lateral para consultar e filtrar a tabela salva. **Gerar / atualizar tabela** refaz `analysis/consolidated.csv` a partir das execuções desktop e ESP32; a navegação não refaz a consolidação. Baixe a tabela e o mapa das execuções na mesma página. Veja [as colunas e regras das fontes](../analysis/README.pt-BR.md). Pelo terminal: `python consolidate_reports.py` na raiz do projeto.
+
 ## ESP32 pela USB (Windows / ESP-IDF 5.3.1)
 
 1. Conecte o ESP32 por um cabo USB de dados. Feche o ESP-IDF Monitor e outros programas que usem a porta COM.

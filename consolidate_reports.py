@@ -17,7 +17,7 @@ COLUMNS = ["execution", "model", "name_image", "quantized", "scores", "result",
            "label", "right", "ok", "invalid", "type", "env", "inference_ms",
            "recovery_attempts", "recovery_skipped", "prediction_usable",
            "output_indices", "output_scope", "source_file", "error"]
-BINARY = re.compile(r"^(.*?)\s*\|\s*quantized=(\[.*?\])\s*\|\s*scores=(\[.*?\])\s*\|\s*result=(-?\d+) label=(-?\d+) right=([01]) invalid=(True|False)\s*$")
+BINARY = re.compile(r"^(.*?)\s*\|\s*quantized=(\[.*?\])\s*\|\s*scores=(\[.*?\])\s*\|\s*result=(None|-?\d+) label=(-?\d+) right=([01]) invalid=(True|False)\s*$")
 TOP = re.compile(r"^\s*\d+\. \[(\d+)\].*?\n\s*wnid=.*?\n\s*q=(-?\d+)\n\s*score=([\d.eE+-]+)", re.M)
 
 
@@ -29,6 +29,15 @@ def image_name(value, cloudinary=False):
     name = str(value).replace("\\", "/").rsplit("/", 1)[-1]
     # Strip only the final Cloudinary suffix, and only for ESP32 sources.
     return re.sub(r"_[^_.]+(?=\.[^.]+$)", "", name) if cloudinary else name
+
+
+def is_image(value):
+    value = str(value or "").strip()
+    if not value or value.startswith("#"):
+        return False
+    return Path(image_name(value)).suffix.lower() in {
+        ".raw", ".png", ".jpg", ".jpeg", ".bmp", ".webp", ".tif", ".tiff", ".pgm", ".ppm"
+    }
 
 
 def number(value):
@@ -73,9 +82,11 @@ def desktop_rows(path, base):
             name, q, scores, result, label, right, invalid = match.groups()
             q = json.loads(q)
             yield row(base, name_image=image_name(name), quantized=q, scores=json.loads(scores),
-                      output_indices=list(range(len(q))), output_scope="full", result=int(result),
+                      output_indices=list(range(len(q))), output_scope="full", result=None if result == "None" else int(result),
                       label=int(label), right=int(right), invalid=invalid == "True", ok=1)
         elif re.search(r"\.raw\s*\|", line, re.I):
+            if "quantized=" in line:
+                raise ValueError(f"Unrecognized inference row: {path}")
             name, error = line.split("|", 1)
             yield row(base, name_image=image_name(name.strip()), ok=0, error=error.strip())
         elif line.strip().lower().endswith(".raw"):
@@ -106,6 +117,10 @@ def esp32_rows(path, base, config, warnings):
         if not classes or not {"name_image", "ok", "result"}.issubset(reader.fieldnames or []):
             raise ValueError(f"Unsupported ESP32 CSV: {path}")
         for record in reader:
+            # Firmware appends human-readable summaries after the CSV samples.
+            # Reject those before parsing numbers or normalizing Cloudinary names.
+            if not is_image(record.get("name_image")):
+                continue
             skipped = number(record.get("recovery_skipped"))
             ok = number(record["ok"])
             valid = ok == 1 and skipped != 1
@@ -171,12 +186,15 @@ def consolidate(root=ROOT):
         ids = previous.get("execution_ids", {})
         rows, executions, warnings = [], [], []
         for path, model, runtime, env, info in discover(root, config):
+            if model == "mobilenetv2_alpha035":
+                continue
             folder = path.parent.relative_to(root).as_posix()
             if folder not in ids:
                 ids[folder] = max(ids.values(), default=0) + 1
             base = dict(execution=ids[folder], model=model, type=runtime, env=env,
                         source_file=path.relative_to(root).as_posix())
             items = list(esp32_rows(path, base, info, warnings) if env == "esp32" else desktop_rows(path, base))
+            items = [item for item in items if is_image(item["name_image"])]
             if not items:
                 warnings.append(f"{base['source_file']}: no sample rows found.")
             names = [r["name_image"] for r in items]

@@ -1860,3 +1860,11 @@ input[type=checkbox]
 .execution-log { max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 #execution-reports { overflow-wrap: anywhere; }
 #execution-error { color: #9b3030; }
+.consolidation-filters { flex-wrap: wrap; gap: 16px; }
+.consolidation-filters select, .consolidation-filters input:not([type=checkbox]) { padding: 10px; border: 1px solid #cbd8d1; border-radius: 8px; background: white; color: inherit; }
+.consolidation-table { overflow: auto; max-height: 650px; margin-bottom: 20px; }
+.consolidation-table th { position: sticky; top: 0; background: #e8f1eb; z-index: 1; padding: 14px 17px; }
+.consolidation-table td { white-space: nowrap; vertical-align: top; }
+.consolidation-values { white-space: normal; overflow-wrap: anywhere; width: 340px; max-height: 180px; overflow: auto; }
+.consolidation-failed { background: #fff1e9; }
+.consolidation-table th button.sort-image { width: auto; padding: 5px 8px; margin-left: 6px; border: 1px solid #b5cfc0; border-radius: 5px; cursor: pointer; color: inherit; }

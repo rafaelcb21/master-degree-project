@@ -1,6 +1,7 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { esp32View } from './esp32-view';
+import { consolidationView } from './consolidation-view';
 import { language as uiLanguage, locale, setLanguage, t, localize } from './i18n';
 
 type Entry = { path: string; name: string; title: string; kind: 'document' | 'report'; project: string; folder: string; language: string; historical: boolean; size: number; modified: string; counterpart: string | null };
@@ -59,6 +60,7 @@ function sidebar(view: string, selected = '') {
     <div class="sidebar-bottom"><div class="side-note">${icon('folder')}<span>Um projeto.<br><strong>Todas as descobertas.</strong></span></div><p>Python · WebAssembly · ESP32</p><div class="index-status"><i></i> Índice local atualizado</div></div>`;
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'execute' ? 'active' : ''}" href="#execute" ${view === 'execute' ? 'aria-current="page"' : ''}>${icon('chip')}${uiLanguage === 'en' ? 'Run models' : 'Executar modelos'}</a>`);
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'esp32' ? 'active' : ''}" href="#esp32" ${view === 'esp32' ? 'aria-current="page"' : ''}>${icon('chip')}ESP32 · USB</a>`);
+  $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view.startsWith('analysis') ? 'active' : ''}" href="#analysis">${icon('chart')}${uiLanguage === 'en' ? 'Consolidated analysis' : 'Análise consolidada'}</a>`);
 }
 function title(eyebrow: string, heading: string, sub: string, right = '') {
   return `<div class="page-heading"><div><div class="eyebrow">${e(eyebrow)}</div><h1>${e(heading)}</h1><p>${e(t(sub))}</p></div>${right}</div>`;
@@ -287,6 +289,8 @@ async function render() {
     else if (view === 'reports' || view === 'documents') library(view, project);
     else if (view === 'execute') executionView(token);
     else if (view === 'esp32') esp32View(() => generation === token, async () => { catalog = await api<Catalog>('/api/index'); });
+    else if (view === 'analysis') await consolidationView(() => generation === token);
+    else if (view === 'analysis-mobilenet') await consolidationView(() => generation === token, true);
     else overview();
   } catch (error) {
     if (token === generation) $('#main').innerHTML = `<div class="empty panel"><h2>Não foi possível abrir</h2><p>${e((error as Error).message)}</p><a class="button primary" href="#overview">Voltar ao início</a></div>`;

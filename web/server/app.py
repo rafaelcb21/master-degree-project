@@ -13,6 +13,7 @@ from reports import parse_report
 from esp32_import import import_reports
 from executions import Executions
 from esp32_execution import ESP32Executions
+from consolidation import Consolidation
 
 WEB = Path(__file__).resolve().parents[1]
 ROOT = WEB.parent
@@ -87,11 +88,13 @@ CATALOG = Catalog()
 EXECUTIONS = Executions(ROOT, CONFIG)
 ESP32 = ESP32Executions(ROOT, CONFIG)
 START_LOCK = threading.Lock()
+CONSOLIDATION = Consolidation(ROOT)
+MOBILENET_CONSOLIDATION = Consolidation(ROOT, mobilenet=True)
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop"):
+        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation"):
             self.json(404, {"error": "not_found"})
             return
         origin = self.headers.get("Origin")
@@ -105,7 +108,11 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError("invalid_request")
-            if self.path == "/api/executions":
+            if self.path == "/api/mobilenet-consolidation":
+                self.json(200, MOBILENET_CONSOLIDATION.rebuild())
+            elif self.path == "/api/consolidation":
+                self.json(200, CONSOLIDATION.rebuild())
+            elif self.path == "/api/executions":
                 with START_LOCK:
                     if ESP32.busy():
                         raise RuntimeError("execution_busy")
@@ -149,7 +156,17 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         args = parse_qs(url.query)
         try:
-            if url.path == "/api/index":
+            if url.path == "/api/mobilenet-consolidation":
+                self.json(200, MOBILENET_CONSOLIDATION.query(args))
+            elif url.path == "/api/mobilenet-consolidation/download":
+                filename = args.get("file", ["mobilenet_top15.csv"])[0]
+                self.send(200, MOBILENET_CONSOLIDATION.download(filename), "text/csv; charset=utf-8", filename)
+            elif url.path == "/api/consolidation":
+                self.json(200, CONSOLIDATION.query(args))
+            elif url.path == "/api/consolidation/download":
+                filename = args.get("file", ["consolidated.csv"])[0]
+                self.send(200, CONSOLIDATION.download(filename), "text/csv; charset=utf-8", filename)
+            elif url.path == "/api/index":
                 self.json(200, CATALOG.scan())
             elif url.path == "/api/executions":
                 self.json(200, EXECUTIONS.snapshot())

@@ -1,5 +1,9 @@
 # Research Explorer
 
+## Consolidated analysis
+
+Use **Consolidated analysis** in the sidebar to browse and filter the saved comparison table. **Generate / update table** rebuilds `analysis/consolidated.csv` from desktop and ESP32 runs; navigation does not rebuild it. Download the table and execution map from the same page. See [column definitions and source rules](../analysis/README.md). CLI: `python consolidate_reports.py` from the repository root.
+
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
 A local website for browsing documentation and reports across this repository, including model packages and ESP32. The interface uses HTML, CSS and TypeScript; a small Python server discovers and reads files.
