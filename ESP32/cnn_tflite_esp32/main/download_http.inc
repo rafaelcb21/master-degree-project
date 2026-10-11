@@ -1,5 +1,5 @@
 /* Included by main.c; isolated so the same code can be tested with fake HTTP. */
-#if HTTP_DOWNLOAD_MAX_ATTEMPTS < 1 || HTTP_READ_CHUNK_BYTES < 1 || HTTP_READ_TIMEOUT_MS < 1 || HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS < 1
+#if HTTP_READ_CHUNK_BYTES < 1 || HTTP_READ_TIMEOUT_MS < 1 || HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS < 1
 #error "HTTP download limits must be positive"
 #endif
 
@@ -88,16 +88,9 @@ cleanup:
     return ok;
 }
 
-static bool download_image(const char *url, uint8_t *out_buf, size_t expected_len, int64_t *download_us) {
+bool download_image(const char *url, uint8_t *out_buf, size_t expected_len, int64_t *download_us) {
     int64_t started = esp_timer_get_time();
-    bool ok = false;
-    for (int attempt = 1; attempt <= HTTP_DOWNLOAD_MAX_ATTEMPTS; ++attempt) {
-        ESP_LOGI(TAG_HTTP, "Download tentativa %d/%d", attempt, HTTP_DOWNLOAD_MAX_ATTEMPTS);
-        if (download_attempt(url, out_buf, expected_len)) { ok = true; break; }
-        ESP_LOGW(TAG_HTTP, "Download falhou na tentativa %d: %s", attempt, url);
-        if (attempt < HTTP_DOWNLOAD_MAX_ATTEMPTS) vTaskDelay(pdMS_TO_TICKS(HTTP_RETRY_DELAY_MS) + 1);
-    }
+    bool ok = download_attempt(url, out_buf, expected_len);
     if (download_us) *download_us = esp_timer_get_time() - started;
-    if (!ok) ESP_LOGE(TAG_HTTP, "Imagem marcada como erro; seguindo para a proxima");
     return ok;
 }

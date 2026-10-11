@@ -1,5 +1,15 @@
 # Research Explorer
 
+## Within-environment determinism
+
+The page opens on the group with the most divergent images. Each bar represents an image; select maximum, mean, median, P95 or P99 in quantized units or scores. Click a bar to inspect execution values, predicted classes, statistics and a plain-language explanation of that case. Orange bars identify class changes. Aggregate statistics are collapsed at the bottom for additional reference.
+
+The analysis also computes maximum, mean, median, P95 and P99 of absolute component differences across all execution pairs for each image. Zeros are included; percentiles use linear interpolation. Quantized buckets are 0, 1, 2–5, 6–10 and >10. Distributions count component/pair observations and images (their maximum), for both all images and divergent images. Scores have separate statistics. Each image indicates whether its recorded label changed; transitions to invalid output are reported as decision changes. CSV exports include metrics for all images. Missing Top-15 classes are not zero-filled.
+
+Open **Analyses → Within-environment determinism** for a dedicated page. **Generate / update analysis** refreshes both consolidations from reports saved in the project, then recalculates determinism, including new partial runs. Inspect per-environment summaries, filter images, and expand the values and execution IDs that differ. Browsing only reads the saved analysis.
+
+CLI: `python analyze_determinism.py`. Outputs: `analysis/determinism/report.md`, `images.csv`, and `report.json`. The method compares exact recorded numbers within model/runtime/environment, includes completed ties, and excludes failures or missing/ambiguous observations. At least two distinct executions are required. MobileNet results cover only the recorded Top-15 and ranking. Input/model/configuration identity is not verified; observed equality is not a guarantee of future determinism.
+
 ## Consolidated analysis
 
 Use **Consolidated analysis** in the sidebar to browse and filter the saved comparison table. **Generate / update table** rebuilds `analysis/consolidated.csv` from desktop and ESP32 runs; navigation does not rebuild it. Download the table and execution map from the same page. See [column definitions and source rules](../analysis/README.md). CLI: `python consolidate_reports.py` from the repository root.
@@ -129,3 +139,7 @@ npm run test:ui
 The test uses Microsoft Edge installed on Windows. On other systems, run `npx playwright install chromium` first. For another port, set `EXPLORER_URL`. Screenshots go into `web/test-results/`, which Git ignores. Tests check the example reports included in the repository.
 
 The server exposes only indexed documents/reports and site assets. Markdown is sanitized before rendering. It is intended for local browsing, without authentication or public deployment.
+
+## ESP32 representative reports
+
+Use **Analyses → Representative reports · ESP32 → Generate / update reports** to create a CSV per model and WASM/TFLite runtime. Equal image outputs are retained; differing outputs use the most frequent complete vector. The page shows votes, variants, exclusions and source execution, with CSV/JSON downloads. Ties and identity conflicts remain unusable. ESP32 consolidated analysis uses these new reports; regenerating its table also refreshes selection. Timings come from the earliest execution with the selected result. Originals remain the source for determinism analysis. See [method and files](../analysis/README.md).

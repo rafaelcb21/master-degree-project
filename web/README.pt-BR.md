@@ -1,5 +1,15 @@
 # Research Explorer
 
+## Determinismo intra-ambiente
+
+A tela abre no grupo com mais imagens divergentes. Cada barra representa uma imagem e permite selecionar máximo, média, mediana, P95 ou P99, em quantized ou scores. Clique na barra para ver os valores por execução, a classe predita, as estatísticas e uma explicação daquele caso. Barras laranja identificam troca de classe. As estatísticas agregadas ficam recolhidas ao final, como consulta complementar.
+
+A análise também calcula máximo, média, mediana, P95 e P99 das diferenças absolutas por componente, usando todos os pares de execuções da mesma imagem. Inclui zeros e utiliza interpolação linear para os percentis. As faixas quantized são 0, 1, 2–5, 6–10 e >10. Exibe distribuições por componente/par e por imagem (seu máximo), tanto para todas as imagens quanto para as divergentes. Scores têm estatísticas separadas. Cada imagem informa se o label registrado mudou; transições para saída inválida aparecem como mudanças de decisão. O CSV contém essas métricas para todas as imagens. No Top-15, classes sem correspondência não são preenchidas com zero.
+
+Abra **Análises → Determinismo intra-ambiente** para acessar a tela exclusiva. **Gerar / atualizar análise** atualiza as duas consolidações com os relatórios salvos no projeto e depois recalcula o determinismo, incluindo novas execuções parciais. Consulte o resumo por ambiente, filtre imagens e expanda os valores e IDs das execuções com diferenças. A navegação apenas consulta a análise salva.
+
+Pelo terminal: `python analyze_determinism.py`. Arquivos: `analysis/determinism/report.md`, `images.csv` e `report.json`. O método compara os números registrados de forma exata dentro de modelo/formato/ambiente, inclui empates concluídos e exclui falhas ou observações ausentes/ambíguas. Exige pelo menos duas execuções distintas. No MobileNet, cobre somente o Top-15 registrado e sua ordem. A identidade das entradas/modelos/configurações não é verificada; igualdade observada não garante determinismo futuro.
+
 ## Análise consolidada
 
 Abra **Análise consolidada** no menu lateral para consultar e filtrar a tabela salva. **Gerar / atualizar tabela** refaz `analysis/consolidated.csv` a partir das execuções desktop e ESP32; a navegação não refaz a consolidação. Baixe a tabela e o mapa das execuções na mesma página. Veja [as colunas e regras das fontes](../analysis/README.pt-BR.md). Pelo terminal: `python consolidate_reports.py` na raiz do projeto.
@@ -129,3 +139,7 @@ npm run test:ui
 O teste usa Microsoft Edge instalado no Windows. Em outras máquinas, execute `npx playwright install chromium` antes do teste. Para outra porta, defina `EXPLORER_URL`. As capturas ficam em `web/test-results/`, ignorada pelo Git. Os testes conferem os relatórios de exemplo incluídos no repositório.
 
 O servidor disponibiliza apenas os documentos e relatórios indexados e os recursos do site. Markdown passa por sanitização antes da exibição. Ele foi feito para consulta local, sem autenticação ou implantação pública.
+
+## Relatórios representativos do ESP32
+
+No menu **Análises → Relatórios representativos · ESP32**, use **Gerar / atualizar relatórios** para criar um CSV por modelo e formato WASM/TFLite. Para cada imagem, saídas iguais são mantidas e, se houver diferenças, é escolhido o vetor completo mais frequente. A tela mostra votos, variantes, exclusões e execução de origem, com downloads CSV/JSON. Empates e conflitos ficam sem predição utilizável. A análise consolidada do ESP32 usa estes novos relatórios; gerar a tabela também atualiza a seleção. Os tempos vêm da primeira execução com o resultado escolhido. Os originais são preservados para a análise de determinismo. Veja [método e arquivos](../analysis/README.pt-BR.md).

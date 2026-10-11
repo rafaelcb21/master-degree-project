@@ -7,7 +7,5 @@
 10;drowsiness;tflite;desktop;models/drowsiness/reports_tflite/20261008T151518951616Z;models/drowsiness/reports_tflite/20261008T151518951616Z/results-report.json;2000
 11;drowsiness;tflite;desktop;models/drowsiness/reports_tflite/20261008T151851565787Z;models/drowsiness/reports_tflite/20261008T151851565787Z/results-report.json;2000
 12;drowsiness;tflite;desktop;models/drowsiness/reports_tflite/20261008T152221459939Z;models/drowsiness/reports_tflite/20261008T152221459939Z/results-report.json;2000
-20;drowsiness;tflite;esp32;ESP32/cnn_tflite_esp32/reports/20261008T215503505222Z;ESP32/cnn_tflite_esp32/reports/20261008T215503505222Z/report.csv;2000
-21;drowsiness;wasm;esp32;ESP32/cnn_webassembly_esp32/reports/20261009T030249020912Z;ESP32/cnn_webassembly_esp32/reports/20261009T030249020912Z/report.csv;2000
-22;drowsiness;wasm;esp32;ESP32/cnn_webassembly_esp32/reports/20261009T100046423575Z;ESP32/cnn_webassembly_esp32/reports/20261009T100046423575Z/report.csv;2000
-23;drowsiness;tflite;esp32;ESP32/cnn_tflite_esp32/reports/20261009T120557541292Z;ESP32/cnn_tflite_esp32/reports/20261009T120557541292Z/report.csv;2000
+50;drowsiness;tflite;esp32;analysis/esp32_consensus/drowsiness/tflite;analysis/esp32_consensus/drowsiness/tflite/report.csv;2000
+51;drowsiness;wasm;esp32;analysis/esp32_consensus/drowsiness/wasm;analysis/esp32_consensus/drowsiness/wasm/report.csv;2000

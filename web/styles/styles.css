@@ -1867,4 +1867,26 @@ input[type=checkbox]
 .consolidation-table td { white-space: nowrap; vertical-align: top; }
 .consolidation-values { white-space: normal; overflow-wrap: anywhere; width: 340px; max-height: 180px; overflow: auto; }
 .consolidation-failed { background: #fff1e9; }
+.det-image { padding: 18px 0; border-bottom: 1px solid #d8e5dc; }
+.det-image h3 small { display: block; margin-top: 8px; font-size: 13px; font-weight: 400; }
+.det-values { white-space: pre-wrap; overflow-wrap: anywhere; padding: 12px; background: #f4f7f1; max-height: 240px; overflow: auto; }
+#det-sources code { overflow-wrap: anywhere; }
+.det-distribution { max-width: 650px; margin: 16px 0 24px; }
+.det-distribution > div { display: grid; grid-template-columns: 45px 1fr 65px; gap: 12px; align-items: center; margin: 8px 0; }
+.det-track { height: 14px; background: #e8f1eb; border-radius: 4px; overflow: hidden; }
+.det-track i { display: block; height: 100%; background: #1a7058; }
+.det-inspector { display: grid; grid-template-columns: minmax(300px, .9fr) minmax(0, 1.3fr); gap: 28px; align-items: start; }
+.det-image-bar { display:grid; grid-template-columns: 135px minmax(40px,1fr) 78px; gap:10px; align-items:center; width:100%; text-align:left; padding:10px 8px; border:1px solid transparent; border-radius:8px; background:transparent; color:inherit; cursor:pointer; }
+.det-image-bar small { display:block; font-size:11px; margin-top:4px; }
+.det-image-bar b { text-align:right; font-size:12px; overflow-wrap:anywhere; }
+.det-image-bar[aria-pressed=true] { border-color:#1a7058; background:#edf6f0; }
+.det-image-bar:hover { background:#f4f7f1; }
+.det-image-bar.class-change .det-track i { background:#b66025; }
+.det-explanation { background:#f0f6f2; border-left:3px solid #4d8e72; padding:16px; line-height:1.7; }
+.det-inspector #det-images { min-width:0; position:sticky; top:16px; }
+@media(max-width:1100px) { .det-inspector { grid-template-columns:1fr; } .det-inspector #det-images { position:static; } }
 .consolidation-table th button.sort-image { width: auto; padding: 5px 8px; margin-left: 6px; border: 1px solid #b5cfc0; border-radius: 5px; cursor: pointer; color: inherit; }
+/* Representative ESP32 report inspection. */
+.rep-image { margin: 12px 0; padding: 14px; border: 1px solid var(--border); border-radius: 10px; min-width: 0; }
+.rep-image summary { cursor: pointer; overflow-wrap: anywhere; }
+.rep-image p, .rep-source { overflow-wrap: anywhere; }

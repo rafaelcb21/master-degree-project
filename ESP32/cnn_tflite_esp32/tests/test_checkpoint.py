@@ -23,7 +23,8 @@ class CheckpointTests(unittest.TestCase):
             instance = wasmtime.Instance(store, wasmtime.Module.from_file(engine, str(output)), [])
             names = ['restore 2000 rows', 'skip repeated interrupted image', 'torn payload',
                      'missing commit', 'committed row before reset', 'changed experiment',
-                     'full partition preserves data', 'failed NVS commit']
+                     'full partition preserves data', 'failed NVS commit',
+                     'new round executes new inferences', 'new command executes new inferences']
             for mode, name in enumerate(names):
                 with self.subTest(name=name):
                     self.assertEqual(instance.exports(store)['check'](store,mode),0)

@@ -1,0 +1,4665 @@
+# Determinismo intra-ambiente
+
+Gerado em: 2026-10-11T01:26:49.893935+00:00
+
+## Método
+
+Cada comparação agrupa modelo, formato, ambiente e nome exato da imagem (preservando maiúsculas/minúsculas). Cada pasta é considerada uma execução independente, conforme informado pelo pesquisador. São necessárias pelo menos duas execuções com saída registrada. Comparação numérica exata, sem tolerância, dos valores salvos; a precisão é limitada pelo relatório de origem. Valores 0 e 0.0 são equivalentes.
+
+Saídas concluídas marcadas como inválidas/empates são incluídas: uma predição inválida também pode se repetir. Falhas, imagens ignoradas, vetores ausentes e execuções duplicadas para a mesma imagem são excluídos e identificados. Cobertura completa significa que todas as execuções do grupo contribuíram com saída comparável.
+
+MobileNetV2: compara somente as 15 classes registradas. q e score são associados ao índice da classe; mudanças na composição do Top-15 contam como diferenças. A ordem do ranking também é comparada separadamente. Não se infere igualdade das outras 985 classes.
+
+O resultado descreve repetibilidade observada, não uma garantia de determinismo em execuções futuras. A identidade dos bytes de entrada, modelo e configuração entre execuções não é verificada por esta análise; mudanças nesses fatores podem explicar diferenças. Não são comparados tempos de execução.
+
+## Resultados
+
+| Modelo | Formato | Ambiente | Execuções | Imagens comparáveis | Iguais | Diferentes | Insuficientes | Cobertura incompleta |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| drowsiness | tflite | desktop | 4 | 2000 | 2000 | 0 | 0 | 0 |
+| drowsiness | tflite | esp32 | 12 | 2000 | 1996 | 4 | 0 | 1996 |
+| drowsiness | wasm | desktop | 4 | 2000 | 2000 | 0 | 0 | 0 |
+| drowsiness | wasm | esp32 | 18 | 2000 | 1980 | 20 | 0 | 1999 |
+| mobilenetv2_alpha035 | tflite | desktop | 5 | 1 | 1 | 0 | 0 | 0 |
+| mobilenetv2_alpha035 | wasm | desktop | 6 | 1 | 1 | 0 | 0 | 0 |
+
+## Magnitude e distribuição
+
+Para cada imagem, usamos todos os pares não ordenados de execuções válidas e a diferença absoluta por componente de saída. Com n execuções e c classes, são n(n−1)/2 × c diferenças. Média, mediana, P95 e P99 incluem zeros. Percentis usam interpolação linear na posição (N−1)p. As estatísticas agregadas agrupam componentes, não médias de imagens; imagens com mais pares contribuem mais observações. Resultados sem pares são ausentes, não zero.
+
+As faixas 0, 1, 2–5, 6–10 e >10 usam unidades inteiras de quantized. Há duas distribuições: diferenças por componente/par e imagens agrupadas pela sua diferença máxima. Scores têm estatísticas próprias, sem arredondamento antes do cálculo. No Top-15, magnitudes usam somente classes presentes em ambos os pares; classes ausentes não são preenchidas com zero. A mudança de composição continua sinalizada na análise de igualdade.
+
+Mudança de classe compara labels/resultados registrados (Top-1 no MobileNet). Transições entre uma classe e saída inválida são mudanças de decisão, não trocas entre duas classes; resultados desconhecidos não comprovam estabilidade.
+
+### drowsiness / tflite / desktop
+
+Imagens com troca de classe: 0; com mudança de decisão: 0.
+
+**Todas as imagens comparáveis**
+- quantized: N=24000; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- scores: N=24000; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- Faixas por componente/par: {'0': 24000, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 2000, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+**Somente imagens divergentes**
+- quantized: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- scores: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- Faixas por componente/par: {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+### drowsiness / tflite / esp32
+
+Imagens com troca de classe: 0; com mudança de decisão: 0.
+
+**Todas as imagens comparáveis**
+- quantized: N=4520; máximo=46.0; média=0.2517699115044248; mediana=0.0; P95=0.0; P99=4.0
+- scores: N=4520; máximo=0.1796875; média=0.0009834762168141593; mediana=0.0; P95=0.0; P99=0.015625
+- Faixas por componente/par: {'0': 4418, '1': 38, '2–5': 22, '6–10': 0, '>10': 42}
+- Faixas por imagem (máximo): {'0': 1996, '1': 2, '2–5': 1, '6–10': 0, '>10': 1}
+
+**Somente imagens divergentes**
+- quantized: N=528; máximo=46.0; média=2.1553030303030303; mediana=0.0; P95=14.0; P99=32.0
+- scores: N=528; máximo=0.1796875; média=0.008419152462121212; mediana=0.0; P95=0.0546875; P99=0.125
+- Faixas por componente/par: {'0': 426, '1': 38, '2–5': 22, '6–10': 0, '>10': 42}
+- Faixas por imagem (máximo): {'0': 0, '1': 2, '2–5': 1, '6–10': 0, '>10': 1}
+
+### drowsiness / wasm / desktop
+
+Imagens com troca de classe: 0; com mudança de decisão: 0.
+
+**Todas as imagens comparáveis**
+- quantized: N=24000; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- scores: N=24000; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- Faixas por componente/par: {'0': 24000, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 2000, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+**Somente imagens divergentes**
+- quantized: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- scores: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- Faixas por componente/par: {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+### drowsiness / wasm / esp32
+
+Imagens com troca de classe: 2; com mudança de decisão: 2.
+
+**Todas as imagens comparáveis**
+- quantized: N=8826; máximo=119.0; média=1.6577158395649219; mediana=0.0; P95=1.0; P99=59.0
+- scores: N=8826; máximo=0.46484375; média=0.006475452498300476; mediana=0.0; P95=0.00390625; P99=0.23046875
+- Faixas por componente/par: {'0': 8090, '1': 322, '2–5': 58, '6–10': 58, '>10': 298}
+- Faixas por imagem (máximo): {'0': 1980, '1': 9, '2–5': 1, '6–10': 1, '>10': 9}
+
+**Somente imagens divergentes**
+- quantized: N=4866; máximo=119.0; média=3.0067817509247843; mediana=0.0; P95=12.0; P99=119.0
+- scores: N=4866; máximo=0.46484375; média=0.011745241214549939; mediana=0.0; P95=0.046875; P99=0.46484375
+- Faixas por componente/par: {'0': 4130, '1': 322, '2–5': 58, '6–10': 58, '>10': 298}
+- Faixas por imagem (máximo): {'0': 0, '1': 9, '2–5': 1, '6–10': 1, '>10': 9}
+
+### mobilenetv2_alpha035 / tflite / desktop
+
+Imagens com troca de classe: 0; com mudança de decisão: 0.
+
+**Todas as imagens comparáveis**
+- quantized: N=150; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- scores: N=150; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- Faixas por componente/par: {'0': 150, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 1, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+**Somente imagens divergentes**
+- quantized: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- scores: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- Faixas por componente/par: {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+### mobilenetv2_alpha035 / wasm / desktop
+
+Imagens com troca de classe: 0; com mudança de decisão: 0.
+
+**Todas as imagens comparáveis**
+- quantized: N=225; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- scores: N=225; máximo=0.0; média=0.0; mediana=0.0; P95=0.0; P99=0.0
+- Faixas por componente/par: {'0': 225, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 1, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+**Somente imagens divergentes**
+- quantized: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- scores: N=0; máximo=None; média=None; mediana=None; P95=None; P99=None
+- Faixas por componente/par: {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+- Faixas por imagem (máximo): {'0': 0, '1': 0, '2–5': 0, '6–10': 0, '>10': 0}
+
+
+## Interpretação
+
+- **drowsiness / tflite / desktop**: 2000/2000 imagens comparáveis (100.00%) repetiram exatamente os valores registrados em todas as execuções comparadas; 0 apresentaram diferenças. Execuções do grupo: [1, 10, 11, 12].
+- **drowsiness / tflite / esp32**: 1996/2000 imagens comparáveis (99.80%) repetiram exatamente os valores registrados em todas as execuções comparadas; 4 apresentaram diferenças. Execuções do grupo: [20, 23, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49].
+- **drowsiness / wasm / desktop**: 2000/2000 imagens comparáveis (100.00%) repetiram exatamente os valores registrados em todas as execuções comparadas; 0 apresentaram diferenças. Execuções do grupo: [6, 7, 8, 9].
+- **drowsiness / wasm / esp32**: 1980/2000 imagens comparáveis (99.00%) repetiram exatamente os valores registrados em todas as execuções comparadas; 20 apresentaram diferenças. Execuções do grupo: [21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- **mobilenetv2_alpha035 / tflite / desktop**: 1/1 imagens comparáveis (100.00%) repetiram exatamente os valores registrados em todas as execuções comparadas; 0 apresentaram diferenças. Execuções do grupo: [1, 4, 8, 9, 10].
+- **mobilenetv2_alpha035 / wasm / desktop**: 1/1 imagens comparáveis (100.00%) repetiram exatamente os valores registrados em todas as execuções comparadas; 0 apresentaram diferenças. Execuções do grupo: [2, 3, 5, 6, 7, 11].
+
+Esta porcentagem mede repetibilidade por imagem, não acurácia. Para MobileNetV2, inclui igualdade do Top-15 e da ordem do ranking. Diferenças observadas não identificam sua causa; é necessário controlar entradas, modelo e configuração antes de atribuí-las ao runtime.
+
+## Imagens com diferenças
+
+### drowsiness / tflite / esp32 / a0583.raw
+
+Execuções comparadas: [20, 23, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=132; máximo=4.0; média=0.6666666666666666; mediana=0.0; P95=4.0; P99=4.0
+scores: N=132; máximo=0.015625; média=0.0026041666666666665; mediana=0.0; P95=0.015625; P99=0.015625
+Faixas quantized: {'0': 110, '1': 0, '2–5': 22, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[20,23,40,41,42,43,44,45,46,47,48,49],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 4.0 unidades quantizadas e 0.015625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 132 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [20, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]: `[6.0,250.0]`
+- Execuções [23]: `[2.0,254.0]`
+
+**scores**
+- Execuções [20, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]: `[0.0234375,0.9765625]`
+- Execuções [23]: `[0.0078125,0.9921875]`
+
+### drowsiness / tflite / esp32 / a0660.raw
+
+Execuções comparadas: [20, 23, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=132; máximo=1.0; média=0.08333333333333333; mediana=0.0; P95=1.0; P99=1.0
+scores: N=132; máximo=0.00390625; média=0.0003255208333333333; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 121, '1': 11, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[20,23,40,41,42,43,44,45,46,47,48,49],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 132 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [20, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]: `[0.0,255.0]`
+- Execuções [23]: `[1.0,255.0]`
+
+**scores**
+- Execuções [20, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]: `[0.0,0.99609375]`
+- Execuções [23]: `[0.00390625,0.99609375]`
+
+### drowsiness / tflite / esp32 / a0819.raw
+
+Execuções comparadas: [20, 23, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=132; máximo=1.0; média=0.20454545454545456; mediana=0.0; P95=1.0; P99=1.0
+scores: N=132; máximo=0.00390625; média=0.0007990056818181819; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 105, '1': 27, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[20,23,40,41,42,43,44,45,46,47,48,49],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 132 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [20, 41, 42, 43, 44, 46, 47, 48, 49]: `[0.0,255.0]`
+- Execuções [23, 40, 45]: `[1.0,255.0]`
+
+**scores**
+- Execuções [20, 41, 42, 43, 44, 46, 47, 48, 49]: `[0.0,0.99609375]`
+- Execuções [23, 40, 45]: `[0.00390625,0.99609375]`
+
+### drowsiness / tflite / esp32 / a0889.raw
+
+Execuções comparadas: [20, 23, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=132; máximo=46.0; média=7.666666666666667; mediana=0.0; P95=32.0; P99=41.65999999999997
+scores: N=132; máximo=0.1796875; média=0.029947916666666668; mediana=0.0; P95=0.125; P99=0.16273437499999988
+Faixas quantized: {'0': 90, '1': 0, '2–5': 0, '6–10': 0, '>10': 42}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[20,23,40,41,42,43,44,45,46,47,48,49],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 46.0 unidades quantizadas e 0.1796875 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 132 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [20]: `[19.0,237.0]`
+- Execuções [23, 40, 41, 43, 44, 45, 46, 47, 48, 49]: `[33.0,223.0]`
+- Execuções [42]: `[65.0,191.0]`
+
+**scores**
+- Execuções [20]: `[0.07421875,0.92578125]`
+- Execuções [23, 40, 41, 43, 44, 45, 46, 47, 48, 49]: `[0.12890625,0.87109375]`
+- Execuções [42]: `[0.25390625,0.74609375]`
+
+### drowsiness / wasm / esp32 / a0062.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=38.0; média=4.75; mediana=0.0; P95=38.0; P99=38.0
+scores: N=240; máximo=0.1484375; média=0.0185546875; mediana=0.0; P95=0.1484375; P99=0.1484375
+Faixas quantized: {'0': 210, '1': 0, '2–5': 0, '6–10': 0, '>10': 30}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 38.0 unidades quantizadas e 0.1484375 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[68.0,187.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[30.0,225.0]`
+
+**scores**
+- Execuções [21]: `[0.265625,0.73046875]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.1171875,0.87890625]`
+
+### drowsiness / wasm / esp32 / a0082.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.125; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.00048828125; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 210, '1': 30, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+- Execuções [22]: `[1.0,254.0]`
+
+**scores**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+- Execuções [22]: `[0.00390625,0.9921875]`
+
+### drowsiness / wasm / esp32 / a0231.raw
+
+Execuções comparadas: [21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=306; máximo=119.0; média=13.222222222222221; mediana=0.0; P95=119.0; P99=119.0
+scores: N=306; máximo=0.46484375; média=0.05164930555555555; mediana=0.0; P95=0.46484375; P99=0.46484375
+Faixas quantized: {'0': 272, '1': 0, '2–5': 0, '6–10': 0, '>10': 34}
+Troca de classe: True; mudança de decisão: True; predições: [{"executions":[21,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}},{"executions":[22],"value":{"label":1,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 119.0 unidades quantizadas e 0.46484375 em score. A classe predita mudou entre as execuções. As estatísticas resumem 306 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[68.0,187.0]`
+- Execuções [22]: `[187.0,68.0]`
+
+**scores**
+- Execuções [21, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.265625,0.73046875]`
+- Execuções [22]: `[0.73046875,0.265625]`
+
+### drowsiness / wasm / esp32 / a0283.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.125; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.00048828125; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 210, '1': 30, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[1.0,254.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+
+**scores**
+- Execuções [21]: `[0.00390625,0.9921875]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+
+### drowsiness / wasm / esp32 / a0332.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.125; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.00048828125; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 210, '1': 30, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+- Execuções [22]: `[1.0,254.0]`
+
+**scores**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+- Execuções [22]: `[0.00390625,0.9921875]`
+
+### drowsiness / wasm / esp32 / a0423.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=18.0; média=2.25; mediana=0.0; P95=18.0; P99=18.0
+scores: N=240; máximo=0.0703125; média=0.0087890625; mediana=0.0; P95=0.0703125; P99=0.0703125
+Faixas quantized: {'0': 210, '1': 0, '2–5': 0, '6–10': 0, '>10': 30}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 18.0 unidades quantizadas e 0.0703125 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[30.0,225.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[12.0,243.0]`
+
+**scores**
+- Execuções [21]: `[0.1171875,0.87890625]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.046875,0.94921875]`
+
+### drowsiness / wasm / esp32 / a0456.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.125; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.00048828125; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 210, '1': 30, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+- Execuções [22]: `[1.0,254.0]`
+
+**scores**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+- Execuções [22]: `[0.00390625,0.9921875]`
+
+### drowsiness / wasm / esp32 / a0544.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=29.0; média=3.625; mediana=0.0; P95=29.0; P99=29.0
+scores: N=240; máximo=0.11328125; média=0.01416015625; mediana=0.0; P95=0.11328125; P99=0.11328125
+Faixas quantized: {'0': 210, '1': 0, '2–5': 0, '6–10': 0, '>10': 30}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 29.0 unidades quantizadas e 0.11328125 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[30.0,225.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[1.0,254.0]`
+
+**scores**
+- Execuções [21]: `[0.1171875,0.87890625]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.00390625,0.9921875]`
+
+### drowsiness / wasm / esp32 / a0592.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.23333333333333334; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.0009114583333333333; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 184, '1': 56, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 28]: `[1.0,254.0]`
+- Execuções [22, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+
+**scores**
+- Execuções [21, 28]: `[0.00390625,0.9921875]`
+- Execuções [22, 26, 27, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+
+### drowsiness / wasm / esp32 / a0663.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=11.0; média=1.375; mediana=0.0; P95=11.0; P99=11.0
+scores: N=240; máximo=0.04296875; média=0.00537109375; mediana=0.0; P95=0.04296875; P99=0.04296875
+Faixas quantized: {'0': 210, '1': 0, '2–5': 0, '6–10': 0, '>10': 30}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 11.0 unidades quantizadas e 0.04296875 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[1.0,254.0]`
+- Execuções [22]: `[12.0,243.0]`
+
+**scores**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.00390625,0.9921875]`
+- Execuções [22]: `[0.046875,0.94921875]`
+
+### drowsiness / wasm / esp32 / a0711.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.125; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.00048828125; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 210, '1': 30, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[0.0,255.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[1.0,254.0]`
+
+**scores**
+- Execuções [21]: `[0.0,0.99609375]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.00390625,0.9921875]`
+
+### drowsiness / wasm / esp32 / a0739.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=3.0; média=0.375; mediana=0.0; P95=3.0; P99=3.0
+scores: N=240; máximo=0.01171875; média=0.00146484375; mediana=0.0; P95=0.01171875; P99=0.01171875
+Faixas quantized: {'0': 210, '1': 0, '2–5': 30, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 3.0 unidades quantizadas e 0.01171875 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[1.0,254.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[4.0,251.0]`
+
+**scores**
+- Execuções [21]: `[0.00390625,0.9921875]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.015625,0.98046875]`
+
+### drowsiness / wasm / esp32 / a0755.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=8.0; média=1.0; mediana=0.0; P95=8.0; P99=8.0
+scores: N=240; máximo=0.03125; média=0.00390625; mediana=0.0; P95=0.03125; P99=0.03125
+Faixas quantized: {'0': 210, '1': 0, '2–5': 0, '6–10': 30, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 8.0 unidades quantizadas e 0.03125 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[4.0,251.0]`
+- Execuções [22]: `[12.0,243.0]`
+
+**scores**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.015625,0.98046875]`
+- Execuções [22]: `[0.046875,0.94921875]`
+
+### drowsiness / wasm / esp32 / a0852.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.125; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.00048828125; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 210, '1': 30, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[1.0,254.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+
+**scores**
+- Execuções [21]: `[0.00390625,0.9921875]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+
+### drowsiness / wasm / esp32 / a0881.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=30.0; média=5.7; mediana=0.0; P95=18.0; P99=30.0
+scores: N=240; máximo=0.1171875; média=0.022265625; mediana=0.0; P95=0.0703125; P99=0.1171875
+Faixas quantized: {'0': 158, '1': 0, '2–5': 0, '6–10': 0, '>10': 82}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 30.0 unidades quantizadas e 0.1171875 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 29, 30, 31, 32, 34, 35, 36, 37, 38, 39]: `[12.0,243.0]`
+- Execuções [22]: `[0.0,255.0]`
+- Execuções [28, 33]: `[30.0,225.0]`
+
+**scores**
+- Execuções [21, 26, 27, 29, 30, 31, 32, 34, 35, 36, 37, 38, 39]: `[0.046875,0.94921875]`
+- Execuções [22]: `[0.0,0.99609375]`
+- Execuções [28, 33]: `[0.1171875,0.87890625]`
+
+### drowsiness / wasm / esp32 / a0892.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.23333333333333334; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.0009114583333333333; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 184, '1': 56, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 27]: `[1.0,254.0]`
+- Execuções [22, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+
+**scores**
+- Execuções [21, 27]: `[0.00390625,0.9921875]`
+- Execuções [22, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+
+### drowsiness / wasm / esp32 / a0933.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=11.0; média=1.375; mediana=0.0; P95=8.0; P99=8.0
+scores: N=240; máximo=0.04296875; média=0.00537109375; mediana=0.0; P95=0.03125; P99=0.03125
+Faixas quantized: {'0': 182, '1': 0, '2–5': 28, '6–10': 28, '>10': 2}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 11.0 unidades quantizadas e 0.04296875 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[12.0,243.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39]: `[4.0,251.0]`
+- Execuções [34]: `[1.0,254.0]`
+
+**scores**
+- Execuções [21]: `[0.046875,0.94921875]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38, 39]: `[0.015625,0.98046875]`
+- Execuções [34]: `[0.00390625,0.9921875]`
+
+### drowsiness / wasm / esp32 / a0950.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=1.0; média=0.125; mediana=0.0; P95=1.0; P99=1.0
+scores: N=240; máximo=0.00390625; média=0.00048828125; mediana=0.0; P95=0.00390625; P99=0.00390625
+Faixas quantized: {'0': 210, '1': 30, '2–5': 0, '6–10': 0, '>10': 0}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 1.0 unidades quantizadas e 0.00390625 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,255.0]`
+- Execuções [22]: `[1.0,254.0]`
+
+**scores**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.0,0.99609375]`
+- Execuções [22]: `[0.00390625,0.9921875]`
+
+### drowsiness / wasm / esp32 / a0959.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=60.0; média=7.4375; mediana=0.0; P95=60.0; P99=60.0
+scores: N=240; máximo=0.234375; média=0.029052734375; mediana=0.0; P95=0.234375; P99=0.234375
+Faixas quantized: {'0': 210, '1': 0, '2–5': 0, '6–10': 0, '>10': 30}
+Troca de classe: False; mudança de decisão: False; predições: [{"executions":[21,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}},{"executions":[22],"value":{"label":null,"state":"unknown"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 60.0 unidades quantizadas e 0.234375 em score. A classe predita permaneceu a mesma, apesar da variação numérica. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[68.0,187.0]`
+- Execuções [22]: `[128.0,128.0]`
+
+**scores**
+- Execuções [21, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.265625,0.73046875]`
+- Execuções [22]: `[0.5,0.5]`
+
+### drowsiness / wasm / esp32 / a0969.raw
+
+Execuções comparadas: [21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]. Quantized iguais: False; scores iguais: False; ranking igual: None.
+
+quantized: N=240; máximo=119.0; média=14.875; mediana=0.0; P95=119.0; P99=119.0
+scores: N=240; máximo=0.46484375; média=0.05810546875; mediana=0.0; P95=0.46484375; P99=0.46484375
+Faixas quantized: {'0': 210, '1': 0, '2–5': 0, '6–10': 0, '>10': 30}
+Troca de classe: True; mudança de decisão: True; predições: [{"executions":[21],"value":{"label":1,"state":"class"}},{"executions":[22,26,27,28,29,30,31,32,33,34,35,36,37,38,39],"value":{"label":0,"state":"class"}}]
+
+**Interpretação desta imagem:** a maior diferença registrada foi de 119.0 unidades quantizadas e 0.46484375 em score. A classe predita mudou entre as execuções. As estatísticas resumem 240 diferenças entre valores de saída desta imagem. Quando há duas execuções e duas saídas com diferenças iguais, máximo, média, mediana, P95 e P99 coincidem.
+
+**quantized**
+- Execuções [21]: `[187.0,68.0]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[68.0,187.0]`
+
+**scores**
+- Execuções [21]: `[0.73046875,0.265625]`
+- Execuções [22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]: `[0.265625,0.73046875]`
+
+
+## Cobertura e exclusões
+
+- drowsiness / tflite / esp32 / A0001.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0002.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0003.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0004.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0005.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0006.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0007.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0008.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0009.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0010.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0011.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0012.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0013.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0014.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0015.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0016.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0017.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0018.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0019.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0020.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0021.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0022.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0023.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0024.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0025.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0026.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0027.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0028.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0029.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0030.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0031.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0032.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0033.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0034.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0035.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0036.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0037.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0038.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0039.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0040.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0041.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0042.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0043.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0044.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0045.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0046.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0047.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0048.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0049.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0050.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0051.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0052.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0053.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0054.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0055.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0056.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0057.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0058.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0059.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0060.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0061.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0062.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0063.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0064.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0065.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0066.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0067.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0068.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0069.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0070.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0071.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0072.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0073.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0074.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0075.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0076.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0077.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0078.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0079.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0080.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0081.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0082.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0083.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0084.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0085.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0086.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0087.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0088.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0089.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0090.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0091.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0092.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0093.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0094.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0095.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0096.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0097.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0098.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0099.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0100.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0101.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0102.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0103.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0104.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0105.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0106.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0107.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0108.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0109.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0110.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0111.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0112.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0113.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0114.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0115.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0116.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0117.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0118.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0119.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0120.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0121.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0122.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0123.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0124.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0125.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0126.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0127.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0128.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0129.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0130.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0131.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0132.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0133.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0134.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0135.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0136.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0137.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0138.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0139.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0140.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0141.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0142.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0143.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0144.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0145.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0146.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0147.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0148.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0149.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0150.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0151.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0152.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0153.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0154.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0155.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0156.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0157.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0158.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0159.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0160.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0161.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0162.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0163.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0164.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0165.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0166.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0167.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0168.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0169.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0170.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0171.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0172.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0173.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0174.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0175.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0176.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0177.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0178.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0179.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0180.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0181.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0182.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0183.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0184.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0185.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0188.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0189.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0190.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0191.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0192.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0193.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0194.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0195.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0196.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0197.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0198.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0199.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0200.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0201.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0202.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0203.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0204.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0205.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0206.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0207.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0208.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0209.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0210.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0211.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0212.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0213.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0214.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0215.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0216.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0217.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0218.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0219.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0220.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0222.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0223.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0224.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0225.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0226.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0227.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0228.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0229.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0230.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0231.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0232.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0233.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0234.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0235.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0236.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0237.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0238.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0239.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0240.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0241.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0242.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0243.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0244.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0245.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0246.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0247.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0248.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0249.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0250.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0252.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0253.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0254.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0255.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0256.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0257.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0258.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0259.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0260.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0261.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0262.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0263.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0264.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0265.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0266.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0267.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0268.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0269.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0270.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0271.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0272.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0273.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0274.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0275.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0276.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0277.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0278.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0279.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0280.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0284.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0285.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0286.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0287.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0288.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0289.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0290.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0291.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0292.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0293.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0294.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0295.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0296.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0297.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0298.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0299.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0300.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0301.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0302.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0303.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0304.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0305.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0306.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0307.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0308.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0309.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0310.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0311.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0312.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0313.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0314.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0315.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0316.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0317.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0318.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0319.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0320.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0321.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0322.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0323.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0324.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0325.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0326.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0327.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0328.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0329.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0330.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0331.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0332.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0333.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0334.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0335.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0336.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0337.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0338.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0339.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0340.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0341.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0342.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0343.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0344.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0345.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0346.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0347.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0348.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0349.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0350.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0352.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0353.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0354.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0355.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0356.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0357.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0358.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0359.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0360.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0361.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0362.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0363.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0364.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0365.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0366.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0367.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0368.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0369.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0370.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0371.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0372.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0373.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0374.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0376.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0377.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0378.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0379.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0380.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0381.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0382.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0383.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0384.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0385.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0386.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0387.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0388.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0389.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0390.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0391.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0392.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0393.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0394.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0395.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0396.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0397.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0398.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0399.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0400.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0401.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0402.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0403.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0404.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0405.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0406.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0407.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0408.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0409.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0410.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0411.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0412.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0413.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0414.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0415.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0416.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0417.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0418.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0419.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0420.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0421.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0422.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0423.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0424.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0425.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0426.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0427.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0428.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0429.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0430.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0431.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0432.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0433.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0434.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0435.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0436.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0437.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0440.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0441.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0442.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0443.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0444.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0445.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0446.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0447.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0448.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0449.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0450.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0451.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0452.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0453.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0454.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0455.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0456.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0457.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0460.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0461.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0462.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0463.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0464.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0465.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0466.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0467.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0468.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0469.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0470.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0471.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0472.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0473.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0474.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0475.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0476.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0477.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0478.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0479.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0480.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0481.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0482.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0483.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0484.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0485.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0486.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0487.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0488.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0489.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0490.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0491.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0492.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0493.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0494.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0495.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0496.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0497.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0498.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0499.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0500.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0501.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0502.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0503.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0504.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0505.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0506.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0507.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0508.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0509.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0510.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0511.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0512.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0513.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0514.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0515.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0516.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0517.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0518.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0519.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0520.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0521.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0522.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0523.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0524.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0525.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0526.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0527.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0528.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0529.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0530.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0531.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0532.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0533.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0534.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0535.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0536.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0537.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0538.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0539.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0540.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0541.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0542.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0543.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0544.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0545.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0546.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0547.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0548.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0549.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0550.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0551.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0552.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0553.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0554.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0555.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0556.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0557.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0558.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0559.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0560.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0561.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0562.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0563.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0564.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0565.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0566.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0567.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0568.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0569.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0570.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0571.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0572.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0573.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0574.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0575.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0576.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0577.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0578.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0579.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0580.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0581.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0582.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0583.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0584.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0585.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0586.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0587.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0588.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0589.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0590.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0591.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0592.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0593.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0594.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0595.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0596.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0597.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0598.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0599.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0600.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0601.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0602.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0603.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0604.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0605.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0606.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0607.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0608.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0609.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0610.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0611.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0612.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0613.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0614.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0615.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0616.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0617.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0618.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0619.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0620.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0621.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0622.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0623.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0624.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0625.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0626.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0627.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0628.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0629.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0630.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0631.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0632.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0633.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0634.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0635.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0636.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0637.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0638.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0639.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0640.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0641.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0642.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0643.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0644.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0645.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0646.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0647.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0648.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0649.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0650.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0651.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0652.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0653.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0654.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0655.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0656.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0657.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0658.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0659.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0660.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0661.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0662.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0663.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0664.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0665.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0666.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0667.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0668.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0669.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0670.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0671.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0672.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0673.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0674.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0675.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0676.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0677.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0678.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0679.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0680.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0681.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0682.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0683.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0684.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0685.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0686.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0687.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0688.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0689.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0690.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0691.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0692.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0693.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0694.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0695.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0696.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0697.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0698.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0699.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0700.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0701.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0702.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0703.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0704.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0705.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0706.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0707.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0708.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0709.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0710.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0711.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0712.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0713.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0714.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0715.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0716.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0717.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0718.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0719.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0720.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0721.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0722.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0723.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0724.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0725.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0726.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0727.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0728.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0729.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0730.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0731.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0732.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0733.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0734.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0735.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0736.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0737.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0738.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0739.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0740.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0741.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0742.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0743.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0744.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0745.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0746.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0747.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0748.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0749.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0750.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0751.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0752.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0753.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0754.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0755.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0756.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0757.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0758.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0759.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0760.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0761.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0762.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0763.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0764.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0765.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0766.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0767.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0768.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0769.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0770.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0771.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0772.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0773.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0774.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0775.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0776.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0777.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0778.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0779.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0780.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0781.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0782.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0783.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0784.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0785.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0786.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0787.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0788.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0789.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0790.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0791.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0792.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0793.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0794.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0795.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0796.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0797.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0798.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0799.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0800.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0801.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0802.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0803.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0804.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0805.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0806.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0807.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0808.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0809.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0810.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0811.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0812.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0813.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0814.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0815.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0816.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0817.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0818.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0819.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0820.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0821.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0822.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0823.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0824.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0825.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0826.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0827.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0828.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0829.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0830.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0831.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0832.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0833.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0834.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0835.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0836.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0837.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0838.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0839.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0840.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0841.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0842.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0843.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0844.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0845.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0846.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0847.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0848.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0849.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0850.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0851.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0852.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0853.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0854.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0855.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0856.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0857.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0858.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0859.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0860.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0861.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0862.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0863.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0864.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0865.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0866.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0867.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0868.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0869.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0870.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0871.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0872.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0873.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0874.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0875.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0876.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0877.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0878.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0879.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0880.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0881.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0882.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0883.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0884.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0885.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0886.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0887.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0888.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0889.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0890.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0891.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0892.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0893.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0894.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0895.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0896.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0897.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0898.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0899.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0900.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0901.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0902.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0903.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0904.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0905.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0906.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0907.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0908.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0909.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0910.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0911.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0912.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0913.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0914.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0915.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0916.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0917.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0918.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0919.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0920.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0921.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0922.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0923.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0924.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0925.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0926.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0927.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0928.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0929.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0930.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0931.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0932.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0933.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0934.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0935.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0936.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0937.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0938.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0939.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0940.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0941.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0942.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0943.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0944.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0947.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0948.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0949.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0950.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0951.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0952.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0953.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0954.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0955.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0956.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0957.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0958.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0959.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0960.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0961.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0962.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0963.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0964.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0965.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0966.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0967.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0968.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0969.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0970.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0971.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0972.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0973.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0974.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0975.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0976.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0977.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0978.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0979.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0980.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0981.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0982.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0983.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0984.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0985.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0986.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0987.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0988.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0989.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0990.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0991.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0992.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0993.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0994.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0995.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0996.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0997.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0998.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A0999.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1000.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1001.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1002.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1003.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1004.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1005.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1008.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1009.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1010.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1011.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1012.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1013.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1014.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1015.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1016.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / A1017.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0002.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0003.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0004.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0005.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0006.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0007.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0009.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0010.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0011.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0012.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0013.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0014.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0015.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0016.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0017.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0018.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0019.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0020.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0021.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0022.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0023.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0024.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0026.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0029.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0033.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0034.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0035.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0036.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0037.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0038.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0039.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0040.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0041.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0042.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0043.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0044.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0045.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0046.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0047.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0048.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0049.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0050.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0051.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0052.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0053.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0054.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0055.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0056.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0057.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0058.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0059.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0060.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0061.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0062.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0063.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0064.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0065.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0066.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0067.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0068.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0069.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0070.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0071.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0072.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0073.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0074.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0075.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0076.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0077.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0078.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0079.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0080.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0081.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0082.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0083.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0084.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0085.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0086.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0087.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0088.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0089.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0090.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0091.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0092.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0093.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0094.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0095.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0096.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0097.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0098.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0099.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0100.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0101.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0102.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0103.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0104.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0105.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0106.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0107.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0108.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0109.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0110.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0111.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0112.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0113.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0114.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0115.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0116.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0117.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0118.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0119.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0120.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0121.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0122.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0123.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0124.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0125.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0126.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0127.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0128.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0129.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0130.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0131.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0132.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0133.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0134.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0135.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0136.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0137.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0138.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0139.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0140.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0141.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0142.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0143.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0144.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0145.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0146.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0147.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0148.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0149.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0150.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0151.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0152.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0153.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0154.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0155.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0156.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0157.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0158.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0159.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0160.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0161.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0162.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0163.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0164.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0165.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0166.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0167.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0168.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0169.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0170.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0171.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0172.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0173.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0174.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0175.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0176.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0177.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0178.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0179.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0180.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0181.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0182.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0183.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0184.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0185.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0186.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0187.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0188.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0189.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0190.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0191.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0192.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0193.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0194.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0195.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0196.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0197.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0198.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0199.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0200.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0201.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0202.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0203.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0204.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0205.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0206.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0207.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0208.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0209.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0210.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0211.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0212.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0213.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0214.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0215.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0216.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0217.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0218.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0219.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0220.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0221.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0222.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0223.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0224.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0225.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0226.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0227.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0228.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0229.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0230.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0231.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0232.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0233.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0234.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0235.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0236.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0237.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0238.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0239.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0240.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0241.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0242.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0243.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0244.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0245.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0246.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0247.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0248.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0249.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0250.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0251.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0252.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0253.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0254.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0255.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0256.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0257.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0258.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0259.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0260.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0261.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0262.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0263.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0264.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0265.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0266.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0267.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0268.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0269.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0270.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0271.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0272.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0273.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0274.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0275.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0276.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0277.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0278.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0279.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0280.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0281.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0282.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0283.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0284.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0285.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0286.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0287.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0288.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0289.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0290.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0291.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0292.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0293.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0294.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0295.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0296.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0297.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0298.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0299.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0300.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0301.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0302.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0303.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0304.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0305.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0306.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0307.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0308.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0309.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0310.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0311.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0312.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0313.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0314.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0315.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0316.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0317.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0318.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0319.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0320.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0321.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0322.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0323.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0324.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0325.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0326.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0327.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0328.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0329.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0330.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0331.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0332.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0333.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0334.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0335.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0336.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0337.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0338.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0339.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0340.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0341.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0342.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0343.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0344.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0345.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0346.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0347.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0348.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0349.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0350.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0351.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0352.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0353.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0354.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0355.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0356.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0357.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0358.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0359.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0360.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0361.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0362.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0363.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0364.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0365.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0366.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0367.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0368.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0369.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0370.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0371.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0372.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0373.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0374.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0375.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0376.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0377.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0378.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0379.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0380.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0381.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0382.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0383.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0384.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0385.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0386.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0387.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0388.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0389.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0390.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0391.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0392.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0393.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0394.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0395.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0396.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0397.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0398.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0399.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0400.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0401.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0402.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0403.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0404.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0405.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0406.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0407.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0408.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0409.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0410.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0411.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0412.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0413.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0414.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0415.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0416.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0417.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0418.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0419.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0420.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0421.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0422.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0423.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0424.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0425.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0426.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0427.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0428.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0429.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0430.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0431.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0432.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0433.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0434.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0435.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0436.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0437.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0438.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0439.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0440.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0441.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0442.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0443.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0444.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0445.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0446.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0447.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0448.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0449.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0450.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0451.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0452.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0453.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0454.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0455.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0456.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0457.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0458.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0459.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0460.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0461.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0462.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0463.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0464.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0465.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0466.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0467.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0468.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0469.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0470.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0471.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0472.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0473.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0474.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0475.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0476.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0477.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0478.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0479.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0480.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0481.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0482.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0483.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0484.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0485.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0486.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0487.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0488.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0489.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0490.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0491.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0492.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0493.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0494.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0495.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0496.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0497.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0498.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0499.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0500.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0501.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0502.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0503.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0504.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0505.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0506.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0507.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0508.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0509.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0510.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0511.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0512.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0513.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0514.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0515.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0516.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0517.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0518.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0519.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0520.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0521.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0522.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0523.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0524.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0525.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0526.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0527.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0528.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0529.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0530.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0531.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0532.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0533.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0534.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0535.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0536.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0537.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0538.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0539.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0540.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0541.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0542.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0543.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0544.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0545.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0546.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0547.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0548.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0549.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0550.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0551.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0552.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0553.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0554.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0555.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0556.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0557.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0558.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0559.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0560.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0561.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0562.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0563.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0564.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0565.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0566.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0567.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0568.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0569.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0570.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0571.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0572.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0573.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0574.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0575.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0576.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0577.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0578.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0579.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0580.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0581.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0582.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0584.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0585.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0586.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0587.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0588.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0589.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0590.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0591.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0592.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0593.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0594.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0595.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0596.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0597.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0598.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0599.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0600.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0601.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0602.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0603.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0604.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0605.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0606.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0607.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0608.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0609.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0610.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0611.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0612.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0613.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0614.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0615.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0616.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0617.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0618.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0619.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0620.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0621.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0622.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0623.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0624.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0625.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0626.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0627.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0628.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0629.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0630.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0631.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0632.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0633.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0634.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0635.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0636.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0637.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0638.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0639.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0640.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0641.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0642.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0643.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0644.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0645.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0646.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0647.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0648.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0649.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0650.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0651.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0652.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0653.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0654.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0655.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0656.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0657.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0658.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0659.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0661.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0662.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0663.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0664.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0665.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0666.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0667.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0668.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0669.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0670.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0671.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0672.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0673.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0674.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0675.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0676.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0677.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0678.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0679.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0680.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0681.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0682.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0683.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0684.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0685.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0686.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0687.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0688.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0689.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0690.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0691.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0692.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0693.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0694.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0695.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0696.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0697.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0698.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0699.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0700.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0701.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0702.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0703.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0704.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0705.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0706.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0707.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0708.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0709.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0710.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0711.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0712.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0713.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0714.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0715.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0716.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0717.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0718.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0719.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0720.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0721.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0722.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0723.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0724.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0725.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0726.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0727.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0728.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0729.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0730.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0731.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0732.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0733.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0734.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0735.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0736.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0737.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0738.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0739.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0740.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0741.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0742.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0743.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0744.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0745.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0746.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0747.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0748.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0749.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0750.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0751.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0752.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0753.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0754.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0755.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0756.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0757.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0758.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0759.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0760.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0761.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0762.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0763.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0764.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0765.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0766.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0767.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0768.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0769.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0770.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0771.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0772.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0773.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0774.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0775.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0776.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0777.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0778.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0779.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0780.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0781.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0782.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0783.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0784.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0785.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0786.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0787.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0788.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0789.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0790.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0791.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0792.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0793.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0794.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0795.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0796.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0797.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0798.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0799.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0800.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0801.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0802.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0803.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0804.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0805.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0806.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0807.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0808.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0809.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0810.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0811.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0812.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0813.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0814.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0815.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0816.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0817.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0818.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0820.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0821.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0822.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0823.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0824.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0825.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0826.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0827.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0828.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0829.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0830.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0831.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0832.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0833.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0834.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0835.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0836.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0837.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0838.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0839.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0840.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0841.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0842.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0843.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0844.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0845.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0846.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0847.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0848.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0849.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0850.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0851.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0852.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0853.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0854.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0855.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0856.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0857.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0858.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0859.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0860.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0861.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0862.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0863.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0864.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0865.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0866.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0867.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0868.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0869.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0870.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0871.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0872.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0873.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0874.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0875.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0876.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0877.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0878.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0879.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0880.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0881.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0882.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0883.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0884.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0885.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0886.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0887.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0888.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0890.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0891.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0892.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0893.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0894.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0895.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0896.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0897.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0898.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0899.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0900.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0901.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0902.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0903.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0904.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0905.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0906.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0907.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0908.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0909.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0910.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0911.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0912.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0913.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0914.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0915.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0916.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0917.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0918.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0919.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0920.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0921.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0922.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0923.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0924.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0925.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0926.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0927.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0928.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0929.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0930.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0931.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0932.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0933.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0934.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0935.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0936.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0937.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0938.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0939.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0940.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0941.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0942.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0943.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0944.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0945.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0946.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0947.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0948.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0949.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0950.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0951.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0952.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0953.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0954.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0955.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0956.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0957.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0958.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0959.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0960.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0961.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0962.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0963.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0964.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0965.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0966.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0967.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0968.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0969.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0970.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0971.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0972.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0973.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0974.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0975.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0976.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0977.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0978.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0979.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0980.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0981.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0982.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0983.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0984.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0985.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0986.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0987.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0988.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0989.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0990.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0991.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0992.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0993.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0994.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0995.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0996.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0997.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0998.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a0999.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1000.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1001.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1002.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1003.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1004.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1005.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1006.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1007.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / tflite / esp32 / a1008.raw: ausentes=[40, 41, 42, 43, 44, 45, 46, 47, 48, 49]; excluídas=[]; duplicadas=[]; comparadas=[20, 23].
+- drowsiness / wasm / esp32 / A0001.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0002.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0003.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0004.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0005.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0006.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0007.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0008.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0009.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0010.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0011.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0012.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0013.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0014.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0015.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0016.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0017.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0018.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0019.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0020.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0021.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0022.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0023.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0024.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0025.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0026.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0027.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0028.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0029.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0030.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0031.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0032.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0033.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0034.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0035.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0036.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0037.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0038.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0039.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0040.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0041.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0042.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0043.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0044.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0045.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0046.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0047.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0048.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0049.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0050.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0051.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0052.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0053.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0054.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0055.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0056.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0057.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0058.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0059.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0060.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0061.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0062.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0063.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0064.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0065.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0066.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0067.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0068.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0069.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0070.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0071.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0072.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0073.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0074.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0075.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0076.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0077.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0078.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0079.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0080.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0081.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0082.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0083.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0084.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0085.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0086.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0087.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0088.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0089.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0090.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0091.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0092.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0093.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0094.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0095.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0096.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0097.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0098.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0099.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0100.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0101.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0102.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0103.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0104.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0105.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0106.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0107.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0108.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0109.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0110.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0111.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0112.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0113.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0114.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0115.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0116.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0117.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0118.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0119.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0120.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0121.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0122.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0123.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0124.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0125.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0126.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0127.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0128.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0129.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0130.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0131.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0132.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0133.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0134.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0135.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0136.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0137.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0138.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0139.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0140.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0141.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0142.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0143.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0144.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0145.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0146.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0147.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0148.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0149.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0150.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0151.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0152.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0153.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0154.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0155.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0156.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0157.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0158.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0159.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0160.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0161.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0162.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0163.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0164.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0165.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0166.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0167.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0168.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0169.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0170.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0171.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0172.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0173.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0174.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0175.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0176.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0177.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0178.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0179.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0180.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0181.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0182.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0183.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0184.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0185.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0188.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0189.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0190.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0191.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0192.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0193.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0194.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0195.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0196.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0197.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0198.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0199.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0200.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0201.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0202.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0203.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0204.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0205.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0206.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0207.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0208.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0209.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0210.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0211.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0212.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0213.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0214.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0215.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0216.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0217.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0218.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0219.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0220.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0222.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0223.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0224.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0225.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0226.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0227.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0228.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0229.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0230.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0231.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0232.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0233.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0234.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0235.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0236.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0237.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0238.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0239.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0240.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0241.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0242.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0243.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0244.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0245.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0246.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0247.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0248.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0249.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0250.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0252.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0253.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0254.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0255.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0256.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0257.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0258.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0259.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0260.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0261.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0262.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0263.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0264.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0265.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0266.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0267.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0268.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0269.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0270.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0271.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0272.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0273.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0274.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0275.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0276.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0277.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0278.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0279.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0280.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0284.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0285.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0286.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0287.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0288.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0289.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0290.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0291.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0292.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0293.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0294.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0295.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0296.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0297.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0298.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0299.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0300.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0301.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0302.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0303.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0304.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0305.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0306.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0307.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0308.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0309.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0310.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0311.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0312.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0313.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0314.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0315.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0316.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0317.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0318.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0319.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0320.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0321.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0322.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0323.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0324.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0325.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0326.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0327.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0328.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0329.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0330.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0331.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0332.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0333.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0334.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0335.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0336.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0337.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0338.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0339.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0340.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0341.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0342.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0343.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0344.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0345.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0346.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0347.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0348.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0349.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0350.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0352.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0353.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0354.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0355.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0356.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0357.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0358.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0359.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0360.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0361.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0362.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0363.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0364.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0365.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0366.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0367.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0368.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0369.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0370.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0371.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0372.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0373.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0374.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0376.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0377.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0378.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0379.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0380.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0381.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0382.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0383.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0384.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0385.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0386.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0387.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0388.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0389.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0390.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0391.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0392.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0393.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0394.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0395.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0396.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0397.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0398.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0399.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0400.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0401.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0402.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0403.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0404.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0405.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0406.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0407.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0408.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0409.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0410.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0411.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0412.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0413.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0414.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0415.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0416.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0417.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0418.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0419.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0420.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0421.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0422.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0423.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0424.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0425.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0426.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0427.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0428.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0429.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0430.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0431.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0432.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0433.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0434.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0435.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0436.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0437.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0440.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0441.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0442.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0443.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0444.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0445.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0446.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0447.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0448.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0449.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0450.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0451.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0452.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0453.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0454.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0455.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0456.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0457.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0460.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0461.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0462.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0463.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0464.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0465.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0466.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0467.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0468.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0469.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0470.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0471.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0472.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0473.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0474.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0475.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0476.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0477.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0478.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0479.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0480.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0481.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0482.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0483.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0484.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0485.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0486.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0487.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0488.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0489.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0490.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0491.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0492.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0493.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0494.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0495.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0496.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0497.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0498.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0499.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0500.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0501.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0502.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0503.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0504.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0505.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0506.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0507.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0508.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0509.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0510.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0511.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0512.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0513.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0514.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0515.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0516.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0517.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0518.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0519.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0520.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0521.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0522.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0523.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0524.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0525.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0526.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0527.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0528.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0529.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0530.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0531.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0532.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0533.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0534.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0535.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0536.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0537.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0538.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0539.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0540.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0541.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0542.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0543.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0544.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0545.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0546.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0547.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0548.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0549.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0550.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0551.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0552.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0553.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0554.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0555.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0556.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0557.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0558.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0559.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0560.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0561.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0562.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0563.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0564.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0565.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0566.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0567.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0568.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0569.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0570.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0571.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0572.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0573.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0574.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0575.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0576.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0577.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0578.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0579.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0580.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0581.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0582.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0583.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0584.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0585.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0586.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0587.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0588.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0589.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0590.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0591.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0592.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0593.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0594.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0595.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0596.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0597.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0598.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0599.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0600.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0601.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0602.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0603.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0604.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0605.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0606.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0607.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0608.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0609.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0610.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0611.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0612.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0613.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0614.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0615.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0616.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0617.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0618.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0619.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0620.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0621.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0622.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0623.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0624.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0625.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0626.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0627.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0628.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0629.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0630.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0631.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0632.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0633.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0634.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0635.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0636.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0637.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0638.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0639.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0640.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0641.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0642.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0643.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0644.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0645.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0646.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0647.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0648.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0649.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0650.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0651.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0652.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0653.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0654.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0655.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0656.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0657.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0658.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0659.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0660.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0661.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0662.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0663.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0664.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0665.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0666.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0667.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0668.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0669.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0670.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0671.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0672.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0673.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0674.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0675.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0676.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0677.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0678.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0679.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0680.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0681.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0682.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0683.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0684.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0685.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0686.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0687.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0688.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0689.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0690.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0691.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0692.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0693.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0694.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0695.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0696.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0697.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0698.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0699.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0700.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0701.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0702.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0703.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0704.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0705.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0706.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0707.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0708.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0709.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0710.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0711.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0712.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0713.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0714.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0715.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0716.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0717.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0718.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0719.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0720.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0721.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0722.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0723.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0724.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0725.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0726.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0727.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0728.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0729.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0730.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0731.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0732.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0733.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0734.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0735.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0736.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0737.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0738.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0739.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0740.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0741.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0742.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0743.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0744.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0745.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0746.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0747.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0748.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0749.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0750.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0751.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0752.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0753.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0754.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0755.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0756.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0757.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0758.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0759.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0760.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0761.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0762.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0763.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0764.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0765.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0766.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0767.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0768.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0769.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0770.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0771.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0772.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0773.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0774.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0775.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0776.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0777.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0778.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0779.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0780.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0781.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0782.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0783.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0784.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0785.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0786.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0787.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0788.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0789.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0790.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0791.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0792.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0793.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0794.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0795.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0796.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0797.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0798.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0799.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0800.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0801.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0802.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0803.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0804.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0805.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0806.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0807.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0808.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0809.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0810.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0811.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0812.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0813.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0814.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0815.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0816.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0817.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0818.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0819.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0820.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0821.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0822.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0823.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0824.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0825.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0826.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0827.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0828.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0829.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0830.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0831.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0832.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0833.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0834.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0835.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0836.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0837.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0838.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0839.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0840.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0841.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0842.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0843.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0844.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0845.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0846.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0847.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0848.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0849.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0850.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0851.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0852.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0853.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0854.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0855.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0856.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0857.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0858.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0859.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0860.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0861.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0862.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0863.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0864.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0865.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0866.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0867.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0868.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0869.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0870.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0871.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0872.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0873.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0874.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0875.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0876.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0877.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0878.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0879.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0880.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0881.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0882.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0883.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0884.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0885.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0886.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0887.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0888.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0889.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0890.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0891.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0892.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0893.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0894.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0895.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0896.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0897.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0898.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0899.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0900.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0901.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0902.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0903.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0904.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0905.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0906.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0907.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0908.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0909.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0910.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0911.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0912.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0913.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0914.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0915.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0916.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0917.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0918.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0919.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0920.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0921.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0922.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0923.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0924.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0925.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0926.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0927.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0928.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0929.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0930.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0931.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0932.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0933.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0934.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0935.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0936.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0937.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0938.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0939.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0940.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0941.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0942.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0943.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0944.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0947.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0948.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0949.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0950.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0951.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0952.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0953.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0954.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0955.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0956.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0957.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0958.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0959.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0960.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0961.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0962.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0963.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0964.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0965.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0966.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0967.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0968.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0969.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0970.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0971.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0972.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0973.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0974.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0975.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0976.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0977.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0978.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0979.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0980.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0981.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0982.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0983.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0984.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0985.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0986.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0987.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0988.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0989.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0990.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0991.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0992.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0993.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0994.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0995.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0996.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0997.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0998.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A0999.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1000.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1001.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1002.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1003.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1004.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1005.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1008.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1009.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1010.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1011.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1012.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1013.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1014.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1015.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1016.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / A1017.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0002.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0003.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0004.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0005.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0006.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0007.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0009.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0010.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0011.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0012.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0013.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0014.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0015.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0016.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0017.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0018.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0019.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0020.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0021.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0022.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0023.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0024.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0026.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0029.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0033.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0034.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0035.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0036.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0037.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0038.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0039.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0040.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0041.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0042.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0043.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0044.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0045.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0046.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0047.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0048.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0049.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0050.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0051.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0052.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0053.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0054.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0055.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0056.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0057.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0058.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0059.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0060.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0061.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0062.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0063.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0064.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0065.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0066.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0067.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0068.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0069.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0070.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0071.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0072.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0073.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0074.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0075.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0076.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0077.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0078.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0079.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0080.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0081.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0082.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0083.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0084.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0085.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0086.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0087.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0088.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0089.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0090.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0091.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0092.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0093.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0094.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0095.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0096.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0097.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0098.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0099.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0100.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0101.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0102.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0103.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0104.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0105.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0106.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0107.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0108.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0109.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0110.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0111.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0112.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0113.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0114.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0115.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0116.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0117.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0118.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0119.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0120.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0121.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0122.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0123.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0124.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0125.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0126.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0127.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0128.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0129.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0130.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0131.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0132.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0133.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0134.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0135.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0136.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0137.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0138.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0139.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0140.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0141.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0142.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0143.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0144.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0145.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0146.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0147.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0148.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0149.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0150.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0151.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0152.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0153.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0154.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0155.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0156.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0157.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0158.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0159.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0160.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0161.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0162.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0163.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0164.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0165.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0166.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0167.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0168.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0169.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0170.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0171.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0172.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0173.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0174.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0175.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0176.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0177.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0178.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0179.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0180.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0181.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0182.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0183.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0184.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0185.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0186.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0187.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0188.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0189.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0190.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0191.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0192.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0193.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0194.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0195.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0196.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0197.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0198.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0199.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0200.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0201.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0202.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0203.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0204.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0205.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0206.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0207.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0208.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0209.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0210.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0211.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0212.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0213.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0214.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0215.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0216.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0217.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0218.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0219.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0220.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0221.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0222.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0223.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0224.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0225.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0226.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0227.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0228.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0229.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0230.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0232.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0233.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0234.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0235.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0236.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0237.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0238.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0239.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0240.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0241.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0242.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0243.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0244.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0245.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0246.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0247.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0248.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0249.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0250.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0251.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0252.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0253.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0254.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0255.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0256.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0257.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0258.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0259.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0260.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0261.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0262.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0263.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0264.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0265.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0266.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0267.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0268.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0269.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0270.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0271.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0272.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0273.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0274.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0275.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0276.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0277.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0278.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0279.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0280.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0281.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0282.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0283.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0284.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0285.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0286.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0287.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0288.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0289.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0290.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0291.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0292.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0293.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0294.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0295.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0296.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0297.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0298.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0299.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0300.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0301.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0302.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0303.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0304.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0305.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0306.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0307.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0308.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0309.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0310.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0311.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0312.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0313.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0314.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0315.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0316.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0317.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0318.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0319.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0320.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0321.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0322.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0323.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0324.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0325.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0326.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0327.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0328.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0329.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0330.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0331.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0332.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0333.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0334.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0335.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0336.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0337.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0338.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0339.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0340.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0341.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0342.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0343.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0344.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0345.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0346.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0347.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0348.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0349.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0350.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0351.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0352.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0353.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0354.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0355.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0356.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0357.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0358.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0359.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0360.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0361.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0362.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0363.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0364.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0365.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0366.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0367.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0368.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0369.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0370.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0371.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0372.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0373.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0374.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0375.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0376.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0377.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0378.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0379.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0380.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0381.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0382.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0383.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0384.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0385.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0386.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0387.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0388.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0389.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0390.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0391.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0392.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0393.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0394.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0395.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0396.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0397.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0398.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0399.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0400.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0401.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0402.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0403.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0404.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0405.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0406.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0407.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0408.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0409.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0410.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0411.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0412.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0413.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0414.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0415.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0416.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0417.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0418.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0419.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0420.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0421.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0422.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0423.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0424.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0425.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0426.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0427.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0428.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0429.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0430.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0431.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0432.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0433.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0434.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0435.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0436.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0437.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0438.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0439.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0440.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0441.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0442.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0443.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0444.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0445.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0446.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0447.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0448.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0449.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0450.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0451.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0452.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0453.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0454.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0455.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0456.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0457.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0458.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0459.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0460.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0461.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0462.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0463.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0464.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0465.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0466.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0467.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0468.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0469.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0470.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0471.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0472.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0473.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0474.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0475.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0476.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0477.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0478.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0479.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0480.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0481.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0482.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0483.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0484.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0485.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0486.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0487.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0488.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0489.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0490.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0491.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0492.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0493.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0494.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0495.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0496.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0497.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0498.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0499.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0500.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0501.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0502.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0503.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0504.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0505.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0506.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0507.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0508.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0509.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0510.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0511.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0512.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0513.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0514.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0515.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0516.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0517.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0518.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0519.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0520.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0521.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0522.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0523.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0524.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0525.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0526.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0527.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0528.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0529.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0530.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0531.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0532.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0533.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0534.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0535.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0536.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0537.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0538.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0539.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0540.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0541.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0542.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0543.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0544.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0545.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0546.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0547.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0548.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0549.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0550.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0551.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0552.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0553.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0554.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0555.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0556.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0557.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0558.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0559.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0560.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0561.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0562.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0563.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0564.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0565.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0566.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0567.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0568.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0569.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0570.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0571.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0572.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0573.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0574.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0575.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0576.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0577.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0578.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0579.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0580.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0581.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0582.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0583.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0584.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0585.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0586.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0587.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0588.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0589.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0590.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0591.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0592.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0593.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0594.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0595.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0596.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0597.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0598.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0599.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0600.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0601.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0602.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0603.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0604.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0605.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0606.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0607.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0608.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0609.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0610.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0611.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0612.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0613.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0614.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0615.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0616.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0617.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0618.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0619.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0620.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0621.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0622.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0623.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0624.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0625.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0626.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0627.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0628.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0629.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0630.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0631.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0632.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0633.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0634.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0635.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0636.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0637.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0638.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0639.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0640.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0641.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0642.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0643.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0644.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0645.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0646.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0647.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0648.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0649.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0650.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0651.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0652.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0653.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0654.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0655.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0656.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0657.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0658.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0659.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0660.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0661.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0662.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0663.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0664.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0665.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0666.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0667.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0668.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0669.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0670.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0671.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0672.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0673.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0674.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0675.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0676.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0677.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0678.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0679.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0680.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0681.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0682.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0683.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0684.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0685.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0686.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0687.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0688.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0689.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0690.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0691.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0692.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0693.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0694.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0695.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0696.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0697.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0698.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0699.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0700.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0701.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0702.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0703.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0704.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0705.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0706.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0707.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0708.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0709.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0710.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0711.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0712.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0713.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0714.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0715.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0716.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0717.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0718.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0719.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0720.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0721.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0722.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0723.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0724.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0725.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0726.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0727.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0728.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0729.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0730.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0731.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0732.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0733.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0734.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0735.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0736.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0737.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0738.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0739.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0740.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0741.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0742.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0743.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0744.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0745.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0746.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0747.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0748.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0749.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0750.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0751.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0752.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0753.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0754.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0755.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0756.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0757.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0758.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0759.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0760.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0761.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0762.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0763.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0764.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0765.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0766.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0767.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0768.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0769.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0770.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0771.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0772.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0773.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0774.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0775.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0776.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0777.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0778.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0779.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0780.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0781.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0782.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0783.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0784.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0785.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0786.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0787.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0788.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0789.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0790.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0791.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0792.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0793.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0794.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0795.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0796.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0797.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0798.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0799.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0800.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0801.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0802.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0803.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0804.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0805.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0806.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0807.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0808.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0809.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0810.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0811.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0812.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0813.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0814.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0815.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0816.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0817.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0818.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0819.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0820.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0821.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0822.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0823.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0824.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0825.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0826.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0827.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0828.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0829.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0830.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0831.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0832.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0833.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0834.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0835.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0836.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0837.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0838.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0839.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0840.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0841.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0842.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0843.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0844.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0845.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0846.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0847.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0848.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0849.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0850.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0851.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0852.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0853.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0854.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0855.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0856.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0857.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0858.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0859.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0860.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0861.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0862.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0863.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0864.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0865.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0866.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0867.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0868.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0869.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0870.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0871.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0872.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0873.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0874.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0875.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0876.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0877.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0878.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0879.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0880.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0881.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0882.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0883.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0884.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0885.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0886.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0887.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0888.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0889.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0890.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0891.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0892.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0893.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0894.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0895.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0896.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0897.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0898.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0899.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0900.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0901.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0902.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0903.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0904.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0905.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0906.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0907.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0908.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0909.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0910.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0911.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0912.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0913.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0914.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0915.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0916.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0917.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0918.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0919.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0920.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0921.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0922.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0923.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0924.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0925.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0926.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0927.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0928.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0929.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0930.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0931.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0932.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0933.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0934.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0935.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0936.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0937.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0938.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0939.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0940.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0941.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0942.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0943.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0944.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0945.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0946.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0947.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0948.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0949.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0950.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0951.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0952.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0953.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0954.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0955.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0956.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0957.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0958.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0959.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0960.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0961.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0962.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0963.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0964.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0965.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0966.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0967.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0968.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0969.raw: ausentes=[24, 25]; excluídas=[]; duplicadas=[]; comparadas=[21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39].
+- drowsiness / wasm / esp32 / a0970.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0971.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0972.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0973.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0974.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0975.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0976.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0977.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0978.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0979.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0980.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0981.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0982.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0983.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0984.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0985.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0986.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0987.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0988.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0989.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0990.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0991.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0992.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0993.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0994.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0995.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0996.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0997.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0998.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a0999.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1000.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1001.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1002.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1003.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1004.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1005.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1006.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1007.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+- drowsiness / wasm / esp32 / a1008.raw: ausentes=[24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]; excluídas=[]; duplicadas=[]; comparadas=[21, 22].
+
+## Fontes consolidadas
+
+- `analysis/consolidated.json` — SHA256 `8e9dcb32e11a8e75b01500cfa558698663d35983d855f45d0fc69c891b8a11e2`; consolidação: 2026-10-11T01:26:46.050440+00:00.
+- `analysis/mobilenet_top15.json` — SHA256 `9fb339c0d837b57b2d65b231b8ff64fc7b098ca8f2dbac89280f40ac337547d8`; consolidação: 2026-10-11T01:26:47.614033+00:00.
+
+Os IDs de execução do MobileNetV2 pertencem ao seu próprio mapa; não correspondem aos IDs da tabela Drowsiness.
+
+### Mapa: consolidated.json
+
+- 1 / tflite / desktop: `models/drowsiness/reports_tflite/20261006T234046384562Z`
+- 6 / wasm / desktop: `models/drowsiness/reports/20261008T144420089689Z`
+- 7 / wasm / desktop: `models/drowsiness/reports/20261008T144420099689Z`
+- 8 / wasm / desktop: `models/drowsiness/reports/20261008T145237348771Z`
+- 9 / wasm / desktop: `models/drowsiness/reports/20261008T150239050848Z`
+- 10 / tflite / desktop: `models/drowsiness/reports_tflite/20261008T151518951616Z`
+- 11 / tflite / desktop: `models/drowsiness/reports_tflite/20261008T151851565787Z`
+- 12 / tflite / desktop: `models/drowsiness/reports_tflite/20261008T152221459939Z`
+- 20 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261008T215503505222Z`
+- 21 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261009T030249020912Z`
+- 22 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261009T100046423575Z`
+- 23 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261009T120557541292Z`
+- 24 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261009T162706717797Z`
+- 25 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261009T162903249065Z`
+- 26 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T065213914103Z`
+- 27 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T104935041067Z`
+- 28 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T213807486556Z`
+- 29 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T214851386515Z`
+- 30 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T224321858067Z`
+- 31 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T224533543535Z`
+- 32 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T224746625586Z`
+- 33 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T225002403148Z`
+- 34 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T225217545416Z`
+- 35 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T225432343119Z`
+- 36 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T225647558728Z`
+- 37 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T225902621889Z`
+- 38 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T230117085453Z`
+- 39 / wasm / esp32: `ESP32/cnn_webassembly_esp32/reports/20261010T230338214091Z`
+- 40 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232504489915Z`
+- 41 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232521064892Z`
+- 42 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232535770956Z`
+- 43 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232552714485Z`
+- 44 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232610853978Z`
+- 45 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232628528318Z`
+- 46 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232647331203Z`
+- 47 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232704189340Z`
+- 48 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232724717617Z`
+- 49 / tflite / esp32: `ESP32/cnn_tflite_esp32/reports/20261010T232741579214Z`
+
+### Mapa: mobilenet_top15.json
+
+- 1 / tflite / desktop: `models/mobilenetv2_alpha035/reports_tflite/20261006T234306012235Z`
+- 2 / wasm / desktop: `models/mobilenetv2_alpha035/reports/20261008T142556339628Z`
+- 3 / wasm / desktop: `models/mobilenetv2_alpha035/reports/20261008T143556339628Z`
+- 4 / tflite / desktop: `models/mobilenetv2_alpha035/reports_tflite/20261008T143604250212Z`
+- 5 / wasm / desktop: `models/mobilenetv2_alpha035/reports/20261008T152728866002Z`
+- 6 / wasm / desktop: `models/mobilenetv2_alpha035/reports/20261008T152738064392Z`
+- 7 / wasm / desktop: `models/mobilenetv2_alpha035/reports/20261008T152748423738Z`
+- 8 / tflite / desktop: `models/mobilenetv2_alpha035/reports_tflite/20261008T152800893168Z`
+- 9 / tflite / desktop: `models/mobilenetv2_alpha035/reports_tflite/20261008T152809214074Z`
+- 10 / tflite / desktop: `models/mobilenetv2_alpha035/reports_tflite/20261008T152815376026Z`
+- 11 / wasm / desktop: `models/mobilenetv2_alpha035/reports/20261008T171700236197Z`

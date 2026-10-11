@@ -9,7 +9,7 @@ if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/main.aot")
 endif()
 
 idf_component_register(
-    SRCS "main.c"
+    SRCS "main.c" "image_cache.c"
     EMBED_FILES "${MODEL_MODULE_FILE}"
     INCLUDE_DIRS "."
     PRIV_INCLUDE_DIRS .

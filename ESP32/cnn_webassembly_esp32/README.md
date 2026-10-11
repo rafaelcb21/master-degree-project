@@ -96,6 +96,29 @@ idf.py flash monitor
 
 The `monitor` command displays the board's output in real time.
 
+In this project, `idf.py flash monitor` updates the firmware and restarts
+the board while preserving images saved to SPIFFS with
+`benchmark <passes> sim`, provided the partition table preserves that region.
+Images held only in RAM with `nao` and the CSV report are lost on restart.
+
+To erase all flash, including the image cache, run:
+
+```bash
+idf.py erase-flash
+```
+
+This also erases the firmware and persistent settings. Flash again with
+`idf.py flash monitor` afterward. The next `benchmark <passes> sim` command
+will need to download the images again.
+See the execution commands in the [host guide](HOST.md).
+
+If an image download fails or receives an unexpected byte count, the board
+retries the same image until it succeeds, with no attempt limit and a
+5-second pause between attempts. This applies to `sim`, `nao` and streaming.
+Previously saved images are preserved; only complete downloads are saved
+or used for inference. In streaming mode, `download_ms` includes retry
+attempts and pauses. Storage errors or insufficient space still stop preparation.
+
 ## Requirements
 
 - **Board:** ESP32-CAM with PSRAM.

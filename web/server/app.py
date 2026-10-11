@@ -14,6 +14,8 @@ from esp32_import import import_reports
 from executions import Executions
 from esp32_execution import ESP32Executions
 from consolidation import Consolidation
+from determinism import Determinism
+from representative_reports import ESP32Consensus
 
 WEB = Path(__file__).resolve().parents[1]
 ROOT = WEB.parent
@@ -90,11 +92,13 @@ ESP32 = ESP32Executions(ROOT, CONFIG)
 START_LOCK = threading.Lock()
 CONSOLIDATION = Consolidation(ROOT)
 MOBILENET_CONSOLIDATION = Consolidation(ROOT, mobilenet=True)
+DETERMINISM = Determinism(ROOT)
+ESP32_CONSENSUS = ESP32Consensus(ROOT)
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation"):
+        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation", "/api/analyses/determinism", "/api/analyses/esp32-consensus"):
             self.json(404, {"error": "not_found"})
             return
         origin = self.headers.get("Origin")
@@ -108,7 +112,11 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError("invalid_request")
-            if self.path == "/api/mobilenet-consolidation":
+            if self.path == "/api/analyses/esp32-consensus":
+                self.json(200, ESP32_CONSENSUS.rebuild())
+            elif self.path == "/api/analyses/determinism":
+                self.json(200, DETERMINISM.rebuild())
+            elif self.path == "/api/mobilenet-consolidation":
                 self.json(200, MOBILENET_CONSOLIDATION.rebuild())
             elif self.path == "/api/consolidation":
                 self.json(200, CONSOLIDATION.rebuild())
@@ -156,7 +164,17 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         args = parse_qs(url.query)
         try:
-            if url.path == "/api/mobilenet-consolidation":
+            if url.path == "/api/analyses/esp32-consensus":
+                self.json(200, ESP32_CONSENSUS.query(args))
+            elif url.path == "/api/analyses/esp32-consensus/download":
+                content, filename = ESP32_CONSENSUS.download(args)
+                self.send(200, content, "application/octet-stream", filename)
+            elif url.path == "/api/analyses/determinism":
+                self.json(200, DETERMINISM.query(args))
+            elif url.path == "/api/analyses/determinism/download":
+                filename = args.get("file", ["report.md"])[0]
+                self.send(200, DETERMINISM.download(filename), "application/octet-stream", filename)
+            elif url.path == "/api/mobilenet-consolidation":
                 self.json(200, MOBILENET_CONSOLIDATION.query(args))
             elif url.path == "/api/mobilenet-consolidation/download":
                 filename = args.get("file", ["mobilenet_top15.csv"])[0]

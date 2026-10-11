@@ -54,20 +54,61 @@ Models with multiple outputs, detection, or other postprocessing need an adapted
 Place `main.aot` or `main.wasm` in `main/`. The existing CMake rule gives `main.aot` priority when present. To use interpreted WASM, remove that AOT from the folder before reconfiguring/building the project.
 The host does not generate these files. The AOT must match the target and WAMR used in the firmware.
 
+## Commands, storage and repetitions
+
+Build and flash in the ESP-IDF terminal with `idf.py build flash monitor`.
+After Wi-Fi and WAMR initialization, enter a command in the serial monitor:
+
+```text
+benchmark 10 sim
+benchmark 10 nao
+```
+
+The number specifies complete passes through the image list: 20 images and
+10 passes produce 200 inferences. `sim` saves RAW files to SPIFFS; only
+missing or invalid files are downloaded before execution. Files survive
+power cycles and normal firmware flashes that preserve the SPIFFS partition.
+The first use may format SPIFFS. Erasing flash removes the cache. Files are
+identified by URL and input size and checked for integrity. Use versioned
+URLs when changing remote content.
+
+`nao` downloads the list once into PSRAM, reuses it across passes and frees
+it when the command ends. It does not write or format SPIFFS. A new command
+in this mode downloads again; existing flash files are preserved.
+
+There is a **10-second pause between complete passes**, outside inference
+timing. Save `/report` under a different name during each pause. The previous
+CSV remains available during the next pass and is replaced only once a new
+complete report is ready. The final report stays available until another
+execution or reboot. Another command can be entered after execution ends.
+
+The current SPIFFS partition is 1 MiB; 20 RGB565 files use 640 KiB plus
+metadata. The cache reserves spare filesystem space and rejects oversized
+lists. Old files are retained and also consume space. 2,000 files use
+62.5 MiB and do not fit in this board's flash or PSRAM. `benchmark 1 nao`
+supports such lists by streaming one file at a time. Multiple passes with
+`nao` are rejected if the list cannot fit in PSRAM; repeating that many images
+without downloads requires additional storage, such as an SD card.
+
 ## Measurements and CSV
 
-After the benchmark, the server serves the CSV at `http://<esp32-ip>:80/report` (the port and path are configurable).
-It starts after data collection to serve a complete, immutable report.
+After each pass, the server serves the CSV at `http://<esp32-ip>:80/report` (the port and path are configurable).
+The server starts before commands and returns HTTP 503 until the first complete
+report. The summary includes `round`, `repetitions` and `persist`.
 
 Each image produces `ok`, `class_0_raw` through `class_N_raw`, the result, label, correctness, download time, inference time, heap and PSRAM before/after inference, memory differences, and the lowest observed free task stack space.
 `right=-1` means no evaluation (failure or unknown label).
 On failure, outputs are blank; measurements that were not taken remain zero.
 Time averages and accuracy only include successfully processed images; accuracy excludes unlabeled images. Ties count as classification errors for labeled images.
 
+Cached passes have `download_ms=0`: downloads happened during preparation.
+Streaming passes record actual download times.
 Inference time measures the export call, including lookup and entry into WAMR; download and input copying are outside this interval.
 Heap/PSRAM differences do not represent peak memory use during inference.
 Historical minima in the summary include other tasks and initialization.
 
-The accumulated CSV resides in PSRAM; many images/classes may exhaust this space. In that case, the host logs the failure and the endpoint returns an HTTP error rather than presenting a partial CSV as complete.
-One image buffer and one result structure are reused throughout the benchmark.
+The accumulated CSV resides in PSRAM; many images/classes may exhaust this space.
+In that case, passes stop and the last complete CSV is preserved instead of
+publishing a partial report. One image buffer and one result structure are reused,
+alongside the optional PSRAM image cache and current/previous CSV buffers.
 

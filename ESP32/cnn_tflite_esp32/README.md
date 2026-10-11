@@ -34,7 +34,7 @@ Edit `main/host_config.h`:
 #define TENSOR_ARENA_BYTES (1024 * 1024)
 ```
 
-Edit the URLs in `main/image_list.h`. Each download must contain exactly 32,768 bytes of little-endian RGB565 for the default configuration. These are RAW bytes, not PNG/JPEG files. Label `-1` means unknown ground truth. The list is processed in order once per boot.
+Edit the URLs in `main/image_list.h`. Each download must contain exactly 32,768 bytes of little-endian RGB565 for the default configuration. These are RAW bytes, not PNG/JPEG files. Label `-1` means unknown ground truth. Each pass processes the list in order; the number of passes is supplied in the serial monitor.
 
 The host expands RGB565 to RGB888 with the same bit replication as WASM and places those bytes in the uint8 TFLite input. The original model's QUANTIZE layer is executed by TFLite Micro. The next image is loaded only after the synchronous `Invoke()` returns; there is no WASM handshake.
 
@@ -51,11 +51,64 @@ idf.py -B build-tflite -p COM3 flash monitor
 
 Replace `COM3` with your board's port. The first configuration downloads managed components. Keep the same `-B build-tflite` argument for subsequent commands. Exit the monitor with `Ctrl+]`.
 
+### Commands and image cache
+
+At the serial prompt, enter a command and press Enter:
+
+```text
+benchmark 10 sim
+benchmark 10 nao
+benchmark 1 nao
+```
+
+The number specifies complete passes through the list. With 20 images,
+10 passes produce 200 inferences. `sim` saves RAW files to SPIFFS and downloads
+only missing or invalid files. `nao` holds images in PSRAM during the command,
+without writing them to flash. A new command with `nao` downloads again;
+existing flash images are preserved. Commands/results still use NVS and the
+checkpoint journal for recovery, including in `nao` mode.
+
+There is a **10-second pause between complete passes** to save `/report`
+and `/metadata` under different names. The previous complete report stays
+available while the next pass runs. Endpoints return HTTP 503 before the
+first complete report. Every new command executes new inferences.
+
+Incomplete downloads, HTTP/TLS errors and timeouts retry the same image
+**until success, without an attempt limit**, waiting **5 seconds** between
+attempts. Each attempt uses a fresh connection and starts at byte zero.
+Saved images are preserved and the watchdog is fed during retries.
+Storage errors or insufficient space still stop preparation.
+
+20 files of 32 KiB use 640 KiB and fit in the 1 MiB SPIFFS partition,
+including the metadata reserve. Old files also consume space. 2,000 files
+use 62.5 MiB and do not fit in this board's flash or PSRAM; `benchmark 1 nao`
+streams one pass. Repeating without further downloads requires the list to
+fit in PSRAM or additional storage, such as an SD card. Oversized cache
+configurations are rejected.
+
+`idf.py -B build-tflite flash monitor` preserves SPIFFS images provided the
+partition table preserves that region. To erase all flash:
+
+```powershell
+idf.py -B build-tflite erase-flash
+```
+
+This erases images, firmware, settings and checkpoints. Flash again afterward;
+the next `sim` command downloads images again. First use with `sim` may format
+SPIFFS. Use versioned URLs when changing remote content: cache identity uses
+the URL and RAW size.
+
+**Upgrading older firmware:** SPIFFS at `0x210000` now stores images; results
+use a separate 960 KiB checkpoint partition at `0x310000`. Old raw-journal
+results in SPIFFS are not migrated; save those reports before upgrading.
+Subsequent flashes preserve image files. Model/configuration changes invalidate
+result recovery to avoid mixing experiments.
+
 The firmware validates the model schema, operator availability, tensor types, dimensions and number of classes. An incompatible model or insufficient arena stops the benchmark with a log message. Increase the arena only if your PSRAM has room for it, the downloaded image and the accumulated CSV. Unsupported operators require adding their registrations in `tflite_runtime.cpp` and confirming that TFLite Micro supports their tensor types.
 
 ## 3. Download the results
 
-Look for `Conectado ao Wi-Fi. IP:` in the serial log. This is the ESP32's address, not the computer's address. After the benchmark finishes, the host prints the complete download URLs:
+Look for `Conectado ao Wi-Fi. IP:` in the serial log. This is the ESP32's address, not the computer's address. The server prints the download URLs and publishes results after each pass:
 
 ```text
 http://<ESP32-IP>:80/report
@@ -77,9 +130,9 @@ Replace the example IP with the address printed by your board. In Research Explo
 
 If opening results causes `A stack overflow in task httpd has been detected`, flash the updated firmware: the `/metadata` JSON buffer is stored outside the stack, and `REPORT_HTTP_STACK_BYTES` in `main/host_config.h` reserves 8 KiB for the server. This failure occurs in the HTTP server after inference; the current firmware restores committed results from flash after restarting.
 
-`Certificate validated` confirms only the TLS certificate check. Follow the next stage logs: `Download concluido`, `Iniciando preparacao + Invoke`, and `Invoke retornou`. These distinguish network delays from preprocessing or inference stalls.
+`Certificate validated` confirms only the TLS certificate check. Follow the next stage logs: `Imagem carregada`, `Iniciando preparacao + Invoke`, and `Invoke retornou`. These distinguish network delays from preprocessing or inference stalls.
 
-Cloudinary HTTPS downloads use explicit open/header/body reads in `main/download_http.inc`, included by `main.c`. They no longer use asynchronous `esp_http_client_perform()`. In `main/host_config.h`, `HTTP_DOWNLOAD_TIMEOUT_MS` sets the connection/header timeout (15 seconds), `HTTP_READ_TIMEOUT_MS` sets the body-read timeout (3 seconds), and `HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS` sets the per-attempt deadline checked between calls (45 seconds). Reads are limited to `HTTP_READ_CHUNK_BYTES` (1,024 bytes), with progress logging every `HTTP_PROGRESS_INTERVAL_MS` (5 seconds). `HTTP_DOWNLOAD_MAX_ATTEMPTS=2` allows one retry, with `HTTP_RETRY_DELAY_MS=1000` between attempts. Each attempt uses a fresh connection and validates HTTP status, exact byte count and response completion. After both attempts fail, the image produces `ok=0` and processing continues. `download_ms` includes attempts, retry waits and connection cleanup. Logs identify connection, headers, body and cleanup stages. These checks do not forcibly interrupt an internal driver call or a stuck inference.
+HTTPS downloads use explicit open/header/body reads in `main/download_http.inc`. `HTTP_DOWNLOAD_TIMEOUT_MS` sets the connection/header timeout (15 seconds), `HTTP_READ_TIMEOUT_MS` the body-read timeout (3 seconds), and `HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS` the per-attempt deadline checked between calls (45 seconds). Reads are limited to `HTTP_READ_CHUNK_BYTES` (1,024 bytes). `main/image_cache.c` retries failed attempts indefinitely with a 5-second pause. Each attempt validates HTTP status, exact byte count and response completion. Streaming `download_ms` includes attempts, pauses and connection cleanup; cached passes report zero because downloads happened before measurement. These checks do not forcibly interrupt an internal driver call or a stuck inference.
 
 The firmware build passed, and `tests/test_download.py` verifies the actual downloader with a fake HTTP transport across 12 success/error scenarios, including truncation, timeout, overflow and retry. This does not reproduce TLS faults on the physical ESP32. In the website, close the serial monitor and choose **Build and flash** to install this change; **Restart benchmark** alone runs the old firmware.
 
@@ -89,11 +142,11 @@ Rebuild and flash the firmware to apply changes. Restarting resumes the current 
 
 ### Automatic recovery and persistent results
 
-The host uses the existing 1 MiB partition named `spiffs` as a raw checkpoint journal (not a mounted filesystem). Before each new image it atomically records its attempt in NVS; after processing it writes the result, its checksum, and a final commit marker to flash. Only committed records are restored. Interrupted writes consume an unused slot and do not overwrite earlier results. Storage errors stop processing rather than silently discarding the journal. The host checks that the partition can hold all configured samples before starting; larger outputs/datasets may require a larger partition.
+The host uses the 960 KiB `checkpoint` partition as a raw result journal, separate from SPIFFS images. Before each new image it atomically records its attempt in NVS; after processing it writes the result, its checksum, and a final commit marker to flash. Only committed records are restored. Interrupted writes consume an unused slot and do not overwrite earlier results. Storage errors stop processing rather than silently discarding the journal. The host checks that the partition can hold all configured samples before starting; larger outputs/datasets may require a larger partition.
 
 The benchmark task is registered with the task watchdog. `BENCHMARK_WDT_TIMEOUT_MS=120000` triggers a panic/reboot if it stops making progress. After reboot, the CSV and totals are reconstructed from flash and processing resumes at the first uncommitted image. `RECOVERY_MAX_ATTEMPTS=2` limits interrupted executions per image; after two interruptions, the next boot records that image as an error and continues. Manual resets/power loss during an image also count as interruptions. CSV fields `recovery_attempts` and `recovery_skipped` expose this recovery; metadata includes `processed`, `resumed`, `recovery_skipped`, and `checkpoint_run_id`.
 
-The first installation starts at image 1. A completed experiment remains available through `/report` and `/metadata` after reboot, without rerunning inference. To deliberately start another experiment, increment `BENCHMARK_RUN_ID` in `main/host_config.h` and rebuild/flash. Changes to model, image list, host sources or configuration also start a new journal to avoid mixing experiments. Save the previous report before making such changes. `fullclean` only cleans desktop build files; it does not erase board checkpoints. Flash writes occur outside measured inference time. This recovers progress after a hang; it does not establish or fix the underlying cause of an inference hang.
+The first installation waits for a serial command. NVS stores the command and current pass; interrupted execution resumes automatically after reboot. `nao` loses its PSRAM images on reset and must download them again; `sim` reuses flash images. The last completed pass remains available through `/report` and `/metadata` after reboot, reconstructed from the journal without rerunning inference. Enter another `benchmark` command to start a new experiment; no rebuild is needed. Command/pass identities prevent reusing old results as new inferences. Changes to model, image list, sources or configuration invalidate recovery. Save the previous report before changing them. `fullclean` only cleans desktop build files, preserving board data. Flash writes occur outside measured inference time. Recovery does not establish or fix the underlying cause of an inference hang.
 
 See [measurement definitions](HOST.md). The CSV preserves the WASM host's original column names and adds:
 

@@ -96,6 +96,31 @@ idf.py flash monitor
 
 O comando `monitor` exibe a saída da placa em tempo real.
 
+Neste projeto, `idf.py flash monitor` atualiza o firmware e reinicia a placa,
+mas preserva as imagens salvas com `benchmark <rodadas> sim` na partição
+SPIFFS, desde que a tabela de partições mantenha essa região.
+Imagens mantidas apenas na RAM com `nao` e o relatório CSV são perdidos
+ao reiniciar.
+
+Para apagar toda a flash, incluindo o cache das imagens, execute:
+
+```bash
+idf.py erase-flash
+```
+
+Esse comando também apaga o firmware e as configurações persistentes.
+Depois, grave novamente com `idf.py flash monitor`. No próximo comando
+`benchmark <rodadas> sim`, as imagens precisarão ser baixadas novamente.
+Veja os comandos de execução no [guia do host](HOST.pt-BR.md).
+
+Se o download de uma imagem falhar ou receber menos bytes que o esperado,
+a placa tenta novamente a mesma imagem até conseguir, sem limite de
+tentativas, com uma pausa de 5 segundos entre elas. Isso vale para os modos
+`sim`, `nao` e streaming. As imagens já salvas são preservadas; apenas um
+download completo é gravado ou usado na inferência. No modo streaming,
+`download_ms` inclui as tentativas e suas pausas. Erros de armazenamento
+ou falta de espaço continuam interrompendo a preparação.
+
 ## Requisitos
 
 - **Placa:** ESP32-CAM com PSRAM.

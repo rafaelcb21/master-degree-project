@@ -5,6 +5,7 @@
 #define CP_BASE 4096u
 typedef struct {
     uint32_t committed, version, images, row_bytes, run_id;
+    uint32_t command_id, round;
     char model[65], images_hash[65], config[65];
 } cp_header_t;
 typedef struct {
@@ -16,6 +17,7 @@ static nvs_handle_t cp_nvs;
 static size_t cp_offset, cp_next;
 static const size_t cp_stride = (sizeof(cp_record_t) + 15u) & ~15u;
 static cp_record_t *cp_record;
+static uint32_t cp_command_id, cp_round;
 
 static uint32_t cp_crc(const report_row_t *row) {
     uint32_t crc = UINT32_MAX;
@@ -38,7 +40,8 @@ static bool checkpoint_open(void) {
     if (!cp_record || nvs_open("bench_resume", NVS_READWRITE, &cp_nvs) != ESP_OK) return false;
     cp_header_t expected, saved;
     memset(&expected, 0, sizeof(expected));
-    expected.committed = CP_MAGIC; expected.version = 1;
+    expected.committed = CP_MAGIC; expected.version = 2;
+    expected.command_id = cp_command_id; expected.round = cp_round;
     expected.images = NUM_IMAGES; expected.row_bytes = sizeof(report_row_t); expected.run_id = BENCHMARK_RUN_ID;
     snprintf(expected.model, sizeof(expected.model), "%s", TFLITE_MODEL_SHA256);
     snprintf(expected.images_hash, sizeof(expected.images_hash), "%s", IMAGE_LIST_SHA256);

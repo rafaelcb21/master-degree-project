@@ -20,7 +20,7 @@ static char identity[] = "config1";
 typedef int esp_err_t;
 typedef int nvs_handle_t;
 typedef struct { size_t size; } esp_partition_t;
-static esp_partition_t partition = {1024 * 1024};
+static esp_partition_t partition = {960 * 1024};
 static uint8_t flash[1024 * 1024], arena[16384];
 static uint64_t attempt_value, staged_value;
 static int erase_count, write_count, fail_write, fail_bytes, fail_commit;
@@ -55,6 +55,7 @@ static int nvs_commit(nvs_handle_t h){(void)h;if(fail_commit)return -1;attempt_v
 int check(int mode) {
     memset(flash,255,sizeof(flash)); attempt_value=staged_value=0;
     erase_count=write_count=fail_write=fail_bytes=fail_commit=0; identity[6]='1';
+    cp_command_id = 1; cp_round = 1;
     VERIFY(checkpoint_open(),1);
     report_row_t row,out; memset(&row,0,sizeof(row));
     unsigned attempts; bool skip;
@@ -100,6 +101,11 @@ int check(int mode) {
     } else if(mode==7) {
         fail_commit=1; VERIFY(!checkpoint_attempt(0,&attempts,&skip),27);
         fail_commit=0; VERIFY(checkpoint_open()&&checkpoint_attempt(0,&attempts,&skip)&&attempts==1&&!skip,28);
+    } else if(mode==8 || mode==9) {
+        VERIFY(checkpoint_append(0,&row),29);
+        if(mode==8) ++cp_round; else ++cp_command_id;
+        VERIFY(checkpoint_open()&&checkpoint_read(&out)==0&&erase_count==2,30);
+        VERIFY(checkpoint_attempt(0,&attempts,&skip)&&attempts==1&&!skip,31);
     }
     return 0;
 }

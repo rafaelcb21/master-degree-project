@@ -59,10 +59,10 @@ int check(int mode) {
     uint8_t data[6]; for (int i = 0; i < 6; ++i) data[i] = 99;
     int64_t elapsed = -1;
     bool ok = download_image("https://test/image.raw", data + 1, 4, &elapsed);
-    bool success = mode == 0 || mode == 1 || mode == 11;
+    bool success = mode == 0 || mode == 11;
     if (ok != success) return 1;
     if (data[0] != 99 || data[5] != 99) return 2;
-    if (attempts != ((mode == 0 || mode == 11) ? 1 : HTTP_DOWNLOAD_MAX_ATTEMPTS)) return 3;
+    if (attempts != 1) return 3;
     if (cleanups != (mode == 9 ? 0 : attempts)) return 4;
     if (success) for (int i = 0; i < 4; ++i) if (data[i+1] != attempts * 10 + i) return 5;
     if (elapsed < 0 || elapsed != clock_us) return 6;

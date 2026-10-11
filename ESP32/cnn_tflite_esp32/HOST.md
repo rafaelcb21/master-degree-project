@@ -23,7 +23,7 @@ Default class order is `{1, 0}`: output 0 means label 1 and output 1 means label
 | `ok` | 1 only after successful download, preparation, Invoke and output reading |
 | `class_N_raw` | Raw output tensor element, in model order; failed rows are blank |
 | `result`, `label`, `right` | Predicted mapped label, reference label, correctness (1/0 or -1 when unavailable) |
-| `download_ms` | HTTP client request duration |
+| `download_ms` | Zero for cached passes; streaming includes downloads, retries and pauses |
 | `preprocess_ms` | RAW decoding/channel ordering/normalization and tensor writes |
 | `invoke_ms` | TFLite Micro Invoke duration |
 | `inference_ms` | `preprocess_ms + invoke_ms`; excludes network, hashing and reading output |
@@ -35,7 +35,7 @@ Default class order is `{1, 0}`: output 0 means label 1 and output 1 means label
 
 The interpreter and arena are created before collecting per-image deltas, so `heap_used=0` does **not** mean the model uses no memory. Do not add heap and PSRAM figures: the total heap may already include PSRAM. CSV storage grows after each sample and affects subsequent free-memory values.
 
-The report is immutable once served. If report allocation fails, `/report` returns an error instead of presenting a partial report as complete. Rows for failed images have `ok=0`; summaries appear in the serial log and `/metadata`, not as fake CSV data rows. HTTP endpoints start after the benchmark and remain available while the board is powered.
+The server publishes only complete passes and keeps the previous CSV while the next pass runs. Allocation failure preserves the previous report and stops execution. Endpoints start before commands and return HTTP 503 until the first report. `/metadata` describes the published pass and includes `round`, `repetitions` and `persist`; the CSV identifies them in a comment line. Save both files during the 10-second pause. See [commands and storage](README.md).
 
 ## Metadata and reproducibility
 

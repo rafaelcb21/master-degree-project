@@ -4,6 +4,9 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <errno.h>
+#include <limits.h>
+#include <pthread.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -40,6 +43,7 @@
 #include <inttypes.h>
 #include "host_config.h"
 #include "image_list.h"
+#include "image_cache.h"
 
 #define TAG "tflite_benchmark"
 #define TAG_HTTP "HTTP_SERVER"
@@ -75,13 +79,19 @@ typedef struct {
     int recovery_skipped;
 } report_row_t;
 
-/* O servidor inicia depois do benchmark: o CSV servido e imutavel. */
+/* Benchmark builds a new CSV while HTTP serves the last completed pass. */
 static char *g_report_text = NULL;
 static size_t g_report_len = 0;
 static size_t g_report_cap = 0;
 static bool g_report_failed = false;
 static size_t g_success, g_errors, g_labeled, g_correct, g_invalid;
 static size_t g_processed, g_resumed, g_recovery_skipped;
+static pthread_mutex_t report_mutex = PTHREAD_MUTEX_INITIALIZER;
+static char *published_report;
+static size_t published_report_len;
+static size_t published_counts[8];
+static unsigned published_round, published_repetitions;
+static bool published_persist;
 
 static void report_append(const char *fmt, ...) {
     if (g_report_failed) return;
@@ -226,15 +236,16 @@ static void filename_from_url(const char *url, char *out, size_t out_size) {
  * Processa uma imagem: download, preparacao RGB, Invoke e metricas.
  * Execucao sincrona: a proxima imagem so entra apos Invoke retornar.
  * ============================================================ */
-static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t *img_buf) {
+static void process_image(size_t index, report_row_t *row, uint8_t *img_buf) {
+    const image_entry_t *entry = &IMAGES[index];
     memset(row, 0, sizeof(*row));
     filename_from_url(entry->url, row->name_image, sizeof(row->name_image));
     row->label = entry->label;
     row->result = -1;
     row->right = -1;
-    if (!download_image(entry->url, img_buf, INPUT_BYTES, &row->download_us)) return;
+    if (!image_cache_load(index, img_buf, &row->download_us)) return;
     ESP_ERROR_CHECK(esp_task_wdt_reset());
-    ESP_LOGI(TAG, "Download concluido: %s (%u bytes); calculando SHA256", row->name_image, (unsigned)INPUT_BYTES);
+    ESP_LOGI(TAG, "Imagem carregada: %s (%u bytes); calculando SHA256", row->name_image, (unsigned)INPUT_BYTES);
 
     uint8_t digest[32];
     if (mbedtls_sha256(img_buf, INPUT_BYTES, digest, 0) != 0) return;
@@ -286,8 +297,17 @@ static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t
 }
 
 #include "checkpoint.inc"
+#include "benchmark_session.inc"
 
-static void run_benchmark(void) {
+static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
+    heap_caps_free(g_report_text);
+    g_report_text = NULL;
+    g_report_len = g_report_cap = 0;
+    g_report_failed = false;
+    g_success = g_errors = g_labeled = g_correct = g_invalid = 0;
+    g_processed = g_resumed = g_recovery_skipped = 0;
+    cp_command_id = session.id;
+    cp_round = round;
     uint8_t *img_buf = heap_caps_malloc(INPUT_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     report_row_t *row = heap_caps_malloc(sizeof(*row), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!img_buf || !row) {
@@ -295,7 +315,7 @@ static void run_benchmark(void) {
         ESP_LOGE(TAG, "Sem memoria para buffers do benchmark");
         heap_caps_free(img_buf);
         heap_caps_free(row);
-        return;
+        return false;
     }
     report_append("name_image,ok");
     for (int c = 0; c < NUM_CLASSES; ++c) report_append(",class_%d_raw", c);
@@ -308,7 +328,9 @@ static void run_benchmark(void) {
         g_report_failed = true;
         ESP_LOGE(TAG, "Checkpoint indisponivel; benchmark interrompido para preservar resultados");
         heap_caps_free(img_buf); heap_caps_free(row);
-        return;
+        heap_caps_free(cp_record); cp_record = NULL;
+        if (cp_nvs) { nvs_close(cp_nvs); cp_nvs = 0; }
+        return false;
     }
     for (size_t i = 0; i < NUM_IMAGES; ++i) {
         ESP_ERROR_CHECK(esp_task_wdt_reset());
@@ -334,7 +356,7 @@ static void run_benchmark(void) {
                 ESP_LOGE(TAG, "Imagem %u interrompida %u vezes; registrando erro e avancando", (unsigned)(i + 1), attempts);
             } else {
                 ESP_LOGI(TAG, "Processando [%u/%u], tentativa persistente %u: %s", (unsigned)(i + 1), (unsigned)NUM_IMAGES, attempts, IMAGES[i].url);
-                process_image(&IMAGES[i], row, img_buf);
+                process_image(i, row, img_buf);
             }
             row->recovery_attempts = attempts;
             ESP_ERROR_CHECK(esp_task_wdt_reset());
@@ -392,13 +414,30 @@ static void run_benchmark(void) {
                   (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
     ESP_LOGI(TAG, "Checkpoint: confirmados=%u/%u restaurados=%u", (unsigned)cp_next, (unsigned)NUM_IMAGES, (unsigned)g_resumed);
     if (g_report_failed) ESP_LOGE(TAG, "Benchmark incompleto; resultados confirmados permanecem na flash");
-    else ESP_LOGI(TAG, "Benchmark concluido: sucesso=%u erros=%u; CSV em http://<ip>:%d%s",
-             (unsigned)success, (unsigned)errors, REPORT_HTTP_PORT, REPORT_HTTP_URI);
     g_success = success; g_errors = errors; g_labeled = labeled; g_correct = correct; g_invalid = invalid;
     heap_caps_free(row);
     heap_caps_free(img_buf);
     heap_caps_free(cp_record);
+    cp_record = NULL;
     nvs_close(cp_nvs);
+    cp_nvs = 0;
+    if (g_report_failed) return false;
+    report_append("\n# round=%u repetitions=%u persist=%s\n", round, repetitions, persist ? "sim" : "nao");
+    if (g_report_failed) return false;
+    pthread_mutex_lock(&report_mutex);
+    heap_caps_free(published_report);
+    published_report = g_report_text;
+    published_report_len = g_report_len;
+    g_report_text = NULL;
+    g_report_len = g_report_cap = 0;
+    size_t counts[] = {g_success, g_errors, g_labeled, g_correct, g_invalid,
+                       g_processed, g_resumed, g_recovery_skipped};
+    memcpy(published_counts, counts, sizeof(counts));
+    published_round = round; published_repetitions = repetitions; published_persist = persist;
+    pthread_mutex_unlock(&report_mutex);
+    ESP_LOGI(TAG, "Benchmark concluido: sucesso=%u erros=%u; CSV em http://<ip>:%d%s",
+             (unsigned)success, (unsigned)errors, REPORT_HTTP_PORT, REPORT_HTTP_URI);
+    return true;
 }
 /* ============================================================
  * Endpoint HTTP para baixar o relatorio (mais confiavel que
@@ -406,18 +445,25 @@ static void run_benchmark(void) {
  * Acesse: http://<ip_do_esp32>/report
  * ============================================================ */
 static esp_err_t report_handler(httpd_req_t *req) {
-    if (g_report_failed || !g_report_text) {
-        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
-                                   "Relatorio indisponivel ou incompleto");
+    pthread_mutex_lock(&report_mutex);
+    if (!published_report) {
+        pthread_mutex_unlock(&report_mutex);
+        httpd_resp_set_status(req, "503 Service Unavailable");
+        return httpd_resp_sendstr(req, "Aguardando primeira rodada completa");
     }
     httpd_resp_set_type(req, "text/csv; charset=utf-8");
     httpd_resp_set_hdr(req, "Content-Disposition", "attachment; filename=report-tflite.csv");
-    return httpd_resp_send(req, g_report_text, g_report_len);
+    esp_err_t result = httpd_resp_send(req, published_report, published_report_len);
+    pthread_mutex_unlock(&report_mutex);
+    return result;
 }
 
 static esp_err_t metadata_handler(httpd_req_t *req) {
-    if (g_report_failed || !g_report_text) {
-        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Benchmark incomplete");
+    pthread_mutex_lock(&report_mutex);
+    if (!published_report) {
+        pthread_mutex_unlock(&report_mutex);
+        httpd_resp_set_status(req, "503 Service Unavailable");
+        return httpd_resp_sendstr(req, "Aguardando primeira rodada completa");
     }
     /* This server runs synchronous handlers serially. Keep the response off
      * the httpd task stack; httpd_resp_send consumes it before returning. */
@@ -430,13 +476,17 @@ static esp_err_t metadata_handler(httpd_req_t *req) {
         "\"arena_reserved_bytes\":%u,\"arena_used_bytes\":%u,\"cpu_mhz\":%d,"
         "\"total\":%u,\"success\":%u,\"errors\":%u,\"labeled\":%u,\"correct\":%u,\"ties\":%u,"
         "\"processed\":%u,\"resumed\":%u,\"recovery_skipped\":%u,\"checkpoint_run_id\":%u,"
+        "\"round\":%u,\"repetitions\":%u,\"persist\":%s,"
         "\"warmup_runs\":0,\"inference_ms_scope\":\"prepare_input + Invoke; download, checkpoint and output reading excluded\","
         "\"heap_scope\":\"free heap across capabilities; PSRAM also reported separately\"}",
         model_sha256(), IMAGE_LIST_SHA256, esp_get_idf_version(), INPUT_FORMAT, IMG_W, IMG_H, NUM_CLASSES,
         model_output_type(), model_output_scale(), model_output_zero_point(),
         (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ,
-        (unsigned)NUM_IMAGES, (unsigned)g_success, (unsigned)g_errors, (unsigned)g_labeled,
-        (unsigned)g_correct, (unsigned)g_invalid, (unsigned)g_processed, (unsigned)g_resumed, (unsigned)g_recovery_skipped, (unsigned)BENCHMARK_RUN_ID);
+        (unsigned)NUM_IMAGES, (unsigned)published_counts[0], (unsigned)published_counts[1], (unsigned)published_counts[2],
+        (unsigned)published_counts[3], (unsigned)published_counts[4], (unsigned)published_counts[5],
+        (unsigned)published_counts[6], (unsigned)published_counts[7], (unsigned)BENCHMARK_RUN_ID,
+        published_round, published_repetitions, published_persist ? "true" : "false");
+    pthread_mutex_unlock(&report_mutex);
     if (n < 0 || (size_t)n >= sizeof(json)) return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Metadata too large");
     httpd_resp_set_type(req, "application/json");
     return httpd_resp_send(req, json, n);
@@ -470,6 +520,82 @@ static void start_file_server(void) {
     }
 }
 
+void image_cache_keep_alive(void) {
+    ESP_ERROR_CHECK(esp_task_wdt_reset());
+}
+
+static void read_command(char *line, size_t capacity) {
+    size_t len = 0;
+    bool overflow = false;
+    while (1) {
+        image_cache_keep_alive();
+        int ch = getchar();
+        if (ch == EOF) {
+            clearerr(stdin);
+            vTaskDelay(pdMS_TO_TICKS(20) + 1);
+            continue;
+        }
+        if (ch == '\r' || ch == '\n') {
+            if (!len && !overflow) continue;
+            putchar('\n');
+            line[overflow ? 0 : len] = '\0';
+            if (overflow) ESP_LOGE(TAG, "Comando muito longo");
+            return;
+        }
+        if (ch == 8 || ch == 127) {
+            if (len) { --len; printf("\b \b"); }
+        } else if (ch >= 32 && ch < 127) {
+            if (len + 1 < capacity) { line[len++] = (char)ch; putchar(ch); }
+            else overflow = true;
+        }
+        fflush(stdout);
+    }
+}
+
+static bool parse_command(const char *line, unsigned *repetitions, bool *persist) {
+    char command[16], count[24], save[8], extra[2];
+    if (sscanf(line, "%15s %23s %7s %1s", command, count, save, extra) != 3
+        || strcmp(command, "benchmark") != 0
+        || (strcmp(save, "sim") != 0 && strcmp(save, "nao") != 0)) return false;
+    for (const char *p = count; *p; ++p) if (*p < '0' || *p > '9') return false;
+    errno = 0;
+    char *end;
+    unsigned long value = strtoul(count, &end, 10);
+    if (errno || *end || value == 0 || value > UINT_MAX) return false;
+    *repetitions = (unsigned)value;
+    *persist = strcmp(save, "sim") == 0;
+    return true;
+}
+
+static void run_session(void) {
+    if (!image_cache_prepare(session.persist != 0, session.repetitions)) {
+        image_cache_release();
+        if (!session_cancel()) ESP_LOGE(TAG, "Falha cancelando comando persistente");
+        ESP_LOGE(TAG, "Preparacao falhou; nenhuma rodada iniciada.");
+        return;
+    }
+    while (1) {
+        image_cache_keep_alive();
+        ESP_LOGI(TAG, "Iniciando rodada %u/%u (%u imagens)", (unsigned)session.round,
+                 (unsigned)session.repetitions, (unsigned)NUM_IMAGES);
+        if (!run_benchmark(session.round, session.repetitions, session.persist != 0)) {
+            ESP_LOGE(TAG, "Rodada interrompida; checkpoint preservado para recuperacao apos reiniciar.");
+            break;
+        }
+        bool last = session.round == session.repetitions;
+        if (last) session.active = 0;
+        else ++session.round;
+        if (!session_save()) {
+            ESP_LOGE(TAG, "Falha salvando progresso do comando; execucao interrompida.");
+            break;
+        }
+        if (last) break;
+        ESP_LOGI(TAG, "CSV e metadata disponiveis; proxima rodada em 10 segundos.");
+        vTaskDelay(pdMS_TO_TICKS(10000));
+    }
+    image_cache_release();
+}
+
 static void benchmark_task(void *arg) {
     (void)arg;
     extend_task_wdt_for_benchmark();
@@ -488,10 +614,36 @@ static void benchmark_task(void *arg) {
     }
     ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
     ESP_ERROR_CHECK(esp_task_wdt_reset());
-    run_benchmark();
-    ESP_ERROR_CHECK(esp_task_wdt_delete(NULL));
     start_file_server();
-    vTaskDelete(NULL);
+    setvbuf(stdin, NULL, _IONBF, 0);
+    if (session_load()) {
+        if (session.active) {
+            ESP_LOGI(TAG, "Retomando comando %u, rodada %u/%u", (unsigned)session.id,
+                     (unsigned)session.round, (unsigned)session.repetitions);
+            run_session();
+        } else {
+            ESP_LOGI(TAG, "Restaurando relatorio da ultima rodada concluida");
+            if (!run_benchmark(session.round, session.repetitions, session.persist != 0))
+                ESP_LOGE(TAG, "Falha restaurando relatorio");
+        }
+    }
+    while (1) {
+        char command[96];
+        unsigned repetitions;
+        bool persist;
+        printf("\nComando: benchmark <rodadas> <sim|nao> (gravar imagens na flash)\n> ");
+        fflush(stdout);
+        read_command(command, sizeof(command));
+        if (!parse_command(command, &repetitions, &persist)) {
+            ESP_LOGE(TAG, "Use benchmark 10 sim ou benchmark 10 nao; rodadas deve ser inteiro positivo.");
+            continue;
+        }
+        if (!session_start(repetitions, persist)) {
+            ESP_LOGE(TAG, "Falha persistindo comando; nenhuma rodada iniciada.");
+            continue;
+        }
+        run_session();
+    }
 }
 
 void app_main(void) {

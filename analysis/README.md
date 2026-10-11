@@ -21,7 +21,15 @@ Columns: `model;execution;score;q;name`, with names such as `[404] airliner`. Ea
 - `consolidated.json`: cached data and persistent ID registry. Preserve this file to keep IDs stable across updates.
 - `config.json`: ESP32 host/model/runtime mapping and fallback output quantization. Update when changing the embedded model. Metadata quantization takes precedence; fallback use appears in source notes.
 
-Each folder is a separate execution, as requested. Renaming a folder creates a new identity. Nothing is deduplicated across execution folders.
+Desktop folders remain separate executions. For ESP32, consolidation uses one representative report per model/runtime. Original executions remain in JSON `raw_rows` and `raw_executions` for determinism analysis. Renaming a folder creates a new identity.
+
+## ESP32 representative reports
+
+Open **Analyses → Representative reports · ESP32** and click **Generate / update reports**. Generation also updates consolidated analysis. Its generate button and `python consolidate_reports.py` perform the same selection.
+
+Per image, equal outputs are retained and differing outputs are grouped by the complete vector (`quantized`, `scores`, indices and result). Each execution contributes one vote. A unique most frequent variant is selected; an absolute majority is not required. Ties, identity conflicts and missing complete outputs remain unusable. Failures, skipped images and duplicate image records within an execution do not vote. Single observations are retained and identified. Image normalization preserves case.
+
+Generated CSVs live in `esp32_consensus/<model>/<wasm|tflite>/report.csv`. The row and timings are copied from the earliest execution with the selected vector. Consolidation records `consensus_status`, `consensus_votes`, `consensus_observations` and `selected_execution`. `esp32_consensus/report.json` records all variants, votes, exclusions and sources; `images.csv` summarizes selection. Recorded hashes and configurations are checked when available; matching names without hashes do not establish matching bytes. Original reports remain unchanged and determinism analysis continues using all original executions.
 
 ## Interpretation
 

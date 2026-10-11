@@ -23,7 +23,7 @@ A ordem padrão é `{1, 0}`: saída 0 representa rótulo 1, saída 1 representa 
 | `ok` | 1 somente após download, preparação, Invoke e leitura de saída bem-sucedidos |
 | `class_N_raw` | Elemento bruto do tensor, na ordem do modelo; vazio em falhas |
 | `result`, `label`, `right` | Rótulo previsto, rótulo esperado, acerto (1/0 ou -1 quando indisponível) |
-| `download_ms` | Duração da requisição HTTP |
+| `download_ms` | Zero em rodadas com cache; em streaming inclui download, novas tentativas e pausas |
 | `preprocess_ms` | Decodificação RAW, ordem dos canais, normalização e escrita do tensor |
 | `invoke_ms` | Duração de Invoke do TFLite Micro |
 | `inference_ms` | `preprocess_ms + invoke_ms`; exclui rede, hashing e leitura da saída |
@@ -35,7 +35,7 @@ A ordem padrão é `{1, 0}`: saída 0 representa rótulo 1, saída 1 representa 
 
 Interpretador e arena são criados antes das medições por imagem; `heap_used=0` **não** significa ausência de uso de memória pelo modelo. Não some heap e PSRAM: o heap total pode já incluir a PSRAM. O armazenamento do CSV cresce depois de cada amostra e influencia o heap livre das próximas medições.
 
-O relatório servido é imutável. Se faltar memória para o CSV, `/report` retorna erro, sem apresentar um resultado parcial como completo. Imagens com falha têm `ok=0`; resumos aparecem no serial e em `/metadata`, sem linhas falsas de dados no CSV. Os endpoints começam após o benchmark e permanecem disponíveis enquanto a placa estiver ligada.
+O servidor publica apenas rodadas completas e mantém o último CSV enquanto a próxima executa. Se faltar memória, preserva o relatório anterior e interrompe a execução. Os endpoints iniciam antes dos comandos e retornam HTTP 503 até o primeiro relatório. `/metadata` acompanha a rodada publicada e inclui `round`, `repetitions` e `persist`; o CSV identifica esses valores em uma linha de comentário. Salve os dois arquivos durante a pausa de 10 segundos. Veja os [comandos e armazenamento](README.pt-BR.md).
 
 ## Metadados e reprodutibilidade
 

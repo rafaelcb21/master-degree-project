@@ -1,17 +1,18 @@
 ﻿#ifndef HOST_CONFIG_H
 #define HOST_CONFIG_H
 /* Independent host configuration. */
-#define WIFI_SSID "<SSID>"
-#define WIFI_PASS "<PASSWORD>"
+//#define WIFI_SSID "Contabil2025"
+//#define WIFI_PASS "Reservalagos36@"
+#define WIFI_SSID "Sitio"
+#define WIFI_PASS "72777206"
 #define WIFI_CONNECT_TIMEOUT_MS 30000
 #define WIFI_MIN_AUTHMODE WIFI_AUTH_WPA2_PSK
 #define HTTP_DOWNLOAD_TIMEOUT_MS 15000
-/* Streaming download: total budget per attempt, short body reads, one retry. */
+/* Streaming download: total budget per attempt and short body reads.
+ * image_cache.c retries failed attempts indefinitely, waiting 5 seconds. */
 #define HTTP_DOWNLOAD_TOTAL_TIMEOUT_MS 45000
 #define HTTP_READ_TIMEOUT_MS 3000
 #define HTTP_READ_CHUNK_BYTES 1024
-#define HTTP_DOWNLOAD_MAX_ATTEMPTS 2
-#define HTTP_RETRY_DELAY_MS 1000
 #define HTTP_PROGRESS_INTERVAL_MS 5000
 #define HTTP_KEEP_ALIVE_ENABLE 0
 #define REPORT_HTTP_PORT 80
@@ -53,7 +54,7 @@
 /* Increment to deliberately start a new persistent experiment. */
 #define BENCHMARK_RUN_ID 2
 #define RECOVERY_MAX_ATTEMPTS 2
-#define CHECKPOINT_PARTITION_LABEL "spiffs"
+#define CHECKPOINT_PARTITION_LABEL "checkpoint"
 #if RECOVERY_MAX_ATTEMPTS < 1
 #error "RECOVERY_MAX_ATTEMPTS must be positive"
 #endif

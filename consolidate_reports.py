@@ -17,6 +17,7 @@ COLUMNS = ["execution", "model", "name_image", "quantized", "scores", "result",
            "label", "right", "ok", "invalid", "type", "env", "inference_ms",
            "recovery_attempts", "recovery_skipped", "prediction_usable",
            "output_indices", "output_scope", "source_file", "error"]
+COLUMNS += ["consensus_status", "consensus_votes", "consensus_observations", "selected_execution"]
 BINARY = re.compile(r"^(.*?)\s*\|\s*quantized=(\[.*?\])\s*\|\s*scores=(\[.*?\])\s*\|\s*result=(None|-?\d+) label=(-?\d+) right=([01]) invalid=(True|False)\s*$")
 TOP = re.compile(r"^\s*\d+\. \[(\d+)\].*?\n\s*wnid=.*?\n\s*q=(-?\d+)\n\s*score=([\d.eE+-]+)", re.M)
 
@@ -125,13 +126,18 @@ def esp32_rows(path, base, config, warnings):
             ok = number(record["ok"])
             valid = ok == 1 and skipped != 1
             q = [number(record[key]) for key in classes] if valid else None
-            scores = [(v - zero) * scale for v in q] if q is not None and scale is not None and zero is not None else None
+            scores = [(v - zero) * scale for v in q] if q is not None and all(v is not None for v in q) and scale is not None and zero is not None else None
             output = row(base, name_image=image_name(record["name_image"], True),
                          quantized=q, scores=scores, output_indices=[int(key.split("_")[1]) for key in classes] if valid else None,
                          output_scope="full" if valid else None, result=number(record["result"]) if valid else None,
                          label=number(record.get("label")), right=number(record.get("right")) if valid else None,
                          ok=ok, recovery_attempts=number(record.get("recovery_attempts")), recovery_skipped=skipped)
             output["inference_ms"] = number(record.get("inference_ms"))
+            output["_source_record"] = record
+            output["_identity"] = {key: metadata.get(key) for key in
+                ("model_sha256", "input_format", "width", "height", "output_type")}
+            output["_identity"].update(input_sha256=record.get("input_sha256") or None,
+                                         output_scale=scale, output_zero_point=zero)
             yield output
 
 
@@ -202,12 +208,23 @@ def consolidate(root=ROOT):
                 warnings.append(f"{base['source_file']}: duplicate normalized image names; rows preserved.")
             rows.extend(items)
             executions.append(dict(base, folder=folder, rows=len(items)))
-        result = dict(generated_at=datetime.now(timezone.utc).isoformat(), columns=COLUMNS,
-                      rows=rows, executions=executions, execution_ids=ids, warnings=warnings)
+        from esp32_consensus import build
+        generated_at = datetime.now(timezone.utc).isoformat()
+        raw_rows, raw_executions = rows, executions
+        derived, runs, consensus, artifacts = build(raw_rows, raw_executions, ids, generated_at)
+        rows = [item for item in raw_rows if item["env"] != "esp32"] + derived
+        executions = [item for item in raw_executions if item["env"] != "esp32"] + runs
+        result = dict(generated_at=generated_at, columns=COLUMNS,
+                      rows=rows, executions=executions, execution_ids=ids, warnings=warnings,
+                      raw_rows=raw_rows, raw_executions=raw_executions, esp32_source="consensus")
         # Validate everything before replacing existing output files.
         payload = json.dumps(result, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8")
         table = csv_bytes(COLUMNS, rows)
         mapping = csv_bytes(["execution", "model", "type", "env", "folder", "source_file", "rows"], executions)
+        artifacts["analysis/esp32_consensus/report.json"] = json.dumps(consensus, ensure_ascii=False,
+            allow_nan=False, separators=(",", ":")).encode("utf-8")
+        for filename, content in artifacts.items():
+            atomic_write(root / filename, content)
         atomic_write(destination / "consolidated.csv", table)
         atomic_write(destination / "executions.csv", mapping)
         atomic_write(destination / "consolidated.json", payload)

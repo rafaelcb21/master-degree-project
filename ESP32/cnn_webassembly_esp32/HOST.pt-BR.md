@@ -73,11 +73,57 @@ retire esse AOT da pasta antes de reconfigurar/compilar o projeto.
 O host nao gera esses arquivos. O AOT deve corresponder ao alvo e ao WAMR
 usados no firmware.
 
+## Comandos, armazenamento e repeticoes
+
+Compile e grave pelo terminal ESP-IDF com `idf.py build flash monitor`.
+Depois de conectar ao Wi-Fi e inicializar o WAMR, a placa aguarda um comando
+no monitor serial. Digite e pressione Enter:
+
+```text
+benchmark 10 sim
+```
+
+O numero indica rodadas da lista inteira: com 20 imagens, 10 rodadas fazem
+200 inferencias. `sim` autoriza gravar os RAWs na particao SPIFFS. Somente
+arquivos ausentes ou invalidos sao baixados antes das rodadas. As imagens
+permanecem depois de reiniciar/desligar a placa e em gravacoes normais do
+firmware que preservem essa particao. Apagar a flash remove o cache.
+O primeiro uso pode formatar a particao SPIFFS para inicializa-la.
+O cache identifica a URL e o tamanho do RAW, e verifica sua integridade;
+se o conteudo de uma URL mudar, use uma URL versionada na lista.
+
+```text
+benchmark 10 nao
+```
+
+`nao` nao grava nem formata o SPIFFS: baixa uma vez para a PSRAM, repete
+a lista sem novos downloads e libera essas imagens ao terminar o comando.
+Um novo comando nesse modo baixa novamente. Os arquivos ja existentes
+na flash permanecem intactos.
+
+Ha uma pausa de **10 segundos entre rodadas completas**, fora do tempo
+medido de inferencia. Nesse intervalo, baixe `http://<ip-do-esp32>/report`
+e salve o CSV com um nome diferente para cada rodada. O CSV anterior
+continua disponivel enquanto a proxima rodada executa, e so e substituido
+quando um novo relatorio completo fica pronto. O ultimo fica disponivel
+ate uma nova execucao ou reinicio. A placa aceita outro comando ao terminar.
+
+A particao atual tem 1 MiB; 20 RAWs de 128 x 128 RGB565 ocupam 640 KiB,
+mais metadados. O codigo reserva espaco para o SPIFFS e recusa listas
+maiores que sua capacidade segura. Arquivos de listas antigas nao sao
+apagados automaticamente e tambem ocupam espaco.
+2.000 RAWs ocupam 62,5 MiB: nao cabem na flash nem na PSRAM desta placa.
+`benchmark 1 nao` permite essa lista por streaming, baixando cada imagem
+para um unico buffer. Repetir uma lista que nao cabe em PSRAM com `nao`
+e recusado antes das rodadas; para repetir 2.000 imagens sem download seria
+necessario armazenamento adicional, como um cartao SD.
+
 ## Medicoes e CSV
 
-Depois do benchmark, o servidor disponibiliza o CSV em
+Depois de cada rodada, o servidor disponibiliza o CSV em
 `http://<ip-do-esp32>:80/report` (porta e caminho configuraveis).
-Ele inicia depois da coleta para servir um relatorio completo e imutavel.
+Ele inicia antes dos comandos e retorna HTTP 503 ate a primeira rodada
+completa. Cada CSV inclui `round`, `repetitions` e `persist` no resumo.
 
 Cada imagem gera `ok`, `class_0_raw` ate `class_N_raw`, resultado, rotulo,
 acerto, tempo de download, tempo de inferencia, heap e PSRAM antes/depois,
@@ -88,12 +134,15 @@ As medias de tempo e a acuracia consideram apenas imagens processadas com
 sucesso; a acuracia exclui imagens sem rotulo. Empates contam como erro de
 classificacao para imagens rotuladas.
 
+No modo cache, `download_ms` e zero nas rodadas: os downloads ocorreram
+na preparacao, antes das medicoes. Em streaming, ele mede o download real.
 O tempo de inferencia mede a chamada ao export, incluindo lookup e entrada
 no WAMR; download e copia de entrada ficam fora dessa janela. As diferencas
 de heap/PSRAM nao representam o pico de memoria durante uma inferencia.
 Os minimos historicos do resumo incluem outras tarefas e a inicializacao.
 
 O CSV acumulado fica na PSRAM; muitas imagens/classes podem esgotar esse
-espaco. Nesse caso o host registra a falha e o endpoint retorna erro HTTP,
-sem apresentar o CSV parcial como completo. Ha apenas um buffer de imagem
-e uma estrutura de resultado reutilizados durante o benchmark.
+espaco. Nesse caso o host interrompe as rodadas e preserva o ultimo CSV
+completo, sem publicar o CSV parcial. Ha um buffer de imagem e uma estrutura
+de resultado reutilizados, alem do cache opcional em PSRAM e dos buffers
+do relatorio atual e anterior.

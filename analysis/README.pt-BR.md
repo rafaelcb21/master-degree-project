@@ -21,7 +21,15 @@ Colunas: `model;execution;score;q;name`, com nomes como `[404] airliner`. Cada e
 - `consolidated.json`: dados salvos e registro persistente dos IDs. Preserve esse arquivo para manter os IDs nas atualizações.
 - `config.json`: associação host/modelo/formato do ESP32 e quantização alternativa. Atualize ao trocar o modelo embarcado. A quantização do metadata tem preferência; o uso da alternativa aparece nas observações das fontes.
 
-Cada pasta representa uma execução distinta, conforme solicitado. Renomear uma pasta cria outra identidade. Execuções de pastas diferentes não são deduplicadas.
+No desktop, cada pasta representa uma execução distinta. No ESP32, a consolidação usa um novo relatório representativo por modelo/formato. As execuções originais permanecem em `raw_rows` e `raw_executions` no JSON para a análise de determinismo. Renomear uma pasta cria outra identidade.
+
+## Relatórios representativos do ESP32
+
+Abra **Análises → Relatórios representativos · ESP32** e clique em **Gerar / atualizar relatórios**. A geração também atualiza a análise consolidada. O botão de gerar a tabela consolidada e `python consolidate_reports.py` fazem a mesma seleção.
+
+Para cada imagem, saídas iguais são mantidas e saídas diferentes são agrupadas pelo vetor completo (`quantized`, `scores`, índices e resultado). Cada execução fornece um voto. Escolhe-se a variante com maior frequência única; não é exigida maioria absoluta. Empates, conflitos de identidade e ausência de saída completa ficam sem predição utilizável. Falhas, imagens ignoradas e registros duplicados da mesma imagem/execução não votam. Uma única observação é mantida e identificada. A normalização do nome preserva maiúsculas e minúsculas.
+
+Os novos CSVs ficam em `esp32_consensus/<modelo>/<wasm|tflite>/report.csv`. A linha e seus tempos são copiados da primeira execução que contém o vetor escolhido. `consensus_status`, `consensus_votes`, `consensus_observations` e `selected_execution` identificam a seleção na consolidação. `esp32_consensus/report.json` registra todas as variantes, votos, exclusões e fontes; `images.csv` resume a seleção. Hashes e configurações são conferidos quando registrados; nomes iguais sem hashes não comprovam igualdade dos bytes. Os relatórios originais não são alterados. A análise de determinismo continua usando todas as execuções originais.
 
 ## Interpretação
 

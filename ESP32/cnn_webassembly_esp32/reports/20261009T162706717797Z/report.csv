@@ -1,0 +1,9 @@
+name_image,ok,class_0_raw,class_1_raw,result,label,right,download_ms,inference_ms,heap_before,heap_after,heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes
+"a0231_dfkgjq.raw",1,68,187,0,0,1,527.645,6204.158,2076028,2076156,0,1969096,1969096,0,13156
+
+# total=1 sucesso=1 erros=0 empates=0
+# rotuladas_com_sucesso=1 acertos=1
+# accuracy_pct=100.000
+# inference_avg_ms=6204.158 inference_min_ms=6204.158 inference_max_ms=6204.158
+# download_avg_ms=527.645
+# heap_min_free_bytes=2047896 psram_min_free_bytes=1968992 psram_total_bytes=4194304

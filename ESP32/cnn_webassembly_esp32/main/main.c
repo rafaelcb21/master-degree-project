@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <errno.h>
+#include <limits.h>
 #include <pthread.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -37,6 +39,7 @@
 #include <inttypes.h>
 #include "host_config.h"
 #include "image_list.h"
+#include "image_cache.h"
 
 #define TAG "wasm_benchmark"
 #define TAG_HTTP "HTTP_SERVER"
@@ -65,11 +68,29 @@ typedef struct {
     size_t stack_min_free_bytes;
 } report_row_t;
 
-/* O servidor inicia depois do benchmark: o CSV servido e imutavel. */
+/* Builder owned by the benchmark; completed CSV published under a mutex. */
 static char *g_report_text = NULL;
 static size_t g_report_len = 0;
 static size_t g_report_cap = 0;
 static bool g_report_failed = false;
+static pthread_mutex_t report_mutex = PTHREAD_MUTEX_INITIALIZER;
+static char *published_report;
+static size_t published_report_len;
+
+static bool publish_report(void) {
+    if (g_report_failed || !g_report_text) {
+        ESP_LOGE(TAG, "Rodada sem relatorio completo; relatorio anterior preservado");
+        return false;
+    }
+    pthread_mutex_lock(&report_mutex);
+    heap_caps_free(published_report);
+    published_report = g_report_text;
+    published_report_len = g_report_len;
+    g_report_text = NULL;
+    g_report_len = g_report_cap = 0;
+    pthread_mutex_unlock(&report_mutex);
+    return true;
+}
 
 static void report_append(const char *fmt, ...) {
     if (g_report_failed) return;
@@ -408,7 +429,7 @@ static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
 }
 
 /* Baixa a imagem crua (raw) da URL para out_buf. Retorna true em sucesso. */
-static bool download_image(const char *url, uint8_t *out_buf, size_t expected_len, int64_t *download_us) {
+bool download_image(const char *url, uint8_t *out_buf, size_t expected_len, int64_t *download_us) {
     http_download_ctx_t ctx = { .buf = out_buf, .capacity = expected_len, .len = 0 };
 
     esp_http_client_config_t config = {
@@ -462,13 +483,14 @@ static void filename_from_url(const char *url, char *out, size_t out_size) {
  * Processa uma imagem: baixa, aguarda o WASM ficar pronto,
  * escreve na memoria, roda a inferencia e coleta metricas.
  * ============================================================ */
-static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t *img_buf) {
+static void process_image(size_t index, report_row_t *row, uint8_t *img_buf) {
+    const image_entry_t *entry = &IMAGES[index];
     memset(row, 0, sizeof(*row));
     filename_from_url(entry->url, row->name_image, sizeof(row->name_image));
     row->label = entry->label;
     row->result = -1;
     row->right = -1;
-    if (!download_image(entry->url, img_buf, INPUT_BYTES, &row->download_us)) return;
+    if (!image_cache_load(index, img_buf, &row->download_us)) return;
 
     if (USE_READY_HANDSHAKE) {
         int64_t deadline = esp_timer_get_time() + (int64_t)READY_TIMEOUT_MS * 1000;
@@ -548,14 +570,18 @@ static void process_image(const image_entry_t *entry, report_row_t *row, uint8_t
     row->ok = 1;
 }
 
-static void run_benchmark(void) {
+static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
+    heap_caps_free(g_report_text);
+    g_report_text = NULL;
+    g_report_len = g_report_cap = 0;
+    g_report_failed = false;
     uint8_t *img_buf = heap_caps_malloc(INPUT_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     report_row_t *row = heap_caps_malloc(sizeof(*row), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!img_buf || !row) {
         ESP_LOGE(TAG, "Sem memoria para buffers do benchmark");
         heap_caps_free(img_buf);
         heap_caps_free(row);
-        return;
+        return false;
     }
     report_append("name_image,ok");
     for (int c = 0; c < NUM_CLASSES; ++c) report_append(",class_%d_raw", c);
@@ -566,7 +592,7 @@ static void run_benchmark(void) {
     int64_t sum_us = 0, min_us = INT64_MAX, max_us = 0, sum_download_us = 0;
     for (size_t i = 0; i < NUM_IMAGES; ++i) {
         ESP_LOGI(TAG, "Processando [%u/%u]: %s", (unsigned)(i + 1), (unsigned)NUM_IMAGES, IMAGES[i].url);
-        process_image(&IMAGES[i], row, img_buf);
+        process_image(i, row, img_buf);
         report_csv_string(row->name_image);
         report_append(",%d", row->ok);
         for (int c = 0; c < NUM_CLASSES; ++c) {
@@ -600,7 +626,8 @@ static void run_benchmark(void) {
                  row->name_image, row->result, row->label, row->right,
                  row->download_us / 1000.0, row->inference_us / 1000.0);
     }
-    report_append("\n# total=%u sucesso=%u erros=%u empates=%u\n",
+    report_append("\n# round=%u repetitions=%u persist=%s\n", round, repetitions, persist ? "sim" : "nao");
+    report_append("# total=%u sucesso=%u erros=%u empates=%u\n",
                   (unsigned)NUM_IMAGES, (unsigned)success, (unsigned)errors, (unsigned)invalid);
     report_append("# rotuladas_com_sucesso=%u acertos=%u\n", (unsigned)labeled, (unsigned)correct);
     if (labeled) report_append("# accuracy_pct=%.3f\n", 100.0 * correct / labeled);
@@ -612,10 +639,12 @@ static void run_benchmark(void) {
                   (unsigned)esp_get_minimum_free_heap_size(),
                   (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM),
                   (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
-    ESP_LOGI(TAG, "Benchmark concluido: sucesso=%u erros=%u; CSV em http://<ip>:%d%s",
-             (unsigned)success, (unsigned)errors, REPORT_HTTP_PORT, REPORT_HTTP_URI);
     heap_caps_free(row);
     heap_caps_free(img_buf);
+    if (!publish_report()) return false;
+    ESP_LOGI(TAG, "Benchmark concluido: sucesso=%u erros=%u; CSV em http://<ip>:%d%s",
+             (unsigned)success, (unsigned)errors, REPORT_HTTP_PORT, REPORT_HTTP_URI);
+    return true;
 }
 /* ============================================================
  * Endpoint HTTP para baixar o relatorio (mais confiavel que
@@ -623,12 +652,16 @@ static void run_benchmark(void) {
  * Acesse: http://<ip_do_esp32>/report
  * ============================================================ */
 static esp_err_t report_handler(httpd_req_t *req) {
-    if (g_report_failed || !g_report_text) {
-        return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR,
-                                   "Relatorio indisponivel ou incompleto");
+    pthread_mutex_lock(&report_mutex);
+    if (!published_report) {
+        pthread_mutex_unlock(&report_mutex);
+        httpd_resp_set_status(req, "503 Service Unavailable");
+        return httpd_resp_sendstr(req, "Aguardando primeira rodada completa");
     }
     httpd_resp_set_type(req, "text/csv; charset=utf-8");
-    return httpd_resp_send(req, g_report_text, g_report_len);
+    esp_err_t result = httpd_resp_send(req, published_report, published_report_len);
+    pthread_mutex_unlock(&report_mutex);
+    return result;
 }
 
 static void start_file_server(void) {
@@ -648,6 +681,50 @@ static void start_file_server(void) {
     } else {
         ESP_LOGE(TAG_HTTP, "Falha ao iniciar o servidor HTTP");
     }
+}
+
+/* The default ESP-IDF console uses nonblocking UART reads. Poll with a delay
+ * to keep Wi-Fi/IDLE tasks running, and accept either CR or LF from monitors. */
+static void read_command(char *line, size_t capacity) {
+    size_t len = 0;
+    bool overflow = false;
+    while (1) {
+        int ch = getchar();
+        if (ch == EOF) {
+            clearerr(stdin);
+            vTaskDelay(pdMS_TO_TICKS(20));
+            continue;
+        }
+        if (ch == '\r' || ch == '\n') {
+            if (!len && !overflow) continue;
+            putchar('\n');
+            line[overflow ? 0 : len] = '\0';
+            if (overflow) ESP_LOGE(TAG, "Comando muito longo");
+            return;
+        }
+        if (ch == 8 || ch == 127) {
+            if (len) { --len; printf("\b \b"); }
+        } else if (ch >= 32 && ch < 127) {
+            if (len + 1 < capacity) { line[len++] = (char)ch; putchar(ch); }
+            else overflow = true;
+        }
+        fflush(stdout);
+    }
+}
+
+static bool parse_command(const char *line, unsigned *repetitions, bool *persist) {
+    char command[16], count[24], save[8], extra[2];
+    if (sscanf(line, "%15s %23s %7s %1s", command, count, save, extra) != 3
+        || strcmp(command, "benchmark") != 0
+        || (strcmp(save, "sim") != 0 && strcmp(save, "nao") != 0)) return false;
+    for (const char *p = count; *p; ++p) if (*p < '0' || *p > '9') return false;
+    errno = 0;
+    char *end;
+    unsigned long value = strtoul(count, &end, 10);
+    if (errno || *end || value == 0 || value > UINT_MAX) return false;
+    *repetitions = (unsigned)value;
+    *persist = strcmp(save, "sim") == 0;
+    return true;
 }
 
 static void *benchmark_thread_main(void *arg) {
@@ -671,11 +748,35 @@ static void *benchmark_thread_main(void *arg) {
     ESP_LOGI(TAG, "PSRAM total: %u bytes | PSRAM livre antes do benchmark: %u bytes",
              (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM),
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-    run_benchmark();
     start_file_server();
-
+    setvbuf(stdin, NULL, _IONBF, 0);
     while (1) {
-        vTaskDelay(pdMS_TO_TICKS(IDLE_DELAY_MS));
+        char command[96];
+        unsigned repetitions;
+        bool persist;
+        printf("\nComando: benchmark <rodadas> <sim|nao> (gravar imagens na flash)\n> ");
+        fflush(stdout);
+        read_command(command, sizeof(command));
+        if (!parse_command(command, &repetitions, &persist)) {
+            ESP_LOGE(TAG, "Use benchmark 10 sim ou benchmark 10 nao; rodadas deve ser inteiro positivo.");
+            continue;
+        }
+        if (!image_cache_prepare(persist, repetitions)) {
+            image_cache_release();
+            ESP_LOGE(TAG, "Preparacao falhou; nenhuma rodada iniciada.");
+            continue;
+        }
+        for (unsigned round = 1; ; ++round) {
+            ESP_LOGI(TAG, "Iniciando rodada %u/%u (%u imagens)", round, repetitions, (unsigned)NUM_IMAGES);
+            if (!run_benchmark(round, repetitions, persist)) {
+                ESP_LOGE(TAG, "Execucao interrompida por falta de memoria para relatorio/buffers.");
+                break;
+            }
+            if (round == repetitions) break;
+            ESP_LOGI(TAG, "CSV da rodada %u disponivel em %s; proxima rodada em 10 segundos.", round, REPORT_HTTP_URI);
+            vTaskDelay(pdMS_TO_TICKS(10000));
+        }
+        image_cache_release();
     }
 
     return NULL;

@@ -1,8 +1,8 @@
 idf_component_register(
-    SRCS "main.c" "tflite_runtime.cpp" "${CMAKE_CURRENT_BINARY_DIR}/model_data.S"
+    SRCS "main.c" "image_cache.c" "tflite_runtime.cpp" "${CMAKE_CURRENT_BINARY_DIR}/model_data.S"
     INCLUDE_DIRS "."
     REQUIRES esp_wifi esp_event esp_netif nvs_flash esp_psram esp_http_server esp_http_client
-             mbedtls esp-tls esp_timer esp_system esp-tflite-micro
+             mbedtls esp-tls esp_timer esp_system spiffs pthread esp-tflite-micro
 )
 
 set(TFLITE_MODEL_FILE "${CMAKE_CURRENT_LIST_DIR}/../model_int8_esp32.tflite" CACHE FILEPATH "TFLite model embedded in firmware")
@@ -23,7 +23,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_
 
 # Resume only results produced with the same host sources and configuration.
 set(CHECKPOINT_SOURCE_HASHES "")
-foreach(source main.c host_config.h checkpoint.inc download_http.inc tflite_runtime.cpp)
+foreach(source main.c host_config.h checkpoint.inc benchmark_session.inc image_cache.c image_cache.h download_http.inc tflite_runtime.cpp)
     file(SHA256 "${CMAKE_CURRENT_LIST_DIR}/${source}" SOURCE_HASH)
     string(APPEND CHECKPOINT_SOURCE_HASHES "${SOURCE_HASH}")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/${source}")
