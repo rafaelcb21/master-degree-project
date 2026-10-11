@@ -1,0 +1,7 @@
+﻿Comparação;Vetores diferentes;Vetores idênticos;Concordância vetorial;Trocas de classe;Concordância de classe;Imagens totais;Vetores comparáveis;Vetores não comparáveis;Classes comparáveis;Classes idênticas;Classes não comparáveis;Execução esquerda;Execução direita
+WASM ESP32 × TFLite ESP32;266;1734;86,70%;23;98,85%;2000;2000;0;1994;1971;6;51;50
+WASM desktop × TFLite desktop;263;1737;86,85%;23;98,85%;2000;2000;0;1993;1970;7;9;12
+WASM ESP32 × TFLite desktop;263;1737;86,85%;24;98,80%;2000;2000;0;1993;1969;7;51;12
+WASM desktop × TFLite ESP32;266;1734;86,70%;24;98,80%;2000;2000;0;1994;1970;6;9;50
+WASM ESP32 × WASM desktop;1;1999;99,95%;1;99,95%;2000;2000;0;1995;1994;5;51;9
+TFLite desktop × TFLite ESP32;122;1878;93,90%;2;99,90%;2000;2000;0;1997;1995;3;12;50

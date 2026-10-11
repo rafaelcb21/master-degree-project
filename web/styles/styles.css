@@ -1890,3 +1890,7 @@ input[type=checkbox]
 .rep-image { margin: 12px 0; padding: 14px; border: 1px solid var(--border); border-radius: 10px; min-width: 0; }
 .rep-image summary { cursor: pointer; overflow-wrap: anywhere; }
 .rep-image p, .rep-source { overflow-wrap: anywhere; }
+.cmp-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.cmp-sides > div { min-width: 0; padding: 12px; background: #f0f6f2; border-radius: 8px; }
+.cmp-buckets { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+@media(max-width:700px) { .cmp-sides { grid-template-columns: 1fr; } }

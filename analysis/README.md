@@ -33,6 +33,24 @@ Generated CSVs live in `esp32_consensus/<model>/<wasm|tflite>/report.csv`. The r
 
 ## Interpretation
 
+### Environment and runtime comparison
+
+**Quantized difference statistics**, **Quantized difference distribution** and **Accuracy by reference class** read the same saved data and provide CSV/Markdown downloads: `quantized_stats.*`, `quantized_buckets.*` and `accuracy.*`. The first includes maximum, mean, median, P95/P99 and Δq=0 count/percentage; the second includes the five quantized buckets. Each comparable image contributes two components, so 2,000 complete image pairs produce N=4,000 differences. Decimal rounding is half-up, matching the interface; unrounded values remain in the detailed JSON.
+
+Accuracy reports include Overall, class 0 (non_drowsy) and class 1 (drowsy) per selected source. Correct means `result == label`, recalculated against reference labels. Each source/image is counted once despite appearing in three pairs. The main percentage is correct / all labelled images in the reference class; failures, invalid outputs and ties do not count as correct. Coverage also displays accuracy among valid predictions, unknown labels and missing/duplicate records outside the denominator. This measures performance against reference labels separately from agreement between implementations. No new inferences are needed. Generating comparisons refreshes all these files and includes accuracy in JSON.
+
+The **Agreement summary** section shows all six comparisons with differing/identical vectors, vector agreement, class changes and class agreement. It reads saved data without new inferences or comparison regeneration. Download `agreement.csv` (UTF-8 BOM, `;` delimiter) or `agreement.md` (ready-to-copy table), including denominators and execution IDs. Generation also updates these files.
+
+Vector agreement = numerically identical quantized vectors and scores / comparable vectors, independently of the decision. Class agreement = identical classes / pairs with comparable vectors and valid classes on both sides. Invalid outputs, ties and non-comparable pairs are excluded from this denominator. **Denominators and coverage** displays exclusions. Percentages without comparable observations are unavailable (—), never 100%.
+
+Open **Analyses → Environment and runtime comparison**. **Generate / update comparisons** refreshes consolidation and ESP32 representative reports, then builds six pairs: WASM ESP32 × TFLite ESP32; WASM desktop × TFLite desktop; WASM ESP32 × TFLite desktop; WASM desktop × TFLite ESP32; WASM ESP32 × WASM desktop; TFLite desktop × TFLite ESP32. Desktop defaults to its latest execution, with selectors for other executions. Each side uses one selected execution, without mixing desktop runs.
+
+Images match by exact case-sensitive name and outputs by index. Each image shows scores and predicted class side by side, quantized vectors, sources, absolute component differences, maximum, mean, median, P95 and P99 for both quantized values and scores. Counts `0`, `1`, `2–5`, `6–10` and `>10` refer to quantized differences. Drowsiness has two output components: index 0 is class 1 (drowsy), index 1 is class 0 (non_drowsy).
+
+Statistics include zeros and percentiles use linear interpolation. Summaries aggregate all comparable components, without averaging averages. Missing images, failures, unresolved selection, duplicates and incomplete vectors are non-comparable with empty statistics; they do not become zero differences. Completed invalid outputs allow numeric comparison but do not count as transitions between valid classes. Class changes and decision changes are distinct. Equality requires matching values and decisions.
+
+Files live in `analysis/comparisons/`: one CSV per pair, `images.csv` for all six pairs, `summary.csv` for aggregate statistics, and `report.json` for detailed evidence and selected executions. CSVs use UTF-8 BOM and `;` delimiters. Browsing reads saved files and flags changed consolidation. CLI: `python compare_environments.py`, which refreshes sources and defaults to the latest desktop executions. Comparisons are limited to recorded precision; matching names do not prove identical bytes or establish the cause of differences.
+
 - ESP32: `A0001_pngxcr.raw` becomes `A0001.raw`, preserving case. Desktop names, including `aviao_uint8.raw`, are unchanged.
 - `scores = (quantized - zero_point) * scale` for ESP32. Desktop scores come from the report.
 - `output_indices` identifies the positions/classes of the arrays. Drowsiness positions `[0,1]` correspond to labels `[1,0]`.

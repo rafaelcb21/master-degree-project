@@ -1,0 +1,83 @@
+import { chromium, expect } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+const url=process.env.EXPLORER_URL||'http://127.0.0.1:8015';
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+try {
+  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(`${url}/#comparisons`);
+  await expect(page.locator('#main h1')).toHaveText('Comparação entre ambientes e formatos');
+  await expect(page.locator('#cmp-summary > .consolidation-table > table tbody tr')).toHaveCount(6);
+  await expect(page.locator('#cmp-quantized-stats tbody tr')).toHaveCount(6);
+  await expect(page.locator('#cmp-quantized-stats tbody tr').first()).toContainText('4,014');
+  await expect(page.locator('#cmp-quantized-stats tbody tr').first()).toContainText('87,18%');
+  await expect(page.locator('#cmp-quantized-buckets tbody tr')).toHaveCount(6);
+  await expect(page.locator('#cmp-accuracy tbody tr')).toHaveCount(12);
+  await expect(page.locator('#cmp-accuracy')).toContainText('Geral');
+  const accuracyResponse=await (await page.request.get(`${url}/api/analyses/comparisons`)).json();
+  const wasmAccuracy=accuracyResponse.accuracy.find(a=>a.source==='wasm_esp32'&&a.class_label===null);
+  expect(wasmAccuracy.total).toBe(2000);
+  expect(wasmAccuracy.correct+wasmAccuracy.incorrect_valid+wasmAccuracy.no_valid_prediction).toBe(2000);
+  for(const filename of ['quantized_stats.csv','quantized_stats.md','quantized_buckets.csv','quantized_buckets.md','accuracy.csv','accuracy.md']) {
+    const download=await page.request.get(`${url}/api/analyses/comparisons/download?file=${filename}`);
+    expect(download.status()).toBe(200);
+  }
+  await expect(page.locator('#cmp-agreement-table thead')).toContainText('Concordância vetorial');
+  await expect(page.locator('#cmp-agreement-table tbody tr').first()).toContainText('86,70%');
+  await expect(page.locator('#cmp-agreement-table tbody tr').first()).toContainText('98,85%');
+  const agreementCsv=await page.request.get(`${url}/api/analyses/comparisons/download?file=agreement.csv`);
+  expect(agreementCsv.status()).toBe(200);
+  expect(await agreementCsv.text()).toContain('86,70%');
+  expect(await agreementCsv.text()).toContain('1994');
+  const agreementMarkdown=await page.request.get(`${url}/api/analyses/comparisons/download?file=agreement.md`);
+  expect(agreementMarkdown.status()).toBe(200);
+  expect(await agreementMarkdown.text()).toContain('Concordância de classe');
+  await expect(page.locator('#cmp-images .cmp-image')).toHaveCount(25);
+  await expect(page.locator('[data-cmp-source="wasm_esp32"]')).toBeDisabled();
+  await expect(page.locator('[data-cmp-source="wasm_desktop"] option')).toHaveCount(4);
+  await page.locator('#cmp-next').click();
+  await expect(page.locator('#cmp-page')).toHaveText('2 / 80');
+  await page.locator('#cmp-status').selectOption('different');
+  await page.locator('#cmp-sort').selectOption('maximum');
+  await page.locator('#cmp-search').fill('a0969.raw');
+  await page.locator('#cmp-search').press('Tab');
+  await expect(page.locator('#cmp-images .cmp-image')).toHaveCount(1);
+  await page.locator('.cmp-image summary').click();
+  await expect(page.locator('.cmp-sides > div')).toHaveCount(2);
+  await expect(page.locator('.cmp-image')).toContainText('P95');
+  await expect(page.locator('.cmp-image')).toContainText('Δq >10');
+  await expect(page.locator('.cmp-image')).toContainText('Classe predita');
+  const saved=await (await page.request.get(`${url}/api/analyses/comparisons`)).json();
+  for(const pair of saved.pairs) {
+    expect(pair.total).toBe(2000);expect(pair.comparable).toBe(2000);expect(pair.quantized.count).toBe(4000);
+    expect(Object.values(pair.quantized.buckets).reduce((a,b)=>a+b,0)).toBe(4000);
+    const response=await page.request.get(`${url}/api/analyses/comparisons/download?file=${pair.id}.csv`);
+    expect(response.status()).toBe(200);expect((await response.text()).split('\n').length).toBe(2002);
+  }
+  expect((await page.request.post(`${url}/api/analyses/comparisons`,{headers:{Origin:'https://example.com'},data:{}})).status()).toBe(403);
+  expect((await page.request.get(`${url}/api/analyses/comparisons/download?file=../consolidated.json`)).status()).not.toBe(200);
+  await page.locator('[data-cmp-source="wasm_desktop"]').selectOption('6');
+  await expect(page.locator('#cmp-message')).toContainText('Seleção alterada');
+  await page.locator('#cmp-generate').click();
+  await expect(page.locator('#cmp-generate')).toBeEnabled({timeout:30000});
+  const regenerated=await (await page.request.get(`${url}/api/analyses/comparisons`)).json();
+  expect(regenerated.selected.wasm_desktop.execution).toBe(6);
+  expect(regenerated.generated_at).not.toBe(saved.generated_at);
+  // Restore the default latest execution after checking explicit selection.
+  await page.locator('[data-cmp-source="wasm_desktop"]').selectOption('9');
+  await page.locator('#cmp-generate').click();
+  await expect(page.locator('#cmp-generate')).toBeEnabled({timeout:30000});
+  await page.locator('#cmp-pair').selectOption('wasm_esp32--wasm_desktop');
+  await page.locator('#cmp-search').fill('');await page.locator('#cmp-search').press('Tab');
+  await expect(page.locator('#cmp-images .cmp-image')).toHaveCount(1);
+  await page.locator('.cmp-image summary').click();
+  mkdirSync('test-results',{recursive:true});
+  await page.screenshot({path:'test-results/comparisons-desktop.png',fullPage:true});
+  await page.locator('#ui-language').click();
+  await expect(page.locator('#main h1')).toHaveText('Environment and runtime comparison');
+  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(300);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:'test-results/comparisons-mobile.png',fullPage:true});
+  expect(errors).toEqual([]);
+  console.log('Six comparisons: side-by-side values, per-image statistics, CSVs, filtering, desktop selection and mobile layout passed.');
+} finally {await browser.close();}

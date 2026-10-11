@@ -143,3 +143,11 @@ The server exposes only indexed documents/reports and site assets. Markdown is s
 ## ESP32 representative reports
 
 Use **Analyses → Representative reports · ESP32 → Generate / update reports** to create a CSV per model and WASM/TFLite runtime. Equal image outputs are retained; differing outputs use the most frequent complete vector. The page shows votes, variants, exclusions and source execution, with CSV/JSON downloads. Ties and identity conflicts remain unusable. ESP32 consolidated analysis uses these new reports; regenerating its table also refreshes selection. Timings come from the earliest execution with the selected result. Originals remain the source for determinism analysis. See [method and files](../analysis/README.md).
+
+## Environment and runtime comparison
+
+Three additional tables offer CSV/Markdown downloads: **Quantized difference statistics**, **Quantized difference distribution** and **Accuracy by reference class**. The first two summarize component-level Δq; the third shows Overall, non_drowsy and drowsy accuracy for WASM/TFLite on ESP32/desktop using reference labels and selected runs. The main percentage includes all labelled images; invalid outputs and failures do not count as correct. Coverage shows the supplementary percentage among valid predictions. Already saved data is sufficient to view and download these reports.
+
+The **Agreement summary** section displays all six comparisons with vector/class agreement percentages, counts and CSV/Markdown downloads. It uses already saved data without new inferences. Expand **Denominators and coverage** to inspect valid classes and outputs excluded from each calculation.
+
+Open **Analyses → Environment and runtime comparison** to compare results. Select desktop executions (latest by default), then **Generate / update comparisons**. All six combinations show scores and predicted class side by side per image, absolute quantized and score differences, maximum, mean, median, P95/P99 and five quantized bucket counts. Filter by image, equality, class changes or largest difference. Download individual comparisons, all images, an aggregate summary or detailed JSON. Changed consolidation is flagged. See [method and files](../analysis/README.md).

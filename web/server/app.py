@@ -16,6 +16,7 @@ from esp32_execution import ESP32Executions
 from consolidation import Consolidation
 from determinism import Determinism
 from representative_reports import ESP32Consensus
+from comparisons import Comparisons
 
 WEB = Path(__file__).resolve().parents[1]
 ROOT = WEB.parent
@@ -94,11 +95,12 @@ CONSOLIDATION = Consolidation(ROOT)
 MOBILENET_CONSOLIDATION = Consolidation(ROOT, mobilenet=True)
 DETERMINISM = Determinism(ROOT)
 ESP32_CONSENSUS = ESP32Consensus(ROOT)
+COMPARISONS = Comparisons(ROOT)
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation", "/api/analyses/determinism", "/api/analyses/esp32-consensus"):
+        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation", "/api/analyses/determinism", "/api/analyses/esp32-consensus", "/api/analyses/comparisons"):
             self.json(404, {"error": "not_found"})
             return
         origin = self.headers.get("Origin")
@@ -112,7 +114,9 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError("invalid_request")
-            if self.path == "/api/analyses/esp32-consensus":
+            if self.path == "/api/analyses/comparisons":
+                self.json(200, COMPARISONS.rebuild(data.get('selections')))
+            elif self.path == "/api/analyses/esp32-consensus":
                 self.json(200, ESP32_CONSENSUS.rebuild())
             elif self.path == "/api/analyses/determinism":
                 self.json(200, DETERMINISM.rebuild())
@@ -164,7 +168,12 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         args = parse_qs(url.query)
         try:
-            if url.path == "/api/analyses/esp32-consensus":
+            if url.path == "/api/analyses/comparisons":
+                self.json(200, COMPARISONS.query(args))
+            elif url.path == "/api/analyses/comparisons/download":
+                filename = args.get('file', ['images.csv'])[0]
+                self.send(200, COMPARISONS.download(filename), 'application/octet-stream', filename)
+            elif url.path == "/api/analyses/esp32-consensus":
                 self.json(200, ESP32_CONSENSUS.query(args))
             elif url.path == "/api/analyses/esp32-consensus/download":
                 content, filename = ESP32_CONSENSUS.download(args)
