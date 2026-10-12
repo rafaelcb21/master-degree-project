@@ -28,15 +28,9 @@ Pelo terminal: `python analyze_determinism.py`. Arquivos: `analysis/determinism/
 
 Abra **Análise consolidada** no menu lateral para consultar e filtrar a tabela salva. **Gerar / atualizar tabela** refaz `analysis/consolidated.csv` a partir das execuções desktop e ESP32; a navegação não refaz a consolidação. Baixe a tabela e o mapa das execuções na mesma página. Veja [as colunas e regras das fontes](../analysis/README.pt-BR.md). Pelo terminal: `python consolidate_reports.py` na raiz do projeto.
 
-## ESP32 pela USB (Windows / ESP-IDF 5.3.1)
+## ESP32 pelo terminal ESP-IDF
 
-1. Conecte o ESP32 por um cabo USB de dados. Feche o ESP-IDF Monitor e outros programas que usem a porta COM.
-2. Abra **ESP32 · USB** e clique em **Verificar conexão**. Selecione a porta e o projeto TFLite Micro ou WASM/AOT. Os botões ficam bloqueados sem uma porta detectada; o servidor verifica novamente ao iniciar e usa o esptool para confirmar um chip ESP32 clássico antes de compilar/gravar. Um adaptador serial não é considerado automaticamente uma placa ESP32.
-3. **Compilar e gravar** ativa o ESP-IDF, compila o projeto (`build-tflite` para TFLite, `build` para WASM), verifica novamente o chip e grava. **Reiniciar benchmark** executa o firmware já gravado, sem recompilar; selecione o projeto correspondente. O TFLite com checkpoints retoma o experimento atual; incremente `BENCHMARK_RUN_ID` e compile para começar da imagem 1. Firmwares sem persistência perdem os relatórios mantidos apenas na RAM ao reiniciar.
-4. Acompanhe a compilação e o monitor serial pela página. Mantenha o servidor aberto e o USB conectado durante a gravação. **Fechar monitor** libera a porta sem reiniciar deliberadamente a placa; não interrompe a inferência. Esse botão fica bloqueado durante compilação/gravação. Encerrar o servidor termina seus processos filhos, portanto não o feche durante a gravação.
-5. Com a importação automática habilitada, o site lê o IP nos logs e baixa os relatórios quando o firmware anuncia o servidor HTTP. Computador e placa ainda precisam se comunicar pela rede. Se a importação falhar, use **Importar do ESP32** para tentar novamente. Mantenha o monitor aberto para a importação automática funcionar.
-
-Os caminhos `esp32.idf_root`, `esp32.python` e `esp32.tools` em `web/config.json` indicam a instalação ESP-IDF. Os valores fornecidos usam `C:/Espressif` e ESP-IDF 5.3.1. Não é preciso abrir o terminal ESP-IDF: o servidor executa `export.ps1` e `idf.py` no mesmo ambiente filho do PowerShell. A página controla os projetos existentes; modelo, Wi-Fi e pré-processamento continuam definidos nos arquivos de cada firmware. A inicialização/reset pela USB depende do circuito de reset automático da placa; se o esptool não conseguir identificá-la, a operação falha com logs. O mesmo servidor bloqueia execuções desktop e USB simultâneas.
+Compile, grave e acompanhe a placa pelo terminal ESP-IDF. Consulte os guias de [TFLite Micro](../ESP32/cnn_tflite_esp32/README.pt-BR.md) e [WebAssembly / AOT](../ESP32/cnn_webassembly_esp32/README.pt-BR.md) para os comandos de cada projeto. Depois da execução, use **Importar do ESP32** na web para consultar os relatórios.
 
 ## Executar modelos no desktop
 

@@ -52,15 +52,9 @@ Then open http://127.0.0.1:8001. The server listens only on the local computer.
 
 ## Navigation
 
-### ESP32 over USB (Windows / ESP-IDF 5.3.1)
+### ESP32 from the ESP-IDF terminal
 
-1. Connect the ESP32 using a USB data cable. Close ESP-IDF Monitor or other programs using its COM port.
-2. Open **ESP32 · USB** and click **Check connection**. Select the port and the TFLite Micro or WASM/AOT project. No actions are enabled without a detected port; the server checks again when starting and uses esptool to confirm a classic ESP32 chip before building/flashing. Serial adapters are not assumed to be ESP32 boards.
-3. **Build and flash** activates ESP-IDF, builds the selected project (`build-tflite` for TFLite, `build` for WASM), checks the chip again, and flashes it. **Restart benchmark** skips compilation and flashing, and runs the firmware already on the board. Select the matching project. TFLite with checkpoints resumes the current experiment; increment `BENCHMARK_RUN_ID` and rebuild to start from image 1. Firmware without persistence loses reports held only in RAM after reset.
-4. Follow build output and serial logs on the page. Keep the server running and USB connected while flashing. **Close monitor** releases the serial port without deliberately resetting the board; it does not stop inference. The button is disabled during build/flash. Closing the server terminates its child processes, so do not close it during flashing.
-5. With automatic import enabled, the site reads the IP from serial logs and downloads reports when the firmware announces its HTTP server. The computer and board still need network connectivity. Failed imports can be retried with **Import from ESP32**. The serial monitor must remain open for automatic import.
-
-Configure `esp32.idf_root`, `esp32.python`, and `esp32.tools` in `web/config.json` for your ESP-IDF installation. The supplied values use `C:/Espressif` and ESP-IDF 5.3.1. No manual ESP-IDF terminal is required. The server runs PowerShell's `export.ps1` and `idf.py` in the same child environment. This controls the existing firmware projects; model, Wi-Fi and preprocessing settings still come from their source/configuration files. USB boot/reset requires the board's automatic reset circuit; if esptool cannot identify it, the operation fails with logs instead of proceeding. Desktop and USB executions cannot start concurrently within the same server.
+Build, flash and monitor the board from the ESP-IDF terminal. Follow the [TFLite Micro](../ESP32/cnn_tflite_esp32/README.md) or [WebAssembly / AOT](../ESP32/cnn_webassembly_esp32/README.md) project guide for the commands. After execution, use **Import from ESP32** in the web app to view the reports.
 
 ### Run desktop models
 

@@ -1,6 +1,5 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { esp32View } from './esp32-view';
 import { consolidationView } from './consolidation-view';
 import { determinismView } from './determinism-view';
 import { representativeView } from './representative-view';
@@ -64,7 +63,6 @@ function sidebar(view: string, selected = '') {
     <div class="sidebar-bottom"><div class="side-note">${icon('folder')}<span>Um projeto.<br><strong>Todas as descobertas.</strong></span></div><p>Python · WebAssembly · ESP32</p><div class="index-status"><i></i> Índice local atualizado</div></div>`;
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'execute' ? 'active' : ''}" href="#execute" ${view === 'execute' ? 'aria-current="page"' : ''}>${icon('chip')}${uiLanguage === 'en' ? 'Run models' : 'Executar modelos'}</a>`);
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'parameters' ? 'active' : ''}" href="#parameters" ${view === 'parameters' ? 'aria-current="page"' : ''}>${icon('chart')}${uiLanguage === 'en' ? 'TFLite parameters' : 'Parâmetros TFLite'}</a>`);
-  $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'esp32' ? 'active' : ''}" href="#esp32" ${view === 'esp32' ? 'aria-current="page"' : ''}>${icon('chip')}ESP32 · USB</a>`);
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view.startsWith('analysis') ? 'active' : ''}" href="#analysis">${icon('chart')}${uiLanguage === 'en' ? 'Consolidated analysis' : 'Análise consolidada'}</a>`);
   $('#sidebar nav').insertAdjacentHTML('afterend', `<div class="sidebar-caption">${uiLanguage === 'en' ? 'ANALYSES' : 'ANÁLISES'}</div><nav><a class="nav-item ${view === 'esp32-consensus' ? 'active' : ''}" href="#esp32-consensus">${icon('chart')}${uiLanguage === 'en' ? 'Representative reports · ESP32' : 'Relatórios representativos · ESP32'}</a><a class="nav-item ${view === 'comparisons' ? 'active' : ''}" href="#comparisons">${icon('chart')}${uiLanguage === 'en' ? 'Environment and runtime comparison' : 'Comparação entre ambientes e formatos'}</a><a class="nav-item ${view === 'determinism' ? 'active' : ''}" href="#determinism">${icon('chart')}${uiLanguage === 'en' ? 'Within-environment determinism' : 'Determinismo intra-ambiente'}</a></nav>`);
 }
@@ -295,7 +293,6 @@ async function render() {
     else if (view === 'reports' || view === 'documents') library(view, project);
     else if (view === 'execute') executionView(token);
     else if (view === 'parameters') await parametersView(() => generation === token);
-    else if (view === 'esp32') esp32View(() => generation === token, async () => { catalog = await api<Catalog>('/api/index'); });
     else if (view === 'analysis') await consolidationView(() => generation === token);
     else if (view === 'analysis-mobilenet') await consolidationView(() => generation === token, true);
     else if (view === 'determinism') await determinismView(() => generation === token);

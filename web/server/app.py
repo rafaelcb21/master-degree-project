@@ -12,7 +12,6 @@ from urllib.parse import parse_qs, unquote, urlsplit, quote
 from reports import parse_report
 from esp32_import import import_reports
 from executions import Executions
-from esp32_execution import ESP32Executions
 from consolidation import Consolidation
 from determinism import Determinism
 from representative_reports import ESP32Consensus
@@ -90,8 +89,6 @@ class Catalog:
 
 CATALOG = Catalog()
 EXECUTIONS = Executions(ROOT, CONFIG)
-ESP32 = ESP32Executions(ROOT, CONFIG)
-START_LOCK = threading.Lock()
 CONSOLIDATION = Consolidation(ROOT)
 MOBILENET_CONSOLIDATION = Consolidation(ROOT, mobilenet=True)
 DETERMINISM = Determinism(ROOT)
@@ -102,7 +99,7 @@ TFLITE_PARAMETERS = TFLiteParameters(ROOT, CONFIG)
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if self.path not in ("/api/tflite-parameters", "/api/tflite-parameters/upload", "/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation", "/api/analyses/determinism", "/api/analyses/esp32-consensus", "/api/analyses/comparisons"):
+        if self.path not in ("/api/tflite-parameters", "/api/tflite-parameters/upload", "/api/esp32/import", "/api/executions", "/api/consolidation", "/api/mobilenet-consolidation", "/api/analyses/determinism", "/api/analyses/esp32-consensus", "/api/analyses/comparisons"):
             self.json(404, {"error": "not_found"})
             return
         origin = self.headers.get("Origin")
@@ -137,20 +134,8 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == "/api/consolidation":
                 self.json(200, CONSOLIDATION.rebuild())
             elif self.path == "/api/executions":
-                with START_LOCK:
-                    if ESP32.busy():
-                        raise RuntimeError("execution_busy")
-                    result = EXECUTIONS.start(data.get("model"), data.get("runtime"))
+                result = EXECUTIONS.start(data.get("model"), data.get("runtime"))
                 self.json(202, result)
-            elif self.path == "/api/esp32/start":
-                with START_LOCK:
-                    desktop = EXECUTIONS.snapshot()["run"]
-                    if desktop and desktop["status"] == "running":
-                        raise RuntimeError("execution_busy")
-                    result = ESP32.start(data.get("runtime"), data.get("port"), data.get("action"), data.get("autoImport") is True)
-                self.json(202, result)
-            elif self.path == "/api/esp32/stop":
-                self.json(200, ESP32.stop_monitor())
             else:
                 result = import_reports(CATALOG.root, data.get("ip", ""), data.get("runtime", ""))
                 self.json(201, result)
@@ -213,13 +198,6 @@ class Handler(BaseHTTPRequestHandler):
                 self.json(200, CATALOG.scan())
             elif url.path == "/api/executions":
                 self.json(200, EXECUTIONS.snapshot())
-            elif url.path == "/api/esp32/status":
-                self.json(200, ESP32.snapshot())
-            elif url.path == "/api/esp32/ports":
-                try:
-                    self.json(200, {"ports": ESP32.ports()})
-                except (OSError, ValueError, TimeoutError) as error:
-                    self.json(200, {"ports": [], "error": str(error)})
             elif url.path == "/api/file":
                 entry, data = CATALOG.read(args.get("path", [""])[0])
                 if args.get("download") == ["1"]:
@@ -258,7 +236,6 @@ def main():
         pass
     finally:
         EXECUTIONS.close()
-        ESP32.close()
         server.server_close()
 
 
