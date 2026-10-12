@@ -17,6 +17,7 @@ from consolidation import Consolidation
 from determinism import Determinism
 from representative_reports import ESP32Consensus
 from comparisons import Comparisons
+from tflite_parameters import TFLiteParameters
 
 WEB = Path(__file__).resolve().parents[1]
 ROOT = WEB.parent
@@ -96,11 +97,12 @@ MOBILENET_CONSOLIDATION = Consolidation(ROOT, mobilenet=True)
 DETERMINISM = Determinism(ROOT)
 ESP32_CONSENSUS = ESP32Consensus(ROOT)
 COMPARISONS = Comparisons(ROOT)
+TFLITE_PARAMETERS = TFLiteParameters(ROOT, CONFIG)
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if self.path not in ("/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation", "/api/analyses/determinism", "/api/analyses/esp32-consensus", "/api/analyses/comparisons"):
+        if self.path not in ("/api/tflite-parameters", "/api/tflite-parameters/upload", "/api/esp32/import", "/api/executions", "/api/esp32/start", "/api/esp32/stop", "/api/consolidation", "/api/mobilenet-consolidation", "/api/analyses/determinism", "/api/analyses/esp32-consensus", "/api/analyses/comparisons"):
             self.json(404, {"error": "not_found"})
             return
         origin = self.headers.get("Origin")
@@ -109,12 +111,22 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
+            if self.path == "/api/tflite-parameters/upload":
+                if not 0 < length <= CONFIG["max_file_bytes"] or self.headers.get_content_type() != "application/octet-stream":
+                    raise ValueError("Arquivo vazio, tipo inválido ou limite de upload excedido.")
+                content = self.rfile.read(length)
+                if len(content) != length:
+                    raise ValueError("Upload incompleto.")
+                self.json(200, TFLITE_PARAMETERS.from_bytes(content, unquote(self.headers.get("X-Model-Name", "model.tflite"))))
+                return
             if not 0 < length <= 2048 or self.headers.get_content_type() != "application/json":
                 raise ValueError("invalid_request")
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError("invalid_request")
-            if self.path == "/api/analyses/comparisons":
+            if self.path == "/api/tflite-parameters":
+                self.json(200, TFLITE_PARAMETERS.from_path(data.get("path")))
+            elif self.path == "/api/analyses/comparisons":
                 self.json(200, COMPARISONS.rebuild(data.get('selections')))
             elif self.path == "/api/analyses/esp32-consensus":
                 self.json(200, ESP32_CONSENSUS.rebuild())
@@ -168,7 +180,11 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         args = parse_qs(url.query)
         try:
-            if url.path == "/api/analyses/comparisons":
+            if url.path == "/api/tflite-parameters/models":
+                self.json(200, TFLITE_PARAMETERS.models())
+            elif url.path == "/api/tflite-parameters/report":
+                self.json(200, TFLITE_PARAMETERS.query(args.get("path", [""])[0]))
+            elif url.path == "/api/analyses/comparisons":
                 self.json(200, COMPARISONS.query(args))
             elif url.path == "/api/analyses/comparisons/download":
                 filename = args.get('file', ['images.csv'])[0]

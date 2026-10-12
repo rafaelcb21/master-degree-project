@@ -1,5 +1,19 @@
 # Research Explorer
 
+## Parâmetros de modelos TFLite
+
+Relatórios gerados ficam salvos em `analysis/tflite-parameters/`. Ao trocar o select, a aplicação carrega o resultado salvo automaticamente e lembra a última seleção ao recarregar a página. Os relatórios de uploads aparecem no grupo **Enviados · relatórios salvos**, mesmo sem reenviar o arquivo. **Regerar relatório** atualiza a análise de um modelo do projeto. Se o conteúdo do modelo ou o analisador mudar, a aplicação solicita uma nova geração em vez de apresentar um relatório desatualizado. Os relatórios continuam disponíveis depois de reiniciar o servidor.
+
+A tabela usa cabeçalho fixo, linhas alternadas, números alinhados, totais destacados e barras de participação na soma por camadas. Clique no número de uma camada para abrir suas contas.
+
+Abra **Parâmetros TFLite** no menu lateral. Selecione um `.tflite` do projeto e clique em **Gerar relatório online**, ou escolha um arquivo no computador e clique em **Analisar arquivo enviado**. A análise roda no servidor local usando `.venv-models` (ou `runner_python.wasm`), com os pacotes `tflite` e `flatbuffers`, sem executar inferência. O limite é `max_file_bytes` de `web/config.json` (16 MiB por padrão); uploads são temporários.
+
+A tela mostra pesos, bias e outros parâmetros por operação, nomes e formas dos tensores, tipos, bytes e as multiplicações linha a linha. O total global conta buffers compartilhados uma única vez; a soma por camadas inclui a reutilização. Constantes auxiliares, ativações e metadados de quantização ficam fora do total de parâmetros identificados. Pesos FP16 com DEQUANTIZE são rastreados até o tensor armazenado. Tensores esparsos contam pela forma lógica, com bytes reais separados. Operações desconhecidas e parâmetros dinâmicos recebem observações: o total identificado pode ser parcial. O TFLite convertido pode fundir camadas e não informa quais parâmetros eram treináveis no modelo original.
+
+Baixe **HTML** para abrir o relatório completo fora do site (ou imprimir/salvar como PDF pelo navegador), **MD** para as contas em texto, **CSV** para a tabela detalhada ou **JSON** para todos os dados. A geração e o download não alteram os modelos.
+
+Pelo terminal: `.venv-models/Scripts/python.exe analyze_tflite_parameters.py models/drowsiness/model_int8_esp32.tflite --output report.json`.
+
 ## Determinismo intra-ambiente
 
 A tela abre no grupo com mais imagens divergentes. Cada barra representa uma imagem e permite selecionar máximo, média, mediana, P95 ou P99, em quantized ou scores. Clique na barra para ver os valores por execução, a classe predita, as estatísticas e uma explicação daquele caso. Barras laranja identificam troca de classe. As estatísticas agregadas ficam recolhidas ao final, como consulta complementar.

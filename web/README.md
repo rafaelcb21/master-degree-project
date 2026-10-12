@@ -1,5 +1,17 @@
 # Research Explorer
 
+## TFLite model parameters
+
+Generated reports persist in `analysis/tflite-parameters/`. Changing the model selector automatically loads a saved result, and page reloads restore the last selection. Uploaded reports remain selectable in **Uploaded · saved reports** without uploading the file again. **Regenerate report** refreshes a project model’s analysis. Changed model contents or analyzer code invalidate the project cache. Saved reports survive server restarts.
+
+The layer table has a sticky header, alternating rows, aligned numbers, highlighted totals and bars showing each layer’s share of the layer sum. Click a layer number to jump to its calculations.
+
+Open **TFLite parameters** in the sidebar. Select a project `.tflite` and click **Generate report online**, or select a file on your computer and click **Analyze uploaded file**. Inspection runs on the local server using `.venv-models` (or `runner_python.wasm`) with `tflite` and `flatbuffers`, without inference. Uploads are temporary and bounded by `max_file_bytes` in `web/config.json` (16 MiB by default).
+
+The report shows weights, bias and other identified parameters per operation, tensor names, shapes, types, stored bytes and dimension multiplications. The global total counts shared buffers once; the layer sum includes reuse. Auxiliary constants, activations and quantization metadata are excluded. FP16 weights are traced through DEQUANTIZE. Sparse tensors use logical shapes for counts and actual storage for bytes. Unknown operations and dynamic parameters carry notes, so the identified total may be partial. Converted TFLite operations may fuse original layers and do not establish which parameters were trainable.
+
+Download standalone **HTML** (also printable to PDF in a browser), **MD**, detailed **CSV**, or full **JSON**. Models are unchanged. CLI: `.venv-models/Scripts/python.exe analyze_tflite_parameters.py models/drowsiness/model_int8_esp32.tflite --output report.json`.
+
 ## Within-environment determinism
 
 The page opens on the group with the most divergent images. Each bar represents an image; select maximum, mean, median, P95 or P99 in quantized units or scores. Click a bar to inspect execution values, predicted classes, statistics and a plain-language explanation of that case. Orange bars identify class changes. Aggregate statistics are collapsed at the bottom for additional reference.

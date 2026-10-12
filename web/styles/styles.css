@@ -1894,3 +1894,41 @@ input[type=checkbox]
 .cmp-sides > div { min-width: 0; padding: 12px; background: #f0f6f2; border-radius: 8px; }
 .cmp-buckets { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
 @media(max-width:700px) { .cmp-sides { grid-template-columns: 1fr; } }
+/* TFLite parameter inspection */
+.parameter-panel { padding: 24px; margin-bottom: 20px; min-width: 0; }
+.parameter-panel label { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.parameter-panel select { max-width: min(650px, 100%); min-width: 0; width: 100%; }
+.parameter-panel input[type=file] { max-width: 100%; }
+.parameter-panel .table-scroll { overflow-x: auto; max-width: 100%; }
+.parameter-panel pre, .parameter-panel code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.parameter-layer { border-top: 1px solid var(--border, #dce3e1); padding: 16px 0; }
+.parameter-layer summary, .parameter-warning summary { cursor: pointer; font-weight: 600; }
+.parameter-tensor { padding: 12px; margin: 12px 0; background: #f3f7f5; border-radius: 8px; overflow-wrap: anywhere; }
+.parameter-tensor pre { margin-bottom: 0; }
+.parameter-downloads { flex-wrap: wrap; }
+.parameter-table-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.parameter-table-heading h2 { margin: 8px 0; }
+.parameter-table-heading p { margin-bottom: 0; }
+.parameter-count { flex-shrink: 0; padding: 7px 12px; background: #eef6f2; border: 1px solid #d5e8de; border-radius: 20px; font-size: 12px; color: #31705b; }
+.parameter-table-scroll { max-height: 580px; border: 1px solid #e0e9e4; border-radius: 12px; }
+.parameter-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.parameter-table th, .parameter-table td { padding: 14px 16px; border-bottom: 1px solid #eaf0ec; white-space: nowrap; }
+.parameter-table thead th { position: sticky; top: 0; z-index: 1; background: #eff5f1; color: #536d60; font-size: 11px; font-weight: 600; text-align: left; }
+.parameter-table .parameter-numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.parameter-table tbody tr:nth-child(even) { background: #fafcfb; }
+.parameter-table tbody tr:hover { background: #edf7f1; }
+.parameter-table .parameter-zero { color: #a3b1aa; }
+.parameter-table .parameter-total { font-weight: 700; color: #176b53; }
+.parameter-table tfoot th, .parameter-table tfoot td { background: #e9f3ed; border-bottom: 0; font-weight: 700; color: #245540; }
+.parameter-layer-link { display: flex; align-items: center; gap: 10px; color: #526a5d; }
+.parameter-layer-link small { font-size: 10px; }
+.parameter-index { padding: 5px 7px; border: 1px solid #dce7e0; border-radius: 6px; background: white; color: #536d60; font-size: 11px; font-variant-numeric: tabular-nums; }
+.parameter-op { display: inline-block; padding: 5px 8px; background: #f0f2f4; color: #61717c; border-radius: 5px; font-size: 10px; font-weight: 600; letter-spacing: .025em; }
+.parameter-op.convolution { background: #e5f3ed; color: #24765b; }
+.parameter-op.dense { background: #ebebfa; color: #65629b; }
+.parameter-share { min-width: 80px; font-size: 11px; color: #688171; }
+.parameter-share-track { height: 4px; background: #e3ede6; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.parameter-share-track i { display: block; height: 100%; background: #51a984; border-radius: inherit; }
+.parameter-layer { scroll-margin-top: 24px; }
+#parameters-error { color: #a53720; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .parameter-panel { padding: 16px; } .parameter-panel .toolbar { align-items: stretch; flex-direction: column; } .parameter-panel .toolbar label { flex: none; width: 100%; } }

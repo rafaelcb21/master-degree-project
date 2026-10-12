@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc --noEmit && esbuild src/app.ts --bundle --minify --format=esm --outfile=public/app.js",
     "watch": "esbuild src/app.ts --bundle --format=esm --outfile=public/app.js --watch",
-    "test:ui": "node tests/browser.mjs"
+    "test:ui": "node tests/browser.mjs",
+    "test:parameters": "node tests/parameters-browser.mjs"
   },
   "dependencies": {
     "dompurify": "^3.4.16",

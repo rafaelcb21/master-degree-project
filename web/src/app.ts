@@ -5,6 +5,7 @@ import { consolidationView } from './consolidation-view';
 import { determinismView } from './determinism-view';
 import { representativeView } from './representative-view';
 import { comparisonView } from './comparison-view';
+import { parametersView } from './parameters-view';
 import { language as uiLanguage, locale, setLanguage, t, localize } from './i18n';
 
 type Entry = { path: string; name: string; title: string; kind: 'document' | 'report'; project: string; folder: string; language: string; historical: boolean; size: number; modified: string; counterpart: string | null };
@@ -62,6 +63,7 @@ function sidebar(view: string, selected = '') {
     <nav class="project-nav">${projects().map(id => `<a class="nav-item ${selected === id ? 'selected' : ''}" href="${route(id === 'repository' || id === 'web' ? 'documents' : 'reports', { project: id })}"><span class="project-dot ${id.startsWith('ESP32') ? 'amber' : ''}"></span>${e(projectName(id))}</a>`).join('')}</nav>
     <div class="sidebar-bottom"><div class="side-note">${icon('folder')}<span>Um projeto.<br><strong>Todas as descobertas.</strong></span></div><p>Python · WebAssembly · ESP32</p><div class="index-status"><i></i> Índice local atualizado</div></div>`;
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'execute' ? 'active' : ''}" href="#execute" ${view === 'execute' ? 'aria-current="page"' : ''}>${icon('chip')}${uiLanguage === 'en' ? 'Run models' : 'Executar modelos'}</a>`);
+  $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'parameters' ? 'active' : ''}" href="#parameters" ${view === 'parameters' ? 'aria-current="page"' : ''}>${icon('chart')}${uiLanguage === 'en' ? 'TFLite parameters' : 'Parâmetros TFLite'}</a>`);
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view === 'esp32' ? 'active' : ''}" href="#esp32" ${view === 'esp32' ? 'aria-current="page"' : ''}>${icon('chip')}ESP32 · USB</a>`);
   $('#sidebar nav').insertAdjacentHTML('beforeend', `<a class="nav-item ${view.startsWith('analysis') ? 'active' : ''}" href="#analysis">${icon('chart')}${uiLanguage === 'en' ? 'Consolidated analysis' : 'Análise consolidada'}</a>`);
   $('#sidebar nav').insertAdjacentHTML('afterend', `<div class="sidebar-caption">${uiLanguage === 'en' ? 'ANALYSES' : 'ANÁLISES'}</div><nav><a class="nav-item ${view === 'esp32-consensus' ? 'active' : ''}" href="#esp32-consensus">${icon('chart')}${uiLanguage === 'en' ? 'Representative reports · ESP32' : 'Relatórios representativos · ESP32'}</a><a class="nav-item ${view === 'comparisons' ? 'active' : ''}" href="#comparisons">${icon('chart')}${uiLanguage === 'en' ? 'Environment and runtime comparison' : 'Comparação entre ambientes e formatos'}</a><a class="nav-item ${view === 'determinism' ? 'active' : ''}" href="#determinism">${icon('chart')}${uiLanguage === 'en' ? 'Within-environment determinism' : 'Determinismo intra-ambiente'}</a></nav>`);
@@ -292,6 +294,7 @@ async function render() {
     if (view === 'file') { $('#main').innerHTML = `<div class="loading">${t('Abrindo arquivo…')}</div>`; localize(); await openFile(params.get('path') ?? '', params.get('anchor') ?? '', token); }
     else if (view === 'reports' || view === 'documents') library(view, project);
     else if (view === 'execute') executionView(token);
+    else if (view === 'parameters') await parametersView(() => generation === token);
     else if (view === 'esp32') esp32View(() => generation === token, async () => { catalog = await api<Catalog>('/api/index'); });
     else if (view === 'analysis') await consolidationView(() => generation === token);
     else if (view === 'analysis-mobilenet') await consolidationView(() => generation === token, true);

@@ -1,0 +1,76 @@
+import { chromium, expect as baseExpect } from '@playwright/test';
+import { existsSync, readFileSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const url = process.env.EXPLORER_URL || 'http://127.0.0.1:8012';
+const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
+const browser = await chromium.launch({ headless: true, ...(existsSync(edge) ? { executablePath: edge } : {}) });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+const errors = [];
+const expect = baseExpect.configure({ timeout: 20000 });
+page.on('pageerror', error => errors.push(error.message));
+mkdirSync('test-results', { recursive: true });
+try {
+  await page.goto(url + '/#parameters');
+  await expect(page.locator('h1')).toHaveText('Parâmetros TFLite');
+  await expect(page.locator('#parameters-run')).toBeEnabled();
+  await page.locator('#parameters-model').selectOption('models/mobilenetv2_alpha035/mobilenetv2_alpha035_quant.tflite');
+  await page.locator('#parameters-run').click();
+  await expect(page.locator('#parameters-status')).toHaveText('Relatório pronto e salvo.', { timeout: 60000 });
+  await expect(page.locator('#parameters-result .metric').filter({ hasText: 'Parâmetros únicos' })).toContainText('1.670.088');
+  await expect(page.locator('.parameter-layer')).toHaveCount(67);
+  await page.locator('.parameter-summary').screenshot({ path: 'test-results/parameters-table.png' });
+  await page.screenshot({ path: 'test-results/parameters-desktop.png' });
+  for (const format of ['html', 'md', 'csv', 'json']) {
+    const waiting = page.waitForEvent('download');
+    await page.locator(`[data-parameter-download="${format}"]`).click();
+    const download = await waiting;
+    const path = `test-results/parameters-report.${format}`;
+    await download.saveAs(path);
+    const content = readFileSync(path, 'utf8');
+    expect(content).toContain('1670088');
+    if (format === 'json') expect(JSON.parse(content).totals.total).toBe(1670088);
+    if (format === 'html') expect(content).toContain('Contas, camada por camada');
+  }
+  await page.locator('#parameters-model').selectOption('models/drowsiness/model_int8_esp32.tflite');
+  await page.locator('#parameters-run').click();
+  await expect(page.locator('#parameters-status')).toHaveText('Relatório pronto e salvo.', { timeout: 60000 });
+  let postCount = 0;
+  page.on('request', request => { if (request.method() === 'POST' && request.url().includes('/api/tflite-parameters')) ++postCount; });
+  await page.locator('#parameters-model').selectOption('models/mobilenetv2_alpha035/mobilenetv2_alpha035_quant.tflite');
+  await expect(page.locator('#parameters-status')).toHaveText('Relatório salvo carregado.');
+  await expect(page.locator('#parameters-result .metric').filter({ hasText: 'Parâmetros únicos' })).toContainText('1.670.088');
+  await page.locator('#parameters-model').selectOption('models/drowsiness/model_int8_esp32.tflite');
+  await expect(page.locator('#parameters-status')).toHaveText('Relatório salvo carregado.');
+  await expect(page.locator('#parameters-result .metric').filter({ hasText: 'Parâmetros únicos' })).toContainText('391.650');
+  await page.reload();
+  await expect(page.locator('#parameters-status')).toHaveText('Relatório salvo carregado.');
+  await expect(page.locator('#parameters-model')).toHaveValue('models/drowsiness/model_int8_esp32.tflite');
+  expect(postCount).toBe(0);
+  const model = resolve('../models/drowsiness/model_int8_esp32.tflite');
+  await page.locator('#parameters-file').setInputFiles(model);
+  await page.locator('#parameters-upload').click();
+  await expect(page.locator('#parameters-status')).toHaveText('Relatório pronto e salvo.', { timeout: 60000 });
+  await expect(page.locator('#parameters-result h2').filter({ hasText: 'model_int8_esp32.tflite' })).toBeVisible();
+  const uploadValue = await page.locator('#parameters-model').inputValue();
+  expect(uploadValue).toMatch(/^saved:/);
+  await page.reload();
+  await expect(page.locator('#parameters-status')).toHaveText('Relatório salvo carregado.');
+  await expect(page.locator('#parameters-model')).toHaveValue(uploadValue);
+  const invalid = await page.request.post(url + '/api/tflite-parameters/upload', { headers: { 'Content-Type': 'application/octet-stream' }, data: Buffer.from('invalid') });
+  expect(invalid.status()).toBe(400);
+  const denied = await page.request.post(url + '/api/tflite-parameters', { data: { path: '../outside.tflite' } });
+  expect(denied.status()).toBe(400);
+  const crossSite = await page.request.post(url + '/api/tflite-parameters', { headers: { Origin: 'https://example.org' }, data: { path: 'models/drowsiness/model_int8_esp32.tflite' } });
+  expect(crossSite.status()).toBe(403);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/parameters-mobile.png', animations: 'disabled' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('#ui-language').click();
+  await expect(page.locator('h1')).toHaveText('TFLite parameters');
+  await expect(page.locator('#parameters-status')).toHaveText('Saved report loaded.');
+  expect(errors).toEqual([]);
+  console.log('Parameter UI passed: real models, upload, four downloads, validation, mobile and English.');
+} finally {
+  await browser.close();
+}
