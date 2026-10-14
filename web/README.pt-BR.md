@@ -1,5 +1,9 @@
 # Research Explorer
 
+## Metodologia experimental
+
+Abra **Metodologia experimental** no menu lateral para consultar o [relatório de versões, compilação, medição, imagens, memória, portabilidade e aquecimento](../analysis/experimental-method/report.pt-BR.md). A página distingue as evidências atuais dos registros históricos e permite baixar o Markdown em **Baixar original**. Os tamanhos e SHA-256 auditados ficam em [artifacts-report.json](../analysis/experimental-method/artifacts-report.json).
+
 ## Parâmetros de modelos TFLite
 
 Relatórios gerados ficam salvos em `analysis/tflite-parameters/`. Ao trocar o select, a aplicação carrega o resultado salvo automaticamente e lembra a última seleção ao recarregar a página. Os relatórios de uploads aparecem no grupo **Enviados · relatórios salvos**, mesmo sem reenviar o arquivo. **Regerar relatório** atualiza a análise de um modelo do projeto. Se o conteúdo do modelo ou o analisador mudar, a aplicação solicita uma nova geração em vez de apresentar um relatório desatualizado. Os relatórios continuam disponíveis depois de reiniciar o servidor.

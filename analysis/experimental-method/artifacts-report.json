@@ -1,0 +1,42 @@
+{
+  "scope": "Current filesystem artifacts, not proof of historical execution or flashed firmware",
+  "wasmtime_version": "49.0.0",
+  "artifacts": [
+    {
+      "path": "models/drowsiness/generated/model.wasm",
+      "bytes": 514564,
+      "sha256": "7634ca88b88c73bb3451e85fe59046c72dcf592322e2c3faf5ede25313c7ac2f"
+    },
+    {
+      "path": "models/mobilenetv2_alpha035/generated/model.wasm",
+      "bytes": 1807875,
+      "sha256": "84db5ad4e4c65a77327c8f40cdbac99352dcdd10691a48bbc3594603ff562cb2"
+    },
+    {
+      "path": "ESP32/cnn_webassembly_esp32/main/main.aot",
+      "bytes": 528564,
+      "sha256": "c1a1d9ec9f0428336f6f508e7640304b67a22c8bfca2dfc019e12fcd35646f78"
+    }
+  ],
+  "esp32_wat_reconverted": {
+    "path": "ESP32/cnn_webassembly_esp32/main/main.wat (reconverted in memory)",
+    "bytes": 514568,
+    "sha256": "d86e8dade226ce995e5450809d391ce1957fac005e3c99bb8f35c235239d7ff5"
+  },
+  "esp32_wat_reconverted_matches_desktop_wasm": false,
+  "desktop_wat_reconverted_matches_desktop_wasm": true,
+  "build_assembly_payload": {
+    "path": "ESP32/cnn_webassembly_esp32/build/main.aot.S (.byte payload)",
+    "bytes": 528564,
+    "sha256": "c1a1d9ec9f0428336f6f508e7640304b67a22c8bfca2dfc019e12fcd35646f78"
+  },
+  "build_assembly_matches_current_aot": true,
+  "esp32_main_wasm_exists": false,
+  "aot_memory": {
+    "flags": 0,
+    "page_bytes": 1114112,
+    "initial_pages": 1,
+    "maximum_pages": 1,
+    "initial_bytes": 1114112
+  }
+}
