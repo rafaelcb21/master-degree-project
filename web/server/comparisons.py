@@ -2,6 +2,7 @@
 from consolidate_reports import ROOT, LOCK, read_json, consolidate
 from compare_environments import analyze, options, agreement, agreement_files, PAIR_IDS, SOURCES
 from comparison_summaries import accuracy, summary_files, FILES
+from consistency_report import audit, consistency_files, FILES as CONSISTENCY_FILES
 
 
 class Comparisons:
@@ -24,6 +25,8 @@ class Comparisons:
                 for saved_pair in self.cached['pairs']:
                     saved_pair.update(agreement(saved_pair))
                 self.cached['accuracy'] = accuracy(self.cached)
+                self.cached['consistency'] = [{k: v for k, v in p.items() if k != 'details'}
+                                              for p in audit(self.cached)['pairs']]
                 self.signature = signature
             data = self.cached
             requested = args.get('pair', [PAIR_IDS[0]])[0]
@@ -48,6 +51,7 @@ class Comparisons:
             return dict(exists=True, generated_at=data['generated_at'], model=data['model'],
                 selected=data['selected'], options=data['options'], stale=stale,
                 accuracy=data['accuracy'],
+                consistency=data['consistency'],
                 pairs=[{key: value for key, value in p.items() if key != 'images'} for p in data['pairs']],
                 pair=pair['id'], images=items[(page-1)*25:page*25], matched=len(items), page=page, pages=pages)
 
@@ -60,9 +64,11 @@ class Comparisons:
             return self.query({})
 
     def download(self, filename):
-        if filename not in ['report.json', 'images.csv', 'summary.csv', 'agreement.csv', 'agreement.md'] + list(FILES) + [p+'.csv' for p in PAIR_IDS]:
+        if filename not in ['report.json', 'images.csv', 'summary.csv', 'agreement.csv', 'agreement.md'] + list(FILES) + list(CONSISTENCY_FILES) + [p+'.csv' for p in PAIR_IDS]:
             raise ValueError('Unknown comparison report')
         with LOCK:
+            if filename in CONSISTENCY_FILES:
+                return consistency_files(read_json(self.root / 'analysis/comparisons/report.json'))[filename]
             if filename in FILES:
                 return summary_files(read_json(self.root / 'analysis/comparisons/report.json'))[filename]
             if filename in ('agreement.csv', 'agreement.md'):

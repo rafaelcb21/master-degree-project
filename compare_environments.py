@@ -213,6 +213,8 @@ def analyze(root=ROOT, model='drowsiness', selections=None):
         payload = json.dumps(report, ensure_ascii=False, allow_nan=False, separators=(',', ':')).encode('utf-8')
         files, all_rows = agreement_files(report), []
         files.update(summary_files(report))
+        from consistency_report import consistency_files
+        files.update(consistency_files(report))
         for pair in report['pairs']:
             rows = list(export_rows(pair))
             files[pair['id']+'.csv'] = csv_bytes(list(rows[0]) if rows else [], rows)

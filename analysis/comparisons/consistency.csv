@@ -1,0 +1,7 @@
+﻿id;left;right;total;both_correct;both_incorrect;both_wrong_valid;left_only_correct;right_only_correct;same_valid_class;different_valid_class;any_no_prediction;both_no_prediction;left_no_prediction;right_no_prediction;same_category;different_category;identical_quantized_vectors;vector_comparable;unknown_or_conflicting_label;accuracy_difference_right_minus_left;category_agreement_pct;valid_class_agreement_pct;quantized_agreement_pct;previous_class_changes;previous_decision_changes
+wasm_esp32--tflite_esp32;wasm_esp32;tflite_esp32;2000;1964;8;7;2;26;1971;23;6;0;5;1;1971;29;1734;2000;0;24;98.55;98.84653961885657;86.7;23;29
+wasm_desktop--tflite_desktop;wasm_desktop;tflite_desktop;2000;1963;8;7;2;27;1970;23;7;0;5;2;1970;30;1737;2000;0;25;98.5;98.84596086302057;86.85;23;30
+wasm_esp32--tflite_desktop;wasm_esp32;tflite_desktop;2000;1963;7;6;3;27;1969;24;7;0;5;2;1969;31;1737;2000;0;24;98.45;98.7957852483693;86.85;24;31
+wasm_desktop--tflite_esp32;wasm_desktop;tflite_esp32;2000;1963;8;7;2;27;1970;24;6;0;5;1;1970;30;1734;2000;0;25;98.5;98.79638916750251;86.7;24;30
+wasm_esp32--wasm_desktop;wasm_esp32;wasm_desktop;2000;1965;34;29;1;0;1994;1;5;5;5;5;1999;1;1999;2000;0;-1;99.95;99.9498746867168;99.95;1;1
+tflite_desktop--tflite_esp32;tflite_desktop;tflite_esp32;2000;1988;8;7;2;2;1995;2;3;0;2;1;1995;5;1878;2000;0;0;99.75;99.89984977466199;93.9;2;5
