@@ -33,6 +33,41 @@ def metrics_for_rows(rows):
     return metrics
 
 
+def memory_metrics(text):
+    """Only explicit versioned fields may be labeled as internal SRAM."""
+    footer = "\n".join(line[1:] for line in text.splitlines() if line.startswith("#"))
+    fields = dict(re.findall(r"(?:^|\s)([a-z][a-z0-9_]*)=([^\s]+)", footer))
+    if fields.get("memory_report_schema") != "1":
+        return [], []
+    metrics = []
+    for key, label, unit in [
+        ("cpu_frequency_mhz", "Frequência da CPU", "MHz"),
+        ("internal_heap_total_bytes", "Heap interno total (8 bits)", "bytes"),
+        ("internal_heap_min_free_bytes", "Heap interno livre mínimo desde o boot", "bytes"),
+        ("internal_heap_used_bytes", "Heap interno ocupado ao final", "bytes"),
+        ("psram_total_bytes", "PSRAM total", "bytes"),
+        ("psram_min_free_bytes", "PSRAM livre mínima desde o boot", "bytes"),
+        ("psram_occupied_bytes", "PSRAM ocupada ao final", "bytes"),
+        ("sram_static_dram_bytes", "SRAM estática em DRAM", "bytes"),
+        ("sram_static_iram_bytes", "SRAM estática em IRAM (com alinhamento)", "bytes"),
+        ("flash_app_image_bytes", "Firmware na flash", "bytes"),
+        ("flash_app_partition_bytes", "Partição da aplicação", "bytes"),
+        ("flash_app_partition_used_pct", "Ocupação da partição da aplicação", "%"),
+        ("flash_spiffs_used_bytes", "SPIFFS ocupado", "bytes"),
+    ]:
+        value = number(fields.get(key))
+        if value is not None and value >= 0:
+            metrics.append({"label": label, "value": value, "unit": unit})
+    notes = [
+        "Heap interno: MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT. PSRAM: MALLOC_CAP_SPIRAM. Os campos legados heap_* usam MALLOC_CAP_DEFAULT e não representam somente SRAM interna.",
+        "Memória livre: heap_caps_get_free_size. Mínimos históricos por região desde o boot: heap_caps_get_minimum_free_size. Total: heap_caps_get_total_size. Maior bloco livre: heap_caps_get_largest_free_block.",
+        "A ocupação dinâmica é total menos livre, medida ao final da rodada antes do rodapé de memória e da liberação dos buffers. Inclui runtime, cache de imagens e relatório. Os mínimos históricos não são reiniciados a cada rodada.",
+        "SRAM estática: intervalos do linker para DRAM (.data, .bss, .noinit) e IRAM, incluindo alinhamento. Flash: esp_image_get_metadata na partição obtida por esp_ota_get_running_partition. A ocupação da aplicação não inclui bootloader, tabela de partições ou SPIFFS; SPIFFS só é medido quando montado.",
+        "No TFLite, linhas restauradas de checkpoints conservam as medições da execução original. O resumo de memória pertence ao boot e à rodada que publicaram este CSV.",
+    ]
+    return metrics, notes
+
+
 def parse_report(path, text):
     result = {"kind": "text", "metrics": [], "columns": [], "rows": [], "series": [], "regions": []}
     if path.suffix.lower() == ".csv":
@@ -43,10 +78,20 @@ def parse_report(path, text):
         try:
             reader = csv.DictReader(io.StringIO(text), dialect=dialect)
             columns = reader.fieldnames or []
-            rows = [{k: (v or "") for k, v in row.items() if k is not None} for row in reader]
+            rows = []
+            for row in reader:
+                # ESP32 footers are single-field comment records, not images.
+                first = columns[0] if columns else ""
+                if str(row.get(first) or "").startswith("#") and all(
+                        v in (None, "") for k, v in row.items() if k != first):
+                    continue
+                rows.append({k: (v or "") for k, v in row.items() if k is not None})
         except csv.Error:
             return result
         result.update(kind="csv", columns=columns, rows=rows, metrics=metrics_for_rows(rows))
+        memory, notes = memory_metrics(text)
+        result["metrics"].extend(memory)
+        result["memory_notes"] = notes
         for key, label in [("inference_ms", "Inferência"), ("download_ms", "Download")]:
             points = [{"x": i + 1, "y": number(r.get(key))} for i, r in enumerate(rows) if r.get("ok", "1") == "1" and number(r.get(key)) is not None and number(r.get(key)) >= 0]
             if points:

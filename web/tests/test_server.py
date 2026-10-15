@@ -58,6 +58,34 @@ class CatalogTests(unittest.TestCase):
 
 
 class ReportTests(unittest.TestCase):
+    def test_versioned_memory_report_separates_internal_heap_and_flash(self):
+        text = ("name_image,ok,right,inference_ms,internal_heap_before,internal_heap_after\n"
+                "a.raw,1,1,10,80000,79000\n\n"
+                "# memory_report_schema=1 cpu_frequency_mhz=160\n"
+                "# internal_heap_total_bytes=180000 internal_heap_min_free_bytes=70000 internal_heap_used_bytes=101000\n"
+                "# psram_total_bytes=4194304 psram_min_free_bytes=1313628 psram_occupied_bytes=2800000\n"
+                "# sram_static_dram_bytes=42452 sram_static_iram_bytes=106986\n"
+                "# flash_app_image_bytes=1824000 flash_app_partition_bytes=2097152 flash_app_partition_used_pct=86.98\n")
+        report = parse_report(Path("report.csv"), text)
+        self.assertEqual(len(report["rows"]), 1)
+        metrics = {item["label"]: item["value"] for item in report["metrics"]}
+        self.assertEqual(metrics["Registros"], 1)
+        self.assertEqual(metrics["Heap interno livre mínimo desde o boot"], 70000)
+        self.assertEqual(metrics["PSRAM livre mínima desde o boot"], 1313628)
+        self.assertEqual(metrics["Firmware na flash"], 1824000)
+        self.assertNotIn("SPIFFS ocupado", metrics)  # unavailable is not zero
+        self.assertTrue(any("heap_caps_get_minimum_free_size" in note for note in report["memory_notes"]))
+
+    def test_legacy_heap_is_not_reinterpreted_as_internal_sram(self):
+        report = parse_report(Path("report.csv"), "name_image,ok,inference_ms\na.raw,1,10\n\n# heap_min_free_bytes=1800000 psram_min_free_bytes=1700000\n")
+        self.assertEqual(len(report["rows"]), 1)
+        self.assertFalse(report["memory_notes"])
+        self.assertFalse(any("Heap interno" in item["label"] for item in report["metrics"]))
+
+    def test_hash_prefixed_image_name_is_not_a_footer(self):
+        report = parse_report(Path("report.csv"), "name_image,ok,inference_ms\n#image.raw,1,10\n")
+        self.assertEqual(report["rows"][0]["name_image"], "#image.raw")
+
     def test_csv_denominators_and_invalid_times(self):
         report = parse_report(Path("report.csv"), "name_image,ok,right,inference_ms,download_ms\na,1,1,10,2\nb,0,0,100,99\nc,1,0,20,4\nd,1,-1,nan,-1\n")
         metrics = {m["label"]: m["value"] for m in report["metrics"]}

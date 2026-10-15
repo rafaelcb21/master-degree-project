@@ -1,5 +1,9 @@
 # Research Explorer
 
+## Memory in new ESP32 reports
+
+CSVs with `memory_report_schema=1` display internal heap, PSRAM, static SRAM and application flash usage, together with measurement functions and scopes. Minima are historical since boot; legacy `heap_*` fields are not presented as internal SRAM. See the [shared collector documentation](../ESP32/common/README.md). Flash the updated firmware and run a new round to obtain these values. Older reports remain available without fabricated values for missing fields.
+
 ## Experimental methodology
 
 Open **Experimental methodology** in the sidebar to read the [report on versions, compilation, timing, images, memory, portability and warm-up](../analysis/experimental-method/report.md). The page distinguishes current evidence from historical records and provides the Markdown through **Download original**. Use **EN / PT** to switch between the complete English and Portuguese reports. Audited sizes and SHA-256 hashes are available in [artifacts-report.json](../analysis/experimental-method/artifacts-report.json).

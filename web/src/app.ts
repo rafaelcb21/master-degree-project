@@ -10,7 +10,7 @@ import { language as uiLanguage, locale, setLanguage, t, localize } from './i18n
 type Entry = { path: string; name: string; title: string; kind: 'document' | 'report'; project: string; folder: string; language: string; historical: boolean; size: number; modified: string; counterpart: string | null };
 type Row = Record<string, string | number | null>;
 type Metric = { label: string; value: number; unit?: string };
-type Report = { kind: string; metrics: Metric[]; columns: string[]; rows: Row[]; regions: Row[]; series: { label: string; unit: string; points: { x: number; y: number }[] }[] };
+type Report = { kind: string; metrics: Metric[]; columns: string[]; rows: Row[]; regions: Row[]; memory_notes?: string[]; series: { label: string; unit: string; points: { x: number; y: number }[] }[] };
 type Catalog = { entries: Entry[]; scannedAt: string; repository: string };
 type FileData = { entry: Entry; content: string; report: Report | null };
 
@@ -224,6 +224,7 @@ function reportView(data: FileData) {
   const report = data.report!;
   const images = [...new Set(report.rows.map(r => String(r.Imagem ?? '')))];
   $('#detail-body').innerHTML = metricCards(report.metrics) +
+    (report.memory_notes?.length ? `<section class="panel"><h2>${e(t('Medição de memória e flash'))}</h2>${report.memory_notes.map(note => `<p>${e(t(note))}</p>`).join('')}</section>` : '') +
     (report.kind === 'csv' && report.columns.includes('right') ? '<p class="metric-note">Acurácia calculada sobre registros bem-sucedidos com <code>right</code> igual a 0 ou 1. Tempos médios consideram execuções bem-sucedidas.</p>' : '') +
     (report.kind === 'inference' ? '<p class="metric-note">Acurácia calculada sobre as amostras com rótulo. Inválidos e empates permanecem nos registros, conforme o relatório original.</p>' : '') +
     (report.regions.length ? memoryChart(report.regions) : '') +

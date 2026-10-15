@@ -1,0 +1,167 @@
+\begin{table}[htbp]
+\centering
+\caption{Configurações utilizadas nos experimentos e respectivos tempos médios de inferência.}
+\label{tab:configuracoes-experimentos-wasm}
+
+\small
+\begin{tabularx}{\textwidth}{
+>{\raggedright\arraybackslash}p{2.3cm}
+>{\raggedright\arraybackslash}X
+>{\centering\arraybackslash}p{1.4cm}
+>{\centering\arraybackslash}p{1.6cm}
+>{\centering\arraybackslash}p{1.5cm}
+>{\centering\arraybackslash}p{1.8cm}
+}
+\toprule
+\textbf{Configuração} &
+\textbf{Plataforma / ambiente} &
+\textbf{CPU} &
+\textbf{Memória} &
+\textbf{Imagens} &
+\textbf{Tempo médio} \\
+\midrule
+
+WebAssembly interpretado &
+ESP32-CAM / WAMR &
+160 MHz &
+4 MB PSRAM &
+6 &
+144,019 s \\
+
+\addlinespace
+
+WebAssembly AOT &
+ESP32-CAM / WAMR &
+160 MHz &
+4 MB PSRAM &
+2.000 &
+9,591 s \\
+
+\addlinespace
+
+WebAssembly AOT &
+ESP32-CAM / WAMR &
+240 MHz &
+4 MB PSRAM &
+2.000 &
+6,195 s \\
+
+\addlinespace
+
+WebAssembly desktop &
+Windows x64 / Node.js v22.19.0 &
+- MHz\textsuperscript{*} &
+15,74 GB RAM &
+2.000 &
+0,041 s \\
+
+\bottomrule
+\end{tabularx}
+
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Tempos de inferência e aceleração das configurações avaliadas.}
+\label{tab:tempos-inferencia-aceleracao}
+
+\begin{tabular}{
+l
+r
+r
+r
+r
+}
+\toprule
+\textbf{Configuração} &
+\textbf{Média} &
+\textbf{Mínimo} &
+\textbf{Máximo} &
+\textbf{Aceleração} \\
+\midrule
+
+Interpretado, 160 MHz &
+144,019 s &
+143,891 s &
+144,436 s &
+1,00$\times$ \\
+
+\addlinespace
+
+AOT, 160 MHz &
+9,591 s &
+9,576 s &
+9,613 s &
+15,02$\times$ \\
+
+\addlinespace
+
+AOT, 240 MHz &
+6,195 s &
+6,189 s &
+6,202 s &
+23,25$\times$ \\
+
+\addlinespace
+
+Desktop &
+0,041 s &
+0,036 s &
+0,170 s &
+3479,56$\times$ \\
+
+\addlinespace
+
+\shortstack[l]{TFLM + ESP-NN,\\ESP32-CAM, 240 MHz} &
+$\approx 1{,}7$ s &
+--- &
+--- &
+--- \\
+
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+
+\small \textbf{Fonte:} Elaborado pelo autor.
+
+\par\smallskip
+\begin{minipage}{\textwidth}
+\small \textbf{Nota:} A linha TFLM com ESP-NN apresenta o tempo aproximado informado para a execução do mesmo modelo no ESP32-CAM a 240~MHz. Não estão disponíveis, para essa medição, mínimo, máximo ou estatísticas de dispersão; por isso, esses campos e a aceleração não são preenchidos. A diferença em relação ao WASM AOT caracteriza o desempenho relativo de implementações com kernels e otimizações distintos, sem isolar o custo exclusivo da portabilidade.
+\end{minipage}
+
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Acurácia das implementações avaliadas.}
+\label{tab:acuracia-configuracoes}
+
+\small
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Configuração} &
+\textbf{Acertos} &
+\textbf{Erros} &
+\textbf{Sem predição} &
+\textbf{Acurácia} \\
+\midrule
+
+WASM ESP32-CAM &
+1.966 & 29 & 5 & 98,30\% \\
+
+WASM desktop &
+1.965 & 30 & 5 & 98,25\% \\
+
+TFLite ESP32-CAM &
+1.990 & 9 & 1 & 99,50\% \\
+
+TFLite desktop &
+1.990 & 8 & 2 & 99,50\% \\
+
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+\small \textbf{Fonte:} Elaborado pelo autor.
+\end{table}

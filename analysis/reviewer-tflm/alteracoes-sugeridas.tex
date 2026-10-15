@@ -1,0 +1,69 @@
+% Item 7(a) do parecer — trechos para integrar à dissertação.
+% Fonte única TFLM: coleta 20261009T120557541292Z, 2.000 imagens.
+% Não compilar este arquivo isoladamente: são alternativas/trechos de integração.
+
+% 1. Em tab:tempos-inferencia-aceleracao (Tabela 5.2), SUBSTITUIR a linha
+% TFLM aproximada já existente. Não adicionar uma segunda linha para o runtime.
+\shortstack[l]{TFLM + ESP-NN,\\ESP32-CAM, 240 MHz} &
+1,777 s &
+1,761 s &
+1,793 s &
+81,06$\times$ \\
+
+% 2. SUBSTITUIR a nota atual da Tabela 5.2, que diz não haver mínimo/máximo.
+\begin{minipage}{\textwidth}
+\small \textbf{Nota:} Os valores de TFLM com ESP-NN foram calculados sobre
+2.000 imagens da coleta \texttt{20261009T120557541292Z}. O tempo inclui a
+preparação da entrada e a execução de \texttt{Invoke}, excluindo download,
+gravação de checkpoints e leitura da saída. A aceleração de 81,06$\times$
+utiliza a referência interpretada a 160~MHz da tabela e é uma razão
+descritiva entre cenários com frequências e tamanhos de amostra diferentes.
+A comparação de latência entre WASM AOT e TFLM a 240~MHz não isola o custo
+exclusivo da portabilidade, pois os kernels e as otimizações diferem.
+\end{minipage}
+
+% Alternativa: se a coluna de aceleração for reservada às estratégias WAMR,
+% usar --- no lugar de 81,06$\times$ e explicar essa delimitação na nota.
+
+% 3. Em tab:acuracia-configuracoes (Tabela 5.3), SUBSTITUIR a linha
+% "TFLite ESP32-CAM". Os valores numéricos permanecem iguais.
+\shortstack[l]{TFLM + ESP-NN,\\ESP32-CAM, 240 MHz} &
+1.990 & 9 & 1 & 99,50\% \\
+
+% 4. Acrescentar junto à Tabela 5.3.
+Os resultados de TFLM com ESP-NN nas
+Tabelas~\ref{tab:tempos-inferencia-aceleracao}
+e~\ref{tab:acuracia-configuracoes} utilizam a mesma coleta,
+identificada por \texttt{20261009T120557541292Z}.
+Foram processadas 2.000 imagens sem falhas de processamento, com
+1.990 acertos, nove predições válidas incorretas e um empate.
+O empate foi contabilizado como ocorrência sem predição válida e
+como não correto no cálculo da acurácia, cujo denominador é 2.000.
+
+% 5. SUBSTITUIR o parágrafo comparativo que usa apenas "aproximadamente 1,7".
+A comparação de desempenho com uma referência embarcada utilizou
+o mesmo modelo de sonolência no ESP32-CAM a 240~MHz, executado com
+TensorFlow Lite Micro, componente versão 1.3.5, e ESP-NN habilitado.
+O tempo médio foi de 1,776715~s por imagem, com mínimo de 1,760819~s
+e máximo de 1,792774~s. O intervalo compreende a preparação da entrada
+e a execução de \texttt{Invoke}, excluindo download, gravação de
+checkpoints e leitura da saída. Não houve aquecimento explícito,
+conforme o metadata da coleta.
+Em comparação com os 6,195~s do WASM AOT a 240~MHz apresentados na
+Tabela~\ref{tab:tempos-inferencia-aceleracao}, a latência média do
+TFLM foi aproximadamente 3,49 vezes menor. Essa razão caracteriza
+o desempenho relativo das implementações avaliadas, sem isolar
+um custo exclusivo de portabilidade, pois diferem os kernels,
+as otimizações e a organização da execução. A comparação entre
+interpretação e AOT do WAMR a 160~MHz permanece a avaliação específica
+do efeito da estratégia de execução WebAssembly no mesmo hardware
+e frequência.
+
+% 6. Opcional: acrescentar também a configuração à Tabela 5.1
+% (tab:configuracoes-experimentos-wasm), cujo formato possui seis colunas.
+TFLM + ESP-NN &
+ESP32-CAM / TFLM 1.3.5 &
+240 MHz &
+4 MiB PSRAM &
+2.000 &
+1,777 s \\

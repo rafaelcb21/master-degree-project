@@ -44,6 +44,7 @@
 #include "host_config.h"
 #include "image_list.h"
 #include "image_cache.h"
+#include "benchmark_memory.h"
 
 #define TAG "tflite_benchmark"
 #define TAG_HTTP "HTTP_SERVER"
@@ -74,6 +75,8 @@ typedef struct {
     size_t heap_after;
     size_t psram_before;
     size_t psram_after;
+    size_t internal_heap_before;
+    size_t internal_heap_after;
     size_t stack_min_free_bytes;
     unsigned recovery_attempts;
     int recovery_skipped;
@@ -256,6 +259,7 @@ static void process_image(size_t index, report_row_t *row, uint8_t *img_buf) {
              (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
     row->heap_before = esp_get_free_heap_size();
     row->psram_before = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    row->internal_heap_before = benchmark_internal_free();
     int64_t t0 = esp_timer_get_time();
     bool prepared = model_prepare_input(img_buf, INPUT_BYTES);
     int64_t t1 = esp_timer_get_time();
@@ -266,6 +270,7 @@ static void process_image(size_t index, report_row_t *row, uint8_t *img_buf) {
     row->inference_us = t2 - t0; /* Includes RGB conversion, as the WASM run does. */
     row->heap_after = esp_get_free_heap_size();
     row->psram_after = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    row->internal_heap_after = benchmark_internal_free();
     ESP_LOGI(TAG, "Invoke retornou: %s | sucesso=%d | preprocess=%.3f ms invoke=%.3f ms",
              row->name_image, invoked, row->preprocess_us / 1000.0, row->invoke_us / 1000.0);
     row->stack_min_free_bytes = uxTaskGetStackHighWaterMark(NULL);
@@ -320,7 +325,7 @@ static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
     report_append("name_image,ok");
     for (int c = 0; c < NUM_CLASSES; ++c) report_append(",class_%d_raw", c);
     report_append(",result,label,right,download_ms,inference_ms,heap_before,heap_after,"
-                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes,preprocess_ms,invoke_ms,arena_reserved_bytes,arena_used_bytes,input_sha256,recovery_attempts,recovery_skipped\n");
+                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes,preprocess_ms,invoke_ms,arena_reserved_bytes,arena_used_bytes,input_sha256,recovery_attempts,recovery_skipped,internal_heap_before,internal_heap_after\n");
 
     size_t success = 0, errors = 0, labeled = 0, correct = 0, invalid = 0;
     int64_t sum_us = 0, min_us = INT64_MAX, max_us = 0, sum_download_us = 0;
@@ -370,13 +375,14 @@ static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
         }
         size_t heap_used = row->heap_before > row->heap_after ? row->heap_before - row->heap_after : 0;
         size_t psram_used = row->psram_before > row->psram_after ? row->psram_before - row->psram_after : 0;
-        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%u,%u,%s,%u,%d\n",
+        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%u,%u,%s,%u,%d,%u,%u\n",
                       row->result, row->label, row->right,
                       row->download_us / 1000.0, row->inference_us / 1000.0,
                       (unsigned)row->heap_before, (unsigned)row->heap_after, (unsigned)heap_used,
                       (unsigned)row->psram_before, (unsigned)row->psram_after, (unsigned)psram_used,
                       (unsigned)row->stack_min_free_bytes, row->preprocess_us / 1000.0, row->invoke_us / 1000.0,
-                      (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), row->input_sha256, row->recovery_attempts, row->recovery_skipped);
+                      (unsigned)TENSOR_ARENA_BYTES, (unsigned)model_arena_used_bytes(), row->input_sha256, row->recovery_attempts, row->recovery_skipped,
+                      (unsigned)row->internal_heap_before, (unsigned)row->internal_heap_after);
         if (g_report_failed) break;
         ++g_processed;
         g_recovery_skipped += row->recovery_skipped;
@@ -415,6 +421,7 @@ static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
     ESP_LOGI(TAG, "Checkpoint: confirmados=%u/%u restaurados=%u", (unsigned)cp_next, (unsigned)NUM_IMAGES, (unsigned)g_resumed);
     if (g_report_failed) ESP_LOGE(TAG, "Benchmark incompleto; resultados confirmados permanecem na flash");
     g_success = success; g_errors = errors; g_labeled = labeled; g_correct = correct; g_invalid = invalid;
+    if (!g_report_failed) benchmark_memory_report(report_append);
     heap_caps_free(row);
     heap_caps_free(img_buf);
     heap_caps_free(cp_record);

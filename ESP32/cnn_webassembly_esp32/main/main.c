@@ -40,6 +40,7 @@
 #include "host_config.h"
 #include "image_list.h"
 #include "image_cache.h"
+#include "benchmark_memory.h"
 
 #define TAG "wasm_benchmark"
 #define TAG_HTTP "HTTP_SERVER"
@@ -65,6 +66,8 @@ typedef struct {
     size_t heap_after;
     size_t psram_before;
     size_t psram_after;
+    size_t internal_heap_before;
+    size_t internal_heap_after;
     size_t stack_min_free_bytes;
 } report_row_t;
 
@@ -172,7 +175,7 @@ extern const uint8_t model_wasm_end[] asm("_binary_main_wasm_end");
 static void *psram_malloc(unsigned int size) {
     void *ptr = heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
     if (!ptr) {
-        ESP_LOGW(TAG, "PSRAM sem espaco para %u bytes, caindo para heap interna", size);
+        ESP_LOGW(TAG, "PSRAM sem espaco para %u bytes, tentando alocador padrao", size);
         ptr = malloc(size);
     }
     return ptr;
@@ -181,7 +184,7 @@ static void *psram_malloc(unsigned int size) {
 static void *psram_realloc(void *ptr, unsigned int size) {
     void *new_ptr = heap_caps_realloc(ptr, size, MALLOC_CAP_SPIRAM);
     if (!new_ptr) {
-        ESP_LOGW(TAG, "PSRAM sem espaco para realloc de %u bytes, caindo para heap interna", size);
+        ESP_LOGW(TAG, "PSRAM sem espaco para realloc de %u bytes, tentando alocador padrao", size);
         new_ptr = realloc(ptr, size);
     }
     return new_ptr;
@@ -293,7 +296,7 @@ static bool initialize_wasm_runtime(void) {
 
     g_wasm_file_buf = (uint8_t *)heap_caps_malloc(wasm_file_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!g_wasm_file_buf) {
-        ESP_LOGW(TAG, "Falha ao alocar buffer do WASM na PSRAM; tentando heap interna");
+        ESP_LOGW(TAG, "Falha ao alocar buffer do WASM na PSRAM; tentando alocador padrao");
         g_wasm_file_buf = (uint8_t *)malloc(wasm_file_size);
     }
     if (!g_wasm_file_buf) {
@@ -523,11 +526,13 @@ static void process_image(size_t index, report_row_t *row, uint8_t *img_buf) {
 
     row->heap_before = esp_get_free_heap_size();
     row->psram_before = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    row->internal_heap_before = benchmark_internal_free();
     int64_t t0 = esp_timer_get_time();
     int32_t status = call_wasm_i32(WASM_RUN_EXPORT);
     row->inference_us = esp_timer_get_time() - t0;
     row->heap_after = esp_get_free_heap_size();
     row->psram_after = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    row->internal_heap_after = benchmark_internal_free();
     /* ESP-IDF informa o high-water mark em bytes. */
     row->stack_min_free_bytes = uxTaskGetStackHighWaterMark(NULL);
     if (status != INFERENCE_SUCCESS_CODE) {
@@ -586,7 +591,7 @@ static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
     report_append("name_image,ok");
     for (int c = 0; c < NUM_CLASSES; ++c) report_append(",class_%d_raw", c);
     report_append(",result,label,right,download_ms,inference_ms,heap_before,heap_after,"
-                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes\n");
+                  "heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes,internal_heap_before,internal_heap_after\n");
 
     size_t success = 0, errors = 0, labeled = 0, correct = 0, invalid = 0;
     int64_t sum_us = 0, min_us = INT64_MAX, max_us = 0, sum_download_us = 0;
@@ -601,12 +606,13 @@ static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
         }
         size_t heap_used = row->heap_before > row->heap_after ? row->heap_before - row->heap_after : 0;
         size_t psram_used = row->psram_before > row->psram_after ? row->psram_before - row->psram_after : 0;
-        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u\n",
+        report_append(",%d,%d,%d,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u\n",
                       row->result, row->label, row->right,
                       row->download_us / 1000.0, row->inference_us / 1000.0,
                       (unsigned)row->heap_before, (unsigned)row->heap_after, (unsigned)heap_used,
                       (unsigned)row->psram_before, (unsigned)row->psram_after, (unsigned)psram_used,
-                      (unsigned)row->stack_min_free_bytes);
+                      (unsigned)row->stack_min_free_bytes,
+                      (unsigned)row->internal_heap_before, (unsigned)row->internal_heap_after);
         if (!row->ok) {
             ++errors;
             ESP_LOGE(TAG, "Falha: %s", row->name_image);
@@ -639,6 +645,7 @@ static bool run_benchmark(unsigned round, unsigned repetitions, bool persist) {
                   (unsigned)esp_get_minimum_free_heap_size(),
                   (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM),
                   (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
+    benchmark_memory_report(report_append);
     heap_caps_free(row);
     heap_caps_free(img_buf);
     if (!publish_report()) return false;
@@ -744,7 +751,7 @@ static void *benchmark_thread_main(void *arg) {
 
     extend_task_wdt_for_benchmark();
 
-    ESP_LOGI(TAG, "Heap (interna) livre antes do benchmark: %u bytes", (unsigned)esp_get_free_heap_size());
+    ESP_LOGI(TAG, "Heap padrao livre antes do benchmark (pode incluir PSRAM): %u bytes", (unsigned)esp_get_free_heap_size());
     ESP_LOGI(TAG, "PSRAM total: %u bytes | PSRAM livre antes do benchmark: %u bytes",
              (unsigned)heap_caps_get_total_size(MALLOC_CAP_SPIRAM),
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));

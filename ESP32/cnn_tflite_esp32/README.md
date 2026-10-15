@@ -2,6 +2,8 @@
 
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
+New CSV reports include [separate internal SRAM, PSRAM and flash metrics](../common/README.md), with measurement functions and scopes. Build and flash the updated firmware before collecting new results; older checkpoints have a different identity.
+
 This independent ESP-IDF project runs an original `.tflite` model on ESP32 with **TensorFlow Lite Micro**, downloads RAW inputs from Cloudinary, and serves CSV results for comparison with the [WASM/AOT host](../cnn_webassembly_esp32/README.md). The default model is Drowsiness, 128×128 RGB input and two output classes.
 
 ## What changed from the copied host

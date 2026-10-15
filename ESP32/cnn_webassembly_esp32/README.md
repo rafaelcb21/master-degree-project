@@ -2,6 +2,8 @@
 
 [English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
+New CSV reports include [separate internal SRAM, PSRAM and flash metrics](../common/README.md), with measurement functions and scopes. Build and flash the updated firmware before collecting new results.
+
 > **WASM → AOT in WSL:** [README_AOT_WSL.md](README_AOT_WSL.md).
 > Step-by-step instructions covering project versions, Xtensa LLVM, wamrc, firmware, and troubleshooting.
 > Configure the host and image list with [HOST.md](HOST.md).

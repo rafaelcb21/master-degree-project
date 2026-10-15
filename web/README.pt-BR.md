@@ -1,5 +1,9 @@
 # Research Explorer
 
+## Memória nos novos relatórios ESP32
+
+Os CSVs com `memory_report_schema=1` exibem métricas de heap interno, PSRAM, SRAM estática e ocupação da aplicação na flash, além das funções e escopos de medição. Os mínimos são históricos desde o boot; os campos legados `heap_*` não são apresentados como SRAM interna. Veja a [documentação do coletor dos dois firmwares](../ESP32/common/README.pt-BR.md). É necessário gravar o firmware atualizado e executar uma nova rodada. Relatórios antigos continuam disponíveis sem valores inventados para campos ausentes.
+
 ## Metodologia experimental
 
 Abra **Metodologia experimental** no menu lateral para consultar o [relatório de versões, compilação, medição, imagens, memória, portabilidade e aquecimento](../analysis/experimental-method/report.pt-BR.md). A página distingue as evidências atuais dos registros históricos e permite baixar o Markdown em **Baixar original**. Use **EN / PT** para alternar entre os relatórios completos em inglês e português. Os tamanhos e SHA-256 auditados ficam em [artifacts-report.json](../analysis/experimental-method/artifacts-report.json).

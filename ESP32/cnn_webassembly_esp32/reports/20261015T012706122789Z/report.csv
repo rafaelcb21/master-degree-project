@@ -1,0 +1,48 @@
+name_image,ok,class_0_raw,class_1_raw,result,label,right,download_ms,inference_ms,heap_before,heap_after,heap_used,psram_before,psram_after,psram_used,stack_min_free_bytes,internal_heap_before,internal_heap_after
+"a0062_fqmvyz.raw",1,30,225,0,0,1,0.000,9105.110,1413212,1413204,8,1313620,1313620,0,13076,108211,108203
+"a0082_wdddcd.raw",1,0,255,0,0,1,0.000,9107.878,1412968,1412976,0,1313620,1313620,0,13076,107967,107975
+"a0231_dfkgjq.raw",1,68,187,0,0,1,0.000,9129.472,1412976,1412976,0,1313620,1313620,0,13076,107975,107975
+"a0283_ed9ybp.raw",1,0,255,0,0,1,0.000,9104.669,1412976,1412976,0,1313620,1313620,0,13076,107975,107975
+"a0332_mlywvc.raw",1,0,255,0,0,1,0.000,9115.430,1412976,1412976,0,1313620,1313620,0,13076,107975,107975
+"a0423_q0gp9y.raw",1,12,243,0,0,1,0.000,9122.520,1412976,1412996,0,1313620,1313620,0,13076,107975,107995
+"a0456_jbbytw.raw",1,0,255,0,0,1,0.000,9100.378,1412976,1412996,0,1313620,1313620,0,13076,107975,107995
+"a0544_d9bjli.raw",1,1,254,0,0,1,0.000,9107.801,1412996,1412996,0,1313620,1313620,0,13076,107995,107995
+"a0592_bpzfci.raw",1,0,255,0,0,1,0.000,9111.899,1412996,1412996,0,1313620,1313620,0,13076,107995,107995
+"a0663_gya6lx.raw",1,1,254,0,0,1,0.000,9111.062,1412996,1412996,0,1313620,1313620,0,13076,107995,107995
+"a0711_rewvuv.raw",1,1,254,0,0,1,0.000,9119.788,1412996,1412996,0,1313620,1313620,0,13076,107995,107995
+"a0739_e3ferw.raw",1,4,251,0,0,1,0.000,9109.961,1412996,1413844,0,1313620,1313620,0,13076,107995,108843
+"a0755_unt17r.raw",1,4,251,0,0,1,0.000,9113.484,1413844,1416592,0,1313620,1313620,0,13076,108843,111591
+"a0852_t8myv6.raw",1,0,255,0,0,1,0.000,9105.289,1416592,1417248,0,1313620,1313620,0,13076,111591,112247
+"a0881_ljtvq1.raw",1,12,243,0,0,1,0.000,9109.992,1417248,1417248,0,1313620,1313620,0,13076,112247,112247
+"a0892_trop1o.raw",1,0,255,0,0,1,0.000,9109.645,1417248,1417248,0,1313620,1313620,0,13076,112247,112247
+"a0933_ddzhlj.raw",1,4,251,0,0,1,0.000,9100.948,1417248,1417248,0,1313620,1313620,0,13076,112247,112247
+"a0950_xtmcwu.raw",1,0,255,0,0,1,0.000,9100.886,1417248,1417248,0,1313620,1313620,0,13076,112247,112247
+"a0959_cbmjkb.raw",1,68,187,0,0,1,0.000,9099.157,1417228,1417248,0,1313620,1313620,0,13076,112227,112247
+"a0969_o4uupq.raw",1,68,187,0,0,1,0.000,9113.280,1417248,1417256,0,1313620,1313620,0,13076,112247,112255
+
+# round=1 repetitions=1 persist=nao
+# total=20 sucesso=20 erros=0 empates=0
+# rotuladas_com_sucesso=20 acertos=20
+# accuracy_pct=100.000
+# inference_avg_ms=9109.932 inference_min_ms=9099.157 inference_max_ms=9129.472
+# download_avg_ms=0.000
+# heap_min_free_bytes=1380648 psram_min_free_bytes=1313620 psram_total_bytes=4194304
+
+# memory_report_schema=1 cpu_frequency_mhz=160
+# memory_snapshot_scope=end_of_round_before_memory_footer_and_buffer_release
+# memory_minimum_scope=since_boot_per_region_low_watermarks
+# internal_heap_caps=MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT psram_caps=MALLOC_CAP_SPIRAM
+# memory_free_function=heap_caps_get_free_size memory_minimum_function=heap_caps_get_minimum_free_size
+# memory_total_function=heap_caps_get_total_size memory_largest_function=heap_caps_get_largest_free_block
+# legacy_heap_caps=MALLOC_CAP_DEFAULT legacy_heap_is_internal_only=0
+# internal_heap_total_bytes=322263 internal_heap_free_bytes=112255 internal_heap_used_bytes=210008 internal_heap_min_free_bytes=67035 internal_heap_largest_free_block_bytes=73728
+# psram_total_bytes=4194304 psram_free_bytes=1313620 psram_occupied_bytes=2880684 psram_min_free_bytes=1313620 psram_largest_free_block_bytes=1310720
+# sram_static_dram_data_bytes=23036 sram_static_dram_bss_bytes=19416 sram_static_dram_noinit_bytes=0 sram_static_dram_bytes=42452 sram_static_iram_bytes=107040
+# sram_static_source=linker_ranges_including_padding
+# flash_size_bytes=4194304
+# flash_image_function=esp_image_get_metadata flash_partition_function=esp_ota_get_running_partition
+# flash_app_partition_bytes=2097152
+# flash_app_image_metadata_ok=1
+# flash_app_image_bytes=1829888 flash_app_partition_free_bytes=267264 flash_app_partition_used_pct=87.256
+# flash_spiffs_usage_available=0
+# flash_scope=running_application_partition_spiffs_separate_not_total_chip_occupation

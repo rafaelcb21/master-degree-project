@@ -1,8 +1,9 @@
 idf_component_register(
     SRCS "main.c" "image_cache.c" "tflite_runtime.cpp" "${CMAKE_CURRENT_BINARY_DIR}/model_data.S"
     INCLUDE_DIRS "."
+    PRIV_INCLUDE_DIRS "../../common"
     REQUIRES esp_wifi esp_event esp_netif nvs_flash esp_psram esp_http_server esp_http_client
-             mbedtls esp-tls esp_timer esp_system spiffs pthread esp-tflite-micro
+             mbedtls esp-tls esp_timer esp_system spiffs pthread esp-tflite-micro app_update bootloader_support spi_flash esp_hw_support
 )
 
 set(TFLITE_MODEL_FILE "${CMAKE_CURRENT_LIST_DIR}/../model_int8_esp32.tflite" CACHE FILEPATH "TFLite model embedded in firmware")
@@ -28,6 +29,9 @@ foreach(source main.c host_config.h checkpoint.inc benchmark_session.inc image_c
     string(APPEND CHECKPOINT_SOURCE_HASHES "${SOURCE_HASH}")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/${source}")
 endforeach()
+file(SHA256 "${CMAKE_CURRENT_LIST_DIR}/../../common/benchmark_memory.h" MEMORY_REPORT_HASH)
+string(APPEND CHECKPOINT_SOURCE_HASHES "${MEMORY_REPORT_HASH}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/../../common/benchmark_memory.h")
 foreach(source "${CMAKE_SOURCE_DIR}/sdkconfig" "${CMAKE_SOURCE_DIR}/dependencies.lock")
     if(EXISTS "${source}")
         file(SHA256 "${source}" SOURCE_HASH)

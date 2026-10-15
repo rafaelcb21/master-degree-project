@@ -1,0 +1,172 @@
+{
+  "audit_date": "2026-10-15",
+  "method": "Read-only Decimal statistics from successful raw CSV rows; accuracy uses all rows",
+  "runs": {
+    "20261008T215503505222Z": {
+      "source": "ESP32/cnn_tflite_esp32/reports/20261008T215503505222Z",
+      "stats": {
+        "rows": 2000,
+        "successful": 2000,
+        "failed": 0,
+        "correct": 1990,
+        "valid_wrong": 9,
+        "without_valid_prediction": 1,
+        "accuracy_pct_all_rows": "99.5",
+        "class_counts": {
+          "1": 1000,
+          "0": 1000
+        },
+        "mean_ms": "1779.7058455",
+        "min_ms": "1759.206",
+        "max_ms": "1791.081",
+        "mean_seconds": "1.7797058455",
+        "preprocess_mean_ms": "11.7837435",
+        "invoke_mean_ms": "1767.922102",
+        "resumed_rows_with_attempts_gt_1": 0,
+        "input_hashes_recorded": 2000
+      },
+      "metadata": {
+        "runtime": "TensorFlow Lite Micro",
+        "component_version": "1.3.5",
+        "kernels": "ESP-NN enabled",
+        "model_sha256": "b4521f926f0133355f970f237ca2c372af36dcae5265766a5f42f717954f02b0",
+        "image_list_sha256": "6142b754a31efd07649ad0fd16216acf17983b1b7eb2b2a77c4601243f5bd5ca",
+        "idf_version": "v5.3.1-dirty",
+        "input_format": 1,
+        "width": 128,
+        "height": 128,
+        "classes": 2,
+        "output_type": "uint8",
+        "output_scale": 0.00390625,
+        "output_zero_point": 0,
+        "arena_reserved_bytes": 1048576,
+        "arena_used_bytes": 312380,
+        "cpu_mhz": 240,
+        "total": 2000,
+        "success": 2000,
+        "errors": 0,
+        "labeled": 2000,
+        "correct": 1990,
+        "ties": 1,
+        "processed": 2000,
+        "resumed": 0,
+        "recovery_skipped": 0,
+        "checkpoint_run_id": 1,
+        "warmup_runs": 0,
+        "inference_ms_scope": "prepare_input + Invoke; download, checkpoint and output reading excluded",
+        "heap_scope": "free heap across capabilities; PSRAM also reported separately"
+      },
+      "csv_identity": {
+        "bytes": 384376,
+        "sha256": "34c946efa58f26a96d7ed116e38ab4a01aad93002e796c33b0176cbee243e54c"
+      },
+      "metadata_identity": {
+        "bytes": 822,
+        "sha256": "a7192a88dd9f84fb31d291f6e143b99fe05f1665e6883350e534d3f3439e24b1"
+      }
+    },
+    "20261009T120557541292Z": {
+      "source": "ESP32/cnn_tflite_esp32/reports/20261009T120557541292Z",
+      "stats": {
+        "rows": 2000,
+        "successful": 2000,
+        "failed": 0,
+        "correct": 1990,
+        "valid_wrong": 9,
+        "without_valid_prediction": 1,
+        "accuracy_pct_all_rows": "99.5",
+        "class_counts": {
+          "1": 1000,
+          "0": 1000
+        },
+        "mean_ms": "1776.7145665",
+        "min_ms": "1760.819",
+        "max_ms": "1792.774",
+        "mean_seconds": "1.7767145665",
+        "preprocess_mean_ms": "11.7326165",
+        "invoke_mean_ms": "1764.98195",
+        "resumed_rows_with_attempts_gt_1": 0,
+        "input_hashes_recorded": 2000
+      },
+      "metadata": {
+        "runtime": "TensorFlow Lite Micro",
+        "component_version": "1.3.5",
+        "kernels": "ESP-NN enabled",
+        "model_sha256": "b4521f926f0133355f970f237ca2c372af36dcae5265766a5f42f717954f02b0",
+        "image_list_sha256": "6142b754a31efd07649ad0fd16216acf17983b1b7eb2b2a77c4601243f5bd5ca",
+        "idf_version": "v5.3.1-dirty",
+        "input_format": 1,
+        "width": 128,
+        "height": 128,
+        "classes": 2,
+        "output_type": "uint8",
+        "output_scale": 0.00390625,
+        "output_zero_point": 0,
+        "arena_reserved_bytes": 1048576,
+        "arena_used_bytes": 312380,
+        "cpu_mhz": 240,
+        "total": 2000,
+        "success": 2000,
+        "errors": 0,
+        "labeled": 2000,
+        "correct": 1990,
+        "ties": 1,
+        "processed": 2000,
+        "resumed": 0,
+        "recovery_skipped": 0,
+        "checkpoint_run_id": 2,
+        "warmup_runs": 0,
+        "inference_ms_scope": "prepare_input + Invoke; download, checkpoint and output reading excluded",
+        "heap_scope": "free heap across capabilities; PSRAM also reported separately"
+      },
+      "csv_identity": {
+        "bytes": 384392,
+        "sha256": "315281d10ac4cb369bead77faef47d4ff788ab85c1a4416e59275ebda4afbeae"
+      },
+      "metadata_identity": {
+        "bytes": 822,
+        "sha256": "1ec223db5d33be36f64f1ced05734d1d40aaf900efd5c87f7b1c62ede0687aa0"
+      }
+    }
+  },
+  "between_complete_runs": {
+    "common_images": 2000,
+    "same_labels": 2000,
+    "same_input_sha256": 2000,
+    "same_predictions": 2000,
+    "same_output_vectors": 1996
+  },
+  "representative_accuracy": {
+    "source": "analysis/esp32_consensus/drowsiness/tflite/report.csv",
+    "identity": {
+      "bytes": 524234,
+      "sha256": "a2dcff74aaf1ba779a3e5d31e3c4b844924bcbed5e75ba45758af5d3914801ab"
+    },
+    "rows": 2000,
+    "correct": 1990,
+    "without_valid_prediction": 1,
+    "selected_source_counts": {
+      "ESP32/cnn_tflite_esp32/reports/20261008T215503505222Z/report.csv": 1999,
+      "ESP32/cnn_tflite_esp32/reports/20261009T120557541292Z/report.csv": 1
+    },
+    "same_predictions_vs_selected_raw_run": 2000
+  },
+  "current_model": {
+    "source": "models/drowsiness/model_int8_esp32.tflite",
+    "bytes": 618376,
+    "sha256": "b4521f926f0133355f970f237ca2c372af36dcae5265766a5f42f717954f02b0"
+  },
+  "selected_run": "20261009T120557541292Z",
+  "contextual_ratios_using_rounded_thesis_wasm_times": {
+    "interpreted_160_seconds": "144.019",
+    "aot_240_seconds": "6.195",
+    "interpreted_divided_by_selected_tflm": "81.05916544811532618230492793",
+    "aot_240_divided_by_selected_tflm": "3.486772786584231564580916605"
+  },
+  "dissertation_examined": {
+    "path": "C:\\Users\\rafae\\Downloads\\latex-mestrado-2\\Dissertacao_Rafael_Braga_UNICO.tex",
+    "bytes": 309407,
+    "sha256": "125c2e7c114359fae467ed06781e62b366ec72981a02c48ac4d260e6e48ea67e",
+    "modified": false
+  }
+}
