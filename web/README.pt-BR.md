@@ -2,7 +2,7 @@
 
 ## Metodologia experimental
 
-Abra **Metodologia experimental** no menu lateral para consultar o [relatório de versões, compilação, medição, imagens, memória, portabilidade e aquecimento](../analysis/experimental-method/report.pt-BR.md). A página distingue as evidências atuais dos registros históricos e permite baixar o Markdown em **Baixar original**. Os tamanhos e SHA-256 auditados ficam em [artifacts-report.json](../analysis/experimental-method/artifacts-report.json).
+Abra **Metodologia experimental** no menu lateral para consultar o [relatório de versões, compilação, medição, imagens, memória, portabilidade e aquecimento](../analysis/experimental-method/report.pt-BR.md). A página distingue as evidências atuais dos registros históricos e permite baixar o Markdown em **Baixar original**. Use **EN / PT** para alternar entre os relatórios completos em inglês e português. Os tamanhos e SHA-256 auditados ficam em [artifacts-report.json](../analysis/experimental-method/artifacts-report.json).
 
 ## Parâmetros de modelos TFLite
 

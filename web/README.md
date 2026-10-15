@@ -1,5 +1,9 @@
 # Research Explorer
 
+## Experimental methodology
+
+Open **Experimental methodology** in the sidebar to read the [report on versions, compilation, timing, images, memory, portability and warm-up](../analysis/experimental-method/report.md). The page distinguishes current evidence from historical records and provides the Markdown through **Download original**. Use **EN / PT** to switch between the complete English and Portuguese reports. Audited sizes and SHA-256 hashes are available in [artifacts-report.json](../analysis/experimental-method/artifacts-report.json).
+
 ## TFLite model parameters
 
 Generated reports persist in `analysis/tflite-parameters/`. Changing the model selector automatically loads a saved result, and page reloads restore the last selection. Uploaded reports remain selectable in **Uploaded · saved reports** without uploading the file again. **Regenerate report** refreshes a project model’s analysis. Changed model contents or analyzer code invalidate the project cache. Saved reports survive server restarts.

@@ -10,6 +10,8 @@ This guide explains how to prepare the **wamrc** compiler in Ubuntu/WSL, convert
 
 ## Contents
 
+For the next collection, use the [provenance generator](../../analysis/aot-provenance/README.md) for compilation: it preserves the WASM and records the wamrc executable, command, log and AOT SHA-256. The manual commands below remain useful for preparing the environment, but do not automatically generate that manifest.
+
 1. [Understand the workflow](#1-understand-the-workflow)
 2. [Check project versions](#2-check-project-versions)
 3. [Prepare WSL](#3-prepare-wsl)
@@ -321,7 +323,7 @@ The input must be a **binary WASM**, not renamed WAT text. This guide starts wit
 
 `-fp` disables generation with the Xtensa backend's floating-point coprocessor option. It does not mean every ESP32 lacks an FPU. If you change this choice for an experiment, record it with the results.
 
-The command follows the options in the [existing AOT script](main/build_aot_windows.ps1). That PowerShell script expects `wamrc.exe` and uses old artifact names; **it is not the script run in this WSL procedure**.
+The command follows the options in the original AOT script. The [updated Windows script](main/build_aot_windows.ps1) now calls the provenance generator and preserves the existing artifact; **it is not the script run in this manual WSL procedure**.
 
 The command omits `--target-abi=ilp32`: this guide uses that compiler's default for Xtensa rather than carrying over an unnecessary historical option.
 It also omits `--enable-multi-thread`: the C host's pthread does not require threads inside the WebAssembly module. If the WASM itself uses shared memory/atomics, both compiler and runtime must be configured for that contract.

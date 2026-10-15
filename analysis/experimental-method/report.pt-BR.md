@@ -1,5 +1,7 @@
 # Relatório de metodologia experimental e rastreabilidade — WASM / ESP32-CAM
 
+[English](report.md) | [Português (Brasil)](report.pt-BR.md)
+
 Data da auditoria: **14/10/2026**. Revisão consultada: `4804169`, com os arquivos presentes no workspace nessa data.
 
 Este relatório responde aos itens (a)–(g) para o estudo de caso **drowsiness**. Inclui a memória do MobileNetV2 α0,35 como comparação. A auditoria foi feita por leitura de código, configuração, registros de build, dissertação e cálculo dos hashes locais. Não foram executados novos benchmarks nem gravado firmware na placa.
@@ -11,11 +13,11 @@ Este relatório responde aos itens (a)–(g) para o estudo de caso **drowsiness*
 | Item | Resultado | Alcance da evidência |
 |---|---|---|
 | a — versões e interpretador | WAMR `1.3.2~2`; ESP-IDF `5.3.1`; interpretador **rápido** habilitado. Node.js `v22.19.0` consta na dissertação e está instalado hoje. | Lock, configuração e build locais; Node histórico registrado no texto, sem log do benchmark. |
-| b — compilação | Registro de `wamrc`: Xtensa, CPU ESP32, ABI ILP32, otimização 3 e tamanho 3. Bounds checks não explicitados no comando; habilitados por padrão para 32 bits no código do compilador consultado. WAT → WASM atual: `wasmtime.wat2wasm`, pacote `49.0.0`. | Não foi recuperado um manifesto que vincule o AOT atual ao executável exato de `wamrc` e ao WASM de origem. |
+| b — compilação | **Procedimento, versão e WASM de origem confirmados pelo autor:** geração AOT em WSL em outro computador seguindo o README; WASM original de 510.943 bytes, com SHA-256 identificado. Destino Xtensa/ESP32, `--cpu-features=-fp`, otimização 3 e tamanho 3; bounds checks automáticos para 32 bits nessa revisão. WAT → WASM atual: `wasmtime.wat2wasm`, pacote `49.0.0`. | Procedimento e uso do WASM informados pelo autor; identidade das duas cópias verificada por SHA-256 e comparação byte a byte. Não há manifesto contemporâneo da compilação. |
 | c — tempo | ESP32: `esp_timer_get_time()` antes/depois da chamada exportada. Inclui RGB565 → RGB888; exclui rede e cópia da entrada. | Confirmado no host e no WAT atuais. Temporizador do experimento Node não recuperado. |
 | d — imagens e câmera | Arquivos RAW entregues por Wi-Fi/HTTPS; cache opcional em SPIFFS ou PSRAM. O host atual não captura imagens da câmera. | Caminho implementado confirmado; justificativa metodológica sugerida abaixo, a validar pelo autor. |
 | e — tamanhos e memória | Drowsiness WASM: **514.564 bytes**; AOT: **528.564 bytes**; memória linear: **1.114.112 bytes**. Alocador do ESP32 prioriza PSRAM. | Artefatos atuais; há fallback de alocação. Não é uma medição do consumo total de RAM. |
-| f — mesmo WASM | **Não comprovado para as execuções históricas.** Hashes locais calculados; `main/main.wasm` do ESP32 está ausente. Recompilar seu WAT atual não reproduz o WASM do desktop. | Não confundir igualdade de modelo ou resultados com identidade binária. |
+| f — mesmo WASM | **Cópias originais dos projetos desktop e ESP32 idênticas byte a byte:** 510.943 bytes, SHA-256 `b2f2b2369a341031caec99530c3277499949712336c52d7a1ab5f2f70ee8ac13`. O autor confirmou esse arquivo como entrada da geração AOT. | Identidade das cópias verificada; uso na compilação confirmado pelo autor. Os arquivos atuais regenerados são distintos desses originais. |
 | g — aquecimento | **Não foi possível determinar se a chamada de 0,170 s foi descartada**, nem se era a primeira chamada. | O pipeline WASM atual não mede latência e não contém descarte de warm-up. |
 
 ## a) Versões dos ambientes e modo de execução
@@ -36,6 +38,27 @@ As opções relevantes são `CONFIG_WAMR_ENABLE_INTERP=y`, `CONFIG_WAMR_INTERP_F
 O [CMake do host](../../ESP32/cnn_webassembly_esp32/main/CMakeLists.txt) incorpora `main.aot` quando esse arquivo existe; caso contrário, seleciona `main.wasm`. No build local preservado, `compile_commands.json` e `main.aot.S` indicam incorporação de AOT. Isso comprova a seleção no build local, não a identidade do firmware gravado em cada experimento.
 
 ## b) Opções de compilação
+
+**Confirmação do autor em 14/10/2026:** a geração AOT da coleta foi realizada em **WSL em outro computador**, seguindo integralmente o [README de geração AOT](../../ESP32/cnn_webassembly_esp32/README_AOT_WSL.pt-BR.md), inclusive a versão/revisão indicada. O procedimento e a versão são, portanto, registrados como **confirmados pelo relato do autor**. A revisão WAMR indicada é `12a42fde353e72ae1aa7c117e3d395340ab37413`, compatível com o componente embarcado `1.3.2~2`.
+
+O comando seguido na etapa de geração, conforme o guia, foi:
+
+```bash
+"$WAMRC" \
+    --target=xtensa \
+    --cpu=esp32 \
+    --cpu-features=-fp \
+    --opt-level=3 \
+    --size-level=3 \
+    -o "$ESP_PROJECT/main/main.aot.new" \
+    "$ESP_PROJECT/main/main.wasm"
+```
+
+O guia não passa `--target-abi` nem `--bounds-checks` explicitamente. O comando histórico abaixo é um registro adicional, distinto da confirmação de execução do procedimento do README.
+
+**Atualização do item b:** o autor disponibilizou duas cópias preservadas do WASM original e confirmou que esse arquivo foi utilizado para gerar o AOT. Ambas possuem 510.943 bytes e SHA-256 `b2f2b2369a341031caec99530c3277499949712336c52d7a1ab5f2f70ee8ac13`, com igualdade byte a byte verificada. Assim, o WASM de origem está identificado; a associação à compilação é sustentada pela confirmação do autor. Não foi recuperado um manifesto contemporâneo da geração.
+
+Foi implementado o [fluxo com manifesto de proveniência](../aot-provenance/README.pt-BR.md) para novas compilações. A tentativa Windows feita nesta auditoria falhou por ausência de suporte Xtensa **neste computador**; ela não caracteriza o ambiente WSL utilizado na coleta. A indisponibilidade desse ambiente nesta máquina não invalida a confirmação do autor.
 
 ### Registro de wamrc encontrado
 
@@ -59,11 +82,11 @@ O [comando.txt](../../ESP32/cnn_webassembly_esp32/main/comando.txt) preserva est
 | Formato de saída | AoT file |
 | Bounds checks | Não explicitado no comando |
 
-No código local do compilador, `wamr-compiler/main.c` inicializa a opção de bounds checks em modo automático; `core/iwasm/compilation/aot_llvm.c` habilita as verificações de memória por padrão em alvos de 32 bits. **Se o binário usado corresponder a essa revisão, o comando registrado mantém bounds checks habilitados para Xtensa/ESP32.** Essa é uma inferência do código e do comando, não um parâmetro recuperado do AOT nem uma verificação do executável histórico.
+No código da revisão indicada, `wamr-compiler/main.c` inicializa a opção de bounds checks em modo automático; `core/iwasm/compilation/aot_llvm.c` habilita as verificações de memória por padrão em alvos de 32 bits. **O comando do guia mantém bounds checks habilitados por padrão para Xtensa/ESP32 nessa revisão.** Essa conclusão decorre do código e das opções do procedimento confirmado pelo autor; não é um parâmetro recuperado do AOT nem uma inspeção do executável utilizado no outro computador.
 
-Existe também um [script Windows](../../ESP32/cnn_webassembly_esp32/main/build_aot_windows.ps1) com `--target=xtensa --cpu=esp32 --cpu-features=-fp --opt-level=3 --size-level=3`. Ele aponta para nomes `rust_drowsiness_trucker.wasm/.aot`; sua presença não comprova que foi utilizado para gerar `main.aot`. O [guia AOT](../../ESP32/cnn_webassembly_esp32/README_AOT_WSL.pt-BR.md) contém instruções de reprodução, que também não devem ser confundidas com logs da coleta.
+Na versão inicialmente auditada, o script Windows continha `--target=xtensa --cpu=esp32 --cpu-features=-fp --opt-level=3 --size-level=3` e nomes `rust_drowsiness_trucker.wasm/.aot`; sua presença não comprova que foi utilizado para gerar `main.aot`. O [script atualizado](../../ESP32/cnn_webassembly_esp32/main/build_aot_windows.ps1) agora chama o gerador de proveniência e preserva o AOT existente. O [guia AOT](../../ESP32/cnn_webassembly_esp32/README_AOT_WSL.pt-BR.md) contém instruções de reprodução, que também não devem ser confundidas com logs da coleta.
 
-Não foi encontrado um registro que vincule, simultaneamente, hash do executável `wamrc`, revisão do LLVM, comando completo, hash do WASM de entrada e hash do AOT atual. A versão do runtime embarcado não identifica automaticamente a versão do compilador AOT utilizado.
+O procedimento, a revisão do compilador e o uso do WASM original como entrada estão confirmados pelo relato do autor. O hash desse WASM foi calculado sobre as cópias preservadas. Não há manifesto histórico que tenha registrado simultaneamente os hashes de entrada, compilador e AOT; um manifesto futuro documentará a nova execução, sem constituir um registro contemporâneo da coleta antiga.
 
 ### Conversão WAT → WASM
 
@@ -178,6 +201,27 @@ O host prioriza PSRAM, mas possui fallback; não é rigoroso afirmar que toda al
 
 ## f) Identidade do WASM e prova de portabilidade
 
+### Identificação do WASM original da coleta
+
+O autor forneceu os seguintes arquivos preservados:
+
+| Cópia | Caminho | Bytes |
+|---|---|---:|
+| Projeto desktop | `C:/Users/rafae/Downloads/modelos/wasm-project/project_predict/main.wasm` | 510.943 |
+| Projeto ESP32 | `C:/Users/rafae/Downloads/dev/MESTRADO/github_repository/cnn_webassembly_esp32/main/main.wasm.txt` | 510.943 |
+
+Os dois arquivos são **idênticos byte a byte** e possuem o mesmo SHA-256:
+
+```text
+b2f2b2369a341031caec99530c3277499949712336c52d7a1ab5f2f70ee8ac13
+```
+
+Apesar da extensão `.txt`, a segunda cópia contém um binário WebAssembly, com cabeçalho `00 61 73 6D 01 00 00 00`. O autor confirmou que esse arquivo foi usado como entrada para a geração AOT no outro computador. A igualdade das cópias foi verificada diretamente; a identificação do arquivo utilizado na compilação decorre da confirmação do autor. Ver [registro dos arquivos originais](original-wasm-report.json).
+
+**Texto para a dissertação:**
+
+> A geração do artefato AOT utilizou como entrada o arquivo original `main.wasm`, de 510.943 bytes, conforme confirmado pelo autor. A identidade das cópias preservadas nos projetos desktop e ESP32 foi verificada por comparação byte a byte e pelo resumo criptográfico SHA-256 `b2f2b2369a341031caec99530c3277499949712336c52d7a1ab5f2f70ee8ac13`, obtendo-se igualdade integral. A compilação foi realizada em WSL em outro computador, seguindo o procedimento e a revisão WAMR especificados no README do projeto. Dessa forma, identifica-se o módulo WebAssembly de origem do artefato AOT e documenta-se a correspondência entre as duas cópias do módulo. O hash foi calculado posteriormente sobre os arquivos preservados; não foi recuperado um manifesto contemporâneo da compilação.
+
 ### SHA-256 dos artefatos locais
 
 | Artefato | SHA-256 |
@@ -191,7 +235,7 @@ A reconversão do WAT da pasta ESP32 produziu **514.568 bytes**, enquanto o WASM
 
 O arquivo `ESP32/cnn_webassembly_esp32/main/main.wasm` **não existe no workspace atual**. O payload `.byte` de `build/main.aot.S` foi reconstruído e possui exatamente o hash do `main.aot` atual. Isso confirma a correspondência entre AOT e fonte assembly do build local, sem comprovar qual WASM originou o AOT nem qual firmware rodou na placa nas coletas.
 
-**Conclusão: não há evidência suficiente para confirmar que o desktop histórico executou o mesmo arquivo `.wasm` usado no ESP32.** O código atual aponta para o WASM de `models/drowsiness/generated/`, mas os relatórios históricos não preservam um hash do módulo executado em ambas as plataformas.
+**Conclusão atualizada:** as cópias originais dos projetos desktop e ESP32 são binariamente idênticas, e o autor confirmou o arquivo como entrada da geração AOT. Os hashes dos artefatos regenerados atualmente não devem ser usados para identificar esse WASM original. A igualdade das cópias documenta o compartilhamento do módulo entre os projetos; os relatórios antigos não registram hashes em tempo de execução que permitam auditar independentemente qual arquivo foi carregado em cada chamada.
 
 Para sustentar essa afirmação em uma nova coleta, devem ser preservados:
 
@@ -231,7 +275,7 @@ Para uma nova medição, registrar separadamente carregamento/compilação/insta
 | Temporizador e fronteiras do Node histórico | Script executado e comandos/opções do Node |
 | Warm-up e descarte | Código de aquecimento e sequência original de tempos |
 | Identidade binária entre plataformas | WASM usado em cada coleta, hashes e manifesto de execução |
-| Proveniência do AOT | WASM de origem, versão/hash do wamrc, LLVM e comando completo |
+| Registro contemporâneo da geração AOT | WASM de origem identificado por SHA-256 e uso confirmado pelo autor; manifesto automático de compilação não foi recuperado |
 | Memória física efetivamente usada | Log de alocação/endereço ou instrumentação da coleta |
 | Motivo original de não usar câmera | Confirmação metodológica do autor |
 

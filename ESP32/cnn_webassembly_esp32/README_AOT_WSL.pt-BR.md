@@ -16,6 +16,8 @@ ESP32-C3/C6. Este procedimento é independente do pipeline Python.
 
 ## Índice
 
+Para a próxima coleta, use o [gerador de proveniência](../../analysis/aot-provenance/README.pt-BR.md) na etapa de compilação: ele preserva o WASM e registra o executável wamrc, comando, log e SHA-256 do AOT. Os comandos manuais abaixo continuam úteis para preparar o ambiente, mas não geram esse manifesto automaticamente.
+
 1. [Entenda o fluxo](#1-entenda-o-fluxo)
 2. [Confirme as versões do projeto](#2-confirme-as-versões-do-projeto)
 3. [Prepare o WSL](#3-prepare-o-wsl)
@@ -371,10 +373,10 @@ Este guia começa com `main.wasm` já gerado.
 do backend Xtensa. Não significa que todos os ESP32 sejam desprovidos de FPU.
 Se mudar essa escolha para um experimento, registre-a junto aos resultados.
 
-O comando acompanha as opções do
-[script AOT já presente](main/build_aot_windows.ps1). Esse script PowerShell
-espera um `wamrc.exe` e usa nomes antigos de artefatos; **não é o script
-executado neste procedimento WSL**.
+O comando acompanha as opções da versão original do script AOT.
+O [script Windows atualizado](main/build_aot_windows.ps1) agora chama o gerador
+de proveniência e preserva o artefato existente; **não é o script executado
+neste procedimento WSL manual**.
 
 Não incluímos `--target-abi=ilp32`: o guia usa o padrão desse compilador
 para Xtensa, em vez de transportar uma opção do histórico sem necessidade.

@@ -1,38 +1,26 @@
-$ErrorActionPreference = "Stop"
-
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$wasmFile = Join-Path $scriptDir "rust_drowsiness_trucker.wasm"
-$aotFile = Join-Path $scriptDir "rust_drowsiness_trucker.aot"
-
-if (-not (Test-Path $wasmFile)) {
-    throw "Arquivo nao encontrado: $wasmFile"
-}
-
-if (-not $env:WAMRC_PATH) {
-    throw "Defina a variavel de ambiente WAMRC_PATH apontando para o wamrc.exe"
-}
-
-$wamrc = $env:WAMRC_PATH
-
-if (-not (Test-Path $wamrc)) {
-    throw "wamrc.exe nao encontrado em WAMRC_PATH: $wamrc"
-}
-
-$args = @(
-    "--target=xtensa",
-    "--cpu=esp32",
-    "--cpu-features=-fp",
-    "--opt-level=3",
-    "--size-level=3",
-    "-o", $aotFile,
-    $wasmFile
+param(
+    [string]$Wamrc = $env:WAMRC_PATH,
+    [string]$Wasm,
+    [string]$OutputDir,
+    [string]$Python,
+    [string[]]$EvidenceFiles = @()
 )
-
-Write-Host "Gerando AOT com:" $wamrc $args
-& $wamrc @args
-
-if (-not (Test-Path $aotFile)) {
-    throw "Falha ao gerar $aotFile"
+$ErrorActionPreference = "Stop"
+$projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "../../.."))
+if (-not $Wamrc) {
+    $compilerCommand = Get-Command wamrc.exe -ErrorAction SilentlyContinue
+    if ($compilerCommand) { $Wamrc = $compilerCommand.Source }
 }
-
-Get-Item $aotFile | Format-List Name,Length,LastWriteTime
+if (-not $Wamrc) { throw "Informe -Wamrc ou configure WAMRC_PATH." }
+if (-not $Wasm) { $Wasm = Join-Path $projectRoot "models/drowsiness/generated/model.wasm" }
+if (-not $Python) {
+    $Python = Join-Path $projectRoot ".venv-models/Scripts/python.exe"
+    if (-not (Test-Path -LiteralPath $Python)) { $Python = "python" }
+}
+$compileArguments = @((Join-Path $projectRoot "build_aot_with_provenance.py"), "build",
+                      "--wamrc", $Wamrc, "--wasm", $Wasm)
+if ($OutputDir) { $compileArguments += @("--output-dir", $OutputDir) }
+foreach ($evidence in $EvidenceFiles) { $compileArguments += @("--evidence", $evidence) }
+& $Python @compileArguments
+if ($LASTEXITCODE -ne 0) { throw "Compilacao AOT falhou. Consulte o manifesto e o log da tentativa." }
+Write-Host "AOT e manifesto gerados em uma pasta nova. O main.aot existente foi preservado."

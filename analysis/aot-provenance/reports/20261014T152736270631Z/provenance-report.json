@@ -1,0 +1,70 @@
+{
+    "schema_version":  1,
+    "scope":  "Compilation provenance only; not evidence of flashing or benchmark execution",
+    "started_at_utc":  "2026-10-14T15:27:36.401156+00:00",
+    "status":  "failed",
+    "compiler":  {
+                     "path":  "C:\\wasm-micro-runtime\\wamr-compiler\\build\\Release\\wamrc.exe",
+                     "bytes":  48920064,
+                     "sha256":  "60bce8a0b98db02900a5e5307e66e317c9e0f397a6ec6d6fcd78e123f9dfa71b",
+                     "version_exit_code":  0,
+                     "version_output":  "wamrc 1.3.2\r\n"
+                 },
+    "source_wasm":  {
+                        "path":  "C:\\Users\\rafae\\Downloads\\master-degree-project\\analysis\\aot-provenance\\reports\\20261014T152736270631Z\\input.wasm",
+                        "bytes":  514564,
+                        "sha256":  "7634ca88b88c73bb3451e85fe59046c72dcf592322e2c3faf5ede25313c7ac2f",
+                        "original_path":  "C:\\Users\\rafae\\Downloads\\master-degree-project\\models\\drowsiness\\generated\\model.wasm",
+                        "archive_path":  "input.wasm"
+                    },
+    "command_argv":  [
+                         "C:\\wasm-micro-runtime\\wamr-compiler\\build\\Release\\wamrc.exe",
+                         "--target=xtensa",
+                         "--target-abi=ilp32",
+                         "--cpu=esp32",
+                         "--cpu-features=-fp",
+                         "--opt-level=3",
+                         "--size-level=3",
+                         "--bounds-checks=1",
+                         "--stack-bounds-checks=1",
+                         "-o",
+                         "C:\\Users\\rafae\\Downloads\\master-degree-project\\analysis\\aot-provenance\\reports\\20261014T152736270631Z\\output.aot",
+                         "C:\\Users\\rafae\\Downloads\\master-degree-project\\analysis\\aot-provenance\\reports\\20261014T152736270631Z\\input.wasm"
+                     ],
+    "command_cwd":  "C:\\Users\\rafae\\Downloads\\master-degree-project\\analysis\\aot-provenance\\reports\\20261014T152736270631Z",
+    "settings":  {
+                     "target":  "xtensa",
+                     "abi":  "ilp32",
+                     "cpu":  "esp32",
+                     "cpu_features":  "-fp",
+                     "opt_level":  3,
+                     "size_level":  3,
+                     "bounds_checks":  1,
+                     "stack_bounds_checks":  1
+                 },
+    "build_evidence":  [
+                           {
+                               "path":  "C:\\Users\\rafae\\Downloads\\master-degree-project\\analysis\\aot-provenance\\reports\\20261014T152736270631Z\\evidence-0-CMakeCache.txt",
+                               "bytes":  30672,
+                               "sha256":  "bac740b256d10688c66ffcd7071b6a2de8d43194007b7d838d0b2fc23b65a1ad",
+                               "original_path":  "C:\\wasm-micro-runtime\\wamr-compiler\\build\\CMakeCache.txt",
+                               "archive_path":  "evidence-0-CMakeCache.txt"
+                           },
+                           {
+                               "path":  "C:\\Users\\rafae\\Downloads\\master-degree-project\\analysis\\aot-provenance\\reports\\20261014T152736270631Z\\evidence-1-LLVMConfig.cmake",
+                               "bytes":  13199,
+                               "sha256":  "d81e41652c89c43e81809e7ef0b2e233acc6c046aa3287549ea460eecbf6068b",
+                               "original_path":  "C:\\wasm-micro-runtime\\core\\deps\\llvm\\win32build\\lib\\cmake\\llvm\\LLVMConfig.cmake",
+                               "archive_path":  "evidence-1-LLVMConfig.cmake"
+                           }
+                       ],
+    "compile_exit_code":  1,
+    "compile_log":  {
+                        "path":  "C:\\Users\\rafae\\Downloads\\master-degree-project\\analysis\\aot-provenance\\reports\\20261014T152736270631Z\\compile-report.txt",
+                        "bytes":  68,
+                        "sha256":  "eb87b46334e7b9b40d0a4c24e46a1ad94ad54fd7c6d3c03eef012fceb7a07f23",
+                        "archive_path":  "compile-report.txt"
+                    },
+    "error":  "wamrc failed with exit code 1; see compile-report.txt.",
+    "finished_at_utc":  "2026-10-14T15:27:36.437043+00:00"
+}

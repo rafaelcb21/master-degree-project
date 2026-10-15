@@ -1,0 +1,167 @@
+I (400) quad_psram: This chip is ESP32-D0WD
+I (401) esp_psram: Found 8MB PSRAM device
+I (401) esp_psram: Speed: 80MHz
+I (402) esp_psram: PSRAM initialized, cache is in low/high (2-core) mode.
+W (410) esp_psram: Virtual address not enough for PSRAM, map as much as we can. 4MB is mapped
+I (419) cpu_start: Multicore app
+I (935) esp_psram: SPI SRAM memory test OK
+I (942) cpu_start: Pro cpu start user code
+I (942) cpu_start: cpu freq: 160000000 Hz
+I (942) app_init: Application information:
+I (945) app_init: Project name:     cnn_webassembly_esp32
+I (951) app_init: App version:      a99630c-dirty
+I (957) app_init: Compile time:     Oct 14 2026 21:18:55
+I (963) app_init: ELF file SHA256:  d3ca60b96...
+I (968) app_init: ESP-IDF:          v5.3.1-dirty
+I (973) efuse_init: Min chip rev:     v0.0
+I (978) efuse_init: Max chip rev:     v3.99
+I (983) efuse_init: Chip rev:         v1.1
+I (988) heap_init: Initializing. RAM available for dynamic allocation:
+I (995) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (1001) heap_init: At 3FFBA5D8 len 00025A28 (150 KiB): DRAM
+I (1008) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (1014) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (1020) heap_init: At 4009A1EC len 00005E14 (23 KiB): IRAM
+I (1027) esp_psram: Adding pool of 4096K of PSRAM memory to heap allocator
+I (1035) spi_flash: detected chip: generic
+I (1039) spi_flash: flash io: dio
+I (1044) main_task: Started on CPU0
+I (1054) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1054) main_task: Calling app_main()
+I (1094) wifi:wifi driver task: 3ffca348, prio:23, stack:6656, core=0
+I (1104) wifi:wifi firmware version: ccaebfa
+I (1104) wifi:wifi certification version: v7.0
+I (1104) wifi:config NVS flash: enabled
+I (1104) wifi:config nano formating: disabled
+I (1104) wifi:Init data frame dynamic rx buffer num: 32
+I (1114) wifi:Init static rx mgmt buffer num: 5
+I (1114) wifi:Init management short buffer num: 32
+I (1124) wifi:Init static tx buffer num: 16
+I (1124) wifi:Init tx cache buffer num: 32
+I (1124) wifi:Init static rx buffer size: 1600
+I (1134) wifi:Init static rx buffer num: 10
+I (1134) wifi:Init dynamic rx buffer num: 32
+I (1144) wifi_init: rx ba win: 6
+I (1144) wifi_init: accept mbox: 6
+I (1144) wifi_init: tcpip mbox: 32
+I (1154) wifi_init: udp mbox: 6
+I (1154) wifi_init: tcp mbox: 6
+I (1164) wifi_init: tcp tx win: 5760
+I (1164) wifi_init: tcp rx win: 5760
+I (1164) wifi_init: tcp mss: 1440
+I (1174) wifi_init: WiFi IRAM OP enabled
+I (1174) wifi_init: WiFi RX IRAM OP enabled
+I (1224) phy_init: phy_version 4830,54550f7,Jun 20 2024,14:22:08
+W (1294) phy_init: saving new calibration data because of checksum failure, mode(0)
+I (1314) wifi:mode : sta (ec:64:c9:ac:c8:48)
+I (1314) wifi:enable tsf
+I (1314) wi-fi: Wi-Fi inicializado
+I (2314) wifi:new:<7,0>, old:<1,0>, ap:<255,255>, sta:<7,0>, prof:1, snd_ch_cfg:0x0
+I (2314) wifi:state: init -> auth (0xb0)
+I (2324) wifi:state: auth -> assoc (0x0)
+I (2324) wifi:state: assoc -> run (0x10)
+I (2354) wifi:connected with Contabil2025, aid = 29, channel 7, BW20, bssid = 38:91:48:52:c2:13
+I (2354) wifi:security: WPA2-PSK, phy: bgn, rssi: -47
+I (2374) wifi:pm start, type: 1
+
+I (2384) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (2384) wifi:<ba-add>idx:0 (ifx:0, 38:91:48:52:c2:13), tid:0, ssn:2, winSize:64
+I (2444) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (5384) esp_netif_handlers: sta ip: 192.168.0.42, mask: 255.255.255.0, gw: 192.168.0.1
+I (5384) wi-fi: Conectado ao Wi-Fi. IP: 192.168.0.42
+I (5384) wi-fi: Wi-Fi conectado.
+I (5384) wasm_benchmark: PSRAM total: 4194304 bytes | PSRAM livre antes de instanciar o WASM: 4191548 bytes
+I (5394) wasm_benchmark: Artefato embutido selecionado no build: AOT
+[00:00:04:358 - 3FFE10CC]: warning: failed to link import function (env, log)
+[00:00:04:253 - 3FFE10CC]: warning: failed to link import function (env, logf)
+[00:00:04:841 - 3FFE10CC]: warning: failed to link import function (env, log64)
+I (5714) wasm_benchmark: WASM instanciado. PSRAM livre apos instanciar: 2039344 bytes (consumo aprox: memoria linear + heap/stack do modulo)
+I (5734) wasm_benchmark: Task WDT reconfigurado para 300000 ms durante o benchmark
+I (5734) wasm_benchmark: Heap (interna) livre antes do benchmark: 2114152 bytes
+I (5744) wasm_benchmark: PSRAM total: 4194304 bytes | PSRAM livre antes do benchmark: 2006172 bytes
+I (5754) HTTP_SERVER: Servidor HTTP iniciado. Relatorio em: http://<ip_do_esp32>:80/report
+
+Comando: benchmark <rodadas> <sim|nao> (gravar imagens na flash)
+> benchmark 1 nao
+I (24264) image_cache: Baixando para PSRAM [1/20]
+I (24354) esp-x509-crt-bundle: Certificate validated
+I (25324) image_cache: Baixando para PSRAM [2/20]
+I (25404) esp-x509-crt-bundle: Certificate validated
+I (26404) image_cache: Baixando para PSRAM [3/20]
+I (26494) esp-x509-crt-bundle: Certificate validated
+I (27324) image_cache: Baixando para PSRAM [4/20]
+I (27404) esp-x509-crt-bundle: Certificate validated
+I (28244) image_cache: Baixando para PSRAM [5/20]
+I (28324) esp-x509-crt-bundle: Certificate validated
+I (29164) image_cache: Baixando para PSRAM [6/20]
+I (29244) esp-x509-crt-bundle: Certificate validated
+I (30084) image_cache: Baixando para PSRAM [7/20]
+I (30164) esp-x509-crt-bundle: Certificate validated
+I (31014) image_cache: Baixando para PSRAM [8/20]
+I (31094) esp-x509-crt-bundle: Certificate validated
+I (32024) image_cache: Baixando para PSRAM [9/20]
+I (32104) esp-x509-crt-bundle: Certificate validated
+I (32964) image_cache: Baixando para PSRAM [10/20]
+I (33044) esp-x509-crt-bundle: Certificate validated
+I (33974) image_cache: Baixando para PSRAM [11/20]
+I (34064) esp-x509-crt-bundle: Certificate validated
+I (34904) image_cache: Baixando para PSRAM [12/20]
+I (34984) esp-x509-crt-bundle: Certificate validated
+I (36024) image_cache: Baixando para PSRAM [13/20]
+I (36104) esp-x509-crt-bundle: Certificate validated
+I (37044) image_cache: Baixando para PSRAM [14/20]
+I (37124) esp-x509-crt-bundle: Certificate validated
+I (38174) image_cache: Baixando para PSRAM [15/20]
+I (38254) esp-x509-crt-bundle: Certificate validated
+I (39104) image_cache: Baixando para PSRAM [16/20]
+I (39184) esp-x509-crt-bundle: Certificate validated
+I (40024) image_cache: Baixando para PSRAM [17/20]
+I (40094) esp-x509-crt-bundle: Certificate validated
+I (41144) image_cache: Baixando para PSRAM [18/20]
+I (41224) esp-x509-crt-bundle: Certificate validated
+I (42064) image_cache: Baixando para PSRAM [19/20]
+I (42144) esp-x509-crt-bundle: Certificate validated
+I (43084) image_cache: Baixando para PSRAM [20/20]
+I (43164) esp-x509-crt-bundle: Certificate validated
+I (44184) wasm_benchmark: Iniciando rodada 1/1 (20 imagens)
+I (44184) wasm_benchmark: Processando [1/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783175586/little/non_drowsy/a0062_fqmvyz.raw
+I (53324) wasm_benchmark: a0062_fqmvyz.raw | result=0 label=0 right=1 | download=0.000 ms inference=9115.806 ms
+I (53324) wasm_benchmark: Processando [2/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783175605/little/non_drowsy/a0082_wdddcd.raw
+I (62454) wasm_benchmark: a0082_wdddcd.raw | result=0 label=0 right=1 | download=0.000 ms inference=9112.064 ms
+I (62454) wasm_benchmark: Processando [3/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783175751/little/non_drowsy/a0231_dfkgjq.raw
+I (71584) wasm_benchmark: a0231_dfkgjq.raw | result=0 label=0 right=1 | download=0.000 ms inference=9112.190 ms
+I (71584) wasm_benchmark: Processando [4/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783175797/little/non_drowsy/a0283_ed9ybp.raw
+I (80714) wasm_benchmark: a0283_ed9ybp.raw | result=0 label=0 right=1 | download=0.000 ms inference=9102.831 ms
+I (80714) wasm_benchmark: Processando [5/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783175838/little/non_drowsy/a0332_mlywvc.raw
+I (89844) wasm_benchmark: a0332_mlywvc.raw | result=0 label=0 right=1 | download=0.000 ms inference=9115.420 ms
+I (89854) wasm_benchmark: Processando [6/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783175912/little/non_drowsy/a0423_q0gp9y.raw
+I (98974) wasm_benchmark: a0423_q0gp9y.raw | result=0 label=0 right=1 | download=0.000 ms inference=9108.599 ms
+I (98984) wasm_benchmark: Processando [7/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783175939/little/non_drowsy/a0456_jbbytw.raw
+I (108114) wasm_benchmark: a0456_jbbytw.raw | result=0 label=0 right=1 | download=0.000 ms inference=9107.726 ms
+I (108114) wasm_benchmark: Processando [8/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176013/little/non_drowsy/a0544_d9bjli.raw
+I (117254) wasm_benchmark: a0544_d9bjli.raw | result=0 label=0 right=1 | download=0.000 ms inference=9121.967 ms
+I (117254) wasm_benchmark: Processando [9/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176059/little/non_drowsy/a0592_bpzfci.raw
+I (126394) wasm_benchmark: a0592_bpzfci.raw | result=0 label=0 right=1 | download=0.000 ms inference=9114.095 ms
+I (126394) wasm_benchmark: Processando [10/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176130/little/non_drowsy/a0663_gya6lx.raw
+I (135524) wasm_benchmark: a0663_gya6lx.raw | result=0 label=0 right=1 | download=0.000 ms inference=9112.847 ms
+I (135524) wasm_benchmark: Processando [11/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176176/little/non_drowsy/a0711_rewvuv.raw
+I (144664) wasm_benchmark: a0711_rewvuv.raw | result=0 label=0 right=1 | download=0.000 ms inference=9116.698 ms
+I (144664) wasm_benchmark: Processando [12/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176203/little/non_drowsy/a0739_e3ferw.raw
+I (153794) wasm_benchmark: a0739_e3ferw.raw | result=0 label=0 right=1 | download=0.000 ms inference=9108.654 ms
+I (153794) wasm_benchmark: Processando [13/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176220/little/non_drowsy/a0755_unt17r.raw
+I (162924) wasm_benchmark: a0755_unt17r.raw | result=0 label=0 right=1 | download=0.000 ms inference=9109.955 ms
+I (162924) wasm_benchmark: Processando [14/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176313/little/non_drowsy/a0852_t8myv6.raw
+I (172054) wasm_benchmark: a0852_t8myv6.raw | result=0 label=0 right=1 | download=0.000 ms inference=9108.560 ms
+I (172054) wasm_benchmark: Processando [15/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176341/little/non_drowsy/a0881_ljtvq1.raw
+I (181184) wasm_benchmark: a0881_ljtvq1.raw | result=0 label=0 right=1 | download=0.000 ms inference=9105.868 ms
+I (181184) wasm_benchmark: Processando [16/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176351/little/non_drowsy/a0892_trop1o.raw
+I (190314) wasm_benchmark: a0892_trop1o.raw | result=0 label=0 right=1 | download=0.000 ms inference=9112.488 ms
+I (190314) wasm_benchmark: Processando [17/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176391/little/non_drowsy/a0933_ddzhlj.raw
+I (199434) wasm_benchmark: a0933_ddzhlj.raw | result=0 label=0 right=1 | download=0.000 ms inference=9097.560 ms
+I (199434) wasm_benchmark: Processando [18/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176408/little/non_drowsy/a0950_xtmcwu.raw
+I (208554) wasm_benchmark: a0950_xtmcwu.raw | result=0 label=0 right=1 | download=0.000 ms inference=9096.266 ms
+I (208554) wasm_benchmark: Processando [19/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176417/little/non_drowsy/a0959_cbmjkb.raw
+I (217704) wasm_benchmark: a0959_cbmjkb.raw | result=0 label=0 right=1 | download=0.000 ms inference=9122.431 ms
+I (217704) wasm_benchmark: Processando [20/20]: https://res.cloudinary.com/dlzzjgs5f/raw/upload/v1783176427/little/non_drowsy/a0969_o4uupq.raw
+I (226834) wasm_benchmark: a0969_o4uupq.raw | result=0 label=0 right=1 | download=0.000 ms inference=9109.691 ms
+I (226834) wasm_benchmark: Benchmark concluido: sucesso=20 erros=0; CSV em http://<ip>:80/report

@@ -1,0 +1,23 @@
+{
+    "audit_date":  "2026-10-14",
+    "artifacts":  [
+                      {
+                          "path":  "C:\\Users\\rafae\\Downloads\\modelos\\wasm-project\\project_predict\\main.wasm",
+                          "bytes":  510943,
+                          "sha256":  "b2f2b2369a341031caec99530c3277499949712336c52d7a1ab5f2f70ee8ac13"
+                      },
+                      {
+                          "path":  "C:\\Users\\rafae\\Downloads\\dev\\MESTRADO\\github_repository\\cnn_webassembly_esp32\\main\\main.wasm.txt",
+                          "bytes":  510943,
+                          "sha256":  "b2f2b2369a341031caec99530c3277499949712336c52d7a1ab5f2f70ee8ac13"
+                      }
+                  ],
+    "byte_for_byte_equal":  true,
+    "wasm_header_hex":  "00-61-73-6D-01-00-00-00",
+    "author_confirmation":  {
+                                "source":  "User confirmation in this conversation",
+                                "statement":  "foi esse arquivo",
+                                "meaning":  "The author confirmed this original WASM was used as the AOT compilation input; the AOT procedure and version followed the project README on another computer."
+                            },
+    "scope":  "File identity verified retrospectively. Use as compilation input confirmed by the author; not a contemporaneous compiler or runtime log."
+}

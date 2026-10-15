@@ -1,0 +1,11 @@
+{
+    "source":  "User-supplied serial log and downloaded CSV",
+    "board_ip":  "192.168.0.42",
+    "cpu_frequency_hz":  160000000,
+    "module_kind":  "AOT",
+    "command":  "benchmark 1 nao",
+    "images":  20,
+    "image_source":  "HTTPS downloads cached in PSRAM",
+    "psram_mapped_bytes":  4194304,
+    "note":  "CPU frequency and module kind were read from the serial log; the CSV has no embedded CPU-frequency metadata."
+}
